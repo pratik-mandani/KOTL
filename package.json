@@ -1,0 +1,16 @@
+{
+  "name": "kotl-ai",
+  "version": "2.1.0",
+  "private": true,
+  "description": "KOTL AI Companion - Multilingual Assistant",
+  "scripts": {
+    "postinstall": "cd backend && npm install",
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2",
+    "ffmpeg-static": "^5.2.0",
+    "node-edge-tts": "^1.2.10"
+  }
+}
