@@ -1448,79 +1448,96 @@ void performAudioUpload()
   http.addHeader("X-Sample-Rate", String(kAudioCaptureSampleRate));
   http.addHeader("X-Duration-Ms", String(kAudioCaptureDurationMs));
   http.addHeader("X-Audio-Format", "raw_pcm_16le");
+  http.addHeader("X-Stream-Audio", "true");
+
+  const char *headerKeys[] = {"Content-Type", "X-Transcript", "X-Assistant-Reply", "X-TTS-Ready", "X-Turn-Status"};
+  http.collectHeaders(headerKeys, 5);
 
   uint8_t *payload = reinterpret_cast<uint8_t *>(audioCaptureBuffer);
   const int httpCode = http.POST(payload, sizeof(audioCaptureBuffer));
-  if (httpCode > 0)
+  if (httpCode == HTTP_CODE_OK || httpCode == 200)
   {
     setVoiceTurnState(VOICE_THINKING);
-    String responsePayload = http.getString();
-    bool ttsReady = false;
-    String ttsUrl;
-    String transcript;
-    String assistantReply;
-    String turnStatus;
-    String sttError;
-    String assistantError;
-    String ttsError;
-    parseAudioUploadResponse(responsePayload, &ttsReady, &ttsUrl, &transcript, &assistantReply, &turnStatus, &sttError, &assistantError, &ttsError);
+    String contentType = http.header("Content-Type");
+    String transcript = http.header("X-Transcript");
+    String assistantReply = http.header("X-Assistant-Reply");
+
+    // Decode URL-escaped headers
+    transcript.replace("%20", " ");
+    assistantReply.replace("%20", " ");
+
     voiceTurn.lastTranscript = transcript;
     voiceTurn.lastAssistantReply = assistantReply;
-
-    String logPayload = responsePayload;
-    logPayload.replace('\n', ' ');
-    logPayload.replace('\r', ' ');
-    if (logPayload.length() > 240)
-    {
-      logPayload.remove(240);
-    }
 
     Serial.println("UPLOAD COMPLETE");
     Serial.print("upload status: ");
     Serial.println(httpCode);
-    Serial.print("upload response: ");
-    Serial.println(logPayload);
-    Serial.print("TRANSCRIPT: ");
+    Serial.print("Content-Type: ");
+    Serial.println(contentType);
     if (transcript.length() > 0)
     {
+      Serial.print("TRANSCRIPT: ");
       Serial.println(transcript);
     }
-    else
-    {
-      Serial.println("(empty)");
-    }
-    if (sttError.length() > 0)
-    {
-      Serial.print("STT ERROR: ");
-      Serial.println(sttError);
-    }
-    Serial.print("ASSISTANT REPLY: ");
     if (assistantReply.length() > 0)
     {
+      Serial.print("ASSISTANT REPLY: ");
       Serial.println(assistantReply);
+    }
+
+    if (contentType.indexOf("audio/wav") != -1 || contentType.indexOf("octet-stream") != -1)
+    {
+      if (ttsStorageAvailable)
+      {
+        setVoiceTurnState(VOICE_DOWNLOADING_TTS);
+        if (LittleFS.exists(kTtsFilePath))
+        {
+          LittleFS.remove(kTtsFilePath);
+        }
+
+        File file = LittleFS.open(kTtsFilePath, FILE_WRITE);
+        if (file)
+        {
+          const int bytesWritten = http.writeToStream(&file);
+          file.close();
+          http.end();
+          Serial.print("DIRECT TTS STREAM WRITTEN: ");
+          Serial.println(bytesWritten);
+
+          if (bytesWritten > 100)
+          {
+            queueOrStartTtsPlayback();
+          }
+          else
+          {
+            failVoiceTurn("TTS stream too short");
+          }
+        }
+        else
+        {
+          http.end();
+          failVoiceTurn("LittleFS open failed");
+        }
+      }
+      else
+      {
+        http.end();
+        failVoiceTurn("TTS skipped: LittleFS unavailable");
+      }
     }
     else
     {
-      Serial.println("(empty)");
-    }
-    if (assistantError.length() > 0)
-    {
-      Serial.print("ASSISTANT ERROR: ");
-      Serial.println(assistantError);
-    }
-    Serial.print("TTS READY: ");
-    Serial.println(ttsReady ? "true" : "false");
-    if (ttsError.length() > 0)
-    {
-      Serial.print("TTS ERROR: ");
-      Serial.println(ttsError);
-    }
+      String responsePayload = http.getString();
+      http.end();
+      bool ttsReady = false;
+      String ttsUrl;
+      String turnStatus;
+      String sttError;
+      String assistantError;
+      String ttsError;
+      parseAudioUploadResponse(responsePayload, &ttsReady, &ttsUrl, &transcript, &assistantReply, &turnStatus, &sttError, &assistantError, &ttsError);
 
-    http.end(); // Cleanly close upload SSL connection before starting TTS download
-
-    if (ttsReady)
-    {
-      if (ttsStorageAvailable)
+      if (ttsReady && ttsStorageAvailable)
       {
         setVoiceTurnState(VOICE_DOWNLOADING_TTS);
         if (!downloadTtsAudio(ttsUrl))
@@ -1530,18 +1547,7 @@ void performAudioUpload()
       }
       else
       {
-        failVoiceTurn("TTS skipped: LittleFS unavailable");
-      }
-    }
-    else
-    {
-      if (turnStatus == "complete" || turnStatus == "no_transcript" || turnStatus == "no_wake_word" || turnStatus == "assistant_failed" || turnStatus == "tts_failed")
-      {
         resetVoiceTurnToIdle();
-      }
-      else
-      {
-        failVoiceTurn("Audio response missing TTS");
       }
     }
   }

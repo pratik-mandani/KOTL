@@ -679,6 +679,30 @@ app.post(
       tts_ready: metadata.tts_generated,
     });
 
+    const wantsStream = req.get("x-stream-audio") === "true" || req.get("x-audio-format") === "raw_pcm_16le";
+    if (wantsStream && metadata.tts_generated && metadata.tts_filename) {
+      const ttsFilePath = path.join(ttsUploadsDir, metadata.tts_filename);
+      if (fs.existsSync(ttsFilePath)) {
+        try {
+          const stat = fs.statSync(ttsFilePath);
+          res.writeHead(200, {
+            "Content-Type": "audio/wav",
+            "Content-Length": stat.size,
+            "X-Transcript": encodeURIComponent(metadata.transcript || ""),
+            "X-Assistant-Reply": encodeURIComponent(metadata.assistant_reply || ""),
+            "X-TTS-Ready": "true",
+            "X-Turn-Status": metadata.turn_status,
+            "X-TTS-Filename": metadata.tts_filename,
+            "Connection": "close",
+          });
+          const stream = fs.createReadStream(ttsFilePath);
+          return stream.pipe(res);
+        } catch (err) {
+          console.error("[Stream Audio Pipe Error]", err);
+        }
+      }
+    }
+
     return res.json(buildAudioResponse(metadata, metadata.turn_status));
   }
 );
