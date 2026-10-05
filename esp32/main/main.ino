@@ -1365,6 +1365,7 @@ void beginWiFiConnection(uint32_t nowMs)
 void performBackendPostRequest(uint32_t nowMs)
 {
   HTTPClient http;
+  WiFiClientSecure sslClient;
   const String chatUrl = resolveBackendUrl("/chat");
 
   http.setConnectTimeout(kHttpTimeoutMs);
@@ -1373,7 +1374,7 @@ void performBackendPostRequest(uint32_t nowMs)
   networkState.requestInProgress = true;
   networkState.lastHttpAttemptMs = nowMs;
 
-  if (!http.begin(chatUrl))
+  if (!beginHttpWithOptionalSsl(http, sslClient, chatUrl))
   {
     Serial.println("Backend POST begin failed");
     networkState.requestInProgress = false;
@@ -1424,6 +1425,7 @@ void performAudioUpload()
   }
 
   HTTPClient http;
+  WiFiClientSecure sslClient;
   const String audioUrl = resolveBackendUrl("/audio");
   http.setConnectTimeout(kHttpTimeoutMs);
   http.setTimeout(kHttpTimeoutMs);
@@ -1434,7 +1436,7 @@ void performAudioUpload()
   Serial.print("upload url: ");
   Serial.println(audioUrl);
 
-  if (!http.begin(audioUrl))
+  if (!beginHttpWithOptionalSsl(http, sslClient, audioUrl))
   {
     captureState.isUploading = false;
     captureState.uploadPending = false;
@@ -1722,6 +1724,7 @@ bool downloadTtsAudio(const String &ttsUrl)
   }
 
   HTTPClient http;
+  WiFiClientSecure sslClient;
   http.setConnectTimeout(kHttpTimeoutMs);
   http.setTimeout(kHttpTimeoutMs);
 
@@ -1730,7 +1733,7 @@ bool downloadTtsAudio(const String &ttsUrl)
   Serial.println(resolvedUrl);
   audioState.isDownloading = true;
 
-  if (!http.begin(resolvedUrl))
+  if (!beginHttpWithOptionalSsl(http, sslClient, resolvedUrl))
   {
     Serial.println("TTS download begin failed");
     audioState.isDownloading = false;

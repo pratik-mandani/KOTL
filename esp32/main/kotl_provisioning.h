@@ -1,11 +1,11 @@
 #pragma once
 
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <WebServer.h>
 #include <DNSServer.h>
 #include <Preferences.h>
 #include <HTTPClient.h>
-#include <ArduinoJson.h>
 
 static const byte DNS_PORT = 53;
 static DNSServer dnsServer;
@@ -47,16 +47,16 @@ static const char CAPTIVE_HTML[] PROGMEM = R"rawliteral(
   <div class="card">
     <div class="logo">K</div>
     <h1>KOTL AI Setup</h1>
-    <p>Configure Wi-Fi and Backend Server connection.</p>
+    <p>Configure Wi-Fi and Cloud Backend Server connection.</p>
     <form action="/save" method="POST">
       <label>Wi-Fi Name (SSID)</label>
-      <input type="text" name="ssid" placeholder="e.g. Home_WiFi" required>
+      <input type="text" name="ssid" placeholder="e.g. Altius" required>
       
       <label>Wi-Fi Password</label>
       <input type="password" name="pass" placeholder="••••••••">
       
-      <label>Hostinger / Cloud Backend URL</label>
-      <input type="text" name="backend" placeholder="https://yourdomain.com or http://192.168.1.13:3000" required>
+      <label>Hostinger / Render / Cloud Backend URL</label>
+      <input type="text" name="backend" placeholder="https://kotl.onrender.com or http://192.168.1.13:3000" value="https://kotl.onrender.com" required>
       
       <button type="submit">Save & Connect</button>
     </form>
@@ -83,7 +83,7 @@ static const char SUCCESS_HTML[] PROGMEM = R"rawliteral(
 <body>
   <div class="card">
     <h2>Credentials Saved!</h2>
-    <p>ESP32 is rebooting and connecting to your Wi-Fi.<br><br>You can now close this window and reconnect to your regular Wi-Fi network.</p>
+    <p>ESP32 is rebooting and connecting to your Wi-Fi.<br><br>You can now close this window and talk to KOTL.</p>
   </div>
 </body>
 </html>
@@ -108,6 +108,10 @@ inline void initPersistentConfig() {
     g_backend_url = String(KOTL_BACKEND_BASE_URL);
   }
 #endif
+
+  if (g_backend_url.length() == 0) {
+    g_backend_url = "https://kotl.onrender.com";
+  }
 }
 
 inline void savePersistentConfig(const String &ssid, const String &pass, const String &backend, int version = 1) {
@@ -167,6 +171,15 @@ inline void serviceCaptivePortal() {
   }
 }
 
+// Helper to begin HTTPClient with automatic SSL/HTTPS support
+inline bool beginHttpWithOptionalSsl(HTTPClient &http, WiFiClientSecure &sslClient, const String &url) {
+  if (url.startsWith("https://")) {
+    sslClient.setInsecure();
+    return http.begin(sslClient, url);
+  }
+  return http.begin(url);
+}
+
 // Background Remote Sync with Admin Dashboard
 inline void checkRemoteAdminUpdates() {
   if (WiFi.status() != WL_CONNECTED || g_in_ap_mode || g_backend_url.length() == 0) {
@@ -180,8 +193,13 @@ inline void checkRemoteAdminUpdates() {
   g_last_heartbeat_ms = now;
 
   HTTPClient http;
+  WiFiClientSecure sslClient;
   String heartbeatUrl = g_backend_url + "/api/device/heartbeat";
-  http.begin(heartbeatUrl);
+  
+  if (!beginHttpWithOptionalSsl(http, sslClient, heartbeatUrl)) {
+    return;
+  }
+  
   http.addHeader("Content-Type", "application/json");
 
   String payload = "{\"version\":" + String(g_config_version) + 
@@ -197,32 +215,35 @@ inline void checkRemoteAdminUpdates() {
       
       // Fetch full config
       HTTPClient httpCfg;
-      httpCfg.begin(g_backend_url + "/api/device/config");
-      int cfgCode = httpCfg.GET();
-      if (cfgCode == 200) {
-        String cfgJson = httpCfg.getString();
-        
-        // Extract new fields simply
-        int ssidIdx = cfgJson.indexOf("\"wifi_ssid\":\"");
-        int passIdx = cfgJson.indexOf("\"wifi_pass\":\"");
-        int backIdx = cfgJson.indexOf("\"backend_url\":\"");
-        int verIdx = cfgJson.indexOf("\"version\":");
+      WiFiClientSecure sslCfgClient;
+      String cfgUrl = g_backend_url + "/api/device/config";
+      
+      if (beginHttpWithOptionalSsl(httpCfg, sslCfgClient, cfgUrl)) {
+        int cfgCode = httpCfg.GET();
+        if (cfgCode == 200) {
+          String cfgJson = httpCfg.getString();
+          
+          int ssidIdx = cfgJson.indexOf("\"wifi_ssid\":\"");
+          int passIdx = cfgJson.indexOf("\"wifi_pass\":\"");
+          int backIdx = cfgJson.indexOf("\"backend_url\":\"");
+          int verIdx = cfgJson.indexOf("\"version\":");
 
-        if (ssidIdx != -1 && backIdx != -1) {
-          String newSsid = cfgJson.substring(ssidIdx + 13, cfgJson.indexOf("\"", ssidIdx + 13));
-          String newPass = (passIdx != -1) ? cfgJson.substring(passIdx + 13, cfgJson.indexOf("\"", passIdx + 13)) : "";
-          String newBack = cfgJson.substring(backIdx + 15, cfgJson.indexOf("\"", backIdx + 15));
-          int newVer = (verIdx != -1) ? cfgJson.substring(verIdx + 10, cfgJson.indexOf(",", verIdx + 10)).toInt() : g_config_version + 1;
+          if (ssidIdx != -1 && backIdx != -1) {
+            String newSsid = cfgJson.substring(ssidIdx + 13, cfgJson.indexOf("\"", ssidIdx + 13));
+            String newPass = (passIdx != -1) ? cfgJson.substring(passIdx + 13, cfgJson.indexOf("\"", passIdx + 13)) : "";
+            String newBack = cfgJson.substring(backIdx + 15, cfgJson.indexOf("\"", backIdx + 15));
+            int newVer = (verIdx != -1) ? cfgJson.substring(verIdx + 10, cfgJson.indexOf(",", verIdx + 10)).toInt() : g_config_version + 1;
 
-          if (newSsid.length() > 0) {
-            savePersistentConfig(newSsid, newPass, newBack, newVer);
-            Serial.println("[Admin Sync] Applied! Restarting with new Wi-Fi credentials...");
-            delay(1000);
-            ESP.restart();
+            if (newSsid.length() > 0) {
+              savePersistentConfig(newSsid, newPass, newBack, newVer);
+              Serial.println("[Admin Sync] Applied! Restarting with new Wi-Fi credentials...");
+              delay(1000);
+              ESP.restart();
+            }
           }
         }
+        httpCfg.end();
       }
-      httpCfg.end();
     }
   }
   http.end();
