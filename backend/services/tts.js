@@ -14,15 +14,20 @@ const DEFAULT_VOICE = process.env.OPENAI_TTS_VOICE || "alloy";
 const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.OPENAI_TIMEOUT_MS || "", 10) || 15000;
 const PIPER_TIMEOUT_MS = Number.parseInt(process.env.PIPER_TIMEOUT_MS || process.env.OPENAI_TIMEOUT_MS || "", 10) || 45000;
 const NORMALIZED_SAMPLE_RATE = Number.parseInt(process.env.TTS_PLAYBACK_SAMPLE_RATE || "", 10) || 16000;
-const FFMPEG_BIN = process.env.FFMPEG_BIN || "D:/KOTL/tools/ffmpeg/bin/ffmpeg.exe";
+let ffmpegStaticPath = null;
+try {
+  ffmpegStaticPath = require("ffmpeg-static");
+} catch (e) {}
+
+const FFMPEG_BIN = process.env.FFMPEG_BIN || ffmpegStaticPath || (os.platform() === "win32" ? "D:/KOTL/tools/ffmpeg/bin/ffmpeg.exe" : "ffmpeg");
 const TTS_UPLOADS_DIR = path.join(__dirname, "..", "uploads", "tts");
 const PIPER_BIN = process.env.PIPER_BIN || "";
 const PIPER_MODEL_PATH = process.env.PIPER_MODEL_PATH || "";
 const PIPER_CONFIG_PATH = process.env.PIPER_CONFIG_PATH || "";
 const PIPER_VOICE = "local";
 
-const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "en-US-ChristopherNeural";
-const EDGE_LANG = process.env.EDGE_TTS_LANG || "en-US";
+const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "gu-IN-NiranjanNeural";
+const EDGE_LANG = process.env.EDGE_TTS_LANG || "gu-IN";
 
 function buildTtsFilename() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -384,7 +389,7 @@ async function generateOpenAiSpeech({ text, sessionId = null }) {
 async function generateSpeech({ text, sessionId = null, voice = null }) {
   const provider = (process.env.TTS_PROVIDER || "edge").trim().toLowerCase();
 
-  if (provider === "edge") {
+  if (provider === "edge" || !process.env.OPENAI_API_KEY) {
     const edgeResult = await generateEdgeSpeech({ text, sessionId, voice });
     if (edgeResult.success) {
       return edgeResult;
@@ -392,7 +397,7 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
     console.warn(`[TTS] Edge TTS fallback triggered due to: ${edgeResult.error}`);
   }
 
-  if (provider === "piper" || provider === "edge") {
+  if (provider === "piper") {
     const piperResult = await generatePiperSpeech({ text, sessionId });
     if (piperResult.success) {
       return piperResult;
@@ -400,7 +405,19 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
     console.warn(`[TTS] Piper fallback triggered due to: ${piperResult.error}`);
   }
 
-  return generateOpenAiSpeech({ text, sessionId });
+  if (process.env.OPENAI_API_KEY) {
+    return generateOpenAiSpeech({ text, sessionId });
+  }
+
+  return {
+    success: false,
+    filename: null,
+    url: null,
+    provider: "edge",
+    voice: voice || EDGE_VOICE,
+    model: "neural",
+    error: "Edge TTS failed and no alternative TTS provider configured",
+  };
 }
 
 module.exports = {

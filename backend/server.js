@@ -236,7 +236,11 @@ app.post(
     const { execFile } = require("child_process");
     const { promisify } = require("util");
     const execFileAsync = promisify(execFile);
-    const FFMPEG_BIN = process.env.FFMPEG_BIN || "D:/KOTL/tools/ffmpeg/bin/ffmpeg.exe";
+    let ffmpegStaticPath = null;
+    try {
+      ffmpegStaticPath = require("ffmpeg-static");
+    } catch (e) {}
+    const FFMPEG_BIN = process.env.FFMPEG_BIN || ffmpegStaticPath || (os.platform() === "win32" ? "D:/KOTL/tools/ffmpeg/bin/ffmpeg.exe" : "ffmpeg");
 
     const tempIn = path.join(os.tmpdir(), `browser-mic-${turnId}.webm`);
     const tempWav = path.join(uploadsDir, `browser-mic-${turnId}.wav`);

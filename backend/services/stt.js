@@ -9,8 +9,8 @@ const execFileAsync = promisify(execFile);
 const OPENAI_TRANSCRIPTION_URL = "https://api.openai.com/v1/audio/transcriptions";
 const GROQ_TRANSCRIPTION_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 
-const DEFAULT_PROVIDER = (process.env.STT_PROVIDER || "openai").trim().toLowerCase();
-const DEFAULT_MODEL = process.env.OPENAI_TRANSCRIPTION_MODEL || "gpt-4o-mini-transcribe";
+const DEFAULT_PROVIDER = (process.env.STT_PROVIDER || "groq").trim().toLowerCase();
+const DEFAULT_MODEL = process.env.OPENAI_TRANSCRIPTION_MODEL || "whisper-1";
 const WHISPER_BIN = process.env.WHISPER_BIN || "";
 const WHISPER_MODEL_PATH = process.env.WHISPER_MODEL_PATH || "";
 const WHISPER_LANGUAGE = process.env.WHISPER_LANGUAGE || "auto";
@@ -404,13 +404,13 @@ async function transcribeWithWhisperCpp(filePath) {
 }
 
 async function transcribeAudio(filePath) {
-  const provider = (process.env.STT_PROVIDER || "openai").trim().toLowerCase();
+  const provider = (process.env.STT_PROVIDER || (process.env.GROQ_API_KEY ? "groq" : "openai")).trim().toLowerCase();
   
   if (provider === "whisper_cpp") {
     return transcribeWithWhisperCpp(filePath);
   }
   
-  if (provider === "groq") {
+  if (provider === "groq" || (!process.env.OPENAI_API_KEY && process.env.GROQ_API_KEY)) {
     return transcribeWithGroq(filePath);
   }
 
