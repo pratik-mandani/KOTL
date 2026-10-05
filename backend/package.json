@@ -1,0 +1,19 @@
+{
+  "name": "kotl-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple backend for KOTL ESP32 testing",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check:piper": "node scripts/check-piper.js",
+    "check:whisper": "node scripts/check-whisper.js",
+    "inspect:wav": "node scripts/inspect-wav.js",
+    "transcribe:wav": "node scripts/transcribe-wav.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^4.21.2",
+    "node-edge-tts": "^1.2.10"
+  }
+}
