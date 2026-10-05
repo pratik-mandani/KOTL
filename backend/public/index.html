@@ -68,7 +68,7 @@
           <div class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-black font-bold text-sm font-mono">
             K
           </div>
-          <span class="font-bold text-sm tracking-tight text-white">KOTL 2.0</span>
+          <span class="font-bold text-sm tracking-tight text-white">KOTL 2.1</span>
         </div>
         <button id="sidebarToggleBtn" class="p-1.5 rounded-lg text-gpt-muted hover:text-white hover:bg-gpt-card transition-colors">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,10 +122,10 @@
     <div class="p-3 border-t border-gpt-border/60 bg-black/20 text-xs font-mono">
       <div class="flex items-center justify-between p-2 rounded-xl bg-gpt-card/60 border border-gpt-border">
         <div class="flex items-center space-x-2 overflow-hidden">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-          <span id="sidebarStatusText" class="truncate text-[11px] text-gpt-light">ESP32 Online</span>
+          <span id="sidebarStatusDot" class="w-2 h-2 rounded-full bg-red-500 shrink-0 transition-all duration-300"></span>
+          <span id="sidebarStatusText" class="truncate text-[11px] text-zinc-400 font-mono">ESP32 Offline</span>
         </div>
-        <span class="text-[10px] px-1.5 py-0.5 rounded bg-black text-gpt-muted">v2.0</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-black text-emerald-400 font-mono font-bold">v2.1</span>
       </div>
     </div>
 
@@ -230,7 +230,7 @@
       </div>
 
       <p class="text-[11px] text-gpt-muted mt-2 text-center font-mono">
-        KOTL 2.0 • Multilingual AI with Edge Neural Voice • Gemini Flash Brain
+        KOTL 2.1 • Multilingual AI with Edge Neural Voice • Gemini / Groq Brain
       </p>
 
     </div>
@@ -749,6 +749,9 @@
       cfgWifiPass.type = isPass ? 'text' : 'password';
     };
 
+    const sidebarStatusDot = document.getElementById('sidebarStatusDot');
+    const sidebarStatusText = document.getElementById('sidebarStatusText');
+
     async function loadDeviceConfig() {
       try {
         const res = await fetch('/api/device/config');
@@ -763,15 +766,38 @@
           if (!cfgBackendUrl.value) cfgBackendUrl.value = resolvedBackend;
 
           if (data.version) cfgVersionText.textContent = `v${data.version}`;
-          if (data.device_status?.online) {
-            deviceOnlineBadge.textContent = 'Online';
-            deviceOnlineBadge.className = 'text-emerald-400';
-            document.getElementById('sidebarStatusText').textContent = `ESP32 (${data.device_status.ip || 'Online'})`;
+          
+          const isOnline = !!data.device_status?.online;
+          if (isOnline) {
+            if (sidebarStatusDot) sidebarStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.9)] transition-all duration-300';
+            if (sidebarStatusText) {
+              sidebarStatusText.textContent = `ESP32 (${data.device_status.ip || 'Online'})`;
+              sidebarStatusText.className = 'truncate text-[11px] text-emerald-300 font-mono';
+            }
+            if (deviceOnlineBadge) {
+              deviceOnlineBadge.textContent = `Online • ${data.device_status.ip || 'Connected'}`;
+              deviceOnlineBadge.className = 'text-emerald-400 font-bold';
+            }
+          } else {
+            if (sidebarStatusDot) sidebarStatusDot.className = 'w-2 h-2 rounded-full bg-red-500 shrink-0 transition-all duration-300';
+            if (sidebarStatusText) {
+              sidebarStatusText.textContent = 'ESP32 Offline';
+              sidebarStatusText.className = 'truncate text-[11px] text-zinc-400 font-mono';
+            }
+            if (deviceOnlineBadge) {
+              deviceOnlineBadge.textContent = 'Offline (No Heartbeat)';
+              deviceOnlineBadge.className = 'text-red-400 font-bold';
+            }
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        if (sidebarStatusDot) sidebarStatusDot.className = 'w-2 h-2 rounded-full bg-red-500 shrink-0';
+        if (sidebarStatusText) sidebarStatusText.textContent = 'ESP32 Offline';
+      }
     }
     loadDeviceConfig();
+    // Realtime live status polling every 3 seconds
+    setInterval(loadDeviceConfig, 3000);
 
     wifiConfigForm.onsubmit = async (e) => {
       e.preventDefault();

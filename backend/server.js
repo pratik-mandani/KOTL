@@ -150,18 +150,7 @@ const DEVICE_CONFIG_FILE = path.join(uploadsDir, "device_config.json");
 
 function getDeviceConfig() {
   const defaultBackend = process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || "https://kotl.onrender.com";
-  try {
-    if (fs.existsSync(DEVICE_CONFIG_FILE)) {
-      const parsed = JSON.parse(fs.readFileSync(DEVICE_CONFIG_FILE, "utf-8"));
-      if (parsed.backend_url && (parsed.backend_url.includes("10.") || parsed.backend_url.includes("localhost") || parsed.backend_url.includes("127.0.0.1")) && process.env.RENDER_EXTERNAL_URL) {
-        parsed.backend_url = process.env.RENDER_EXTERNAL_URL;
-      }
-      return parsed;
-    }
-  } catch (e) {
-    console.warn("[Device Config] Error reading config file:", e.message);
-  }
-  return {
+  let cfg = {
     wifi_ssid: "Altius",
     wifi_pass: "",
     backend_url: defaultBackend,
@@ -171,9 +160,34 @@ function getDeviceConfig() {
       ip: null,
       rssi: null,
       online: false,
-      last_seen: null
+      last_seen: null,
+      last_seen_seconds_ago: null
     }
   };
+
+  try {
+    if (fs.existsSync(DEVICE_CONFIG_FILE)) {
+      const parsed = JSON.parse(fs.readFileSync(DEVICE_CONFIG_FILE, "utf-8"));
+      if (parsed.backend_url && (parsed.backend_url.includes("10.") || parsed.backend_url.includes("localhost") || parsed.backend_url.includes("127.0.0.1")) && process.env.RENDER_EXTERNAL_URL) {
+        parsed.backend_url = process.env.RENDER_EXTERNAL_URL;
+      }
+      cfg = { ...cfg, ...parsed };
+    }
+  } catch (e) {
+    console.warn("[Device Config] Error reading config file:", e.message);
+  }
+
+  // Dynamic live check: If last_seen is within last 45 seconds, mark online, else offline
+  if (cfg.device_status?.last_seen) {
+    const elapsedSec = (Date.now() - new Date(cfg.device_status.last_seen).getTime()) / 1000;
+    cfg.device_status.online = elapsedSec < 45;
+    cfg.device_status.last_seen_seconds_ago = Math.floor(elapsedSec);
+  } else {
+    if (!cfg.device_status) cfg.device_status = {};
+    cfg.device_status.online = false;
+  }
+
+  return cfg;
 }
 
 function saveDeviceConfig(config) {
@@ -182,6 +196,20 @@ function saveDeviceConfig(config) {
   } catch (e) {
     console.warn("[Device Config] Error saving config file:", e.message);
   }
+}
+
+function touchDeviceHeartbeat(ip = null, rssi = null) {
+  try {
+    const current = getDeviceConfig();
+    current.device_status = {
+      ip: ip || current.device_status?.ip,
+      rssi: rssi !== null ? rssi : current.device_status?.rssi,
+      online: true,
+      last_seen: new Date().toISOString(),
+      last_seen_seconds_ago: 0
+    };
+    saveDeviceConfig(current);
+  } catch (e) {}
 }
 
 app.get("/api/device/config", (_req, res) => {
@@ -215,14 +243,7 @@ app.post("/api/device/heartbeat", (req, res) => {
   const ip = req.body?.ip || req.ip;
   const rssi = req.body?.rssi || null;
 
-  current.device_status = {
-    ip,
-    rssi,
-    online: true,
-    last_seen: new Date().toISOString()
-  };
-
-  saveDeviceConfig(current);
+  touchDeviceHeartbeat(ip, rssi);
 
   const hasNewConfig = clientVersion < (current.version || 1);
   res.json({
@@ -471,6 +492,7 @@ app.post(
       duration_ms: metadata.duration_ms,
       format: metadata.format,
     });
+    touchDeviceHeartbeat(req.ip);
     fs.writeFileSync(audioPath, req.body);
 
     try {
