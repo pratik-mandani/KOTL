@@ -149,9 +149,14 @@ app.post("/api/reset-session", (req, res) => {
 const DEVICE_CONFIG_FILE = path.join(uploadsDir, "device_config.json");
 
 function getDeviceConfig() {
+  const defaultBackend = process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || "https://kotl.onrender.com";
   try {
     if (fs.existsSync(DEVICE_CONFIG_FILE)) {
-      return JSON.parse(fs.readFileSync(DEVICE_CONFIG_FILE, "utf-8"));
+      const parsed = JSON.parse(fs.readFileSync(DEVICE_CONFIG_FILE, "utf-8"));
+      if (parsed.backend_url && (parsed.backend_url.includes("10.") || parsed.backend_url.includes("localhost") || parsed.backend_url.includes("127.0.0.1")) && process.env.RENDER_EXTERNAL_URL) {
+        parsed.backend_url = process.env.RENDER_EXTERNAL_URL;
+      }
+      return parsed;
     }
   } catch (e) {
     console.warn("[Device Config] Error reading config file:", e.message);
@@ -159,7 +164,7 @@ function getDeviceConfig() {
   return {
     wifi_ssid: "Altius",
     wifi_pass: "",
-    backend_url: `http://${getLocalIPv4Address()}:${PORT}`,
+    backend_url: defaultBackend,
     version: 1,
     last_updated: new Date().toISOString(),
     device_status: {

@@ -755,7 +755,13 @@
         if (res.ok) {
           const data = await res.json();
           if (data.wifi_ssid && !cfgWifiSsid.value) cfgWifiSsid.value = data.wifi_ssid;
-          if (data.backend_url && !cfgBackendUrl.value) cfgBackendUrl.value = data.backend_url;
+          
+          let resolvedBackend = data.backend_url || window.location.origin;
+          if (window.location.protocol === 'https:' && (resolvedBackend.startsWith('http://10.') || resolvedBackend.startsWith('http://172.') || resolvedBackend.startsWith('http://192.168.'))) {
+            resolvedBackend = window.location.origin;
+          }
+          if (!cfgBackendUrl.value) cfgBackendUrl.value = resolvedBackend;
+
           if (data.version) cfgVersionText.textContent = `v${data.version}`;
           if (data.device_status?.online) {
             deviceOnlineBadge.textContent = 'Online';
