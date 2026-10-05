@@ -1725,7 +1725,7 @@ bool downloadTtsAudio(const String &ttsUrl)
     LittleFS.remove(kTtsFilePath);
   }
 
-  delay(50);
+  delay(100);
   HTTPClient http;
   WiFiClientSecure sslClient;
   http.setConnectTimeout(kHttpTimeoutMs);
@@ -1734,6 +1734,8 @@ bool downloadTtsAudio(const String &ttsUrl)
   Serial.println("TTS DOWNLOAD START");
   Serial.print("tts url: ");
   Serial.println(resolvedUrl);
+  Serial.print("free heap: ");
+  Serial.println(ESP.getFreeHeap());
   audioState.isDownloading = true;
 
   if (!beginHttpWithOptionalSsl(http, sslClient, resolvedUrl))
@@ -1743,7 +1745,18 @@ bool downloadTtsAudio(const String &ttsUrl)
     return false;
   }
 
-  const int httpCode = http.GET();
+  int httpCode = http.GET();
+  if (httpCode != HTTP_CODE_OK)
+  {
+    Serial.printf("TTS download attempt 1 failed: %d (%s), retrying in 300ms...\n", httpCode, http.errorToString(httpCode).c_str());
+    http.end();
+    delay(300);
+    if (beginHttpWithOptionalSsl(http, sslClient, resolvedUrl))
+    {
+      httpCode = http.GET();
+    }
+  }
+
   if (httpCode != HTTP_CODE_OK)
   {
     Serial.print("TTS download failed: ");

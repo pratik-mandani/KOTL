@@ -350,7 +350,21 @@ app.get("/tts/:filename", (req, res) => {
     });
   }
 
-  return res.sendFile(filePath);
+  try {
+    const stat = fs.statSync(filePath);
+    res.writeHead(200, {
+      "Content-Type": "audio/wav",
+      "Content-Length": stat.size,
+      "Accept-Ranges": "bytes",
+      "Cache-Control": "public, max-age=3600",
+      "Connection": "close",
+    });
+    const stream = fs.createReadStream(filePath);
+    stream.pipe(res);
+  } catch (err) {
+    console.error("[TTS Serve Error]", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.post("/chat", async (req, res) => {
