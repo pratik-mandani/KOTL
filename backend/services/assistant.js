@@ -170,16 +170,42 @@ function resetSessionHistory(sessionId) {
   }
 }
 
-function getSessionHistory(sessionId) {
+function attachTtsUrlToLastAssistantReply(sessionId, ttsUrl) {
   const historyKey = sessionId || "default-session";
-  const rawHistory = sessionHistories.get(historyKey) || [];
-  // Return user and assistant messages (omit system prompt)
-  return rawHistory
-    .filter(m => m.role === "user" || m.role === "assistant")
-    .map(m => ({ role: m.role, content: m.content }));
+  const history = sessionHistories.get(historyKey);
+  if (Array.isArray(history) && history.length > 0) {
+    for (let i = history.length - 1; i >= 0; i--) {
+      if (history[i].role === "assistant") {
+        history[i].tts_url = ttsUrl;
+        saveSessionsToDisk();
+        break;
+      }
+    }
+  }
 }
 
-async function generateAssistantReply({ transcript, sessionId = null }) {
+function getSessionHistory(sessionId) {
+  const historyKey = sessionId || "default-session";
+  let rawHistory = sessionHistories.get(historyKey) || [];
+
+  if (rawHistory.length <= 1 && historyKey !== "default-session" && sessionHistories.has("default-session")) {
+    rawHistory = sessionHistories.get("default-session") || [];
+  }
+
+  return rawHistory
+    .filter(m => m.role === "user" || m.role === "assistant")
+    .map(m => ({
+      id: m.id || ('msg-' + Math.random().toString(36).slice(2, 8)),
+      role: m.role,
+      content: m.content || "",
+      text: m.content || "",
+      source: m.source || (m.role === "assistant" ? "kotl" : "device"),
+      tts_url: m.tts_url || null,
+      timestamp: m.timestamp || new Date().toISOString()
+    }));
+}
+
+async function generateAssistantReply({ transcript, sessionId = null, source = "esp32", tts_url = null }) {
   const systemPrompt = buildSystemPrompt();
   const normalizedTranscript = typeof transcript === "string" ? transcript.trim() : "";
 
@@ -205,12 +231,19 @@ async function generateAssistantReply({ transcript, sessionId = null }) {
     history[0] = { role: "system", content: systemPrompt };
   }
 
-  // Add the new user message to the context history
-  history.push({ role: "user", content: normalizedTranscript });
+  // Add the new user message with source metadata
+  const userMsg = {
+    id: "msg-" + Date.now() + "-u",
+    role: "user",
+    content: normalizedTranscript,
+    source: source || "esp32",
+    timestamp: new Date().toISOString(),
+  };
+  history.push(userMsg);
 
-  // Limit conversation context history to last 10 messages to avoid token bloat
-  if (history.length > 11) {
-    history = [history[0], ...history.slice(history.length - 10)];
+  // Keep a maximum of last 20 messages for context
+  if (history.length > 21) {
+    history = [history[0], ...history.slice(history.length - 20)];
     sessionHistories.set(historyKey, history);
   }
 
@@ -219,7 +252,14 @@ async function generateAssistantReply({ transcript, sessionId = null }) {
   if (provider === "ollama") {
     const result = await generateOllamaAssistantReply({ transcript, sessionId });
     if (result.success) {
-      history.push({ role: "assistant", content: result.reply });
+      history.push({
+        id: "msg-" + Date.now() + "-a",
+        role: "assistant",
+        content: result.reply,
+        source: "kotl",
+        tts_url: tts_url || null,
+        timestamp: new Date().toISOString(),
+      });
       saveSessionsToDisk();
     }
     return result;
@@ -228,7 +268,14 @@ async function generateAssistantReply({ transcript, sessionId = null }) {
   if (provider === "openai") {
     const result = await generateOpenAIAssistantReply({ messages: history, sessionId: historyKey });
     if (result.success) {
-      history.push({ role: "assistant", content: result.reply });
+      history.push({
+        id: "msg-" + Date.now() + "-a",
+        role: "assistant",
+        content: result.reply,
+        source: "kotl",
+        tts_url: tts_url || null,
+        timestamp: new Date().toISOString(),
+      });
       saveSessionsToDisk();
     }
     return result;
@@ -254,7 +301,14 @@ async function generateAssistantReply({ transcript, sessionId = null }) {
   let result = await primaryFn({ messages: history, sessionId: historyKey });
 
   if (result.success) {
-    history.push({ role: "assistant", content: result.reply });
+    history.push({
+      id: "msg-" + Date.now() + "-a",
+      role: "assistant",
+      content: result.reply,
+      source: "kotl",
+      tts_url: tts_url || null,
+      timestamp: new Date().toISOString(),
+    });
     saveSessionsToDisk();
     return result;
   }
@@ -264,7 +318,14 @@ async function generateAssistantReply({ transcript, sessionId = null }) {
   result = await secondaryFn({ messages: history, sessionId: historyKey });
   if (result.success) {
     console.log(`[Assistant] Fallback to LLM provider ${secondaryName} succeeded.`);
-    history.push({ role: "assistant", content: result.reply });
+    history.push({
+      id: "msg-" + Date.now() + "-a",
+      role: "assistant",
+      content: result.reply,
+      source: "kotl",
+      tts_url: tts_url || null,
+      timestamp: new Date().toISOString(),
+    });
     saveSessionsToDisk();
     return result;
   }
@@ -277,4 +338,5 @@ module.exports = {
   generateAssistantReply,
   resetSessionHistory,
   getSessionHistory,
+  attachTtsUrlToLastAssistantReply,
 };

@@ -436,32 +436,49 @@
     });
 
     // Render Message Element (ChatGPT styling)
+    const renderedMsgMap = new Map();
+
     function renderMessageElement(msg) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'w-full flex ' + (msg.role === 'user' ? 'justify-end' : 'justify-start');
+      msgDiv.dataset.msgId = msg.id || (msg.role + '-' + (msg.text || msg.content));
+
+      const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      const sourceBadge = msg.source === 'esp32' 
+        ? `<span class="px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 text-[9px] font-mono">🎙️ ESP32 Voice</span>`
+        : `<span class="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[9px] font-mono">💻 Web</span>`;
 
       if (msg.role === 'user') {
         msgDiv.innerHTML = `
-          <div class="max-w-[80%] bg-gpt-card text-white rounded-3xl px-5 py-3 text-sm leading-relaxed shadow-sm">
-            ${escapeHtml(msg.text)}
+          <div class="max-w-[80%] bg-gpt-card text-white rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm border border-gpt-border/40 space-y-1">
+            <div class="flex items-center justify-end space-x-1.5 text-[10px] text-gpt-muted">
+              ${sourceBadge}
+              <span>${timeStr}</span>
+            </div>
+            <div>${escapeHtml(msg.text || msg.content || '')}</div>
           </div>
         `;
       } else {
         const audioBtn = msg.tts_url ? `
-          <button onclick="playAudioClip('${msg.tts_url}')" class="mt-2 inline-flex items-center space-x-1.5 text-xs font-mono text-gpt-muted hover:text-white px-2.5 py-1 rounded-lg bg-gpt-card/60 hover:bg-gpt-card border border-gpt-border transition-all">
-            <span>🔊</span>
+          <button onclick="playAudioClip('${msg.tts_url}')" class="mt-1.5 inline-flex items-center space-x-1.5 text-xs font-mono text-gpt-muted hover:text-white px-2.5 py-1 rounded-lg bg-gpt-card/80 hover:bg-gpt-card border border-gpt-border transition-all shadow-sm">
+            <span class="text-emerald-400">🔊</span>
             <span>Replay Voice</span>
           </button>
         ` : '';
 
         msgDiv.innerHTML = `
-          <div class="flex items-start space-x-3.5 max-w-[85%]">
-            <div class="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 font-mono">
+          <div class="flex items-start space-x-3 max-w-[85%]">
+            <div class="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 font-mono shadow-sm">
               K
             </div>
             <div class="space-y-1">
+              <div class="flex items-center space-x-1.5 text-[10px] text-gpt-muted font-mono">
+                <span class="text-white font-semibold">KOTL AI</span>
+                <span>•</span>
+                <span>${timeStr}</span>
+              </div>
               <div class="text-sm text-gpt-white leading-relaxed font-sans">
-                ${escapeHtml(msg.text)}
+                ${escapeHtml(msg.text || msg.content || '')}
               </div>
               ${audioBtn}
             </div>
@@ -472,17 +489,20 @@
       chatContainer.appendChild(msgDiv);
     }
 
-    function appendAndStoreMessage(role, text, tts_url = null) {
+    function appendAndStoreMessage(role, text, tts_url = null, source = 'web') {
       const msg = {
         id: 'msg-' + Date.now(),
         role,
         text,
+        content: text,
+        source,
         tts_url,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toISOString()
       };
 
       storedMessages.push(msg);
       saveStoredMessages(storedMessages);
+      renderedMsgMap.set(msg.id, msg);
       renderMessageElement(msg);
       scrollToBottom();
     }
@@ -520,12 +540,66 @@
       if (storedMessages.length === 0) {
         renderDefaultHero();
       } else {
-        storedMessages.forEach(msg => renderMessageElement(msg));
+        storedMessages.forEach(msg => {
+          renderedMsgMap.set(msg.id || (msg.role + '-' + msg.text), msg);
+          renderMessageElement(msg);
+        });
         scrollToBottom();
       }
     }
 
     initChatHistory();
+
+    // Live Server History Sync (Polling ESP32 & Web history in Real-time)
+    async function syncLiveServerHistory() {
+      try {
+        const res = await fetch('/api/history?sessionId=default-session');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.history) && data.history.length > 0) {
+            let hasNew = false;
+            
+            // If hero is showing and server has messages, clear hero
+            if (chatContainer.querySelector('h2')) {
+              chatContainer.innerHTML = '';
+            }
+
+            data.history.forEach(item => {
+              const uniqueKey = item.id || (item.role + '-' + item.content);
+              if (!renderedMsgMap.has(uniqueKey)) {
+                renderedMsgMap.set(uniqueKey, item);
+                renderMessageElement(item);
+                hasNew = true;
+              } else {
+                // If TTS url became available later, update audio button
+                const existing = renderedMsgMap.get(uniqueKey);
+                if (!existing.tts_url && item.tts_url) {
+                  existing.tts_url = item.tts_url;
+                  const el = chatContainer.querySelector(`[data-msg-id="${uniqueKey}"]`);
+                  if (el && !el.querySelector('button')) {
+                    const btnContainer = el.querySelector('.space-y-1');
+                    if (btnContainer) {
+                      const btn = document.createElement('button');
+                      btn.onclick = () => playAudioClip(item.tts_url);
+                      btn.className = 'mt-1.5 inline-flex items-center space-x-1.5 text-xs font-mono text-gpt-muted hover:text-white px-2.5 py-1 rounded-lg bg-gpt-card/80 hover:bg-gpt-card border border-gpt-border transition-all shadow-sm';
+                      btn.innerHTML = '<span class="text-emerald-400">🔊</span><span>Replay Voice</span>';
+                      btnContainer.appendChild(btn);
+                    }
+                  }
+                }
+              }
+            });
+
+            if (hasNew) {
+              scrollToBottom();
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    syncLiveServerHistory();
+    setInterval(syncLiveServerHistory, 2000);
 
     function scrollToBottom() {
       chatScrollArea.scrollTop = chatScrollArea.scrollHeight;

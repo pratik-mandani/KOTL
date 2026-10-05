@@ -3,7 +3,7 @@ require("dotenv").config();
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
-const { generateAssistantReply, resetSessionHistory, getSessionHistory } = require("./services/assistant");
+const { generateAssistantReply, resetSessionHistory, getSessionHistory, attachTtsUrlToLastAssistantReply } = require("./services/assistant");
 const { getGroqQuotaStats } = require("./services/groq");
 const { transcribeAudio, normalizeWhisperTranscript, isBlacklistedNoiseTranscript } = require("./services/stt");
 const { generateSpeech, NORMALIZED_SAMPLE_RATE } = require("./services/tts");
@@ -455,7 +455,7 @@ app.post(
     const sessionIdHeader = req.get("x-session-id");
     const sessionId = typeof sessionIdHeader === "string" && sessionIdHeader.trim()
       ? sessionIdHeader.trim()
-      : crypto.randomUUID();
+      : "default-session";
     const turnId = sessionId;
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `audio-${timestamp}.raw`;
@@ -595,6 +595,7 @@ app.post(
         const assistantResult = await generateAssistantReply({
           transcript: metadata.transcript,
           sessionId,
+          source: "esp32",
         });
 
         metadata.assistant_provider = assistantResult.provider;
@@ -636,6 +637,7 @@ app.post(
           metadata.tts_generated = true;
           metadata.tts_filename = ttsResult.filename;
           metadata.tts_url = ttsResult.url;
+          attachTtsUrlToLastAssistantReply(sessionId, metadata.tts_url);
           metadata.tts_sample_rate = NORMALIZED_SAMPLE_RATE;
           metadata.tts_channels = 1;
           metadata.tts_bits_per_sample = 16;
