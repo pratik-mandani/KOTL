@@ -1516,6 +1516,8 @@ void performAudioUpload()
       Serial.println(ttsError);
     }
 
+    http.end(); // Cleanly close upload SSL connection before starting TTS download
+
     if (ttsReady)
     {
       if (ttsStorageAvailable)
@@ -1547,10 +1549,10 @@ void performAudioUpload()
   {
     Serial.print("Audio upload failed: ");
     Serial.println(http.errorToString(httpCode));
+    http.end();
     failVoiceTurn("Audio upload failed");
   }
 
-  http.end();
   captureState.uploadPending = false;
   captureState.isUploading = false;
 }
@@ -1723,6 +1725,7 @@ bool downloadTtsAudio(const String &ttsUrl)
     LittleFS.remove(kTtsFilePath);
   }
 
+  delay(50);
   HTTPClient http;
   WiFiClientSecure sslClient;
   http.setConnectTimeout(kHttpTimeoutMs);
