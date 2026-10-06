@@ -8,6 +8,7 @@
 #include <driver/adc.h>
 #include <driver/i2s.h>
 #include <esp_err.h>
+#include <esp_task_wdt.h>
 #include "../hello_sample.h"
 #include "kotl_provisioning.h"
 
@@ -83,6 +84,12 @@ static const uint32_t kExpectedTtsSampleRate = 16000;
 static const uint16_t kExpectedTtsBitsPerSample = 16;
 static const uint16_t kExpectedTtsChannels = 1;
 static const size_t kExpectedWavHeaderSize = 44;
+static const uint8_t kSpeakerVolumePercent = 75; // 75% digital volume headroom prevents MAX98357A 9dB clipping distortion
+
+static inline int16_t applySpeakerVolume(int16_t sample)
+{
+  return (int16_t)(((int32_t)sample * kSpeakerVolumePercent) / 100);
+}
 
 enum PlaybackSource
 {
@@ -235,6 +242,8 @@ void beginWiFiConnection(uint32_t nowMs);
 void performBackendPostRequest(uint32_t nowMs);
 void performAudioUpload();
 void beginAudioCapture();
+void performSynchronousAudioCapture();
+void applySoftwareAudioGain();
 void triggerSoundReaction(uint32_t nowMs);
 void triggerVoicePlayback();
 void fillAudioChunk();
@@ -421,17 +430,8 @@ void loop()
   // Butter-smooth 50 FPS OLED animations on Core 1 - immune to network delays!
   roboEyes.update();
 
-  if (captureState.isRecording)
-  {
-    serviceAudioCapture();
-    serviceEyeReaction();
-    handleVoiceTurnTimeouts();
-    return;
-  }
-
   serviceBootButton();
   serviceMicrophoneInput();
-  serviceAudioCapture();
   serviceEyeReaction();
   handleVoiceTurnTimeouts();
 
@@ -567,6 +567,10 @@ void failVoiceTurn(const String &errorText)
 
 bool canStartVoiceTurn()
 {
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    return false;
+  }
   return voiceTurn.state == VOICE_IDLE &&
          !captureState.isRecording &&
          !captureState.isUploading &&
@@ -982,8 +986,9 @@ void fillAudioChunk()
 
     for (size_t frameIndex = 0; frameIndex < framesRead; ++frameIndex)
     {
-      audioState.dmaBuffer[frameIndex * 2] = monoBlock[frameIndex];
-      audioState.dmaBuffer[(frameIndex * 2) + 1] = monoBlock[frameIndex];
+      const int16_t sample = applySpeakerVolume(monoBlock[frameIndex]);
+      audioState.dmaBuffer[frameIndex * 2] = sample;
+      audioState.dmaBuffer[(frameIndex * 2) + 1] = sample;
     }
 
     for (size_t frameIndex = framesRead; frameIndex < kI2SChunkFrames; ++frameIndex)
@@ -999,7 +1004,7 @@ void fillAudioChunk()
 
   for (size_t frameIndex = 0; frameIndex < kI2SChunkFrames; ++frameIndex)
   {
-    const int16_t monoSample = nextMonoSample();
+    const int16_t monoSample = applySpeakerVolume(nextMonoSample());
     audioState.dmaBuffer[frameIndex * 2] = monoSample;
     audioState.dmaBuffer[(frameIndex * 2) + 1] = monoSample;
   }
@@ -1219,99 +1224,167 @@ void finishPlayback()
   }
 }
 
-void serviceAudioCapture()
+void applySoftwareAudioGain()
 {
-  if (captureState.isRecording)
+  int16_t maxAbs = 0;
+  for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
   {
-    const uint32_t nowUs = micros();
-    uint8_t samplesThisService = 0;
-
-    while (captureState.writeIndex < kAudioCaptureSampleCount &&
-           (int32_t)(nowUs - captureState.nextSampleDueUs) >= 0 &&
-           samplesThisService < kAudioCaptureMaxSamplesPerService)
+    const int16_t absVal = abs(audioCaptureBuffer[i]);
+    if (absVal > maxAbs)
     {
-      const uint16_t rawValue = (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
-      const int16_t pcmSample = adcToPcm16(rawValue, captureState.adcBaseline);
-      audioCaptureBuffer[captureState.writeIndex++] = pcmSample;
-      if (pcmSample == 32767 || pcmSample == -32768)
-      {
-        ++captureState.clippedSampleCount;
-      }
-      if (rawValue < captureState.rawMin)
-      {
-        captureState.rawMin = rawValue;
-      }
-      if (rawValue > captureState.rawMax)
-      {
-        captureState.rawMax = rawValue;
-      }
-      if (pcmSample < captureState.pcmMin)
-      {
-        captureState.pcmMin = pcmSample;
-      }
-      if (pcmSample > captureState.pcmMax)
-      {
-        captureState.pcmMax = pcmSample;
-      }
-      captureState.absSum += (uint64_t)abs((int)pcmSample);
-      captureState.nextSampleDueUs += kAudioCaptureSampleIntervalUs;
-      ++samplesThisService;
-    }
-
-    if (captureState.writeIndex >= kAudioCaptureSampleCount)
-    {
-      const uint32_t elapsedMs = (micros() - captureState.recordingStartUs) / 1000UL;
-      captureState.isRecording = false;
-      captureState.uploadPending = true;
-      Serial.println("RECORDING COMPLETE");
-      Serial.print("recording bytes: ");
-      Serial.println(sizeof(audioCaptureBuffer));
-      Serial.print("recording elapsed ms: ");
-      Serial.println(elapsedMs);
-      Serial.print("baseline: ");
-      Serial.println(captureState.adcBaseline);
-      Serial.print("raw min/max: ");
-      Serial.print(captureState.rawMin);
-      Serial.print(" / ");
-      Serial.println(captureState.rawMax);
-      Serial.print("peak-to-peak: ");
-      Serial.println(captureState.rawMax - captureState.rawMin);
-      Serial.print("pcm min/max: ");
-      Serial.print(captureState.pcmMin);
-      Serial.print(" / ");
-      Serial.println(captureState.pcmMax);
-      Serial.print("avg abs amplitude: ");
-      Serial.println((unsigned long)(captureState.absSum / kAudioCaptureSampleCount));
-      Serial.print("clipped sample count: ");
-      Serial.println(captureState.clippedSampleCount);
-      if (kEnableAudioDiagnostic)
-      {
-        const size_t diagnosticSampleCount = min(kAudioDiagnosticSampleCount, kAudioCaptureSampleCount);
-        for (size_t sampleIndex = 0; sampleIndex < diagnosticSampleCount; ++sampleIndex)
-        {
-          Serial.print("sample[");
-          Serial.print(sampleIndex);
-          Serial.print("]: ");
-          Serial.println(audioCaptureBuffer[sampleIndex]);
-        }
-      }
+      maxAbs = absVal;
     }
   }
 
-  if (captureState.uploadPending && !captureState.isUploading)
+  // If audio was captured but amplitude is low, dynamically scale it up for Whisper STT
+  if (maxAbs > 40 && maxAbs < 24000)
   {
-    captureState.uploadPending = false;
-    captureState.isUploading = true;
-    setVoiceTurnState(VOICE_UPLOADING);
-    NetEventType event = NET_EVENT_UPLOAD_AUDIO;
-    if (s_netQueue)
+    float gain = 24000.0f / (float)maxAbs;
+    if (gain > 6.0f)
     {
-      xQueueSend(s_netQueue, &event, 0);
+      gain = 6.0f; // Max 6x digital gain (+15.5 dB)
     }
-    else
+
+    Serial.printf("[Audio-AGC] Peak amplitude was %d, applying %.2fx digital gain boost\n", maxAbs, gain);
+
+    uint64_t newAbsSum = 0;
+    int16_t newMin = 32767;
+    int16_t newMax = -32768;
+
+    for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
     {
-      performAudioUpload();
+      int32_t amplified = (int32_t)((float)audioCaptureBuffer[i] * gain);
+      if (amplified > 32767) amplified = 32767;
+      else if (amplified < -32768) amplified = -32768;
+
+      audioCaptureBuffer[i] = (int16_t)amplified;
+
+      if (audioCaptureBuffer[i] < newMin) newMin = audioCaptureBuffer[i];
+      if (audioCaptureBuffer[i] > newMax) newMax = audioCaptureBuffer[i];
+      newAbsSum += (uint64_t)abs((int)audioCaptureBuffer[i]);
     }
+
+    captureState.pcmMin = newMin;
+    captureState.pcmMax = newMax;
+    captureState.absSum = newAbsSum;
+  }
+}
+
+void performSynchronousAudioCapture()
+{
+  Serial.println("TURN START");
+  Serial.println("RECORDING START");
+  Serial.print("recording sample rate: ");
+  Serial.println(kAudioCaptureSampleRate);
+  Serial.print("recording duration ms: ");
+  Serial.println(kAudioCaptureDurationMs);
+  Serial.print("baseline: ");
+  Serial.println(captureState.adcBaseline);
+
+  captureState.rawMin = 4095;
+  captureState.rawMax = 0;
+  captureState.pcmMin = 32767;
+  captureState.pcmMax = -32768;
+  captureState.absSum = 0;
+  captureState.clippedSampleCount = 0;
+
+  const uint32_t startUs = micros();
+  uint32_t nextSampleDueUs = startUs;
+
+  for (size_t sampleIndex = 0; sampleIndex < kAudioCaptureSampleCount; ++sampleIndex)
+  {
+    while ((int32_t)(micros() - nextSampleDueUs) < 0)
+    {
+      // microsecond precision spinwait for exactly 125us tick
+    }
+
+    const uint16_t rawValue = (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
+    const int16_t pcmSample = adcToPcm16(rawValue, captureState.adcBaseline);
+    audioCaptureBuffer[sampleIndex] = pcmSample;
+
+    if (pcmSample == 32767 || pcmSample == -32768)
+    {
+      ++captureState.clippedSampleCount;
+    }
+    if (rawValue < captureState.rawMin)
+    {
+      captureState.rawMin = rawValue;
+    }
+    if (rawValue > captureState.rawMax)
+    {
+      captureState.rawMax = rawValue;
+    }
+    if (pcmSample < captureState.pcmMin)
+    {
+      captureState.pcmMin = pcmSample;
+    }
+    if (pcmSample > captureState.pcmMax)
+    {
+      captureState.pcmMax = pcmSample;
+    }
+    captureState.absSum += (uint64_t)abs((int)pcmSample);
+
+    nextSampleDueUs += kAudioCaptureSampleIntervalUs;
+
+    // Reset task watchdog every 512 samples (~64ms)
+    if ((sampleIndex & 0x1FF) == 0)
+    {
+      esp_task_wdt_reset();
+    }
+  }
+
+  const uint32_t elapsedMs = (micros() - startUs) / 1000UL;
+  captureState.isRecording = false;
+
+  // Apply Software Auto-Gain / Normalization to ensure loud, clear voice for Whisper STT
+  applySoftwareAudioGain();
+
+  Serial.println("RECORDING COMPLETE");
+  Serial.print("recording bytes: ");
+  Serial.println(sizeof(audioCaptureBuffer));
+  Serial.print("recording elapsed ms: ");
+  Serial.println(elapsedMs);
+  Serial.print("baseline: ");
+  Serial.println(captureState.adcBaseline);
+  Serial.print("raw min/max: ");
+  Serial.print(captureState.rawMin);
+  Serial.print(" / ");
+  Serial.println(captureState.rawMax);
+  Serial.print("peak-to-peak: ");
+  Serial.println(captureState.rawMax - captureState.rawMin);
+  Serial.print("pcm min/max: ");
+  Serial.print(captureState.pcmMin);
+  Serial.print(" / ");
+  Serial.println(captureState.pcmMax);
+  Serial.print("avg abs amplitude: ");
+  Serial.println((unsigned long)(captureState.absSum / kAudioCaptureSampleCount));
+  Serial.print("clipped sample count: ");
+  Serial.println(captureState.clippedSampleCount);
+
+  if (kEnableAudioDiagnostic)
+  {
+    const size_t diagnosticSampleCount = min(kAudioDiagnosticSampleCount, kAudioCaptureSampleCount);
+    for (size_t sampleIndex = 0; sampleIndex < diagnosticSampleCount; ++sampleIndex)
+    {
+      Serial.print("sample[");
+      Serial.print(sampleIndex);
+      Serial.print("]: ");
+      Serial.println(audioCaptureBuffer[sampleIndex]);
+    }
+  }
+
+  // Queue upload to Network Worker on Core 0
+  captureState.uploadPending = false;
+  captureState.isUploading = true;
+  setVoiceTurnState(VOICE_UPLOADING);
+  NetEventType event = NET_EVENT_UPLOAD_AUDIO;
+  if (s_netQueue)
+  {
+    xQueueSend(s_netQueue, &event, 0);
+  }
+  else
+  {
+    performAudioUpload();
   }
 }
 
@@ -1323,31 +1396,25 @@ void beginAudioCapture()
     return;
   }
 
+  // Draw attentive eyes once before entering precision microsecond sampling
+  roboEyes.setMood(DEFAULT);
+  roboEyes.open();
+  roboEyes.update();
+
   captureState.adcBaseline = calibrateCaptureBaseline();
-  captureState.writeIndex = 0;
-  captureState.recordingStartUs = micros();
-  captureState.nextSampleDueUs = captureState.recordingStartUs;
   captureState.isRecording = true;
   captureState.uploadPending = false;
-  captureState.rawMin = 4095;
-  captureState.rawMax = 0;
-  captureState.pcmMin = 32767;
-  captureState.pcmMax = -32768;
-  captureState.absSum = 0;
-  captureState.clippedSampleCount = 0;
   voiceTurn.lastTranscript = "";
   voiceTurn.lastAssistantReply = "";
   voiceTurn.lastError = "";
   setVoiceTurnState(VOICE_RECORDING);
 
-  Serial.println("TURN START");
-  Serial.println("RECORDING START");
-  Serial.print("recording sample rate: ");
-  Serial.println(kAudioCaptureSampleRate);
-  Serial.print("recording duration ms: ");
-  Serial.println(kAudioCaptureDurationMs);
-  Serial.print("baseline: ");
-  Serial.println(captureState.adcBaseline);
+  performSynchronousAudioCapture();
+}
+
+void serviceAudioCapture()
+{
+  // Audio capture is handled synchronously with microsecond precision in performSynchronousAudioCapture()
 }
 
 uint16_t calibrateCaptureBaseline()
@@ -1584,6 +1651,7 @@ void serviceNetworking()
     Serial.print("WiFi connected, IP: ");
     Serial.println(WiFi.localIP());
     networkState.wifiConnectInProgress = false;
+    s_playbackCooldownUntilMs = millis() + 1500; // 1.5s cooldown ignores RF transient spike on connect
   }
 
   if (!kEnableBootChatDebug)
