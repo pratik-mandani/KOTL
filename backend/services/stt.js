@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { execFile } = require("child_process");
 const fs = require("fs");
 const os = require("os");
@@ -404,17 +405,18 @@ async function transcribeWithWhisperCpp(filePath) {
 }
 
 async function transcribeAudio(filePath) {
-  const provider = (process.env.STT_PROVIDER || (process.env.GROQ_API_KEY ? "groq" : "openai")).trim().toLowerCase();
+  const provider = (process.env.STT_PROVIDER || "groq").trim().toLowerCase();
   
   if (provider === "whisper_cpp") {
     return transcribeWithWhisperCpp(filePath);
   }
   
-  if (provider === "groq" || (!process.env.OPENAI_API_KEY && process.env.GROQ_API_KEY)) {
-    return transcribeWithGroq(filePath);
+  if (provider === "openai" && process.env.OPENAI_API_KEY) {
+    return transcribeWithOpenAi(filePath);
   }
 
-  return transcribeWithOpenAi(filePath);
+  // Default to Groq Whisper STT (Free Tier)
+  return transcribeWithGroq(filePath);
 }
 
 module.exports = {
