@@ -56,8 +56,8 @@
 </head>
 <body class="h-screen w-screen overflow-hidden flex font-sans bg-gpt-main text-gpt-white antialiased selection:bg-white selection:text-black">
 
-  <!-- Left Sidebar (ChatGPT-style) -->
-  <aside id="sidebar" class="w-64 h-full bg-gpt-sidebar border-r border-gpt-border flex flex-col justify-between transition-all duration-300 z-30 shrink-0 select-none">
+  <!-- Left Sidebar (ChatGPT-style Mobile Responsive Drawer) -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] bg-gpt-sidebar border-r border-gpt-border flex flex-col justify-between transition-transform duration-300 ease-in-out -translate-x-full md:relative md:translate-x-0 md:w-64 md:z-30 shrink-0 select-none shadow-2xl md:shadow-none">
     
     <!-- Top Sidebar Section -->
     <div class="p-3 flex flex-col space-y-3">
@@ -70,9 +70,9 @@
           </div>
           <span class="font-bold text-sm tracking-tight text-white">KOTL 2.1</span>
         </div>
-        <button id="sidebarToggleBtn" class="p-1.5 rounded-lg text-gpt-muted hover:text-white hover:bg-gpt-card transition-colors">
+        <button id="sidebarToggleBtn" class="p-1.5 rounded-lg text-gpt-muted hover:text-white hover:bg-gpt-card transition-colors" title="Close / Toggle Sidebar">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
       </div>
@@ -85,20 +85,20 @@
           </svg>
           <span>New chat</span>
         </div>
-        <span class="text-[10px] text-gpt-muted font-mono">Ctrl+K</span>
+        <span class="text-[10px] text-gpt-muted font-mono hidden sm:inline">Ctrl+K</span>
       </button>
 
       <!-- Navigation / Menu Links -->
       <div class="pt-2 border-t border-gpt-border/60 space-y-1 text-xs">
         <button id="openWifiModalBtn" class="flex items-center space-x-2.5 w-full px-3 py-2 rounded-xl text-gpt-light hover:text-white hover:bg-gpt-card transition-colors">
-          <svg class="w-4 h-4 text-gpt-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-gpt-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
           </svg>
           <span>ESP32 Wi-Fi & Device</span>
         </button>
 
         <button id="openQuotaModalBtn" class="flex items-center space-x-2.5 w-full px-3 py-2 rounded-xl text-gpt-light hover:text-white hover:bg-gpt-card transition-colors">
-          <svg class="w-4 h-4 text-gpt-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-gpt-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
           </svg>
           <span>Free Quotas & Limits</span>
@@ -108,10 +108,10 @@
       <!-- Recent Conversations List -->
       <div class="pt-3 border-t border-gpt-border/60">
         <p class="text-[10px] font-mono uppercase tracking-wider text-gpt-muted px-3 mb-2">Recent</p>
-        <div class="space-y-1 overflow-y-auto max-h-[38vh] custom-scrollbar text-xs">
+        <div class="space-y-1 overflow-y-auto max-h-[35vh] custom-scrollbar text-xs">
           <div class="px-3 py-2 rounded-xl bg-gpt-card text-white flex items-center justify-between cursor-pointer">
             <span class="truncate">Current Conversation</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           </div>
         </div>
       </div>
@@ -131,35 +131,38 @@
 
   </aside>
 
+  <!-- Mobile Sidebar Backdrop Overlay -->
+  <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300"></div>
+
   <!-- Main Chat Content Area -->
-  <main class="flex-1 flex flex-col h-full relative overflow-hidden bg-gpt-main">
+  <main class="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden bg-gpt-main">
     
     <!-- Top Header Bar -->
-    <header class="h-14 border-b border-gpt-border/60 flex items-center justify-between px-4 sm:px-6 shrink-0 bg-gpt-main/80 backdrop-blur-md z-10">
-      <div class="flex items-center space-x-3">
-        <button id="mobileSidebarToggleBtn" class="p-1.5 rounded-lg text-gpt-muted hover:text-white hover:bg-gpt-card sm:hidden">
+    <header class="h-14 border-b border-gpt-border/60 flex items-center justify-between px-3 sm:px-6 shrink-0 bg-gpt-main/90 backdrop-blur-md z-10">
+      <div class="flex items-center space-x-2 sm:space-x-3 overflow-hidden">
+        <button id="mobileSidebarToggleBtn" class="p-2 -ml-1 rounded-lg text-gpt-muted hover:text-white hover:bg-gpt-card md:hidden shrink-0" title="Open Menu">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
         </button>
-        <div class="flex items-center space-x-2">
-          <span class="font-bold text-sm text-white">KOTL Assistant</span>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-gpt-card border border-gpt-border text-gpt-light">Gemini Flash • Free Tier</span>
+        <div class="flex items-center space-x-2 truncate">
+          <span class="font-bold text-sm text-white truncate">KOTL Assistant</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-gpt-card border border-gpt-border text-gpt-light hidden xs:inline shrink-0">Free AI Brain</span>
         </div>
       </div>
 
-      <div class="flex items-center space-x-3 text-xs font-mono">
-        <span id="backendIpText" class="hidden sm:inline text-gpt-muted">http://192.168.1.13:3000</span>
-        <button id="clearChatBtn" class="text-gpt-muted hover:text-white px-2.5 py-1 rounded-lg hover:bg-gpt-card transition-colors">
+      <div class="flex items-center space-x-2 sm:space-x-3 text-xs font-mono shrink-0">
+        <span id="backendIpText" class="hidden lg:inline text-gpt-muted text-[11px]">https://kotl.onrender.com</span>
+        <button id="clearChatBtn" class="text-gpt-muted hover:text-white px-2.5 py-1 rounded-lg hover:bg-gpt-card transition-colors text-xs">
           Clear
         </button>
       </div>
     </header>
 
     <!-- Chat Messages Scroll Stream (ChatGPT Center layout) -->
-    <div id="chatScrollArea" class="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-6 custom-scrollbar flex flex-col items-center">
+    <div id="chatScrollArea" class="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 custom-scrollbar flex flex-col items-center w-full">
       
-      <div id="chatContainer" class="w-full max-w-3xl space-y-6">
+      <div id="chatContainer" class="w-full max-w-3xl space-y-4 sm:space-y-6">
         <!-- Messages loaded dynamically -->
       </div>
 
@@ -273,6 +276,7 @@
               id="cfgWifiPass"
               type="password"
               placeholder="Enter new Wi-Fi password"
+              autocomplete="current-password"
               class="w-full bg-gpt-main border border-gpt-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-white text-xs pr-10"
             />
             <button type="button" id="togglePassBtn" class="absolute right-3 top-2.5 text-gpt-muted hover:text-white">👁️</button>
@@ -375,6 +379,44 @@
     const visualizerCanvas = document.getElementById('visualizerCanvas');
     const canvasCtx = visualizerCanvas.getContext('2d');
 
+    // Mobile Sidebar Drawer Controls
+    const sidebar = document.getElementById('sidebar');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    const mobileSidebarToggleBtn = document.getElementById('mobileSidebarToggleBtn');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+
+    function openMobileSidebar() {
+      sidebar.classList.remove('-translate-x-full');
+      sidebarBackdrop.classList.remove('hidden');
+    }
+
+    function closeMobileSidebar() {
+      sidebar.classList.add('-translate-x-full');
+      sidebarBackdrop.classList.add('hidden');
+    }
+
+    if (mobileSidebarToggleBtn) {
+      mobileSidebarToggleBtn.onclick = () => {
+        if (sidebar.classList.contains('-translate-x-full')) {
+          openMobileSidebar();
+        } else {
+          closeMobileSidebar();
+        }
+      };
+    }
+
+    if (sidebarBackdrop) {
+      sidebarBackdrop.onclick = closeMobileSidebar;
+    }
+
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.onclick = () => {
+        if (window.innerWidth < 768) {
+          closeMobileSidebar();
+        }
+      };
+    }
+
     // Modals
     const wifiModal = document.getElementById('wifiModal');
     const openWifiModalBtn = document.getElementById('openWifiModalBtn');
@@ -383,9 +425,15 @@
     const openQuotaModalBtn = document.getElementById('openQuotaModalBtn');
     const closeQuotaModalBtn = document.getElementById('closeQuotaModalBtn');
 
-    openWifiModalBtn.onclick = () => wifiModal.classList.remove('hidden');
+    openWifiModalBtn.onclick = () => {
+      if (window.innerWidth < 768) closeMobileSidebar();
+      wifiModal.classList.remove('hidden');
+    };
     closeWifiModalBtn.onclick = () => wifiModal.classList.add('hidden');
-    openQuotaModalBtn.onclick = () => quotaModal.classList.remove('hidden');
+    openQuotaModalBtn.onclick = () => {
+      if (window.innerWidth < 768) closeMobileSidebar();
+      quotaModal.classList.remove('hidden');
+    };
     closeQuotaModalBtn.onclick = () => quotaModal.classList.add('hidden');
 
     const STORAGE_SESSION_KEY = 'kotl_session_id';
@@ -419,6 +467,13 @@
 
     let storedMessages = getStoredMessages();
 
+    function formatTime(ts) {
+      if (!ts) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
     // Enable/Disable Send button dynamically
     chatInput.addEventListener('input', () => {
       sendBtn.disabled = !chatInput.value.trim();
@@ -443,19 +498,19 @@
       msgDiv.className = 'w-full flex ' + (msg.role === 'user' ? 'justify-end' : 'justify-start');
       msgDiv.dataset.msgId = msg.id || (msg.role + '-' + (msg.text || msg.content));
 
-      const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+      const timeStr = formatTime(msg.timestamp);
       const sourceBadge = msg.source === 'esp32' 
         ? `<span class="px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 text-[9px] font-mono">🎙️ ESP32 Voice</span>`
         : `<span class="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[9px] font-mono">💻 Web</span>`;
 
       if (msg.role === 'user') {
         msgDiv.innerHTML = `
-          <div class="max-w-[80%] bg-gpt-card text-white rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm border border-gpt-border/40 space-y-1">
+          <div class="max-w-[88%] sm:max-w-[80%] bg-gpt-card text-white rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-sm leading-relaxed shadow-sm border border-gpt-border/40 space-y-1 break-words">
             <div class="flex items-center justify-end space-x-1.5 text-[10px] text-gpt-muted">
               ${sourceBadge}
               <span>${timeStr}</span>
             </div>
-            <div>${escapeHtml(msg.text || msg.content || '')}</div>
+            <div class="break-words">${escapeHtml(msg.text || msg.content || '')}</div>
           </div>
         `;
       } else {
@@ -467,17 +522,17 @@
         ` : '';
 
         msgDiv.innerHTML = `
-          <div class="flex items-start space-x-3 max-w-[85%]">
+          <div class="flex items-start space-x-2.5 sm:space-x-3 max-w-[95%] sm:max-w-[85%]">
             <div class="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 font-mono shadow-sm">
               K
             </div>
-            <div class="space-y-1">
+            <div class="space-y-1 min-w-0 flex-1">
               <div class="flex items-center space-x-1.5 text-[10px] text-gpt-muted font-mono">
                 <span class="text-white font-semibold">KOTL AI</span>
                 <span>•</span>
                 <span>${timeStr}</span>
               </div>
-              <div class="text-sm text-gpt-white leading-relaxed font-sans">
+              <div class="text-sm text-gpt-white leading-relaxed font-sans break-words overflow-hidden">
                 ${escapeHtml(msg.text || msg.content || '')}
               </div>
               ${audioBtn}
