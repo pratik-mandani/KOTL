@@ -257,20 +257,20 @@ String urlDecode(const String &input);
 bool downloadTtsAudio(const String &ttsUrl);
 uint16_t readLe16(const uint8_t *buffer);
 uint32_t readLe32(const uint8_t *buffer);
-bool takeFsMutex(uint32_t timeoutMs)
+bool takeFsMutex(uint32_t timeoutMs = 2000)
 {
   if (!s_littleFsMutex)
   {
     return true;
   }
-  return (xSemaphoreTake(s_littleFsMutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
+  return (xSemaphoreTakeRecursive(s_littleFsMutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
 }
 
 void giveFsMutex()
 {
   if (s_littleFsMutex)
   {
-    xSemaphoreGive(s_littleFsMutex);
+    xSemaphoreGiveRecursive(s_littleFsMutex);
   }
 }
 
@@ -294,6 +294,9 @@ void networkWorkerTask(void *param)
       {
         checkRemoteAdminUpdates();
       }
+
+      const UBaseType_t stackWords = uxTaskGetStackHighWaterMark(NULL);
+      Serial.printf("[FreeRTOS-Stack] NetWorker min stack remaining: %u bytes\n", (unsigned int)(stackWords * sizeof(StackType_t)));
     }
 
     const uint32_t nowMs = millis();
@@ -345,14 +348,14 @@ void audioPlaybackTask(void *param)
 
 void initFreeRtosTasks()
 {
-  s_littleFsMutex = xSemaphoreCreateMutex();
+  s_littleFsMutex = xSemaphoreCreateRecursiveMutex();
   s_netQueue = xQueueCreate(4, sizeof(NetEventType));
   s_audioQueue = xQueueCreate(4, sizeof(AudioCmdType));
 
   xTaskCreatePinnedToCore(
     networkWorkerTask,
     "NetWorker",
-    8192,
+    12288,
     NULL,
     2,
     &s_hNetworkTask,
@@ -1754,7 +1757,17 @@ void performAudioUpload()
       if (ttsStorageAvailable)
       {
         setVoiceTurnState(VOICE_DOWNLOADING_TTS);
-        takeFsMutex(2000);
+        if (!takeFsMutex(2000))
+        {
+          http.end();
+          failVoiceTurn("LittleFS mutex timeout");
+          return;
+        }
+
+        if (audioState.ttsFile)
+        {
+          audioState.ttsFile.close();
+        }
         if (LittleFS.exists(kTtsFilePath))
         {
           LittleFS.remove(kTtsFilePath);
@@ -2020,14 +2033,6 @@ bool downloadTtsAudio(const String &ttsUrl)
     return false;
   }
 
-  takeFsMutex(2000);
-  if (LittleFS.exists(kTtsFilePath))
-  {
-    LittleFS.remove(kTtsFilePath);
-  }
-  giveFsMutex();
-
-  delay(100);
   HTTPClient http;
   WiFiClientSecure sslClient;
   http.setConnectTimeout(kHttpTimeoutMs);
@@ -2068,12 +2073,21 @@ bool downloadTtsAudio(const String &ttsUrl)
     return false;
   }
 
+  if (!takeFsMutex(2000))
+  {
+    Serial.println("TTS download failed: LittleFS mutex timeout");
+    http.end();
+    audioState.isDownloading = false;
+    return false;
+  }
+
   const int contentLength = http.getSize();
   if (contentLength > 0)
   {
     const size_t freeSpace = LittleFS.totalBytes() - LittleFS.usedBytes();
     if ((size_t)contentLength > freeSpace)
     {
+      giveFsMutex();
       Serial.println("TTS download failed: insufficient LittleFS space");
       http.end();
       audioState.isDownloading = false;
@@ -2081,7 +2095,15 @@ bool downloadTtsAudio(const String &ttsUrl)
     }
   }
 
-  takeFsMutex(2000);
+  if (audioState.ttsFile)
+  {
+    audioState.ttsFile.close();
+  }
+  if (LittleFS.exists(kTtsFilePath))
+  {
+    LittleFS.remove(kTtsFilePath);
+  }
+
   File file = LittleFS.open(kTtsFilePath, FILE_WRITE);
   if (!file)
   {
