@@ -436,19 +436,8 @@
     };
     closeQuotaModalBtn.onclick = () => quotaModal.classList.add('hidden');
 
-    const STORAGE_SESSION_KEY = 'kotl_session_id';
     const STORAGE_CHAT_KEY = 'kotl_chat_history_v2';
-
-    function getOrCreateSessionId() {
-      let id = localStorage.getItem(STORAGE_SESSION_KEY);
-      if (!id) {
-        id = 'kotl-session-' + Date.now();
-        localStorage.setItem(STORAGE_SESSION_KEY, id);
-      }
-      return id;
-    }
-
-    let sessionId = getOrCreateSessionId();
+    const sessionId = 'default-session';
 
     function getStoredMessages() {
       try {
@@ -848,13 +837,12 @@
       if (confirm('Start a new chat and clear conversation history?')) {
         storedMessages = [];
         saveStoredMessages([]);
+        renderedMsgMap.clear();
         fetch('/api/reset-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
+          body: JSON.stringify({ sessionId: 'default-session' })
         });
-        sessionId = 'kotl-session-' + Date.now();
-        localStorage.setItem(STORAGE_SESSION_KEY, sessionId);
         initChatHistory();
       }
     }
