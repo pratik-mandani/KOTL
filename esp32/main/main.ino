@@ -102,6 +102,27 @@ enum VoiceTurnState
   VOICE_ERROR
 };
 
+enum NetEventType
+{
+  NET_EVENT_NONE = 0,
+  NET_EVENT_UPLOAD_AUDIO,
+  NET_EVENT_CHECK_ADMIN
+};
+
+enum AudioCmdType
+{
+  AUDIO_CMD_NONE = 0,
+  AUDIO_CMD_PLAY_TTS,
+  AUDIO_CMD_PLAY_LOCAL,
+  AUDIO_CMD_STOP
+};
+
+static QueueHandle_t s_netQueue = NULL;
+static QueueHandle_t s_audioQueue = NULL;
+static SemaphoreHandle_t s_littleFsMutex = NULL;
+static TaskHandle_t s_hNetworkTask = NULL;
+static TaskHandle_t s_hAudioTask = NULL;
+
 struct AudioPlaybackState
 {
   PlaybackSource activeSource;
@@ -236,6 +257,120 @@ String urlDecode(const String &input);
 bool downloadTtsAudio(const String &ttsUrl);
 uint16_t readLe16(const uint8_t *buffer);
 uint32_t readLe32(const uint8_t *buffer);
+bool takeFsMutex(uint32_t timeoutMs)
+{
+  if (!s_littleFsMutex)
+  {
+    return true;
+  }
+  return (xSemaphoreTake(s_littleFsMutex, pdMS_TO_TICKS(timeoutMs)) == pdTRUE);
+}
+
+void giveFsMutex()
+{
+  if (s_littleFsMutex)
+  {
+    xSemaphoreGive(s_littleFsMutex);
+  }
+}
+
+void networkWorkerTask(void *param)
+{
+  Serial.println("[FreeRTOS] Network Worker Task started on Core 0");
+  uint32_t lastHeartbeatCheckMs = 0;
+
+  for (;;)
+  {
+    serviceNetworking();
+
+    NetEventType event = NET_EVENT_NONE;
+    if (s_netQueue && xQueueReceive(s_netQueue, &event, pdMS_TO_TICKS(500)) == pdTRUE)
+    {
+      if (event == NET_EVENT_UPLOAD_AUDIO)
+      {
+        performAudioUpload();
+      }
+      else if (event == NET_EVENT_CHECK_ADMIN)
+      {
+        checkRemoteAdminUpdates();
+      }
+    }
+
+    const uint32_t nowMs = millis();
+    if (nowMs - lastHeartbeatCheckMs >= 5000)
+    {
+      lastHeartbeatCheckMs = nowMs;
+      if (canStartVoiceTurn())
+      {
+        checkRemoteAdminUpdates();
+      }
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+}
+
+void audioPlaybackTask(void *param)
+{
+  Serial.println("[FreeRTOS] Audio Playback Task started on Core 1");
+
+  for (;;)
+  {
+    AudioCmdType cmd = AUDIO_CMD_NONE;
+    const TickType_t waitTicks = (audioState.isPlaying || audioState.pendingBytes > 0) ? pdMS_TO_TICKS(2) : pdMS_TO_TICKS(20);
+    if (s_audioQueue && xQueueReceive(s_audioQueue, &cmd, waitTicks) == pdTRUE)
+    {
+      if (cmd == AUDIO_CMD_PLAY_TTS)
+      {
+        startTtsPlayback();
+      }
+      else if (cmd == AUDIO_CMD_PLAY_LOCAL)
+      {
+        startLocalSamplePlayback();
+      }
+      else if (cmd == AUDIO_CMD_STOP)
+      {
+        finishPlayback();
+      }
+    }
+
+    if (audioState.isPlaying || audioState.pendingBytes > 0)
+    {
+      serviceAudioOutput();
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(1));
+  }
+}
+
+void initFreeRtosTasks()
+{
+  s_littleFsMutex = xSemaphoreCreateMutex();
+  s_netQueue = xQueueCreate(4, sizeof(NetEventType));
+  s_audioQueue = xQueueCreate(4, sizeof(AudioCmdType));
+
+  xTaskCreatePinnedToCore(
+    networkWorkerTask,
+    "NetWorker",
+    8192,
+    NULL,
+    2,
+    &s_hNetworkTask,
+    0
+  );
+
+  xTaskCreatePinnedToCore(
+    audioPlaybackTask,
+    "AudioPump",
+    4096,
+    NULL,
+    4,
+    &s_hAudioTask,
+    1
+  );
+
+  Serial.println("[FreeRTOS] Dual-Core tasks successfully initialized!");
+}
 
 void setup()
 {
@@ -255,6 +390,7 @@ void setup()
   initFileStorage();
   initNetworking();
   runStartupSelfTest();
+  initFreeRtosTasks();
 }
 
 void loop()
@@ -275,13 +411,12 @@ void loop()
 
   if (!startupSelfTestPassed)
   {
-    serviceAudioOutput();
     delay(20);
     return;
   }
 
+  // Butter-smooth 50 FPS OLED animations on Core 1 - immune to network delays!
   roboEyes.update();
-  serviceAudioOutput();
 
   if (captureState.isRecording)
   {
@@ -291,18 +426,13 @@ void loop()
     return;
   }
 
-  // Periodic check for Wi-Fi or Remote Admin configuration updates (only when fully idle)
-  if (canStartVoiceTurn())
-  {
-    checkRemoteAdminUpdates();
-  }
-
   serviceBootButton();
   serviceMicrophoneInput();
   serviceAudioCapture();
   serviceEyeReaction();
-  serviceNetworking();
   handleVoiceTurnTimeouts();
+
+  vTaskDelay(pdMS_TO_TICKS(1));
 }
 
 void initDisplay()
@@ -812,7 +942,11 @@ void fillAudioChunk()
     size_t readBytes = 0;
     if (toReadBytes > 0)
     {
-      readBytes = audioState.ttsFile.read(reinterpret_cast<uint8_t *>(monoBlock), toReadBytes);
+      if (takeFsMutex(100))
+      {
+        readBytes = audioState.ttsFile.read(reinterpret_cast<uint8_t *>(monoBlock), toReadBytes);
+        giveFsMutex();
+      }
     }
     const size_t framesRead = readBytes / sizeof(int16_t);
     audioState.ttsBytesRemaining = (audioState.ttsBytesRemaining > readBytes) ? (audioState.ttsBytesRemaining - readBytes) : 0;
@@ -959,9 +1093,11 @@ bool startTtsPlayback()
     return false;
   }
 
+  takeFsMutex(2000);
   File file = LittleFS.open(kTtsFilePath, FILE_READ);
   if (!file)
   {
+    giveFsMutex();
     Serial.println("TTS playback skipped: file missing");
     return false;
   }
@@ -972,6 +1108,7 @@ bool startTtsPlayback()
   {
     Serial.println("Unsupported WAV: short header");
     file.close();
+    giveFsMutex();
     return false;
   }
 
@@ -992,12 +1129,14 @@ bool startTtsPlayback()
   {
     Serial.println("Unsupported WAV: expected PCM mono 16-bit 16000 Hz");
     file.close();
+    giveFsMutex();
     return false;
   }
 
   if (!configureAudioSampleRate(kExpectedTtsSampleRate))
   {
     file.close();
+    giveFsMutex();
     return false;
   }
 
@@ -1005,6 +1144,9 @@ bool startTtsPlayback()
   audioState.ttsBytesRemaining = dataBytes;
   audioState.activeSource = PLAYBACK_TTS_AUDIO;
   audioState.isPlaying = true;
+  giveFsMutex();
+
+  setVoiceTurnState(VOICE_SPEAKING);
   Serial.println("PLAYBACK START");
   return true;
 }
@@ -1012,10 +1154,12 @@ bool startTtsPlayback()
 void finishPlayback()
 {
   const PlaybackSource finishedSource = audioState.activeSource;
+  takeFsMutex(500);
   if (audioState.ttsFile)
   {
     audioState.ttsFile.close();
   }
+  giveFsMutex();
 
   audioState.activeSource = PLAYBACK_NONE;
   audioState.isPlaying = false;
@@ -1135,7 +1279,18 @@ void serviceAudioCapture()
 
   if (captureState.uploadPending && !captureState.isUploading)
   {
-    performAudioUpload();
+    captureState.uploadPending = false;
+    captureState.isUploading = true;
+    setVoiceTurnState(VOICE_UPLOADING);
+    NetEventType event = NET_EVENT_UPLOAD_AUDIO;
+    if (s_netQueue)
+    {
+      xQueueSend(s_netQueue, &event, 0);
+    }
+    else
+    {
+      performAudioUpload();
+    }
   }
 }
 
@@ -1581,6 +1736,7 @@ void performAudioUpload()
       if (ttsStorageAvailable)
       {
         setVoiceTurnState(VOICE_DOWNLOADING_TTS);
+        takeFsMutex(2000);
         if (LittleFS.exists(kTtsFilePath))
         {
           LittleFS.remove(kTtsFilePath);
@@ -1591,6 +1747,7 @@ void performAudioUpload()
         {
           const int bytesWritten = http.writeToStream(&file);
           file.close();
+          giveFsMutex();
           http.end();
           Serial.print("DIRECT TTS STREAM WRITTEN: ");
           Serial.println(bytesWritten);
@@ -1606,6 +1763,7 @@ void performAudioUpload()
         }
         else
         {
+          giveFsMutex();
           http.end();
           failVoiceTurn("LittleFS open failed");
         }
@@ -1844,10 +2002,12 @@ bool downloadTtsAudio(const String &ttsUrl)
     return false;
   }
 
+  takeFsMutex(2000);
   if (LittleFS.exists(kTtsFilePath))
   {
     LittleFS.remove(kTtsFilePath);
   }
+  giveFsMutex();
 
   delay(100);
   HTTPClient http;
@@ -1903,9 +2063,11 @@ bool downloadTtsAudio(const String &ttsUrl)
     }
   }
 
+  takeFsMutex(2000);
   File file = LittleFS.open(kTtsFilePath, FILE_WRITE);
   if (!file)
   {
+    giveFsMutex();
     Serial.println("TTS download failed: cannot open file");
     http.end();
     audioState.isDownloading = false;
@@ -1914,6 +2076,7 @@ bool downloadTtsAudio(const String &ttsUrl)
 
   const int bytesWritten = http.writeToStream(&file);
   file.close();
+  giveFsMutex();
   http.end();
   audioState.isDownloading = false;
 
@@ -1940,14 +2103,22 @@ void queueOrStartTtsPlayback()
     return;
   }
 
-  if (startTtsPlayback())
+  AudioCmdType cmd = AUDIO_CMD_PLAY_TTS;
+  if (s_audioQueue)
   {
-    setVoiceTurnState(VOICE_SPEAKING);
+    xQueueSend(s_audioQueue, &cmd, 0);
   }
   else
   {
-    setVoiceTurnState(VOICE_ERROR, "TTS playback start failed");
-    resetVoiceTurnToIdle();
+    if (startTtsPlayback())
+    {
+      setVoiceTurnState(VOICE_SPEAKING);
+    }
+    else
+    {
+      setVoiceTurnState(VOICE_ERROR, "TTS playback start failed");
+      resetVoiceTurnToIdle();
+    }
   }
 }
 
