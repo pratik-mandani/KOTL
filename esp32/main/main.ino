@@ -27,6 +27,39 @@
 #define MIC_ADC_CHANNEL ADC1_CHANNEL_6
 #define BUTTON_BOOT_PIN 0
 
+enum PlaybackSource
+{
+  PLAYBACK_NONE,
+  PLAYBACK_LOCAL_SAMPLE,
+  PLAYBACK_TTS_AUDIO
+};
+
+enum VoiceTurnState
+{
+  VOICE_IDLE,
+  VOICE_RECORDING,
+  VOICE_UPLOADING,
+  VOICE_THINKING,
+  VOICE_DOWNLOADING_TTS,
+  VOICE_SPEAKING,
+  VOICE_ERROR
+};
+
+enum NetEventType
+{
+  NET_EVENT_NONE = 0,
+  NET_EVENT_UPLOAD_AUDIO,
+  NET_EVENT_CHECK_ADMIN
+};
+
+enum AudioCmdType
+{
+  AUDIO_CMD_NONE = 0,
+  AUDIO_CMD_PLAY_TTS,
+  AUDIO_CMD_PLAY_LOCAL,
+  AUDIO_CMD_STOP
+};
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
@@ -85,44 +118,6 @@ static const uint16_t kExpectedTtsBitsPerSample = 16;
 static const uint16_t kExpectedTtsChannels = 1;
 static const size_t kExpectedWavHeaderSize = 44;
 static const uint8_t kSpeakerVolumePercent = 75; // 75% digital volume headroom prevents MAX98357A 9dB clipping distortion
-
-static inline int16_t applySpeakerVolume(int16_t sample)
-{
-  return (int16_t)(((int32_t)sample * kSpeakerVolumePercent) / 100);
-}
-
-enum PlaybackSource
-{
-  PLAYBACK_NONE,
-  PLAYBACK_LOCAL_SAMPLE,
-  PLAYBACK_TTS_AUDIO
-};
-
-enum VoiceTurnState
-{
-  VOICE_IDLE,
-  VOICE_RECORDING,
-  VOICE_UPLOADING,
-  VOICE_THINKING,
-  VOICE_DOWNLOADING_TTS,
-  VOICE_SPEAKING,
-  VOICE_ERROR
-};
-
-enum NetEventType
-{
-  NET_EVENT_NONE = 0,
-  NET_EVENT_UPLOAD_AUDIO,
-  NET_EVENT_CHECK_ADMIN
-};
-
-enum AudioCmdType
-{
-  AUDIO_CMD_NONE = 0,
-  AUDIO_CMD_PLAY_TTS,
-  AUDIO_CMD_PLAY_LOCAL,
-  AUDIO_CMD_STOP
-};
 
 static QueueHandle_t s_netQueue = NULL;
 static QueueHandle_t s_audioQueue = NULL;
@@ -940,6 +935,11 @@ void serviceAudioOutput()
   {
     audioState.pendingOffsetBytes = 0;
   }
+}
+
+static inline int16_t applySpeakerVolume(int16_t sample)
+{
+  return (int16_t)(((int32_t)sample * kSpeakerVolumePercent) / 100);
 }
 
 void fillAudioChunk()
