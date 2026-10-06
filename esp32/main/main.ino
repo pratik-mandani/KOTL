@@ -8,7 +8,6 @@
 #include <driver/adc.h>
 #include <driver/i2s.h>
 #include <esp_err.h>
-#include <esp_task_wdt.h>
 #include "../hello_sample.h"
 #include "kotl_provisioning.h"
 
@@ -1325,12 +1324,6 @@ void performSynchronousAudioCapture()
     captureState.absSum += (uint64_t)abs((int)pcmSample);
 
     nextSampleDueUs += kAudioCaptureSampleIntervalUs;
-
-    // Reset task watchdog every 512 samples (~64ms)
-    if ((sampleIndex & 0x1FF) == 0)
-    {
-      esp_task_wdt_reset();
-    }
   }
 
   const uint32_t elapsedMs = (micros() - startUs) / 1000UL;
