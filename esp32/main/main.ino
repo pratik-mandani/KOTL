@@ -30,9 +30,9 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 250;
-static const uint16_t kMicReleaseThreshold = 180;
-static const uint8_t kMicHighDebounceCount = 3;
+static const uint16_t kMicSpikeThreshold = 120;
+static const uint16_t kMicReleaseThreshold = 80;
+static const uint8_t kMicHighDebounceCount = 2;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 30;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -1173,7 +1173,8 @@ void serviceMicrophoneInput()
   const uint16_t rawValue = (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
 
   micState.rawValue = rawValue;
-  micState.baseline = (uint16_t)(((uint32_t)micState.baseline * 15U + rawValue) / 16U);
+  // Slow moving average (256x filter) so it only tracks DC bias drift, not voice audio waveforms
+  micState.baseline = (uint16_t)(((uint32_t)micState.baseline * 255U + rawValue) / 256U);
   micState.amplitude = (rawValue > micState.baseline) ? (rawValue - micState.baseline) : (micState.baseline - rawValue);
 
   if (kPrintMicDebug && nowMs - micState.lastPrintMs >= kMicPrintIntervalMs)
