@@ -5,12 +5,23 @@ function writePcm16MonoWav({ rawPath, wavPath, sampleRate, audioDataBytes }) {
   const samples = new Int16Array(numSamples);
   
   // Convert byte buffer to 16-bit signed integers
+  let sum = 0;
+  let maxAbs = 0;
   for (let i = 0; i < numSamples; i++) {
-    samples[i] = audioDataBytes.readInt16LE(i * 2);
+    const val = audioDataBytes.readInt16LE(i * 2);
+    samples[i] = val;
+    sum += val;
+    const absVal = Math.abs(val);
+    if (absVal > maxAbs) maxAbs = absVal;
   }
 
-  // 1. Apply first-order high-pass filter (DC Blocker) to strip background humming and low-frequency noise
-  // Formula: y[n] = alpha * (y[n-1] + x[n] - x[n-1])
+  // 1. Remove DC Offset (Microphone signal bias)
+  const dcOffset = Math.round(sum / numSamples);
+  for (let i = 0; i < numSamples; i++) {
+    samples[i] = samples[i] - dcOffset;
+  }
+
+  // 2. Apply gentle high-pass DC blocker filter (alpha = 0.98)
   const alpha = 0.98;
   let prevX = 0;
   let prevY = 0;
@@ -22,54 +33,25 @@ function writePcm16MonoWav({ rawPath, wavPath, sampleRate, audioDataBytes }) {
     samples[i] = y;
   }
 
-  // 2. Apply 20x input volume gain amplification to make quiet speech readable
-  const INPUT_GAIN_FACTOR = 20.0;
-  let sum = 0;
+  // 3. Peak Normalization: If signal is quiet, scale gracefully without clipping
+  let peak = 0;
   for (let i = 0; i < numSamples; i++) {
-    let amplified = Math.round(samples[i] * INPUT_GAIN_FACTOR);
-    if (amplified > 32767) amplified = 32767;
-    else if (amplified < -32768) amplified = -32768;
-    
-    samples[i] = amplified;
-    sum += samples[i];
+    const a = Math.abs(samples[i]);
+    if (a > peak) peak = a;
   }
 
-  // 3. Remove DC Offset (Microphone signal bias)
-  const dcOffset = Math.round(sum / numSamples);
-  for (let i = 0; i < numSamples; i++) {
-    let sample = samples[i] - dcOffset;
-    
-    // Clamp to 16-bit signed integer limits
-    if (sample > 32767) sample = 32767;
-    else if (sample < -32768) sample = -32768;
-    
-    samples[i] = sample;
-  }
+  if (peak > 50) {
+    const targetPeak = 22000;
+    let gain = targetPeak / peak;
+    if (gain > 6.0) gain = 6.0;
+    if (gain < 0.8) gain = 0.8;
 
-  // 4. Dynamic RMS Auto-Gain Normalization
-  // Standard speech conversational RMS target is ~3500 (~ -19 dBFS)
-  let sumSquares = 0;
-  for (let i = 0; i < numSamples; i++) {
-    sumSquares += samples[i] * samples[i];
-  }
-  const rms = Math.sqrt(sumSquares / numSamples);
-  const targetRms = 3500;
-  const minRmsThreshold = 60; // Ignore pure dead silence to prevent noise blowup
-
-  if (rms > minRmsThreshold) {
-    let rmsGain = targetRms / rms;
-    if (rmsGain > 20.0) rmsGain = 20.0;
-    if (rmsGain < 0.5) rmsGain = 0.5;
-
-    console.log(`[WAV] RMS Auto-Gain: current RMS is ${rms.toFixed(1)}, applying scaling factor ${rmsGain.toFixed(2)}`);
     for (let i = 0; i < numSamples; i++) {
-      let sample = Math.round(samples[i] * rmsGain);
-      if (sample > 32767) sample = 32767;
-      else if (sample < -32768) sample = -32768;
-      samples[i] = sample;
+      let val = Math.round(samples[i] * gain);
+      if (val > 32767) val = 32767;
+      else if (val < -32768) val = -32768;
+      samples[i] = val;
     }
-  } else {
-    console.log(`[WAV] Audio RMS is low (${rms.toFixed(1)}), skipping RMS auto-gain.`);
   }
 
   // Convert processed samples back to byte buffer

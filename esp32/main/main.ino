@@ -30,8 +30,8 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 100;
-static const uint16_t kMicReleaseThreshold = 80;
+static const uint16_t kMicSpikeThreshold = 250;
+static const uint16_t kMicReleaseThreshold = 180;
 static const uint8_t kMicHighDebounceCount = 3;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 30;
