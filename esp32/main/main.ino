@@ -432,12 +432,30 @@ void loop()
   serviceEyeReaction();
   handleVoiceTurnTimeouts();
 
-  vTaskDelay(pdMS_TO_TICKS(1));
+  static uint32_t s_diagFrameCount = 0;
+  static uint32_t s_diagLastReportMs = 0;
+  ++s_diagFrameCount;
+  const uint32_t nowMs = millis();
+  if (nowMs - s_diagLastReportMs >= 2000)
+  {
+    const float fps = (float)s_diagFrameCount * 1000.0f / (float)(nowMs - s_diagLastReportMs);
+    Serial.print("[DIAG-FPS] roboEyes loop rate: ");
+    Serial.print(fps, 1);
+    Serial.print(" Hz | State: ");
+    Serial.print(voiceTurn.state);
+    Serial.print(" | Free heap: ");
+    Serial.println(ESP.getFreeHeap());
+    s_diagFrameCount = 0;
+    s_diagLastReportMs = nowMs;
+  }
+
+  taskYIELD();
 }
 
 void initDisplay()
 {
   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+  Wire.setClock(400000);
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS))
   {
