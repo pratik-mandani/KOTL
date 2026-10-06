@@ -266,8 +266,13 @@ async function generateAssistantReply({ transcript, sessionId = null, source = "
     return result;
   }
 
+  const cleanMessages = history.map(m => ({
+    role: m.role,
+    content: typeof m.content === "string" ? m.content : ""
+  }));
+
   if (provider === "openai") {
-    const result = await generateOpenAIAssistantReply({ messages: history, sessionId: historyKey });
+    const result = await generateOpenAIAssistantReply({ messages: cleanMessages, sessionId: historyKey });
     if (result.success) {
       history.push({
         id: "msg-" + Date.now() + "-a",
@@ -298,8 +303,8 @@ async function generateAssistantReply({ transcript, sessionId = null, source = "
     secondaryName = "gemini";
   }
 
-  console.log(`[Assistant] Trying primary LLM provider: ${primaryName} for session ${historyKey} with history of ${history.length} messages`);
-  let result = await primaryFn({ messages: history, sessionId: historyKey });
+  console.log(`[Assistant] Trying primary LLM provider: ${primaryName} for session ${historyKey} with history of ${cleanMessages.length} messages`);
+  let result = await primaryFn({ messages: cleanMessages, sessionId: historyKey });
 
   if (result.success) {
     history.push({
@@ -316,7 +321,7 @@ async function generateAssistantReply({ transcript, sessionId = null, source = "
 
   console.warn(`[Assistant] Primary LLM provider ${primaryName} failed: ${result.error || "unknown error"}. Falling back to ${secondaryName}...`);
   
-  result = await secondaryFn({ messages: history, sessionId: historyKey });
+  result = await secondaryFn({ messages: cleanMessages, sessionId: historyKey });
   if (result.success) {
     console.log(`[Assistant] Fallback to LLM provider ${secondaryName} succeeded.`);
     history.push({

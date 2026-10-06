@@ -42,6 +42,11 @@ async function generateGroqAssistantReply({ messages, sessionId = null }) {
   const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
   try {
+    const cleanMessages = messages.map((m) => ({
+      role: m.role,
+      content: typeof m.content === "string" ? m.content : "",
+    }));
+
     const response = await fetch(DEFAULT_URL, {
       method: "POST",
       headers: {
@@ -50,7 +55,7 @@ async function generateGroqAssistantReply({ messages, sessionId = null }) {
       },
       body: JSON.stringify({
         model: DEFAULT_MODEL,
-        messages: messages,
+        messages: cleanMessages,
         stream: false,
       }),
       signal: controller.signal,
