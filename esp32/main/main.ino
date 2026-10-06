@@ -24,6 +24,7 @@
 #define I2S_DIN_PIN 27
 #define MIC_ADC_PIN 34
 #define MIC_ADC_CHANNEL ADC1_CHANNEL_6
+#define BUTTON_BOOT_PIN 0
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 RoboEyes<Adafruit_SSD1306> roboEyes(display);
@@ -184,11 +185,14 @@ static const uint32_t kVoiceUploadingTimeoutMs = 20000;
 static const uint32_t kVoiceThinkingTimeoutMs = 30000;
 static const uint32_t kVoiceDownloadingTtsTimeoutMs = 20000;
 static const uint32_t kVoiceSpeakingTimeoutMs = 30000;
+static uint32_t s_playbackCooldownUntilMs = 0;
+static const uint32_t kPlaybackCooldownMs = 1500;
 
 void initDisplay();
 void initEyes();
 void initAudioOutput();
 void initMicrophoneInput();
+void initBootButton();
 void initNetworking();
 void initFileStorage();
 void runStartupSelfTest();
@@ -197,6 +201,7 @@ void playStartupBeep();
 void serviceAudioOutput();
 void serviceAudioCapture();
 void serviceMicrophoneInput();
+void serviceBootButton();
 void serviceEyeReaction();
 void serviceNetworking();
 void setVoiceTurnState(VoiceTurnState newState, const String &errorText = "");
@@ -246,6 +251,7 @@ void setup()
   initEyes();
   initAudioOutput();
   initMicrophoneInput();
+  initBootButton();
   initFileStorage();
   initNetworking();
   runStartupSelfTest();
@@ -291,6 +297,7 @@ void loop()
     checkRemoteAdminUpdates();
   }
 
+  serviceBootButton();
   serviceMicrophoneInput();
   serviceAudioCapture();
   serviceEyeReaction();
@@ -414,7 +421,8 @@ bool canStartVoiceTurn()
          !captureState.isUploading &&
          !captureState.uploadPending &&
          !audioState.isDownloading &&
-         !audioState.isPlaying;
+         !audioState.isPlaying &&
+         ((int32_t)(millis() - s_playbackCooldownUntilMs) >= 0);
 }
 
 void handleVoiceTurnTimeouts()
@@ -787,6 +795,53 @@ void fillAudioChunk()
     audioState.pendingSource = PLAYBACK_NONE;
   }
 
+  if (audioState.isPlaying && audioState.activeSource == PLAYBACK_TTS_AUDIO)
+  {
+    if (!audioState.ttsFile || audioState.ttsBytesRemaining < 2)
+    {
+      finishPlayback();
+      audioState.pendingOffsetBytes = 0;
+      audioState.pendingBytes = 0;
+      return;
+    }
+
+    int16_t monoBlock[kI2SChunkFrames];
+    size_t toReadBytes = min((size_t)(kI2SChunkFrames * sizeof(int16_t)), (size_t)audioState.ttsBytesRemaining);
+    toReadBytes = (toReadBytes / sizeof(int16_t)) * sizeof(int16_t);
+
+    size_t readBytes = 0;
+    if (toReadBytes > 0)
+    {
+      readBytes = audioState.ttsFile.read(reinterpret_cast<uint8_t *>(monoBlock), toReadBytes);
+    }
+    const size_t framesRead = readBytes / sizeof(int16_t);
+    audioState.ttsBytesRemaining = (audioState.ttsBytesRemaining > readBytes) ? (audioState.ttsBytesRemaining - readBytes) : 0;
+
+    if (framesRead == 0)
+    {
+      finishPlayback();
+      audioState.pendingOffsetBytes = 0;
+      audioState.pendingBytes = 0;
+      return;
+    }
+
+    for (size_t frameIndex = 0; frameIndex < framesRead; ++frameIndex)
+    {
+      audioState.dmaBuffer[frameIndex * 2] = monoBlock[frameIndex];
+      audioState.dmaBuffer[(frameIndex * 2) + 1] = monoBlock[frameIndex];
+    }
+
+    for (size_t frameIndex = framesRead; frameIndex < kI2SChunkFrames; ++frameIndex)
+    {
+      audioState.dmaBuffer[frameIndex * 2] = 0;
+      audioState.dmaBuffer[(frameIndex * 2) + 1] = 0;
+    }
+
+    audioState.pendingOffsetBytes = 0;
+    audioState.pendingBytes = sizeof(audioState.dmaBuffer);
+    return;
+  }
+
   for (size_t frameIndex = 0; frameIndex < kI2SChunkFrames; ++frameIndex)
   {
     const int16_t monoSample = nextMonoSample();
@@ -976,6 +1031,8 @@ void finishPlayback()
     Serial.println("PLAYBACK DONE");
     configureAudioSampleRate(kI2SSampleRate);
   }
+
+  s_playbackCooldownUntilMs = millis() + kPlaybackCooldownMs;
 
   if (audioState.pendingSource != PLAYBACK_NONE)
   {
@@ -1167,6 +1224,35 @@ int16_t adcToPcm16(uint16_t rawValue, uint16_t baseline)
   return (int16_t)scaled;
 }
 
+void initBootButton()
+{
+  pinMode(BUTTON_BOOT_PIN, INPUT_PULLUP);
+}
+
+void serviceBootButton()
+{
+  static bool s_lastBootPressed = false;
+  const bool isPressed = (digitalRead(BUTTON_BOOT_PIN) == LOW);
+
+  if (isPressed && !s_lastBootPressed)
+  {
+    Serial.println("BOOT button pressed!");
+    if (canStartVoiceTurn())
+    {
+      Serial.println("Starting voice capture via BOOT button");
+      micState.soundActive = true;
+      beginAudioCapture();
+      triggerSoundReaction(millis());
+    }
+    else
+    {
+      Serial.println("BOOT button ignored: voice turn busy or in cooldown");
+    }
+  }
+
+  s_lastBootPressed = isPressed;
+}
+
 void serviceMicrophoneInput()
 {
   const uint32_t nowMs = millis();
@@ -1174,6 +1260,19 @@ void serviceMicrophoneInput()
   const uint16_t rawValue = (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
 
   micState.rawValue = rawValue;
+
+  if ((int32_t)(nowMs - s_playbackCooldownUntilMs) < 0)
+  {
+    // During post-playback cooldown, dynamically adapt baseline and suppress triggers
+    micState.baseline = (uint16_t)(((uint32_t)micState.baseline * 15U + rawValue) / 16U);
+    micState.amplitude = 0;
+    micState.soundHigh = false;
+    micState.soundActive = false;
+    micState.consecutiveHighReadings = 0;
+    micState.silenceStartMs = 0;
+    return;
+  }
+
   // Slow moving average (256x filter) so it only tracks DC bias drift, not voice audio waveforms
   micState.baseline = (uint16_t)(((uint32_t)micState.baseline * 255U + rawValue) / 256U);
   micState.amplitude = (rawValue > micState.baseline) ? (rawValue - micState.baseline) : (micState.baseline - rawValue);
