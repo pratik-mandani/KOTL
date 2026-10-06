@@ -227,6 +227,7 @@ bool parseAudioUploadResponse(const String &payload, bool *ttsReady, String *tts
 bool extractJsonBool(const String &payload, const char *key, bool *value);
 bool extractJsonString(const String &payload, const char *key, String *value);
 String resolveBackendUrl(const String &relativePath);
+String urlDecode(const String &input);
 bool downloadTtsAudio(const String &ttsUrl);
 uint16_t readLe16(const uint8_t *buffer);
 uint32_t readLe32(const uint8_t *buffer);
@@ -1454,12 +1455,8 @@ void performAudioUpload()
   {
     setVoiceTurnState(VOICE_THINKING);
     String contentType = http.header("Content-Type");
-    String transcript = http.header("X-Transcript");
-    String assistantReply = http.header("X-Assistant-Reply");
-
-    // Decode URL-escaped headers
-    transcript.replace("%20", " ");
-    assistantReply.replace("%20", " ");
+    String transcript = urlDecode(http.header("X-Transcript"));
+    String assistantReply = urlDecode(http.header("X-Assistant-Reply"));
 
     voiceTurn.lastTranscript = transcript;
     voiceTurn.lastAssistantReply = assistantReply;
@@ -1704,6 +1701,33 @@ String resolveBackendUrl(const String &relativePath)
     base.remove(base.length() - 1);
   }
   return base + relativePath;
+}
+
+String urlDecode(const String &input)
+{
+  String decoded = "";
+  char temp[] = "0x00";
+  const int len = input.length();
+  for (int i = 0; i < len; ++i)
+  {
+    const char c = input.charAt(i);
+    if (c == '+')
+    {
+      decoded += ' ';
+    }
+    else if (c == '%' && i + 2 < len)
+    {
+      temp[2] = input.charAt(i + 1);
+      temp[3] = input.charAt(i + 2);
+      decoded += (char)strtol(temp, NULL, 16);
+      i += 2;
+    }
+    else
+    {
+      decoded += c;
+    }
+  }
+  return decoded;
 }
 
 bool downloadTtsAudio(const String &ttsUrl)

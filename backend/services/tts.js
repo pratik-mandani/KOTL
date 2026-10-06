@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { execFile, spawn } = require("child_process");
 const fs = require("fs");
 const os = require("os");
