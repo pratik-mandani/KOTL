@@ -19,11 +19,12 @@ static String g_backend_url = "";
 static int g_config_version = 1;
 static bool g_in_ap_mode = false;
 static uint32_t g_last_heartbeat_ms = 0;
-static const uint32_t kHeartbeatIntervalMs = 3000; // Check for Admin updates & web audio every 3s
+static const uint32_t kHeartbeatIntervalMs = 5000; // Check for Admin updates & web audio every 5s
 static String g_last_played_audio_id = "";
 
-// Forward declaration from main sketch for remote TTS playback
+// Forward declarations from main sketch
 extern bool downloadTtsAudio(const String &ttsUrl);
+extern bool canStartVoiceTurn();
 
 // HTML Template for Captive Portal (Monochrome Minimalist)
 static const char CAPTIVE_HTML[] PROGMEM = R"rawliteral(
@@ -187,6 +188,11 @@ inline bool beginHttpWithOptionalSsl(HTTPClient &http, WiFiClientSecure &sslClie
 // Background Remote Sync with Admin Dashboard
 inline void checkRemoteAdminUpdates() {
   if (WiFi.status() != WL_CONNECTED || g_in_ap_mode || g_backend_url.length() == 0) {
+    return;
+  }
+
+  // Never perform background network calls if audio capture or playback is active!
+  if (!canStartVoiceTurn()) {
     return;
   }
 

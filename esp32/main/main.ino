@@ -276,24 +276,18 @@ void loop()
   roboEyes.update();
   serviceAudioOutput();
 
-  // Periodic check for Wi-Fi or Remote Admin configuration updates
-  checkRemoteAdminUpdates();
-
-  // Periodic heartbeat log to show VAD loop is running and listening
-  static uint32_t lastListeningLogMs = 0;
-  const uint32_t nowMs = millis();
-  if (voiceTurn.state == VOICE_IDLE && !audioState.isPlaying && (nowMs - lastListeningLogMs >= 8000))
-  {
-    Serial.println("Listening for wake word...");
-    lastListeningLogMs = nowMs;
-  }
-
   if (captureState.isRecording)
   {
     serviceAudioCapture();
     serviceEyeReaction();
     handleVoiceTurnTimeouts();
     return;
+  }
+
+  // Periodic check for Wi-Fi or Remote Admin configuration updates (only when fully idle)
+  if (canStartVoiceTurn())
+  {
+    checkRemoteAdminUpdates();
   }
 
   serviceMicrophoneInput();
