@@ -212,7 +212,7 @@ async function generateAssistantReply({ transcript, sessionId = null, source = "
   if (!normalizedTranscript) {
     return {
       success: true,
-      reply: "My ears detect only silence or static. Speak more clearly, or check my microphone wiring.",
+      reply: "મને તમારો અવાજ સંભળાયો નહીં. કૃપા કરીને માઇકની નજીકથી ફરી બોલો.",
       provider: "groq",
       model: null,
       error: null,

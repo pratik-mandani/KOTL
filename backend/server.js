@@ -123,6 +123,14 @@ app.post("/api/speak", async (req, res) => {
 
   try {
     const ttsResult = await generateSpeech({ text, sessionId });
+    if (ttsResult.success && ttsResult.url) {
+      latestWebTtsBroadcast = {
+        id: "web-tts-" + Date.now(),
+        url: ttsResult.url,
+        created_at: Date.now()
+      };
+      console.log(`[Broadcast] Queued web audio for ESP32 speaker: ${ttsResult.url}`);
+    }
     res.json(ttsResult);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -237,19 +245,27 @@ app.post("/api/device/config", (req, res) => {
   res.json({ success: true, message: "Device config updated successfully", config: updated });
 });
 
+let latestWebTtsBroadcast = null;
+
 app.post("/api/device/heartbeat", (req, res) => {
   const current = getDeviceConfig();
   const clientVersion = Number.parseInt(req.body?.version || "0", 10);
   const ip = req.body?.ip || req.ip;
   const rssi = req.body?.rssi || null;
+  const lastPlayedId = typeof req.body?.last_played_audio_id === "string" ? req.body.last_played_audio_id : "";
 
   touchDeviceHeartbeat(ip, rssi);
 
   const hasNewConfig = clientVersion < (current.version || 1);
+  const hasNewAudio = latestWebTtsBroadcast && (Date.now() - latestWebTtsBroadcast.created_at < 60000) && (lastPlayedId !== latestWebTtsBroadcast.id);
+
   res.json({
     success: true,
     has_update: hasNewConfig,
-    config: hasNewConfig ? current : null
+    config: hasNewConfig ? current : null,
+    has_pending_audio: !!hasNewAudio,
+    pending_audio_id: hasNewAudio ? latestWebTtsBroadcast.id : null,
+    pending_audio_url: hasNewAudio ? latestWebTtsBroadcast.url : null
   });
 });
 
@@ -378,8 +394,22 @@ app.post("/chat", async (req, res) => {
   }
 
   try {
-    const assistantResult = await generateAssistantReply({ transcript: text, sessionId });
+    const assistantResult = await generateAssistantReply({ transcript: text, sessionId, source: "web" });
     if (assistantResult.success && assistantResult.reply) {
+      try {
+        const ttsResult = await generateSpeech({ text: assistantResult.reply, sessionId });
+        if (ttsResult.success && ttsResult.url) {
+          latestWebTtsBroadcast = {
+            id: "web-chat-" + Date.now(),
+            url: ttsResult.url,
+            created_at: Date.now()
+          };
+          console.log(`[Broadcast] Queued web chat audio for ESP32 speaker: ${ttsResult.url}`);
+        }
+      } catch (e) {
+        console.warn("[Broadcast] TTS audio queue warning:", e.message);
+      }
+
       return res.json({
         reply: assistantResult.reply,
       });

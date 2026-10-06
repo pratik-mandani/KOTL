@@ -19,7 +19,11 @@ static String g_backend_url = "";
 static int g_config_version = 1;
 static bool g_in_ap_mode = false;
 static uint32_t g_last_heartbeat_ms = 0;
-static const uint32_t kHeartbeatIntervalMs = 30000; // Check for Admin updates every 30s
+static const uint32_t kHeartbeatIntervalMs = 3000; // Check for Admin updates & web audio every 3s
+static String g_last_played_audio_id = "";
+
+// Forward declaration from main sketch for remote TTS playback
+extern bool downloadTtsAudio(const String &ttsUrl);
 
 // HTML Template for Captive Portal (Monochrome Minimalist)
 static const char CAPTIVE_HTML[] PROGMEM = R"rawliteral(
@@ -204,11 +208,29 @@ inline void checkRemoteAdminUpdates() {
 
   String payload = "{\"version\":" + String(g_config_version) + 
                    ",\"ip\":\"" + WiFi.localIP().toString() + 
-                   "\",\"rssi\":" + String(WiFi.RSSI()) + "}";
+                   "\",\"rssi\":" + String(WiFi.RSSI()) + 
+                   ",\"last_played_audio_id\":\"" + g_last_played_audio_id + "\"}";
 
   int httpCode = http.POST(payload);
   if (httpCode == 200) {
     String response = http.getString();
+    
+    // Check if web companion has queued voice response for ESP32 speaker
+    if (response.indexOf("\"has_pending_audio\":true") != -1) {
+      int urlIdx = response.indexOf("\"pending_audio_url\":\"");
+      int idIdx = response.indexOf("\"pending_audio_id\":\"");
+      if (urlIdx != -1 && idIdx != -1) {
+        String pendingUrl = response.substring(urlIdx + 21, response.indexOf("\"", urlIdx + 21));
+        String pendingId = response.substring(idIdx + 20, response.indexOf("\"", idIdx + 20));
+        if (pendingUrl.length() > 0 && pendingId != g_last_played_audio_id) {
+          g_last_played_audio_id = pendingId;
+          Serial.print("[Web Broadcast] Playing voice response on ESP32 speaker: ");
+          Serial.println(pendingUrl);
+          downloadTtsAudio(pendingUrl);
+        }
+      }
+    }
+
     // Simple JSON check for update
     if (response.indexOf("\"has_update\":true") != -1) {
       Serial.println("[Admin Sync] Received new configuration from Web Admin Panel! Applying...");
