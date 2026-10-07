@@ -64,9 +64,9 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 120;
-static const uint16_t kMicReleaseThreshold = 80;
-static const uint8_t kMicHighDebounceCount = 2;
+static const uint16_t kMicSpikeThreshold = 350;
+static const uint16_t kMicReleaseThreshold = 220;
+static const uint8_t kMicHighDebounceCount = 20;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 30;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -220,6 +220,7 @@ void initFileStorage();
 void runStartupSelfTest();
 void drawStartupSelfTestScreen(const char *line1, const char *line2, uint8_t progressStep = 0);
 void playStartupBeep();
+void playStartupHello();
 void serviceAudioOutput();
 void serviceAudioCapture();
 void serviceMicrophoneInput();
@@ -386,6 +387,7 @@ void initFreeRtosTasks()
 
 void setup()
 {
+  disableCore1WDT();
   Serial.begin(115200);
   initPersistentConfig();
 
@@ -403,6 +405,8 @@ void setup()
   initNetworking();
   runStartupSelfTest();
   initFreeRtosTasks();
+
+  s_playbackCooldownUntilMs = millis() + 4000;
 }
 
 void loop()
@@ -756,7 +760,7 @@ void runStartupSelfTest()
 
   Serial.println("speaker test started");
   drawStartupSelfTestScreen("KOTL", "Speaker Test", 1);
-  playStartupBeep();
+  playStartupHello();
 
   uint32_t baselineTotal = 0;
   static const uint8_t kBaselineSampleCount = 64;
@@ -929,6 +933,44 @@ void playStartupBeep()
   {
     Serial.println("speaker test warning: i2s_write short write");
   }
+}
+
+void playStartupHello()
+{
+  Serial.print("speaker test (voice) I2S initialized: ");
+  Serial.println(audioOutputInitialized ? "YES" : "NO");
+  if (!audioOutputInitialized)
+  {
+    Serial.println("speaker test skipped: audio output not initialized");
+    return;
+  }
+
+  if (!configureAudioSampleRate(kHelloSampleRate))
+  {
+    Serial.println("speaker test failed: sample rate config");
+    return;
+  }
+
+  Serial.println("speaker test: playing 'Hello' voice sample via I2S...");
+  size_t sampleIdx = 0;
+  while (sampleIdx < kHelloSampleCount)
+  {
+    const size_t framesThisChunk = min((size_t)kI2SChunkFrames, (size_t)(kHelloSampleCount - sampleIdx));
+    for (size_t frameIndex = 0; frameIndex < framesThisChunk; ++frameIndex)
+    {
+      const int16_t sample = applySpeakerVolume(kHelloSample[sampleIdx + frameIndex]);
+      audioState.dmaBuffer[frameIndex * 2] = sample;
+      audioState.dmaBuffer[(frameIndex * 2) + 1] = sample;
+    }
+
+    size_t bytesWritten = 0;
+    const size_t bytesToWrite = framesThisChunk * 2U * sizeof(int16_t);
+    i2s_write(I2S_PORT, audioState.dmaBuffer, bytesToWrite, &bytesWritten, portMAX_DELAY);
+    sampleIdx += framesThisChunk;
+    feedLoopWDT();
+  }
+  i2s_zero_dma_buffer(I2S_PORT);
+  Serial.println("speaker test: 'Hello' playback complete");
 }
 
 void serviceAudioOutput()
@@ -1419,6 +1461,11 @@ void performSynchronousAudioCapture()
     captureState.absSum += (uint64_t)abs((int)pcmSample);
 
     nextSampleDueUs += kAudioCaptureSampleIntervalUs;
+
+    if ((sampleIndex & 0xFF) == 0)
+    {
+      feedLoopWDT();
+    }
   }
 
   const uint32_t elapsedMs = (micros() - startUs) / 1000UL;
@@ -1739,7 +1786,7 @@ void serviceNetworking()
     Serial.print("WiFi connected, IP: ");
     Serial.println(WiFi.localIP());
     networkState.wifiConnectInProgress = false;
-    s_playbackCooldownUntilMs = millis() + 1500; // 1.5s cooldown ignores RF transient spike on connect
+    s_playbackCooldownUntilMs = millis() + 3500; // 3.5s cooldown ignores RF transient spike on connect
   }
 
   if (!kEnableBootChatDebug)
