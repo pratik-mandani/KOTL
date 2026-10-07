@@ -48,7 +48,8 @@ enum NetEventType
 {
   NET_EVENT_NONE = 0,
   NET_EVENT_UPLOAD_AUDIO,
-  NET_EVENT_CHECK_ADMIN
+  NET_EVENT_CHECK_ADMIN,
+  NET_EVENT_CHAT_TEXT
 };
 
 enum AudioCmdType
@@ -264,6 +265,9 @@ bool downloadTtsAudio(const String &ttsUrl);
 bool triggerLocalSamplePlayback();
 void triggerMicCapture();
 static volatile bool s_triggerMicCapturePending = false;
+void performTextChatRequest();
+void serviceSerialInput();
+static String s_serialPromptText = "";
 uint16_t readLe16(const uint8_t *buffer);
 uint32_t readLe32(const uint8_t *buffer);
 bool takeFsMutex(uint32_t timeoutMs = 2000)
@@ -304,6 +308,11 @@ void networkWorkerTask(void *param)
       {
         Serial.println("[NetWorker] Admin check requested -> Polling backend...");
         checkRemoteAdminUpdates();
+      }
+      else if (event == NET_EVENT_CHAT_TEXT)
+      {
+        Serial.println("[NetWorker] Serial text query requested -> Starting request to backend...");
+        performTextChatRequest();
       }
 
       const UBaseType_t stackWords = uxTaskGetStackHighWaterMark(NULL);
@@ -452,6 +461,7 @@ void loop()
   }
 
   serviceBootButton();
+  serviceSerialInput();
   serviceMicrophoneInput();
   serviceEyeReaction();
   handleVoiceTurnTimeouts();
@@ -847,8 +857,15 @@ void runStartupSelfTest()
   }
   else
   {
-    Serial.println("MIC ERROR: no startup mic signal detected; normal voice flow blocked until reset/retry");
-    drawStartupSelfTestScreen("MIC ERROR", "Check MAX9814 / GPIO34", 0);
+    Serial.println("===============================================================");
+    Serial.println("MIC BYPASS: No microphone detected on GPIO 34.");
+    Serial.println("KOTL is running in SERIAL MONITOR MODE!");
+    Serial.println(">>> TYPE YOUR QUESTION IN SERIAL MONITOR AND PRESS ENTER <<<");
+    Serial.println("===============================================================");
+    drawStartupSelfTestScreen("SERIAL MODE", "Type in Serial", 2);
+    delay(800);
+    roboEyes.open();
+    startupSelfTestPassed = true; // Allow loop and Serial input to run
     captureState.isRecording = false;
     captureState.isUploading = false;
     captureState.uploadPending = false;
@@ -2151,6 +2168,170 @@ void performAudioUpload()
 
   captureState.uploadPending = false;
   captureState.isUploading = false;
+}
+
+void serviceSerialInput()
+{
+  if (Serial.available())
+  {
+    String input = Serial.readStringUntil('\n');
+    input.trim();
+    if (input.length() > 0)
+    {
+      Serial.println();
+      Serial.println("=================================================");
+      Serial.printf("[SERIAL INPUT] Received Question: \"%s\"\n", input.c_str());
+      Serial.println("=================================================");
+
+      if (WiFi.status() != WL_CONNECTED)
+      {
+        Serial.println("[SERIAL] WiFi not connected! Please wait for WiFi.");
+        return;
+      }
+
+      if (captureState.isRecording || captureState.isUploading || audioState.isPlaying || audioState.isDownloading)
+      {
+        Serial.println("[SERIAL] Device busy. Please wait for current turn to complete.");
+        return;
+      }
+
+      s_serialPromptText = input;
+      setVoiceTurnState(VOICE_THINKING);
+      roboEyes.setMood(TIRED);
+      roboEyes.update();
+
+      NetEventType event = NET_EVENT_CHAT_TEXT;
+      if (s_netQueue)
+      {
+        xQueueSend(s_netQueue, &event, 0);
+      }
+      else
+      {
+        performTextChatRequest();
+      }
+    }
+  }
+}
+
+void performTextChatRequest()
+{
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("[SERIAL CHAT] Request skipped: WiFi not connected");
+    failVoiceTurn("WiFi not connected");
+    return;
+  }
+
+  if (s_serialPromptText.length() == 0)
+  {
+    Serial.println("[SERIAL CHAT] Request skipped: empty prompt");
+    resetVoiceTurnToIdle();
+    return;
+  }
+
+  HTTPClient http;
+  WiFiClientSecure sslClient;
+  const String chatUrl = resolveBackendUrl("/api/chat-speak");
+  http.setConnectTimeout(kHttpTimeoutMs);
+  http.setTimeout(kHttpTimeoutMs);
+
+  setVoiceTurnState(VOICE_THINKING);
+  Serial.println("[SERIAL CHAT] Request started");
+  Serial.print("URL: ");
+  Serial.println(chatUrl);
+  Serial.print("Prompt: ");
+  Serial.println(s_serialPromptText);
+
+  if (!beginHttpWithOptionalSsl(http, sslClient, chatUrl))
+  {
+    failVoiceTurn("HTTP begin failed");
+    return;
+  }
+
+  http.addHeader("Content-Type", "application/json");
+  const char *headerKeys[] = {"Content-Type", "X-Transcript", "X-Assistant-Reply", "X-TTS-Ready"};
+  http.collectHeaders(headerKeys, 4);
+
+  String escapedPrompt = s_serialPromptText;
+  escapedPrompt.replace("\"", "\\\"");
+  String payload = "{\"text\":\"" + escapedPrompt + "\"}";
+
+  const int httpCode = http.POST(payload);
+  if (httpCode == HTTP_CODE_OK || httpCode == 200)
+  {
+    String contentType = http.header("Content-Type");
+    String assistantReply = urlDecode(http.header("X-Assistant-Reply"));
+    voiceTurn.lastTranscript = s_serialPromptText;
+    voiceTurn.lastAssistantReply = assistantReply;
+
+    Serial.println("[SERIAL CHAT] HTTP 200 OK");
+    Serial.print("ASSISTANT REPLY: ");
+    Serial.println(assistantReply);
+
+    if (contentType.indexOf("audio/wav") != -1 || contentType.indexOf("octet-stream") != -1)
+    {
+      if (ttsStorageAvailable)
+      {
+        setVoiceTurnState(VOICE_DOWNLOADING_TTS);
+        if (!takeFsMutex(2000))
+        {
+          http.end();
+          failVoiceTurn("LittleFS mutex timeout");
+          return;
+        }
+
+        if (audioState.ttsFile)
+        {
+          audioState.ttsFile.close();
+        }
+        if (LittleFS.exists(kTtsFilePath))
+        {
+          LittleFS.remove(kTtsFilePath);
+        }
+
+        File file = LittleFS.open(kTtsFilePath, FILE_WRITE);
+        if (file)
+        {
+          const int bytesWritten = streamHttpToFileWithYield(http, file);
+          file.close();
+          giveFsMutex();
+          http.end();
+          Serial.printf("[SERIAL CHAT] TTS WAV written: %d bytes. Playing on speaker...\n", bytesWritten);
+
+          if (bytesWritten > 100)
+          {
+            queueOrStartTtsPlayback();
+          }
+          else
+          {
+            failVoiceTurn("TTS stream too short");
+          }
+        }
+        else
+        {
+          giveFsMutex();
+          http.end();
+          failVoiceTurn("LittleFS open failed");
+        }
+      }
+      else
+      {
+        http.end();
+        failVoiceTurn("LittleFS unavailable");
+      }
+    }
+    else
+    {
+      http.end();
+      resetVoiceTurnToIdle();
+    }
+  }
+  else
+  {
+    Serial.printf("[SERIAL CHAT] Request failed: %s (%d)\n", http.errorToString(httpCode).c_str(), httpCode);
+    http.end();
+    failVoiceTurn("HTTP request failed");
+  }
 }
 
 bool parseAudioUploadResponse(const String &payload, bool *ttsReady, String *ttsUrl, String *transcript, String *assistantReply, String *turnStatus, String *sttError, String *assistantError, String *ttsError)

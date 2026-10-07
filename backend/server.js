@@ -15,6 +15,8 @@ const { transcribeAudio, normalizeWhisperTranscript, isBlacklistedNoiseTranscrip
 const { generateSpeech, NORMALIZED_SAMPLE_RATE } = require("./services/tts");
 const { writePcm16MonoWav } = require("./utils/wav");
 const { getLocalIPv4Address } = require("./utils/network");
+const http = require("http");
+const { initWebSocketServer } = require("./services/websocket");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -641,6 +643,47 @@ app.get("/tts/:filename", (req, res) => {
   }
 });
 
+app.post("/api/chat-speak", async (req, res) => {
+  const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+  const sessionId = req.body?.sessionId || "serial-session";
+
+  if (!text) {
+    return res.status(400).json({ success: false, error: "text required" });
+  }
+
+  console.log(`[Chat-Speak] Received text query: "${text}"`);
+
+  try {
+    const assistantResult = await generateAssistantReply({ transcript: text, sessionId, source: "serial" });
+    const reply = (assistantResult.reply || "નમસ્તે દોસ્ત!").trim();
+    console.log(`[Chat-Speak] Assistant reply: "${reply}"`);
+
+    const ttsResult = await generateSpeech({ text: reply, sessionId });
+
+    if (ttsResult.success && ttsResult.filename) {
+      const ttsFilePath = path.join(ttsUploadsDir, ttsResult.filename);
+      if (fs.existsSync(ttsFilePath)) {
+        const stat = fs.statSync(ttsFilePath);
+        res.writeHead(200, {
+          "Content-Type": "audio/wav",
+          "Content-Length": stat.size,
+          "X-Transcript": encodeURIComponent(text),
+          "X-Assistant-Reply": encodeURIComponent(reply),
+          "X-TTS-Ready": "true",
+          "Connection": "close",
+        });
+        const stream = fs.createReadStream(ttsFilePath);
+        return stream.pipe(res);
+      }
+    }
+
+    return res.json({ success: true, prompt: text, reply: reply });
+  } catch (err) {
+    console.error("[Chat-Speak Error]", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.post("/chat", async (req, res) => {
   const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
   const sessionId = typeof req.body?.sessionId === "string" && req.body.sessionId.trim() ? req.body.sessionId.trim() : "default-session";
@@ -1002,8 +1045,12 @@ app.post(
   }
 );
 
-app.listen(PORT, "0.0.0.0", () => {
+const server = http.createServer(app);
+initWebSocketServer(server);
+
+server.listen(PORT, "0.0.0.0", () => {
   const localIP = getLocalIPv4Address();
   console.log(`KOTL backend listening on http://localhost:${PORT}`);
+  console.log(`KOTL WebSocket live at ws://localhost:${PORT}/ws`);
   console.log(`KOTL API live at: http://${localIP}:${PORT}`);
 });
