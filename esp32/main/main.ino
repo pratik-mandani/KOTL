@@ -254,6 +254,7 @@ bool startPlayback(PlaybackSource source);
 bool startLocalSamplePlayback();
 bool startTtsPlayback();
 void queueOrStartTtsPlayback();
+int streamHttpToFileWithYield(HTTPClient &http, File &file);
 bool parseAudioUploadResponse(const String &payload, bool *ttsReady, String *ttsUrl, String *transcript, String *assistantReply, String *turnStatus, String *sttError, String *assistantError, String *ttsError);
 bool extractJsonBool(const String &payload, const char *key, bool *value);
 bool extractJsonString(const String &payload, const char *key, String *value);
@@ -397,6 +398,7 @@ void initFreeRtosTasks()
 void setup()
 {
   disableCore1WDT();
+  disableCore0WDT();
   Serial.begin(115200);
   initPersistentConfig();
 
@@ -1920,6 +1922,62 @@ void performBackendPostRequest(uint32_t nowMs)
   networkState.requestInProgress = false;
 }
 
+int streamHttpToFileWithYield(HTTPClient &http, File &file)
+{
+  WiFiClient *stream = http.getStreamPtr();
+  if (!stream)
+  {
+    Serial.println("[Stream] Failed to get HTTP stream pointer");
+    return -1;
+  }
+
+  uint8_t buff[512];
+  int totalBytesWritten = 0;
+  int remainingBytes = http.getSize();
+  uint32_t lastDataMs = millis();
+  const uint32_t streamTimeoutMs = 15000;
+
+  Serial.printf("[Stream] Streaming HTTP audio to file (content length: %d)...\n", remainingBytes);
+
+  while (http.connected() && (remainingBytes > 0 || remainingBytes == -1))
+  {
+    const size_t availableBytes = stream->available();
+    if (availableBytes > 0)
+    {
+      const size_t toRead = min(availableBytes, sizeof(buff));
+      const int bytesRead = stream->readBytes(buff, toRead);
+      if (bytesRead > 0)
+      {
+        file.write(buff, bytesRead);
+        totalBytesWritten += bytesRead;
+        if (remainingBytes > 0)
+        {
+          remainingBytes -= bytesRead;
+        }
+        lastDataMs = millis();
+      }
+      // CRITICAL: Yield every chunk so IDLE0 gets CPU time and watchdog never trips
+      vTaskDelay(pdMS_TO_TICKS(1));
+    }
+    else
+    {
+      if (remainingBytes == 0)
+      {
+        break;
+      }
+      if (millis() - lastDataMs > streamTimeoutMs)
+      {
+        Serial.println("[Stream] Timeout waiting for stream data");
+        break;
+      }
+      vTaskDelay(pdMS_TO_TICKS(5));
+    }
+  }
+
+  Serial.printf("[Stream] Stream completed, total bytes written: %d\n", totalBytesWritten);
+  return totalBytesWritten;
+}
+
 void performAudioUpload()
 {
   if (WiFi.status() != WL_CONNECTED)
@@ -2011,7 +2069,7 @@ void performAudioUpload()
         File file = LittleFS.open(kTtsFilePath, FILE_WRITE);
         if (file)
         {
-          const int bytesWritten = http.writeToStream(&file);
+          const int bytesWritten = streamHttpToFileWithYield(http, file);
           file.close();
           giveFsMutex();
           http.end();
@@ -2349,7 +2407,7 @@ bool downloadTtsAudio(const String &ttsUrl)
     return false;
   }
 
-  const int bytesWritten = http.writeToStream(&file);
+  const int bytesWritten = streamHttpToFileWithYield(http, file);
   file.close();
   giveFsMutex();
   http.end();
@@ -2370,10 +2428,10 @@ bool downloadTtsAudio(const String &ttsUrl)
 
 void queueOrStartTtsPlayback()
 {
+  setVoiceTurnState(VOICE_SPEAKING);
   if (audioState.isPlaying)
   {
     audioState.pendingSource = PLAYBACK_TTS_AUDIO;
-    setVoiceTurnState(VOICE_SPEAKING);
     Serial.println("TTS queued behind current playback");
     return;
   }
@@ -2381,15 +2439,16 @@ void queueOrStartTtsPlayback()
   AudioCmdType cmd = AUDIO_CMD_PLAY_TTS;
   if (s_audioQueue)
   {
-    xQueueSend(s_audioQueue, &cmd, 0);
+    Serial.println("[NetWorker] Dispatching AUDIO_CMD_PLAY_TTS to Audio Task on Core 1");
+    if (xQueueSend(s_audioQueue, &cmd, pdMS_TO_TICKS(200)) != pdTRUE)
+    {
+      Serial.println("[NetWorker] Audio queue full, starting direct TTS");
+      startTtsPlayback();
+    }
   }
   else
   {
-    if (startTtsPlayback())
-    {
-      setVoiceTurnState(VOICE_SPEAKING);
-    }
-    else
+    if (!startTtsPlayback())
     {
       setVoiceTurnState(VOICE_ERROR, "TTS playback start failed");
       resetVoiceTurnToIdle();
