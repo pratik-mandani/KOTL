@@ -118,7 +118,7 @@ static const uint32_t kExpectedTtsSampleRate = 16000;
 static const uint16_t kExpectedTtsBitsPerSample = 16;
 static const uint16_t kExpectedTtsChannels = 1;
 static const size_t kExpectedWavHeaderSize = 44;
-static const uint8_t kSpeakerVolumePercent = 75; // 75% digital volume headroom prevents MAX98357A 9dB clipping distortion
+static const uint8_t kSpeakerVolumePercent = 55; // 55% volume eliminates MAX98357A clipping and cone distortion
 
 static QueueHandle_t s_netQueue = NULL;
 static QueueHandle_t s_audioQueue = NULL;
@@ -401,6 +401,7 @@ void initFreeRtosTasks()
 void setup()
 {
   Serial.begin(115200);
+  Serial.setTimeout(50);
   initPersistentConfig();
 
   Serial.print("Configured Wi-Fi SSID: ");
@@ -2174,7 +2175,8 @@ void serviceSerialInput()
 {
   if (Serial.available())
   {
-    String input = Serial.readStringUntil('\n');
+    delay(25); // allow all characters in current message to arrive
+    String input = Serial.readString();
     input.trim();
     if (input.length() > 0)
     {

@@ -30,7 +30,7 @@ async function synthesizeSentencePcm(text) {
   if (!text || !text.trim()) return Buffer.alloc(0);
 
   const isGujarati = /[\u0A80-\u0AFF]/.test(text);
-  const voice = isGujarati ? "gu-IN-NiranjanNeural" : "en-US-GuyNeural";
+  const voice = isGujarati ? "gu-IN-DhwaniNeural" : "en-US-JennyNeural";
   const lang = isGujarati ? "gu-IN" : "en-US";
   const tempMp3 = path.join(
     os.tmpdir(),
@@ -54,6 +54,8 @@ async function synthesizeSentencePcm(text) {
         "-y",
         "-i",
         tempMp3,
+        "-af",
+        "highpass=f=160,volume=0.8",
         "-f",
         "s16le",
         "-acodec",

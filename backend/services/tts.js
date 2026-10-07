@@ -33,7 +33,7 @@ const PIPER_MODEL_PATH = process.env.PIPER_MODEL_PATH || "";
 const PIPER_CONFIG_PATH = process.env.PIPER_CONFIG_PATH || "";
 const PIPER_VOICE = "local";
 
-const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "gu-IN-NiranjanNeural";
+const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "gu-IN-DhwaniNeural";
 const EDGE_LANG = process.env.EDGE_TTS_LANG || "gu-IN";
 
 function buildTtsFilename() {
@@ -84,7 +84,7 @@ async function normalizeWavFile(sourcePath, targetPath, timeoutMs = DEFAULT_TIME
       "-ar",
       String(NORMALIZED_SAMPLE_RATE),
       "-af",
-      `aresample=resampler=swr:osr=${NORMALIZED_SAMPLE_RATE}:dither_method=triangular,volume=0.85`,
+      `aresample=resampler=swr:osr=${NORMALIZED_SAMPLE_RATE}:dither_method=triangular,highpass=f=160,volume=0.8`,
       "-map_metadata",
       "-1",
       "-fflags",
@@ -112,7 +112,7 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
   }
 
   const isGujarati = /[\u0A80-\u0AFF]/.test(text);
-  const selectedVoice = voice || (isGujarati ? "gu-IN-NiranjanNeural" : EDGE_VOICE);
+  const selectedVoice = voice || (isGujarati ? "gu-IN-DhwaniNeural" : EDGE_VOICE);
   const selectedLang = isGujarati ? "gu-IN" : EDGE_LANG;
   const normalizedFilename = buildTtsFilename();
   const normalizedPath = path.join(TTS_UPLOADS_DIR, normalizedFilename);
