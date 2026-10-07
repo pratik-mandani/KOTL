@@ -1,4 +1,10 @@
-require("dotenv").config();
+try {
+  require("../utils/env");
+} catch (_) {
+  try {
+    require("dotenv").config();
+  } catch (__) {}
+}
 const DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const DEFAULT_MODEL = process.env.GEMINI_CHAT_MODEL || "gemini-3.5-flash";
 const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.GEMINI_TIMEOUT_MS || "", 10) || 15000;

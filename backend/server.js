@@ -1,5 +1,11 @@
 const express = require("express");
-require("./utils/env");
+try {
+  require("./utils/env");
+} catch (_) {
+  try {
+    require("dotenv").config();
+  } catch (__) {}
+}
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");

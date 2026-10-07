@@ -1,4 +1,10 @@
-require("dotenv").config();
+try {
+  require("../utils/env");
+} catch (_) {
+  try {
+    require("dotenv").config();
+  } catch (__) {}
+}
 const fs = require("fs");
 const path = require("path");
 const { generateOllamaAssistantReply } = require("./ollama");

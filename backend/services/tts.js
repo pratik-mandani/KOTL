@@ -1,4 +1,10 @@
-require("dotenv").config();
+try {
+  require("../utils/env");
+} catch (_) {
+  try {
+    require("dotenv").config();
+  } catch (__) {}
+}
 const { execFile, spawn } = require("child_process");
 const fs = require("fs");
 const os = require("os");
