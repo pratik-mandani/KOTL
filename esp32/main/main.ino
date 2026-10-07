@@ -73,7 +73,7 @@ static const uint32_t kSoundReactionDurationMs = 700;
 static const bool kPrintMicDebug = false;
 static const uint16_t kStartupMicSignalThreshold = 40;
 static const uint32_t kStartupMicTestTimeoutMs = 3000;
-static const uint32_t kStartupBeepDurationMs = 300;
+static const uint32_t kStartupBeepDurationMs = 400;
 static const uint32_t kStartupBeepFrequencyHz = 880;
 
 #if __has_include("kotl_config.h")
@@ -758,8 +758,13 @@ void runStartupSelfTest()
   drawStartupSelfTestScreen("KOTL", "Hardware Test", 0);
   delay(250);
 
-  Serial.println("speaker test started");
-  drawStartupSelfTestScreen("KOTL", "Speaker Test", 1);
+  Serial.println("speaker test started: beep");
+  drawStartupSelfTestScreen("KOTL", "Speaker Beep", 1);
+  playStartupBeep();
+  delay(150);
+
+  Serial.println("speaker test: voice sample");
+  drawStartupSelfTestScreen("KOTL", "Speaker Voice", 2);
   playStartupHello();
 
   uint32_t baselineTotal = 0;
@@ -905,7 +910,7 @@ void playStartupBeep()
     for (size_t frameIndex = 0; frameIndex < framesThisChunk; ++frameIndex)
     {
       const bool highPhase = ((frameNumber + frameIndex) % periodFrames) < halfPeriodFrames;
-      const int16_t sample = highPhase ? 12000 : -12000;
+      const int16_t sample = highPhase ? 14000 : -14000;
       audioState.dmaBuffer[frameIndex * 2] = sample;
       audioState.dmaBuffer[(frameIndex * 2) + 1] = sample;
     }
@@ -920,6 +925,7 @@ void playStartupBeep()
     }
 
     frameNumber += framesThisChunk;
+    feedLoopWDT();
   }
 
   i2s_zero_dma_buffer(I2S_PORT);
@@ -958,7 +964,10 @@ void playStartupHello()
     const size_t framesThisChunk = min((size_t)kI2SChunkFrames, (size_t)(kHelloSampleCount - sampleIdx));
     for (size_t frameIndex = 0; frameIndex < framesThisChunk; ++frameIndex)
     {
-      const int16_t sample = applySpeakerVolume(kHelloSample[sampleIdx + frameIndex]);
+      int32_t amplified = (int32_t)kHelloSample[sampleIdx + frameIndex] * 4;
+      if (amplified > 32000) amplified = 32000;
+      if (amplified < -32000) amplified = -32000;
+      const int16_t sample = applySpeakerVolume((int16_t)amplified);
       audioState.dmaBuffer[frameIndex * 2] = sample;
       audioState.dmaBuffer[(frameIndex * 2) + 1] = sample;
     }
@@ -1102,7 +1111,10 @@ int16_t nextLocalSample()
     return 0;
   }
 
-  return kHelloSample[audioState.localSampleIndex++];
+  int32_t amplified = (int32_t)kHelloSample[audioState.localSampleIndex++] * 4;
+  if (amplified > 32000) amplified = 32000;
+  if (amplified < -32000) amplified = -32000;
+  return (int16_t)amplified;
 }
 
 int16_t nextTtsSample()
