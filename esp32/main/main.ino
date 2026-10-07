@@ -258,6 +258,9 @@ bool extractJsonString(const String &payload, const char *key, String *value);
 String resolveBackendUrl(const String &relativePath);
 String urlDecode(const String &input);
 bool downloadTtsAudio(const String &ttsUrl);
+bool triggerLocalSamplePlayback();
+void triggerMicCapture();
+static volatile bool s_triggerMicCapturePending = false;
 uint16_t readLe16(const uint8_t *buffer);
 uint32_t readLe32(const uint8_t *buffer);
 bool takeFsMutex(uint32_t timeoutMs = 2000)
@@ -328,7 +331,10 @@ void audioPlaybackTask(void *param)
     {
       if (cmd == AUDIO_CMD_PLAY_TTS)
       {
-        startTtsPlayback();
+        if (!startTtsPlayback())
+        {
+          failVoiceTurn("TTS playback failed to start");
+        }
       }
       else if (cmd == AUDIO_CMD_PLAY_LOCAL)
       {
@@ -423,6 +429,20 @@ void loop()
 
   // Butter-smooth 50 FPS OLED animations on Core 1 - immune to network delays!
   roboEyes.update();
+
+  if (s_triggerMicCapturePending)
+  {
+    s_triggerMicCapturePending = false;
+    if (canStartVoiceTurn())
+    {
+      Serial.println("[Hardware Test] Triggering 4s physical mic test capture from loop()");
+      beginAudioCapture();
+    }
+    else
+    {
+      Serial.println("[Hardware Test] Mic recording skipped: device busy");
+    }
+  }
 
   serviceBootButton();
   serviceMicrophoneInput();
@@ -1110,6 +1130,21 @@ bool startLocalSamplePlayback()
   return true;
 }
 
+bool triggerLocalSamplePlayback()
+{
+  AudioCmdType cmd = AUDIO_CMD_PLAY_LOCAL;
+  if (s_audioQueue)
+  {
+    return (xQueueSend(s_audioQueue, &cmd, 0) == pdTRUE);
+  }
+  return startLocalSamplePlayback();
+}
+
+void triggerMicCapture()
+{
+  s_triggerMicCapturePending = true;
+}
+
 bool startTtsPlayback()
 {
   if (!ttsStorageAvailable)
@@ -1118,7 +1153,12 @@ bool startTtsPlayback()
     return false;
   }
 
-  takeFsMutex(2000);
+  if (!takeFsMutex(2000))
+  {
+    Serial.println("TTS playback skipped: LittleFS mutex timeout");
+    return false;
+  }
+
   File file = LittleFS.open(kTtsFilePath, FILE_READ);
   if (!file)
   {
@@ -1127,39 +1167,94 @@ bool startTtsPlayback()
     return false;
   }
 
-  uint8_t header[kExpectedWavHeaderSize] = {0};
-  const size_t headerBytesRead = file.read(header, sizeof(header));
-  if (headerBytesRead != sizeof(header))
+  // Read 12-byte RIFF header
+  uint8_t riffHeader[12];
+  if (file.read(riffHeader, sizeof(riffHeader)) != sizeof(riffHeader) ||
+      memcmp(&riffHeader[0], "RIFF", 4) != 0 ||
+      memcmp(&riffHeader[8], "WAVE", 4) != 0)
   {
-    Serial.println("Unsupported WAV: short header");
+    Serial.println("Unsupported WAV: missing RIFF/WAVE header");
     file.close();
     giveFsMutex();
     return false;
   }
 
-  const uint16_t audioFormat = readLe16(&header[20]);
-  const uint16_t channelCount = readLe16(&header[22]);
-  const uint32_t sampleRate = readLe32(&header[24]);
-  const uint16_t bitsPerSample = readLe16(&header[34]);
-  const uint32_t dataBytes = readLe32(&header[40]);
+  uint16_t audioFormat = 0;
+  uint16_t channelCount = 0;
+  uint32_t sampleRate = 0;
+  uint16_t bitsPerSample = 0;
+  uint32_t dataBytes = 0;
+  size_t dataOffset = 0;
+  bool foundFmt = false;
+  bool foundData = false;
 
-  if (memcmp(&header[0], "RIFF", 4) != 0 ||
-      memcmp(&header[8], "WAVE", 4) != 0 ||
-      memcmp(&header[12], "fmt ", 4) != 0 ||
-      memcmp(&header[36], "data", 4) != 0 ||
-      audioFormat != 1 ||
-      channelCount != kExpectedTtsChannels ||
-      sampleRate != kExpectedTtsSampleRate ||
-      bitsPerSample != kExpectedTtsBitsPerSample)
+  // Scan WAV subchunks dynamically (handles standard 16-byte fmt, 18-byte fmt with cbSize, metadata chunks, etc.)
+  while (file.available() >= 8 && (!foundFmt || !foundData))
   {
-    Serial.println("Unsupported WAV: expected PCM mono 16-bit 16000 Hz");
+    uint8_t chunkHeader[8];
+    if (file.read(chunkHeader, 8) != 8)
+    {
+      break;
+    }
+
+    const uint32_t chunkSize = readLe32(&chunkHeader[4]);
+
+    if (memcmp(&chunkHeader[0], "fmt ", 4) == 0 && chunkSize >= 16)
+    {
+      uint8_t fmtBuf[16];
+      if (file.read(fmtBuf, 16) != 16)
+      {
+        break;
+      }
+      audioFormat = readLe16(&fmtBuf[0]);
+      channelCount = readLe16(&fmtBuf[2]);
+      sampleRate = readLe32(&fmtBuf[4]);
+      bitsPerSample = readLe16(&fmtBuf[14]);
+      foundFmt = true;
+
+      // Skip remaining bytes in fmt chunk if chunkSize > 16
+      if (chunkSize > 16)
+      {
+        file.seek(file.position() + (chunkSize - 16));
+      }
+    }
+    else if (memcmp(&chunkHeader[0], "data", 4) == 0)
+    {
+      dataBytes = chunkSize;
+      dataOffset = file.position();
+      foundData = true;
+      break;
+    }
+    else
+    {
+      // Unknown or metadata chunk (e.g. LIST, INFO, fact) - skip it
+      file.seek(file.position() + chunkSize);
+    }
+  }
+
+  if (!foundFmt || !foundData || dataBytes == 0)
+  {
+    Serial.printf("Unsupported WAV: parse failed (fmt=%d, data=%d, bytes=%u)\n", foundFmt, foundData, (unsigned int)dataBytes);
     file.close();
     giveFsMutex();
     return false;
   }
 
-  if (!configureAudioSampleRate(kExpectedTtsSampleRate))
+  if (audioFormat != 1 || channelCount != 1 || bitsPerSample != 16)
   {
+    Serial.printf("Unsupported WAV: format=%u (must be 1/PCM), channels=%u (must be 1), bits=%u (must be 16)\n",
+                  audioFormat, channelCount, bitsPerSample);
+    file.close();
+    giveFsMutex();
+    return false;
+  }
+
+  file.seek(dataOffset);
+
+  const uint32_t targetSampleRate = (sampleRate > 0) ? sampleRate : kExpectedTtsSampleRate;
+  if (!configureAudioSampleRate(targetSampleRate))
+  {
+    Serial.printf("Unsupported WAV: failed to configure I2S sample rate to %u\n", (unsigned int)targetSampleRate);
     file.close();
     giveFsMutex();
     return false;
@@ -1172,7 +1267,7 @@ bool startTtsPlayback()
   giveFsMutex();
 
   setVoiceTurnState(VOICE_SPEAKING);
-  Serial.println("PLAYBACK START");
+  Serial.printf("PLAYBACK START: %u Hz, %u bytes\n", (unsigned int)targetSampleRate, (unsigned int)dataBytes);
   return true;
 }
 

@@ -21,10 +21,13 @@ static bool g_in_ap_mode = false;
 static uint32_t g_last_heartbeat_ms = 0;
 static const uint32_t kHeartbeatIntervalMs = 5000; // Check for Admin updates & web audio every 5s
 static String g_last_played_audio_id = "";
+static String g_last_handled_cmd_id = "";
 
 // Forward declarations from main sketch
 extern bool downloadTtsAudio(const String &ttsUrl);
 extern bool canStartVoiceTurn();
+extern bool triggerLocalSamplePlayback();
+extern void triggerMicCapture();
 
 // HTML Template for Captive Portal (Monochrome Minimalist)
 static const char CAPTIVE_HTML[] PROGMEM = R"rawliteral(
@@ -215,12 +218,47 @@ inline void checkRemoteAdminUpdates() {
   String payload = "{\"version\":" + String(g_config_version) + 
                    ",\"ip\":\"" + WiFi.localIP().toString() + 
                    "\",\"rssi\":" + String(WiFi.RSSI()) + 
-                   ",\"last_played_audio_id\":\"" + g_last_played_audio_id + "\"}";
+                   ",\"last_played_audio_id\":\"" + g_last_played_audio_id + 
+                   "\",\"last_handled_cmd_id\":\"" + g_last_handled_cmd_id + "\"}";
 
   int httpCode = http.POST(payload);
   if (httpCode == 200) {
     String response = http.getString();
-    
+
+    // Check if web admin queued a hardware test command (mic test, speaker test)
+    if (response.indexOf("\"has_command\":true") != -1) {
+      int cmdIdx = response.indexOf("\"command\":\"");
+      int idIdx = response.indexOf("\"command_id\":\"");
+      if (cmdIdx != -1 && idIdx != -1) {
+        String cmd = response.substring(cmdIdx + 11, response.indexOf("\"", cmdIdx + 11));
+        String cmdId = response.substring(idIdx + 14, response.indexOf("\"", idIdx + 14));
+        if (cmdId.length() > 0 && cmdId != g_last_handled_cmd_id) {
+          g_last_handled_cmd_id = cmdId;
+          Serial.print("[Admin Command] Received command: ");
+          Serial.print(cmd);
+          Serial.print(" (id: ");
+          Serial.print(cmdId);
+          Serial.println(")");
+
+          if (cmd == "play_speaker_local") {
+            Serial.println("[Hardware Test] Playing built-in 'Hello' voice sample on ESP32 speaker...");
+            triggerLocalSamplePlayback();
+          } else if (cmd == "record_mic") {
+            Serial.println("[Hardware Test] Triggering 4s physical microphone test capture...");
+            triggerMicCapture();
+          } else if (cmd == "play_speaker_tts") {
+            int urlIdx = response.indexOf("\"pending_audio_url\":\"");
+            if (urlIdx != -1) {
+              String pendingUrl = response.substring(urlIdx + 21, response.indexOf("\"", urlIdx + 21));
+              Serial.print("[Hardware Test] Playing TTS sample on ESP32 speaker: ");
+              Serial.println(pendingUrl);
+              downloadTtsAudio(pendingUrl);
+            }
+          }
+        }
+      }
+    }
+
     // Check if web companion has queued voice response for ESP32 speaker
     if (response.indexOf("\"has_pending_audio\":true") != -1) {
       int urlIdx = response.indexOf("\"pending_audio_url\":\"");

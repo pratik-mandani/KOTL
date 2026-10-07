@@ -1,5 +1,5 @@
 const express = require("express");
-require("dotenv").config();
+require("./utils/env");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
@@ -68,6 +68,78 @@ function buildAudioResponse(metadata, turnStatus) {
     assistant_error: metadata.assistant_error,
     tts_error: metadata.tts_error,
     turn_status: turnStatus,
+  };
+}
+
+function analyzePcm16Mono(buffer) {
+  let pcmMin = 32767;
+  let pcmMax = -32768;
+  let absSum = 0;
+  let clippedSampleCount = 0;
+  const sampleCount = Math.floor(buffer.length / 2);
+
+  for (let offset = 0; offset + 1 < buffer.length; offset += 2) {
+    const sample = buffer.readInt16LE(offset);
+    if (sample < pcmMin) pcmMin = sample;
+    if (sample > pcmMax) pcmMax = sample;
+    absSum += Math.abs(sample);
+    if (sample <= -32760 || sample >= 32760) clippedSampleCount += 1;
+  }
+
+  return {
+    sample_count: sampleCount,
+    pcm_min: sampleCount ? pcmMin : null,
+    pcm_max: sampleCount ? pcmMax : null,
+    peak_to_peak: sampleCount ? pcmMax - pcmMin : null,
+    avg_abs_amplitude: sampleCount ? Math.round(absSum / sampleCount) : null,
+    clipped_sample_count: clippedSampleCount,
+  };
+}
+
+function createHardwareTestToneWav() {
+  const sampleRate = NORMALIZED_SAMPLE_RATE || 16000;
+  const durationSeconds = 2.4;
+  const sampleCount = Math.floor(sampleRate * durationSeconds);
+  const pcm = Buffer.alloc(sampleCount * 2);
+  const tones = [440, 660, 880, 660];
+
+  for (let i = 0; i < sampleCount; i += 1) {
+    const t = i / sampleRate;
+    const toneIndex = Math.min(tones.length - 1, Math.floor(t / (durationSeconds / tones.length)));
+    const envelope = Math.min(1, i / 1200, (sampleCount - i) / 1200);
+    const sample = Math.round(Math.sin(2 * Math.PI * tones[toneIndex] * t) * 14000 * envelope);
+    pcm.writeInt16LE(sample, i * 2);
+  }
+
+  const header = Buffer.alloc(44);
+  const bitsPerSample = 16;
+  const numChannels = 1;
+  const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+  const blockAlign = numChannels * (bitsPerSample / 8);
+
+  header.write("RIFF", 0);
+  header.writeUInt32LE(36 + pcm.length, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(numChannels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  header.write("data", 36);
+  header.writeUInt32LE(pcm.length, 40);
+
+  const filename = `hardware-test-tone-${Date.now()}.wav`;
+  const filePath = path.join(ttsUploadsDir, filename);
+  fs.writeFileSync(filePath, Buffer.concat([header, pcm]));
+
+  return {
+    filename,
+    url: `/tts/${filename}`,
+    provider: "local-tone",
+    voice: "hardware-test-tone",
   };
 }
 
@@ -247,17 +319,193 @@ app.post("/api/device/config", (req, res) => {
 
 let latestWebTtsBroadcast = null;
 
+function getLatestAudioMetadata() {
+  try {
+    const entries = fs.readdirSync(uploadsDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && /^audio-.*\.json$/i.test(entry.name))
+      .map((entry) => {
+        const filePath = path.join(uploadsDir, entry.name);
+        const stat = fs.statSync(filePath);
+        return { filePath, mtimeMs: stat.mtimeMs };
+      })
+      .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+    if (entries.length === 0) {
+      return null;
+    }
+
+    const metadata = JSON.parse(fs.readFileSync(entries[0].filePath, "utf-8"));
+    return {
+      received_at: metadata.received_at || null,
+      bytes_received: metadata.bytes_received || null,
+      sample_rate: metadata.sample_rate || null,
+      duration_ms: metadata.duration_ms || null,
+      sample_count: metadata.sample_count ?? null,
+      pcm_min: metadata.pcm_min ?? null,
+      pcm_max: metadata.pcm_max ?? null,
+      peak_to_peak: metadata.peak_to_peak ?? null,
+      avg_abs_amplitude: metadata.avg_abs_amplitude ?? null,
+      clipped_sample_count: metadata.clipped_sample_count ?? null,
+      transcript: metadata.transcript || null,
+      transcript_provider: metadata.transcript_provider || null,
+      stt_error: metadata.stt_error || null,
+      turn_status: metadata.turn_status || null,
+      tts_ready: !!metadata.tts_generated,
+      tts_url: metadata.tts_url || null,
+    };
+  } catch (error) {
+    return { error: error.message };
+  }
+}
+
+let pendingDeviceCommand = null;
+
+function getLatestAudioWavPath() {
+  try {
+    const entries = fs.readdirSync(uploadsDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && /^audio-.*\.wav$/i.test(entry.name))
+      .map((entry) => {
+        const filePath = path.join(uploadsDir, entry.name);
+        const stat = fs.statSync(filePath);
+        return { filePath, mtimeMs: stat.mtimeMs };
+      })
+      .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+    return entries.length > 0 ? entries[0].filePath : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+app.get("/api/hardware-test/status", (_req, res) => {
+  const config = getDeviceConfig();
+  const latestMic = getLatestAudioMetadata();
+  const wavPath = getLatestAudioWavPath();
+  const hasWav = !!(wavPath && fs.existsSync(wavPath));
+
+  res.json({
+    success: true,
+    device_status: config.device_status || null,
+    pending_command: pendingDeviceCommand && (Date.now() - pendingDeviceCommand.created_at < 60000)
+      ? {
+          command: pendingDeviceCommand.command,
+          id: pendingDeviceCommand.id,
+          age_ms: Date.now() - pendingDeviceCommand.created_at,
+        }
+      : null,
+    pending_audio: latestWebTtsBroadcast
+      ? {
+          id: latestWebTtsBroadcast.id,
+          url: latestWebTtsBroadcast.url,
+          age_ms: Date.now() - latestWebTtsBroadcast.created_at,
+        }
+      : null,
+    latest_mic_upload: latestMic,
+    has_mic_audio: hasWav,
+    mic_audio_url: hasWav ? "/api/hardware-test/latest-mic-audio?t=" + Date.now() : null,
+  });
+});
+
+app.get("/api/hardware-test/latest-mic-audio", (_req, res) => {
+  const wavPath = getLatestAudioWavPath();
+  if (!wavPath || !fs.existsSync(wavPath)) {
+    return res.status(404).json({ success: false, error: "No recorded audio found yet" });
+  }
+  const stat = fs.statSync(wavPath);
+  res.writeHead(200, {
+    "Content-Type": "audio/wav",
+    "Content-Length": stat.size,
+    "Cache-Control": "no-cache",
+  });
+  fs.createReadStream(wavPath).pipe(res);
+});
+
+app.post("/api/hardware-test/speaker-local", (_req, res) => {
+  pendingDeviceCommand = {
+    command: "play_speaker_local",
+    id: "cmd-spk-local-" + Date.now(),
+    created_at: Date.now(),
+  };
+  console.log("[Hardware Test] Queued built-in 'Hello' voice sample test for ESP32 speaker");
+  res.json({
+    success: true,
+    message: "Built-in voice test command queued for ESP32",
+    command_id: pendingDeviceCommand.id,
+  });
+});
+
+app.post("/api/hardware-test/trigger-mic", (_req, res) => {
+  pendingDeviceCommand = {
+    command: "record_mic",
+    id: "cmd-mic-" + Date.now(),
+    created_at: Date.now(),
+  };
+  console.log("[Hardware Test] Queued 4s onboard microphone recording command for ESP32");
+  res.json({
+    success: true,
+    message: "Mic recording command queued. Speak near the ESP32 mic on next heartbeat!",
+    command_id: pendingDeviceCommand.id,
+  });
+});
+
+app.post("/api/hardware-test/speaker", async (req, res) => {
+  const sessionId = typeof req.body?.sessionId === "string" && req.body.sessionId.trim()
+    ? req.body.sessionId.trim()
+    : "hardware-test";
+  const text = typeof req.body?.text === "string" && req.body.text.trim()
+    ? req.body.text.trim()
+    : "KOTL speaker test. If you can hear this voice, your ESP32 audio output is working.";
+
+  try {
+    const ttsResult = await generateSpeech({ text, sessionId });
+    if (!ttsResult.success || !ttsResult.url) {
+      return res.status(500).json({
+        success: false,
+        error: ttsResult.error || "speaker test voice generation failed",
+        provider: ttsResult.provider || null,
+      });
+    }
+
+    latestWebTtsBroadcast = {
+      id: "hardware-speaker-" + Date.now(),
+      url: ttsResult.url,
+      created_at: Date.now(),
+    };
+
+    pendingDeviceCommand = {
+      command: "play_speaker_tts",
+      id: "cmd-spk-tts-" + Date.now(),
+      created_at: Date.now(),
+      data: { url: ttsResult.url },
+    };
+
+    console.log(`[Hardware Test] Queued ESP32 speaker sample: ${ttsResult.url}`);
+    res.json({
+      success: true,
+      message: "Speaker test queued for ESP32 heartbeat",
+      pending_audio_id: latestWebTtsBroadcast.id,
+      pending_audio_url: latestWebTtsBroadcast.url,
+      provider: ttsResult.provider,
+      voice: ttsResult.voice,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.post("/api/device/heartbeat", (req, res) => {
   const current = getDeviceConfig();
   const clientVersion = Number.parseInt(req.body?.version || "0", 10);
   const ip = req.body?.ip || req.ip;
   const rssi = req.body?.rssi || null;
   const lastPlayedId = typeof req.body?.last_played_audio_id === "string" ? req.body.last_played_audio_id : "";
+  const lastHandledCmd = typeof req.body?.last_handled_cmd_id === "string" ? req.body.last_handled_cmd_id : "";
 
   touchDeviceHeartbeat(ip, rssi);
 
   const hasNewConfig = clientVersion < (current.version || 1);
   const hasNewAudio = latestWebTtsBroadcast && (Date.now() - latestWebTtsBroadcast.created_at < 60000) && (lastPlayedId !== latestWebTtsBroadcast.id);
+  const hasCommand = pendingDeviceCommand && (Date.now() - pendingDeviceCommand.created_at < 60000) && (lastHandledCmd !== pendingDeviceCommand.id);
 
   res.json({
     success: true,
@@ -265,7 +513,11 @@ app.post("/api/device/heartbeat", (req, res) => {
     config: hasNewConfig ? current : null,
     has_pending_audio: !!hasNewAudio,
     pending_audio_id: hasNewAudio ? latestWebTtsBroadcast.id : null,
-    pending_audio_url: hasNewAudio ? latestWebTtsBroadcast.url : null
+    pending_audio_url: hasNewAudio ? latestWebTtsBroadcast.url : null,
+    has_command: hasCommand,
+    command: hasCommand ? pendingDeviceCommand.command : null,
+    command_id: hasCommand ? pendingDeviceCommand.id : null,
+    command_data: hasCommand ? (pendingDeviceCommand.data || null) : null
   });
 });
 
@@ -528,6 +780,7 @@ app.post(
       tts_bits_per_sample: null,
       turn_status: "received",
     };
+    Object.assign(metadata, analyzePcm16Mono(req.body));
 
     logAudioTurn(turnId, "upload received", {
       filename,
@@ -535,6 +788,9 @@ app.post(
       sample_rate: metadata.sample_rate,
       duration_ms: metadata.duration_ms,
       format: metadata.format,
+      peak_to_peak: metadata.peak_to_peak,
+      avg_abs_amplitude: metadata.avg_abs_amplitude,
+      clipped_sample_count: metadata.clipped_sample_count,
     });
     touchDeviceHeartbeat(req.ip);
     fs.writeFileSync(audioPath, req.body);

@@ -103,6 +103,13 @@
           </svg>
           <span>Free Quotas & Limits</span>
         </button>
+
+        <button id="openHardwareTestModalBtn" class="flex items-center space-x-2.5 w-full px-3 py-2 rounded-xl text-gpt-light hover:text-white hover:bg-gpt-card transition-colors">
+          <svg class="w-4 h-4 text-gpt-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.5v2.5m-4 0h8M7 5.5A5 5 0 0112 1a5 5 0 015 4.5m-10 0V10a5 5 0 0010 0V5.5M4 10a8 8 0 0016 0"></path>
+          </svg>
+          <span>Hardware Test</span>
+        </button>
       </div>
 
       <!-- Recent Conversations List -->
@@ -317,6 +324,137 @@
     </div>
   </div>
 
+  <!-- Hardware Test Modal -->
+  <div id="hardwareTestModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-gpt-sidebar border border-gpt-border rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-gpt-border pb-3">
+        <div class="flex items-center space-x-2">
+          <span class="text-emerald-400 font-mono text-base">🛠️</span>
+          <h3 class="font-bold text-sm text-white">Hardware Diagnostics & Audio Test</h3>
+        </div>
+        <button id="closeHardwareTestModalBtn" class="text-gpt-muted hover:text-white text-sm px-2 py-1 rounded hover:bg-gpt-card transition-colors">✕</button>
+      </div>
+
+      <!-- Live ESP32 Status Bar -->
+      <div class="p-3 bg-gpt-main rounded-xl border border-gpt-border flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+        <div class="flex items-center space-x-2">
+          <span class="text-gpt-muted">Device Status:</span>
+          <span id="hardwareDeviceStatusText" class="text-zinc-300 font-bold">Checking...</span>
+        </div>
+        <button id="refreshHardwareStatusBtn" type="button" class="bg-gpt-card hover:bg-gpt-subtle border border-gpt-border text-white text-[11px] px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1">
+          <span>🔄</span>
+          <span>Refresh</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+        <!-- Card 1: Physical ESP32 Microphone Test -->
+        <div class="p-4 bg-gpt-main rounded-xl border border-gpt-border space-y-3 flex flex-col justify-between">
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-white font-bold flex items-center space-x-1.5">
+                  <span>🎙️</span>
+                  <span>ESP32 Physical Mic (Pin 34)</span>
+                </p>
+                <p class="text-[11px] text-gpt-muted">Direct ADC pin recording & audio upload</p>
+              </div>
+              <span id="espMicBadge" class="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">Idle</span>
+            </div>
+
+            <p class="text-[11px] text-zinc-400 leading-relaxed">
+              Triggers ESP32 to record 4s directly from its physical microphone, apply AGC gain boost, and send audio here.
+            </p>
+
+            <button id="triggerEspMicBtn" type="button" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2.5 rounded-xl transition-all shadow flex items-center justify-center space-x-2">
+              <span>🎙️</span>
+              <span>Record 4s from ESP32 Mic</span>
+            </button>
+
+            <div id="espMicStatusText" class="text-[11px] text-gpt-muted min-h-[32px] pt-1">
+              Ready. Speak near the robot after clicking Record.
+            </div>
+
+            <!-- Mic Analysis Metrics -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <div class="bg-black/50 p-2 rounded-lg border border-gpt-border/80">
+                <span class="text-[10px] text-gpt-muted block uppercase">Peak-To-Peak</span>
+                <span id="espMicP2pText" class="text-white font-bold text-xs">-</span>
+              </div>
+              <div class="bg-black/50 p-2 rounded-lg border border-gpt-border/80">
+                <span class="text-[10px] text-gpt-muted block uppercase">Avg Amplitude</span>
+                <span id="espMicAvgAmpText" class="text-white font-bold text-xs">-</span>
+              </div>
+            </div>
+
+            <div class="bg-black/50 p-2 rounded-lg border border-gpt-border/80">
+              <span class="text-[10px] text-gpt-muted block uppercase">Recognized Speech (STT)</span>
+              <span id="espMicTranscriptText" class="text-emerald-400 font-mono text-[11px] block truncate">-</span>
+            </div>
+          </div>
+
+          <!-- HTML5 Audio Player for Recorded Mic Sound -->
+          <div class="pt-2 border-t border-gpt-border space-y-1">
+            <span class="text-[11px] text-zinc-300 block font-semibold">🔊 Listen to ESP32 Mic Audio:</span>
+            <audio id="espMicAudioPlayer" controls class="w-full h-8 rounded mt-1 bg-black text-white" preload="none"></audio>
+            <span id="espMicPlayerHint" class="text-[10px] text-zinc-500 block">Hit play to verify physical mic audio quality.</span>
+          </div>
+        </div>
+
+        <!-- Card 2: ESP32 Speaker Output Test -->
+        <div class="p-4 bg-gpt-main rounded-xl border border-gpt-border space-y-3 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-white font-bold flex items-center space-x-1.5">
+                  <span>🔊</span>
+                  <span>ESP32 Speaker (MAX98357A)</span>
+                </p>
+                <p class="text-[11px] text-gpt-muted">Test I2S amplifier and voice playback</p>
+              </div>
+              <span id="speakerTestBadge" class="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">Idle</span>
+            </div>
+
+            <!-- Test Option 1: Built-in ROM sample (100% offline) -->
+            <div class="p-2.5 bg-black/40 rounded-xl border border-gpt-border/80 space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-white text-[11px]">Test 1: Built-in "Hello" Sample</span>
+                <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.2 rounded font-mono">100% Offline</span>
+              </div>
+              <p class="text-[10px] text-zinc-400">
+                Plays internal ROM audio via I2S. 100% immune to network/TTS. Verifies physical speaker & MAX98357A wiring.
+              </p>
+              <button id="testSpeakerLocalBtn" type="button" class="w-full bg-white hover:bg-neutral-200 text-black font-bold py-2 rounded-lg transition-all text-xs flex items-center justify-center space-x-1.5">
+                <span>🔊</span>
+                <span>Play Built-in Voice (Local)</span>
+              </button>
+            </div>
+
+            <!-- Test Option 2: Cloud TTS sample -->
+            <div class="p-2.5 bg-black/40 rounded-xl border border-gpt-border/80 space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-white text-[11px]">Test 2: Cloud TTS Sample</span>
+                <span class="text-[9px] bg-blue-950 text-blue-400 border border-blue-800 px-1.5 py-0.2 rounded font-mono">Edge TTS</span>
+              </div>
+              <textarea
+                id="speakerTestText"
+                class="w-full h-14 bg-black border border-gpt-border rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-white text-[11px] resize-none"
+              >KOTL speaker test. If you can hear this voice, your ESP32 audio output is working.</textarea>
+              <button id="testSpeakerBtn" type="button" class="w-full bg-gpt-card hover:bg-gpt-subtle border border-gpt-border text-white font-semibold py-2 rounded-lg transition-all text-xs flex items-center justify-center space-x-1.5">
+                <span>🗣️</span>
+                <span>Generate & Stream Cloud Voice</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="speakerTestStatusText" class="text-[11px] text-gpt-muted min-h-[36px] pt-1">
+            ESP32 checks for queued commands on its heartbeat (~5s).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Free Quota Limits Modal -->
   <div id="quotaModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-gpt-sidebar border border-gpt-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -424,6 +562,9 @@
     const quotaModal = document.getElementById('quotaModal');
     const openQuotaModalBtn = document.getElementById('openQuotaModalBtn');
     const closeQuotaModalBtn = document.getElementById('closeQuotaModalBtn');
+    const hardwareTestModal = document.getElementById('hardwareTestModal');
+    const openHardwareTestModalBtn = document.getElementById('openHardwareTestModalBtn');
+    const closeHardwareTestModalBtn = document.getElementById('closeHardwareTestModalBtn');
 
     openWifiModalBtn.onclick = () => {
       if (window.innerWidth < 768) closeMobileSidebar();
@@ -435,6 +576,12 @@
       quotaModal.classList.remove('hidden');
     };
     closeQuotaModalBtn.onclick = () => quotaModal.classList.add('hidden');
+    openHardwareTestModalBtn.onclick = () => {
+      if (window.innerWidth < 768) closeMobileSidebar();
+      hardwareTestModal.classList.remove('hidden');
+      loadHardwareStatus();
+    };
+    closeHardwareTestModalBtn.onclick = () => hardwareTestModal.classList.add('hidden');
 
     const STORAGE_CHAT_KEY = 'kotl_chat_history_v2';
     const sessionId = 'default-session';
@@ -831,6 +978,182 @@
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (audioContext) audioContext.close();
     }
+
+    const triggerEspMicBtn = document.getElementById('triggerEspMicBtn');
+    const espMicBadge = document.getElementById('espMicBadge');
+    const espMicStatusText = document.getElementById('espMicStatusText');
+    const espMicP2pText = document.getElementById('espMicP2pText');
+    const espMicAvgAmpText = document.getElementById('espMicAvgAmpText');
+    const espMicTranscriptText = document.getElementById('espMicTranscriptText');
+    const espMicAudioPlayer = document.getElementById('espMicAudioPlayer');
+    const espMicPlayerHint = document.getElementById('espMicPlayerHint');
+
+    const testSpeakerLocalBtn = document.getElementById('testSpeakerLocalBtn');
+    const testSpeakerBtn = document.getElementById('testSpeakerBtn');
+    const speakerTestText = document.getElementById('speakerTestText');
+    const speakerTestBadge = document.getElementById('speakerTestBadge');
+    const speakerTestStatusText = document.getElementById('speakerTestStatusText');
+    const refreshHardwareStatusBtn = document.getElementById('refreshHardwareStatusBtn');
+    const hardwareDeviceStatusText = document.getElementById('hardwareDeviceStatusText');
+
+    let espMicPollInterval = null;
+    let initialMicReceivedAt = null;
+
+    function setBadge(el, text, colorClass) {
+      if (!el) return;
+      el.textContent = text;
+      el.className = `text-[10px] px-2 py-0.5 rounded ${colorClass}`;
+    }
+
+    async function loadHardwareStatus() {
+      try {
+        const res = await fetch('/api/hardware-test/status');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'status failed');
+
+        const device = data.device_status || {};
+        if (device.online) {
+          hardwareDeviceStatusText.textContent = `Online • ${device.ip || 'heartbeat OK'}${device.rssi ? ' • RSSI ' + device.rssi + ' dBm' : ''}`;
+          hardwareDeviceStatusText.className = 'text-emerald-400 font-bold';
+        } else {
+          hardwareDeviceStatusText.textContent = 'Offline or no recent heartbeat';
+          hardwareDeviceStatusText.className = 'text-red-400 font-bold';
+        }
+
+        const mic = data.latest_mic_upload;
+        if (mic && !mic.error) {
+          if (!initialMicReceivedAt) initialMicReceivedAt = mic.received_at;
+          espMicP2pText.textContent = mic.peak_to_peak != null ? `${mic.peak_to_peak} (${mic.pcm_min ?? 0} to ${mic.pcm_max ?? 0})` : '-';
+          espMicAvgAmpText.textContent = mic.avg_abs_amplitude != null ? `${mic.avg_abs_amplitude}` : '-';
+          espMicTranscriptText.textContent = mic.transcript || (mic.stt_error ? `[STT] ${mic.stt_error}` : (mic.turn_status || '-'));
+          espMicTranscriptText.title = espMicTranscriptText.textContent;
+
+          if (data.has_mic_audio && data.mic_audio_url && (!espMicAudioPlayer.src || espMicAudioPlayer.dataset.lastTime !== mic.received_at)) {
+            espMicAudioPlayer.src = data.mic_audio_url;
+            espMicAudioPlayer.dataset.lastTime = mic.received_at;
+            espMicPlayerHint.textContent = `Recording received at ${new Date(mic.received_at).toLocaleTimeString()}. Click play to listen.`;
+            espMicPlayerHint.className = 'text-[10px] text-emerald-400 font-mono block';
+          }
+        }
+        return data;
+      } catch (err) {
+        hardwareDeviceStatusText.textContent = err.message;
+        hardwareDeviceStatusText.className = 'text-red-400 font-bold';
+        return null;
+      }
+    }
+
+    async function triggerEspHardwareMic() {
+      triggerEspMicBtn.disabled = true;
+      setBadge(espMicBadge, 'Queuing', 'bg-blue-950 text-blue-300 border border-blue-800');
+      espMicStatusText.textContent = 'Queuing 4s mic capture for ESP32...';
+
+      try {
+        const res = await fetch('/api/hardware-test/trigger-mic', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Trigger failed');
+
+        setBadge(espMicBadge, 'Waiting ESP32', 'bg-yellow-950 text-yellow-300 border border-yellow-800');
+        espMicStatusText.textContent = 'Command sent. Waiting for ESP32 to record 4s and upload (~5-8s)...';
+
+        // Remember current mic timestamp before capture
+        const beforeData = await loadHardwareStatus();
+        const startRecordTime = beforeData?.latest_mic_upload?.received_at || 0;
+
+        let pollAttempts = 0;
+        if (espMicPollInterval) clearInterval(espMicPollInterval);
+        espMicPollInterval = setInterval(async () => {
+          pollAttempts++;
+          const currentData = await loadHardwareStatus();
+          const currentReceived = currentData?.latest_mic_upload?.received_at || 0;
+
+          if (currentReceived && currentReceived !== startRecordTime) {
+            clearInterval(espMicPollInterval);
+            espMicPollInterval = null;
+            triggerEspMicBtn.disabled = false;
+
+            const mic = currentData.latest_mic_upload;
+            if (mic.peak_to_peak != null && mic.peak_to_peak > 500) {
+              setBadge(espMicBadge, 'Verified OK', 'bg-emerald-950 text-emerald-300 border border-emerald-800');
+              espMicStatusText.textContent = `✅ Audio received! P2P: ${mic.peak_to_peak}, Avg: ${mic.avg_abs_amplitude}. Play below.`;
+            } else {
+              setBadge(espMicBadge, 'Low Signal', 'bg-yellow-950 text-yellow-300 border border-yellow-800');
+              espMicStatusText.textContent = `⚠️ Audio received, but amplitude is quiet (P2P ${mic.peak_to_peak ?? 0}). Check mic wiring.`;
+            }
+
+            if (currentData.mic_audio_url) {
+              espMicAudioPlayer.src = currentData.mic_audio_url;
+              espMicAudioPlayer.play().catch(() => {});
+            }
+          } else if (pollAttempts >= 15) {
+            clearInterval(espMicPollInterval);
+            espMicPollInterval = null;
+            triggerEspMicBtn.disabled = false;
+            setBadge(espMicBadge, 'Timeout', 'bg-red-950 text-red-300 border border-red-800');
+            espMicStatusText.textContent = 'No upload received within 25s. Check if ESP32 is online and Wi-Fi connected.';
+          }
+        }, 1500);
+
+      } catch (err) {
+        setBadge(espMicBadge, 'Error', 'bg-red-950 text-red-300 border border-red-800');
+        espMicStatusText.textContent = err.message;
+        triggerEspMicBtn.disabled = false;
+      }
+    }
+
+    async function runLocalSpeakerHardwareTest() {
+      testSpeakerLocalBtn.disabled = true;
+      setBadge(speakerTestBadge, 'Queuing', 'bg-blue-950 text-blue-300 border border-blue-800');
+      speakerTestStatusText.textContent = 'Sending built-in "Hello" voice command to ESP32...';
+
+      try {
+        const res = await fetch('/api/hardware-test/speaker-local', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to queue command');
+
+        setBadge(speakerTestBadge, 'Queued', 'bg-emerald-950 text-emerald-300 border border-emerald-800');
+        speakerTestStatusText.textContent = '✅ Built-in voice queued. ESP32 will play "Hello" via MAX98357A on next heartbeat (~5s).';
+        await loadHardwareStatus();
+      } catch (err) {
+        setBadge(speakerTestBadge, 'Error', 'bg-red-950 text-red-300 border border-red-800');
+        speakerTestStatusText.textContent = err.message;
+      } finally {
+        setTimeout(() => { testSpeakerLocalBtn.disabled = false; }, 3000);
+      }
+    }
+
+    async function runTtsSpeakerHardwareTest() {
+      testSpeakerBtn.disabled = true;
+      setBadge(speakerTestBadge, 'Generating', 'bg-blue-950 text-blue-300 border border-blue-800');
+      speakerTestStatusText.textContent = 'Generating sample speech with Edge TTS...';
+
+      try {
+        const res = await fetch('/api/hardware-test/speaker', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: 'hardware-test-speaker',
+            text: speakerTestText.value.trim()
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'speaker test failed');
+
+        setBadge(speakerTestBadge, 'Queued', 'bg-emerald-950 text-emerald-300 border border-emerald-800');
+        speakerTestStatusText.textContent = `✅ Cloud voice generated. ESP32 will download and stream it to speaker. (ID: ${data.pending_audio_id})`;
+        await loadHardwareStatus();
+      } catch (err) {
+        setBadge(speakerTestBadge, 'Error', 'bg-red-950 text-red-300 border border-red-800');
+        speakerTestStatusText.textContent = err.message;
+      } finally {
+        setTimeout(() => { testSpeakerBtn.disabled = false; }, 3000);
+      }
+    }
+
+    triggerEspMicBtn.onclick = triggerEspHardwareMic;
+    testSpeakerLocalBtn.onclick = runLocalSpeakerHardwareTest;
+    testSpeakerBtn.onclick = runTtsSpeakerHardwareTest;
+    refreshHardwareStatusBtn.onclick = loadHardwareStatus;
 
     // Reset Chat
     function handleResetChat() {
