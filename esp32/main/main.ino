@@ -64,9 +64,9 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 170;
-static const uint16_t kMicReleaseThreshold = 100;
-static const uint8_t kMicHighDebounceCount = 6;
+static const uint16_t kMicSpikeThreshold = 240;
+static const uint16_t kMicReleaseThreshold = 150;
+static const uint8_t kMicHighDebounceCount = 12;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 30;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -1399,26 +1399,39 @@ void applySoftwareAudioGain()
     audioCaptureBuffer[i] -= dcBias;
   }
 
+  // 2. High-pass filter at ~250 Hz (cuts low-frequency fan wind and rumble noise)
+  const float alpha = 0.82f;
+  float prevX = 0.0f;
+  float prevY = 0.0f;
   int16_t maxAbs = 0;
   for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
   {
-    const int16_t absVal = abs(audioCaptureBuffer[i]);
+    const float x = (float)audioCaptureBuffer[i];
+    const float y = alpha * (prevY + x - prevX);
+    prevX = x;
+    prevY = y;
+    int32_t val = (int32_t)y;
+    if (val > 32767) val = 32767;
+    else if (val < -32768) val = -32768;
+    audioCaptureBuffer[i] = (int16_t)val;
+
+    const int16_t absVal = abs((int)val);
     if (absVal > maxAbs)
     {
       maxAbs = absVal;
     }
   }
 
-  // If audio was captured but amplitude is low, dynamically scale it up for Whisper STT
-  if (maxAbs > 40 && maxAbs < 24000)
+  // 3. Gentle gain: only scale if actual voice is present and quiet, never boost fan noise!
+  if (maxAbs > 400 && maxAbs < 12000)
   {
-    float gain = 24000.0f / (float)maxAbs;
-    if (gain > 6.0f)
+    float gain = 16000.0f / (float)maxAbs;
+    if (gain > 2.2f)
     {
-      gain = 6.0f; // Max 6x digital gain (+15.5 dB)
+      gain = 2.2f; // Cap at 2.2x so room fan noise isn't blown up
     }
 
-    Serial.printf("[Audio-AGC] Peak amplitude was %d, applying %.2fx digital gain boost\n", maxAbs, gain);
+    Serial.printf("[Audio-AGC] Filtered peak was %d, applying %.2fx gentle gain\n", maxAbs, gain);
 
     uint64_t newAbsSum = 0;
     int16_t newMin = 32767;

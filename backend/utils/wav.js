@@ -33,17 +33,17 @@ function writePcm16MonoWav({ rawPath, wavPath, sampleRate, audioDataBytes }) {
     samples[i] = y;
   }
 
-  // 3. Peak Normalization: If signal is quiet, scale gracefully without clipping
+  // 3. Peak Normalization: If signal has actual speech, scale gracefully without boosting background fan noise
   let peak = 0;
   for (let i = 0; i < numSamples; i++) {
     const a = Math.abs(samples[i]);
     if (a > peak) peak = a;
   }
 
-  if (peak > 50) {
-    const targetPeak = 22000;
+  if (peak > 1000) {
+    const targetPeak = 20000;
     let gain = targetPeak / peak;
-    if (gain > 6.0) gain = 6.0;
+    if (gain > 2.5) gain = 2.5;
     if (gain < 0.8) gain = 0.8;
 
     for (let i = 0; i < numSamples; i++) {
