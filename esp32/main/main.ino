@@ -71,6 +71,7 @@ static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 30;
 static const uint32_t kSoundReactionDurationMs = 700;
 static const bool kPrintMicDebug = false;
+static const bool kEnableFpsDiag = false;
 static const uint16_t kStartupMicSignalThreshold = 40;
 static const uint32_t kStartupMicTestTimeoutMs = 3000;
 static const uint32_t kStartupBeepDurationMs = 400;
@@ -453,21 +454,24 @@ void loop()
   serviceEyeReaction();
   handleVoiceTurnTimeouts();
 
-  static uint32_t s_diagFrameCount = 0;
-  static uint32_t s_diagLastReportMs = 0;
-  ++s_diagFrameCount;
-  const uint32_t nowMs = millis();
-  if (nowMs - s_diagLastReportMs >= 2000)
+  if (kEnableFpsDiag)
   {
-    const float fps = (float)s_diagFrameCount * 1000.0f / (float)(nowMs - s_diagLastReportMs);
-    Serial.print("[DIAG-FPS] roboEyes loop rate: ");
-    Serial.print(fps, 1);
-    Serial.print(" Hz | State: ");
-    Serial.print(voiceTurn.state);
-    Serial.print(" | Free heap: ");
-    Serial.println(ESP.getFreeHeap());
-    s_diagFrameCount = 0;
-    s_diagLastReportMs = nowMs;
+    static uint32_t s_diagFrameCount = 0;
+    static uint32_t s_diagLastReportMs = 0;
+    ++s_diagFrameCount;
+    const uint32_t nowMs = millis();
+    if (nowMs - s_diagLastReportMs >= 5000)
+    {
+      const float fps = (float)s_diagFrameCount * 1000.0f / (float)(nowMs - s_diagLastReportMs);
+      Serial.print("[DIAG-FPS] roboEyes loop rate: ");
+      Serial.print(fps, 1);
+      Serial.print(" Hz | State: ");
+      Serial.print(voiceTurn.state);
+      Serial.print(" | Free heap: ");
+      Serial.println(ESP.getFreeHeap());
+      s_diagFrameCount = 0;
+      s_diagLastReportMs = nowMs;
+    }
   }
 
   taskYIELD();
@@ -925,7 +929,7 @@ void playStartupBeep()
     }
 
     frameNumber += framesThisChunk;
-    feedLoopWDT();
+    taskYIELD();
   }
 
   i2s_zero_dma_buffer(I2S_PORT);
@@ -976,7 +980,7 @@ void playStartupHello()
     const size_t bytesToWrite = framesThisChunk * 2U * sizeof(int16_t);
     i2s_write(I2S_PORT, audioState.dmaBuffer, bytesToWrite, &bytesWritten, portMAX_DELAY);
     sampleIdx += framesThisChunk;
-    feedLoopWDT();
+    taskYIELD();
   }
   i2s_zero_dma_buffer(I2S_PORT);
   Serial.println("speaker test: 'Hello' playback complete");
@@ -1476,7 +1480,7 @@ void performSynchronousAudioCapture()
 
     if ((sampleIndex & 0xFF) == 0)
     {
-      feedLoopWDT();
+      taskYIELD();
     }
   }
 
