@@ -710,6 +710,7 @@ function isNoiseTranscript(text) {
     "english subtitles",
     "please subscribe",
     "watching",
+    "the end",
   ];
   
   // Check if it exactly matches or contains any noise phrases
@@ -717,9 +718,9 @@ function isNoiseTranscript(text) {
     return true;
   }
   
-  // Ignore single-character noise or very short filler words (like "you", "yeah", "okay", "oh") if they are alone
+  // Ignore single-character noise or very short filler words (like "you", "yeah", "okay", "oh", "end") if they are alone
   const words = cleanText.split(/\s+/);
-  if (words.length === 1 && ["you", "yeah", "okay", "oh", "yes", "no", "uh", "um"].includes(words[0])) {
+  if (words.length === 1 && ["you", "yeah", "okay", "oh", "yes", "no", "uh", "um", "end", "so", "bye", "a", "i"].includes(words[0])) {
     return true;
   }
   

@@ -1387,6 +1387,18 @@ void finishPlayback()
 
 void applySoftwareAudioGain()
 {
+  // 1. Remove DC offset so waveform is perfectly centered at zero
+  int64_t sampleSum = 0;
+  for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
+  {
+    sampleSum += audioCaptureBuffer[i];
+  }
+  const int16_t dcBias = (int16_t)(sampleSum / (int64_t)kAudioCaptureSampleCount);
+  for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
+  {
+    audioCaptureBuffer[i] -= dcBias;
+  }
+
   int16_t maxAbs = 0;
   for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
   {
