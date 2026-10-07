@@ -64,9 +64,9 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 350;
-static const uint16_t kMicReleaseThreshold = 220;
-static const uint8_t kMicHighDebounceCount = 20;
+static const uint16_t kMicSpikeThreshold = 170;
+static const uint16_t kMicReleaseThreshold = 100;
+static const uint8_t kMicHighDebounceCount = 6;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 30;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -296,10 +296,12 @@ void networkWorkerTask(void *param)
     {
       if (event == NET_EVENT_UPLOAD_AUDIO)
       {
+        Serial.println("[NetWorker] Audio upload requested -> Starting upload to backend...");
         performAudioUpload();
       }
       else if (event == NET_EVENT_CHECK_ADMIN)
       {
+        Serial.println("[NetWorker] Admin check requested -> Polling backend...");
         checkRemoteAdminUpdates();
       }
 
@@ -313,6 +315,12 @@ void networkWorkerTask(void *param)
       lastHeartbeatCheckMs = nowMs;
       if (canStartVoiceTurn())
       {
+        static uint32_t s_lastPollLogMs = 0;
+        if (nowMs - s_lastPollLogMs >= 15000)
+        {
+          s_lastPollLogMs = nowMs;
+          Serial.println("[NetWorker] Background polling: checking remote backend heartbeat...");
+        }
         checkRemoteAdminUpdates();
       }
     }
@@ -453,6 +461,13 @@ void loop()
   serviceMicrophoneInput();
   serviceEyeReaction();
   handleVoiceTurnTimeouts();
+
+  static bool s_printedInitialListening = false;
+  if (!s_printedInitialListening && WiFi.status() == WL_CONNECTED && (int32_t)(millis() - s_playbackCooldownUntilMs) >= 0)
+  {
+    s_printedInitialListening = true;
+    Serial.println("Listening for sound/voice (mic active)...");
+  }
 
   if (kEnableFpsDiag)
   {
@@ -1802,7 +1817,8 @@ void serviceNetworking()
     Serial.print("WiFi connected, IP: ");
     Serial.println(WiFi.localIP());
     networkState.wifiConnectInProgress = false;
-    s_playbackCooldownUntilMs = millis() + 3500; // 3.5s cooldown ignores RF transient spike on connect
+    s_playbackCooldownUntilMs = millis() + 1500; // 1.5s cooldown ignores RF transient spike on connect
+    Serial.println("Listening for sound/voice...");
   }
 
   if (!kEnableBootChatDebug)
