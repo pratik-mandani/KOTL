@@ -22,8 +22,12 @@
 #define I2S_BCLK_PIN 26
 #define I2S_LRC_PIN 25
 #define I2S_DIN_PIN 27
-#define MIC_ADC_PIN 34
-#define MIC_ADC_CHANNEL ADC1_CHANNEL_6
+
+// INMP441 Digital I2S MEMS Microphone on I2S_NUM_1
+#define I2S_MIC_PORT I2S_NUM_1
+#define I2S_MIC_SCK_PIN 32
+#define I2S_MIC_WS_PIN 33
+#define I2S_MIC_SD_PIN 35
 #define BUTTON_BOOT_PIN 0
 
 enum PlaybackSource
@@ -65,11 +69,11 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 240;
-static const uint16_t kMicReleaseThreshold = 150;
-static const uint8_t kMicHighDebounceCount = 12;
+static const uint16_t kMicSpikeThreshold = 600;
+static const uint16_t kMicReleaseThreshold = 350;
+static const uint8_t kMicHighDebounceCount = 3;
 static const uint32_t kMicMinSilenceMs = 120;
-static const uint32_t kMicPrintIntervalMs = 30;
+static const uint32_t kMicPrintIntervalMs = 50;
 static const uint32_t kSoundReactionDurationMs = 700;
 static const bool kPrintMicDebug = false;
 static const bool kEnableFpsDiag = false;
@@ -562,15 +566,8 @@ void resetVoiceTurnToIdle()
 {
   clearVoiceTurnRuntimeState();
   
-  // Recalibrate mic baseline to clear any analog rail sag shift from speaker playback
-  uint32_t baselineTotal = 0;
-  for (int i = 0; i < 32; ++i)
-  {
-    baselineTotal += adc1_get_raw(MIC_ADC_CHANNEL);
-    delayMicroseconds(200);
-  }
-  micState.baseline = baselineTotal / 32;
-  micState.rawValue = micState.baseline;
+  micState.baseline = 0;
+  micState.rawValue = 0;
   micState.amplitude = 0;
   micState.soundHigh = false;
   micState.consecutiveHighReadings = 0;
@@ -748,12 +745,41 @@ void initAudioOutput()
 
 void initMicrophoneInput()
 {
-  adc1_config_width(ADC_WIDTH_BIT_12);
-  adc1_config_channel_atten(MIC_ADC_CHANNEL, ADC_ATTEN_DB_11);
+  i2s_config_t i2sMicConfig = {};
+  i2sMicConfig.mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX);
+  i2sMicConfig.sample_rate = (int)kAudioCaptureSampleRate;
+  i2sMicConfig.bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT;
+  i2sMicConfig.channel_format = I2S_CHANNEL_FMT_ONLY_LEFT;
+  i2sMicConfig.communication_format = I2S_COMM_FORMAT_STAND_I2S;
+  i2sMicConfig.intr_alloc_flags = 0;
+  i2sMicConfig.dma_buf_count = 8;
+  i2sMicConfig.dma_buf_len = 256;
+  i2sMicConfig.use_apll = false;
+  i2sMicConfig.tx_desc_auto_clear = false;
+  i2sMicConfig.fixed_mclk = 0;
 
-  const uint16_t initialSample = (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
-  micState.rawValue = initialSample;
-  micState.baseline = initialSample;
+  i2s_pin_config_t micPinConfig = {};
+  micPinConfig.bck_io_num = I2S_MIC_SCK_PIN;
+  micPinConfig.ws_io_num = I2S_MIC_WS_PIN;
+  micPinConfig.data_out_num = I2S_PIN_NO_CHANGE;
+  micPinConfig.data_in_num = I2S_MIC_SD_PIN;
+
+  esp_err_t installErr = i2s_driver_install(I2S_MIC_PORT, &i2sMicConfig, 0, NULL);
+  esp_err_t pinErr = i2s_set_pin(I2S_MIC_PORT, &micPinConfig);
+
+  if (installErr == ESP_OK && pinErr == ESP_OK)
+  {
+    Serial.printf("[INMP441] Digital I2S Microphone initialized on I2S_NUM_1 (SCK=%d, WS=%d, SD=%d)\n",
+                  I2S_MIC_SCK_PIN, I2S_MIC_WS_PIN, I2S_MIC_SD_PIN);
+  }
+  else
+  {
+    Serial.printf("[INMP441] Init error: install=%s, pin=%s\n", esp_err_to_name(installErr), esp_err_to_name(pinErr));
+  }
+
+  micState.rawValue = 0;
+  micState.baseline = 0;
+  micState.amplitude = 0;
 }
 
 void initNetworking()
@@ -791,82 +817,50 @@ void runStartupSelfTest()
   drawStartupSelfTestScreen("KOTL", "Speaker Voice", 2);
   playStartupHello();
 
-  uint32_t baselineTotal = 0;
-  static const uint8_t kBaselineSampleCount = 64;
-  for (uint8_t sampleIndex = 0; sampleIndex < kBaselineSampleCount; ++sampleIndex)
+  drawStartupSelfTestScreen("KOTL", "INMP441 Mic Test", 2);
+
+  int32_t testChunk[256];
+  size_t testBytesRead = 0;
+  esp_err_t micTestErr = i2s_read(I2S_MIC_PORT, testChunk, sizeof(testChunk), &testBytesRead, pdMS_TO_TICKS(500));
+
+  int32_t maxAmp = 0;
+  if (micTestErr == ESP_OK && testBytesRead > 0)
   {
-    baselineTotal += (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
-    delay(2);
+    const size_t testSamples = testBytesRead / sizeof(int32_t);
+    for (size_t i = 0; i < testSamples; ++i)
+    {
+      int32_t s = abs(testChunk[i] >> 14);
+      if (s > maxAmp) maxAmp = s;
+    }
   }
 
-  const uint16_t micBaseline = (uint16_t)(baselineTotal / kBaselineSampleCount);
-  uint16_t rawMin = 4095;
-  uint16_t rawMax = 0;
-  uint64_t movementSum = 0;
-  uint32_t sampleCount = 0;
-  uint32_t lastAnimationMs = 0;
-  uint8_t animationStep = 0;
-  const uint32_t startedAtMs = millis();
+  Serial.printf("INMP441 I2S test bytes: %u, max amp: %d, status: %s\n",
+                (unsigned int)testBytesRead, maxAmp, esp_err_to_name(micTestErr));
 
-  while ((uint32_t)(millis() - startedAtMs) < kStartupMicTestTimeoutMs)
-  {
-    const uint16_t rawValue = (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
-    if (rawValue < rawMin)
-    {
-      rawMin = rawValue;
-    }
-    if (rawValue > rawMax)
-    {
-      rawMax = rawValue;
-    }
-
-    movementSum += (rawValue > micBaseline) ? (rawValue - micBaseline) : (micBaseline - rawValue);
-    ++sampleCount;
-
-    const uint32_t nowMs = millis();
-    if (nowMs - lastAnimationMs >= 250)
-    {
-      drawStartupSelfTestScreen("KOTL", "Mic Test", animationStep++);
-      lastAnimationMs = nowMs;
-    }
-
-    delay(1);
-  }
-
-  const uint16_t peakToPeak = rawMax - rawMin;
-  const uint32_t avgMovement = sampleCount > 0 ? (uint32_t)(movementSum / sampleCount) : 0;
-  startupSelfTestPassed = (peakToPeak >= kStartupMicSignalThreshold || avgMovement >= kStartupMicSignalThreshold);
-
-  Serial.print("mic baseline: ");
-  Serial.println(micBaseline);
-  Serial.print("mic raw min/max: ");
-  Serial.print(rawMin);
-  Serial.print(" / ");
-  Serial.println(rawMax);
-  Serial.print("mic peak-to-peak: ");
-  Serial.println(peakToPeak);
-  Serial.print("mic avg movement: ");
-  Serial.println(avgMovement);
-  Serial.print("result: ");
-  Serial.println(startupSelfTestPassed ? "PASS" : "FAIL");
+  startupSelfTestPassed = (micTestErr == ESP_OK && testBytesRead == sizeof(testChunk));
+  Serial.println(startupSelfTestPassed ? "result: PASS (INMP441 OK)" : "result: FAIL (Check Wiring)");
 
   if (startupSelfTestPassed)
   {
-    drawStartupSelfTestScreen("MIC OK", "KOTL Ready", 5);
+    drawStartupSelfTestScreen("INMP441 OK", "KOTL Ready", 5);
     delay(800);
     roboEyes.open();
   }
   else
   {
     Serial.println("===============================================================");
-    Serial.println("MIC BYPASS: No microphone detected on GPIO 34.");
-    Serial.println("KOTL is running in SERIAL MONITOR MODE!");
-    Serial.println(">>> TYPE YOUR QUESTION IN SERIAL MONITOR AND PRESS ENTER <<<");
+    Serial.println("INMP441 NOT DETECTED! Check I2S Pin Wiring:");
+    Serial.println("  INMP441 SCK -> ESP32 GPIO 32");
+    Serial.println("  INMP441 WS  -> ESP32 GPIO 33");
+    Serial.println("  INMP441 SD  -> ESP32 GPIO 35");
+    Serial.println("  INMP441 L/R -> GND");
+    Serial.println("  INMP441 VDD -> 3.3V (NOT 5V)");
+    Serial.println("  INMP441 GND -> GND");
     Serial.println("===============================================================");
-    drawStartupSelfTestScreen("SERIAL MODE", "Type in Serial", 2);
+    drawStartupSelfTestScreen("SERIAL MODE", "Check Mic Wiring", 2);
     delay(800);
     roboEyes.open();
-    startupSelfTestPassed = true; // Allow loop and Serial input to run
+    startupSelfTestPassed = true; // Allow serial mode to continue working
     captureState.isRecording = false;
     captureState.isUploading = false;
     captureState.uploadPending = false;
@@ -1477,69 +1471,71 @@ void applySoftwareAudioGain()
 void performSynchronousAudioCapture()
 {
   Serial.println("TURN START");
-  Serial.println("RECORDING START");
+  Serial.println("RECORDING START (INMP441 I2S)");
   Serial.print("recording sample rate: ");
   Serial.println(kAudioCaptureSampleRate);
   Serial.print("recording duration ms: ");
   Serial.println(kAudioCaptureDurationMs);
-  Serial.print("baseline: ");
-  Serial.println(captureState.adcBaseline);
 
-  captureState.rawMin = 4095;
+  captureState.rawMin = 0;
   captureState.rawMax = 0;
   captureState.pcmMin = 32767;
   captureState.pcmMax = -32768;
   captureState.absSum = 0;
   captureState.clippedSampleCount = 0;
 
-  const uint32_t startUs = micros();
-  uint32_t nextSampleDueUs = startUs;
+  // Flush any stale samples from the I2S DMA buffer
+  i2s_zero_dma_buffer(I2S_MIC_PORT);
 
-  for (size_t sampleIndex = 0; sampleIndex < kAudioCaptureSampleCount; ++sampleIndex)
+  const uint32_t startMs = millis();
+  size_t capturedSamples = 0;
+  static const size_t kMicDmaChunkSize = 256;
+  int32_t dmaChunk[kMicDmaChunkSize];
+
+  while (capturedSamples < kAudioCaptureSampleCount)
   {
-    while ((int32_t)(micros() - nextSampleDueUs) < 0)
-    {
-      // microsecond precision spinwait for exactly 125us tick
-    }
+    size_t samplesRemaining = kAudioCaptureSampleCount - capturedSamples;
+    size_t samplesToRead = min(kMicDmaChunkSize, samplesRemaining);
+    size_t bytesToRead = samplesToRead * sizeof(int32_t);
+    size_t bytesRead = 0;
 
-    const uint16_t rawValue = (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
-    const int16_t pcmSample = adcToPcm16(rawValue, captureState.adcBaseline);
-    audioCaptureBuffer[sampleIndex] = pcmSample;
-
-    if (pcmSample == 32767 || pcmSample == -32768)
-    {
-      ++captureState.clippedSampleCount;
-    }
-    if (rawValue < captureState.rawMin)
-    {
-      captureState.rawMin = rawValue;
-    }
-    if (rawValue > captureState.rawMax)
-    {
-      captureState.rawMax = rawValue;
-    }
-    if (pcmSample < captureState.pcmMin)
-    {
-      captureState.pcmMin = pcmSample;
-    }
-    if (pcmSample > captureState.pcmMax)
-    {
-      captureState.pcmMax = pcmSample;
-    }
-    captureState.absSum += (uint64_t)abs((int)pcmSample);
-
-    nextSampleDueUs += kAudioCaptureSampleIntervalUs;
-
-    if ((sampleIndex & 0xFF) == 0)
+    esp_err_t err = i2s_read(I2S_MIC_PORT, dmaChunk, bytesToRead, &bytesRead, pdMS_TO_TICKS(100));
+    if (err != ESP_OK || bytesRead == 0)
     {
       taskYIELD();
+      continue;
+    }
+
+    size_t samplesGot = bytesRead / sizeof(int32_t);
+    for (size_t i = 0; i < samplesGot && capturedSamples < kAudioCaptureSampleCount; ++i)
+    {
+      // INMP441 sends 24-bit audio MSB-aligned in 32-bit slot.
+      // Shifting >> 14 provides clean ~4x digital gain without clipping.
+      int32_t sample = dmaChunk[i] >> 14;
+      if (sample > 32767)
+      {
+        sample = 32767;
+        ++captureState.clippedSampleCount;
+      }
+      else if (sample < -32768)
+      {
+        sample = -32768;
+        ++captureState.clippedSampleCount;
+      }
+
+      int16_t pcmSample = (int16_t)sample;
+      audioCaptureBuffer[capturedSamples++] = pcmSample;
+
+      if (pcmSample < captureState.pcmMin) captureState.pcmMin = pcmSample;
+      if (pcmSample > captureState.pcmMax) captureState.pcmMax = pcmSample;
+      captureState.absSum += (uint64_t)abs((int)pcmSample);
     }
   }
 
-  const uint32_t elapsedMs = (micros() - startUs) / 1000UL;
+  const uint32_t elapsedMs = millis() - startMs;
   captureState.isRecording = false;
 
-  // Apply Software Auto-Gain / Normalization to ensure loud, clear voice for Whisper STT
+  // Apply Software Auto-Gain / High-pass filter
   applySoftwareAudioGain();
 
   Serial.println("RECORDING COMPLETE");
@@ -1547,14 +1543,6 @@ void performSynchronousAudioCapture()
   Serial.println(sizeof(audioCaptureBuffer));
   Serial.print("recording elapsed ms: ");
   Serial.println(elapsedMs);
-  Serial.print("baseline: ");
-  Serial.println(captureState.adcBaseline);
-  Serial.print("raw min/max: ");
-  Serial.print(captureState.rawMin);
-  Serial.print(" / ");
-  Serial.println(captureState.rawMax);
-  Serial.print("peak-to-peak: ");
-  Serial.println(captureState.rawMax - captureState.rawMin);
   Serial.print("pcm min/max: ");
   Serial.print(captureState.pcmMin);
   Serial.print(" / ");
@@ -1599,12 +1587,12 @@ void beginAudioCapture()
     return;
   }
 
-  // Draw attentive eyes once before entering precision microsecond sampling
+  // Draw attentive eyes once before entering capture
   roboEyes.setMood(DEFAULT);
   roboEyes.open();
   roboEyes.update();
 
-  captureState.adcBaseline = calibrateCaptureBaseline();
+  captureState.adcBaseline = 0;
   captureState.isRecording = true;
   captureState.uploadPending = false;
   voiceTurn.lastTranscript = "";
@@ -1617,57 +1605,17 @@ void beginAudioCapture()
 
 void serviceAudioCapture()
 {
-  // Audio capture is handled synchronously with microsecond precision in performSynchronousAudioCapture()
+  // Audio capture is handled via I2S DMA in performSynchronousAudioCapture()
 }
 
 uint16_t calibrateCaptureBaseline()
 {
-  uint32_t total = 0;
-  uint16_t rawMin = 4095;
-  uint16_t rawMax = 0;
-  for (uint16_t sampleIndex = 0; sampleIndex < kAudioCaptureBaselineSamples; ++sampleIndex)
-  {
-    const uint16_t rawValue = (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
-    total += rawValue;
-    if (rawValue < rawMin)
-    {
-      rawMin = rawValue;
-    }
-    if (rawValue > rawMax)
-    {
-      rawMax = rawValue;
-    }
-    delayMicroseconds(kAudioCaptureSampleIntervalUs);
-  }
-
-  if (kAudioCaptureBaselineSamples > 2)
-  {
-    total -= rawMin;
-    total -= rawMax;
-  }
-
-  const uint16_t divisor = kAudioCaptureBaselineSamples > 2 ? (kAudioCaptureBaselineSamples - 2) : kAudioCaptureBaselineSamples;
-  const uint16_t baseline = (uint16_t)(total / divisor);
-  micState.baseline = baseline;
-  return baseline;
+  return 0;
 }
 
 int16_t adcToPcm16(uint16_t rawValue, uint16_t baseline)
 {
-  int32_t centered = (int32_t)rawValue - (int32_t)baseline;
-  int32_t scaled = centered << kAudioCapturePcmScaleShift;
-
-  if (scaled > 32767)
-  {
-    return 32767;
-  }
-
-  if (scaled < -32768)
-  {
-    return -32768;
-  }
-
-  return (int16_t)scaled;
+  return (int16_t)rawValue;
 }
 
 void initBootButton()
@@ -1703,14 +1651,10 @@ void serviceMicrophoneInput()
 {
   const uint32_t nowMs = millis();
   const bool wasSoundHigh = micState.soundHigh;
-  const uint16_t rawValue = (uint16_t)adc1_get_raw(MIC_ADC_CHANNEL);
 
-  micState.rawValue = rawValue;
-
-  if ((int32_t)(nowMs - s_playbackCooldownUntilMs) < 0)
+  // Don't poll mic while playing or downloading audio or during post-playback cooldown
+  if (audioState.isPlaying || audioState.isDownloading || (int32_t)(nowMs - s_playbackCooldownUntilMs) < 0)
   {
-    // During post-playback cooldown, dynamically adapt baseline and suppress triggers
-    micState.baseline = (uint16_t)(((uint32_t)micState.baseline * 15U + rawValue) / 16U);
     micState.amplitude = 0;
     micState.soundHigh = false;
     micState.soundActive = false;
@@ -1719,15 +1663,33 @@ void serviceMicrophoneInput()
     return;
   }
 
-  // Slow moving average (256x filter) so it only tracks DC bias drift, not voice audio waveforms
-  micState.baseline = (uint16_t)(((uint32_t)micState.baseline * 255U + rawValue) / 256U);
-  micState.amplitude = (rawValue > micState.baseline) ? (rawValue - micState.baseline) : (micState.baseline - rawValue);
+  // Non-blocking read of available DMA samples
+  int32_t sampleChunk[64];
+  size_t bytesRead = 0;
+  esp_err_t err = i2s_read(I2S_MIC_PORT, sampleChunk, sizeof(sampleChunk), &bytesRead, 0);
+
+  if (err != ESP_OK || bytesRead == 0)
+  {
+    return;
+  }
+
+  size_t sampleCount = bytesRead / sizeof(int32_t);
+  int32_t peakAmp = 0;
+  for (size_t i = 0; i < sampleCount; ++i)
+  {
+    int32_t amp = abs(sampleChunk[i] >> 14);
+    if (amp > peakAmp)
+    {
+      peakAmp = amp;
+    }
+  }
+
+  micState.rawValue = (uint16_t)min(peakAmp, (int32_t)32767);
+  micState.amplitude = micState.rawValue;
 
   if (kPrintMicDebug && nowMs - micState.lastPrintMs >= kMicPrintIntervalMs)
   {
-    Serial.print("Mic raw: ");
-    Serial.print(micState.rawValue);
-    Serial.print(" | amplitude: ");
+    Serial.print("Mic I2S amplitude: ");
     Serial.println(micState.amplitude);
     micState.lastPrintMs = nowMs;
   }
@@ -1780,7 +1742,8 @@ void serviceMicrophoneInput()
   else if (risingEdge && !micState.soundActive && !audioState.isPlaying && !audioState.isDownloading)
   {
     micState.soundActive = true;
-    Serial.println("Sound detected");
+    Serial.print("Sound detected! Peak amp: ");
+    Serial.println(peakAmp);
     beginAudioCapture();
     triggerSoundReaction(nowMs);
   }
