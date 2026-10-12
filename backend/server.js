@@ -772,7 +772,7 @@ function isNoiseTranscript(text) {
 
 app.post(
   "/audio",
-  express.raw({ type: "application/octet-stream", limit: "128kb" }),
+  express.raw({ type: "application/octet-stream", limit: "256kb" }),
   async (req, res) => {
     if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
       return res.status(400).json({
@@ -886,38 +886,36 @@ app.post(
       logAudioTurn(turnId, "stt failed", { error: metadata.stt_error });
     }
 
-    if (!(typeof metadata.transcript === "string" && metadata.transcript.trim().length > 0)) {
-      const assistantResult = await generateAssistantReply({ transcript: "", sessionId });
-      metadata.assistant_provider = assistantResult.provider;
-      metadata.assistant_model = assistantResult.model;
-      if (assistantResult.success) {
-        metadata.assistant_reply = assistantResult.reply;
-        metadata.assistant_generated_at = new Date().toISOString();
-      } else {
-        metadata.assistant_error = assistantResult.error;
-      }
-      logAudioTurn(turnId, "assistant unclear speech prompt", {
-        stt_error: metadata.stt_error || "empty transcript",
-        reply: metadata.assistant_reply,
-      });
-    }
+    const isLowAmplitudeNoise = (metadata.avg_abs_amplitude !== null && metadata.avg_abs_amplitude < 180) &&
+                                (metadata.peak_to_peak !== null && metadata.peak_to_peak < 2200);
 
-    // Filter out common noise transcriptions & hallucinations without rewriting them into user speech.
-    if (typeof metadata.transcript === "string" && metadata.transcript.trim().length > 0 && isNoiseTranscript(metadata.transcript)) {
-      const originalTranscript = metadata.transcript;
-      const assistantResult = await generateAssistantReply({ transcript: "", sessionId });
-      metadata.assistant_provider = assistantResult.provider;
-      metadata.assistant_model = assistantResult.model;
-      if (assistantResult.success) {
-        metadata.assistant_reply = assistantResult.reply;
-        metadata.assistant_generated_at = new Date().toISOString();
+    const hasValidTranscript = typeof metadata.transcript === "string" && metadata.transcript.trim().length > 0;
+    const isNoise = hasValidTranscript && isNoiseTranscript(metadata.transcript);
+
+    if (!hasValidTranscript || isNoise) {
+      if (isLowAmplitudeNoise) {
+        logAudioTurn(turnId, "silence/ambient noise turn ignored without TTS to prevent feedback loop", {
+          avg_abs_amplitude: metadata.avg_abs_amplitude,
+          peak_to_peak: metadata.peak_to_peak,
+          transcript: metadata.transcript,
+        });
+        metadata.assistant_reply = null;
+        metadata.turn_status = "silence_ignored";
       } else {
-        metadata.assistant_error = assistantResult.error;
+        const assistantResult = await generateAssistantReply({ transcript: "", sessionId });
+        metadata.assistant_provider = assistantResult.provider;
+        metadata.assistant_model = assistantResult.model;
+        if (assistantResult.success) {
+          metadata.assistant_reply = assistantResult.reply;
+          metadata.assistant_generated_at = new Date().toISOString();
+        } else {
+          metadata.assistant_error = assistantResult.error;
+        }
+        logAudioTurn(turnId, "assistant prompt for unclear speech", {
+          info: isNoise ? `Noise ignored: "${metadata.transcript}"` : (metadata.stt_error || "empty transcript"),
+          reply: metadata.assistant_reply,
+        });
       }
-      logAudioTurn(turnId, "assistant unclear speech prompt", {
-        info: `Noise transcript ignored: "${originalTranscript}"`,
-        reply: metadata.assistant_reply,
-      });
     }
 
     // Direct responses enabled: always allow turn and keep session active

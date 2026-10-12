@@ -69,9 +69,9 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 400;
-static const uint16_t kMicReleaseThreshold = 250;
-static const uint8_t kMicHighDebounceCount = 2;
+static const uint16_t kMicSpikeThreshold = 750;
+static const uint16_t kMicReleaseThreshold = 450;
+static const uint8_t kMicHighDebounceCount = 3;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 50;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -208,7 +208,7 @@ static int16_t audioCaptureBuffer[kAudioCaptureSampleCount] = {0};
 bool startupSelfTestPassed = false;
 bool audioOutputInitialized = false;
 bool ttsStorageAvailable = false;
-static const uint32_t kVoiceRecordingTimeoutMs = 5000;
+static const uint32_t kVoiceRecordingTimeoutMs = 8000;
 static const uint32_t kVoiceUploadingTimeoutMs = 20000;
 static const uint32_t kVoiceThinkingTimeoutMs = 30000;
 static const uint32_t kVoiceDownloadingTtsTimeoutMs = 20000;
@@ -244,7 +244,7 @@ void performBackendPostRequest(uint32_t nowMs);
 void performAudioUpload();
 void beginAudioCapture();
 void performSynchronousAudioCapture();
-void applySoftwareAudioGain();
+void applySoftwareAudioGain(size_t sampleCount);
 void triggerSoundReaction(uint32_t nowMs);
 void triggerVoicePlayback();
 void fillAudioChunk();
@@ -1402,16 +1402,17 @@ void finishPlayback()
   }
 }
 
-void applySoftwareAudioGain()
+void applySoftwareAudioGain(size_t sampleCount)
 {
+  if (sampleCount == 0) return;
   // 1. Remove DC offset so waveform is perfectly centered at zero
   int64_t sampleSum = 0;
-  for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
+  for (size_t i = 0; i < sampleCount; ++i)
   {
     sampleSum += audioCaptureBuffer[i];
   }
-  const int16_t dcBias = (int16_t)(sampleSum / (int64_t)kAudioCaptureSampleCount);
-  for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
+  const int16_t dcBias = (int16_t)(sampleSum / (int64_t)sampleCount);
+  for (size_t i = 0; i < sampleCount; ++i)
   {
     audioCaptureBuffer[i] -= dcBias;
   }
@@ -1421,7 +1422,7 @@ void applySoftwareAudioGain()
   float prevX = 0.0f;
   float prevY = 0.0f;
   int16_t maxAbs = 0;
-  for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
+  for (size_t i = 0; i < sampleCount; ++i)
   {
     const float x = (float)audioCaptureBuffer[i];
     const float y = alpha * (prevY + x - prevX);
@@ -1454,7 +1455,7 @@ void applySoftwareAudioGain()
     int16_t newMin = 32767;
     int16_t newMax = -32768;
 
-    for (size_t i = 0; i < kAudioCaptureSampleCount; ++i)
+    for (size_t i = 0; i < sampleCount; ++i)
     {
       int32_t amplified = (int32_t)((float)audioCaptureBuffer[i] * gain);
       if (amplified > 32767) amplified = 32767;
@@ -1477,12 +1478,12 @@ void performSynchronousAudioCapture()
 {
   Serial.println("TURN START");
   Serial.println("=================================================");
-  Serial.println(">>> RECORDING NOW! SPEAK YOUR QUESTION (4 SECONDS) <<<");
+  Serial.println(">>> RECORDING NOW! SPEAK YOUR QUESTION (UP TO 4 SECONDS) <<<");
   Serial.println("=================================================");
-  Serial.println("RECORDING START (INMP441 I2S)");
+  Serial.println("RECORDING START (INMP441 I2S + Dynamic VAD)");
   Serial.print("recording sample rate: ");
   Serial.println(kAudioCaptureSampleRate);
-  Serial.print("recording duration ms: ");
+  Serial.print("max recording duration ms: ");
   Serial.println(kAudioCaptureDurationMs);
 
   captureState.rawMin = 0;
@@ -1500,6 +1501,17 @@ void performSynchronousAudioCapture()
   static const size_t kMicDmaChunkSize = 256;
   int32_t dmaChunk[kMicDmaChunkSize];
 
+  // Voice Activity Detection (VAD) parameters
+  static const int16_t kVadVoiceThreshold = 750;     // Amplitude indicating speech
+  static const uint32_t kVadInitialSilenceMs = 1800;  // Max initial silence before aborting false trigger
+  static const uint32_t kVadTrailingSilenceMs = 750;  // Natural silence after speech indicating finished speaking
+  static const uint32_t kVadMinSpeechMs = 450;        // Minimum speech duration before considering silence
+
+  bool voiceDetected = false;
+  uint32_t voiceStartMs = 0;
+  uint32_t lastVoiceMs = 0;
+  int32_t peakSpeechAmp = 0;
+
   while (capturedSamples < kAudioCaptureSampleCount)
   {
     size_t samplesRemaining = kAudioCaptureSampleCount - capturedSamples;
@@ -1515,6 +1527,8 @@ void performSynchronousAudioCapture()
     }
 
     size_t samplesGot = bytesRead / sizeof(int32_t);
+    int32_t chunkPeak = 0;
+
     for (size_t i = 0; i < samplesGot && capturedSamples < kAudioCaptureSampleCount; ++i)
     {
       // INMP441 sends 24-bit audio MSB-aligned in 32-bit slot.
@@ -1534,35 +1548,87 @@ void performSynchronousAudioCapture()
       int16_t pcmSample = (int16_t)sample;
       audioCaptureBuffer[capturedSamples++] = pcmSample;
 
+      int32_t absSample = abs((int)pcmSample);
+      if (absSample > chunkPeak) chunkPeak = absSample;
+
       if (pcmSample < captureState.pcmMin) captureState.pcmMin = pcmSample;
       if (pcmSample > captureState.pcmMax) captureState.pcmMax = pcmSample;
-      captureState.absSum += (uint64_t)abs((int)pcmSample);
+      captureState.absSum += (uint64_t)absSample;
+    }
+
+    const uint32_t nowMs = millis();
+    if (chunkPeak > peakSpeechAmp)
+    {
+      peakSpeechAmp = chunkPeak;
+    }
+
+    if (chunkPeak >= kVadVoiceThreshold)
+    {
+      if (!voiceDetected)
+      {
+        voiceDetected = true;
+        voiceStartMs = nowMs;
+        Serial.printf("[VAD] >>> Speech active! (Peak: %d) <<<\n", chunkPeak);
+      }
+      lastVoiceMs = nowMs;
+    }
+
+    // 1. Initial silence timeout: If no voice within 1.8s, abort false trigger early
+    if (!voiceDetected && (nowMs - startMs >= kVadInitialSilenceMs))
+    {
+      Serial.printf("[VAD] Initial silence timeout (%u ms, max amp: %d). Aborting capture.\n",
+                    (unsigned int)(nowMs - startMs), peakSpeechAmp);
+      break;
+    }
+
+    // 2. Dynamic end-of-speech silence timeout: User finished talking!
+    if (voiceDetected && (nowMs - voiceStartMs >= kVadMinSpeechMs) && (nowMs - lastVoiceMs >= kVadTrailingSilenceMs))
+    {
+      Serial.printf("[VAD] End of speech detected (%u ms silence). Utterance duration: %u ms.\n",
+                    (unsigned int)(nowMs - lastVoiceMs), (unsigned int)(nowMs - voiceStartMs));
+      break;
     }
   }
 
   const uint32_t elapsedMs = millis() - startMs;
   captureState.isRecording = false;
 
-  // Apply Software Auto-Gain / High-pass filter
-  applySoftwareAudioGain();
+  // False trigger check: if no voice was detected or peak was below speech level (~900):
+  if (!voiceDetected || peakSpeechAmp < 900 || capturedSamples < (kAudioCaptureSampleRate / 3))
+  {
+    Serial.printf("[VAD] False trigger / ambient noise ignored (voice=%d, peak=%d, samples=%u). Turn cancelled.\n",
+                  voiceDetected, peakSpeechAmp, (unsigned int)capturedSamples);
+    resetVoiceTurnToIdle();
+    return;
+  }
 
+  captureState.writeIndex = capturedSamples;
+
+  // Apply Software Auto-Gain / High-pass filter to the captured samples
+  applySoftwareAudioGain(capturedSamples);
+
+  const uint32_t actualDurationMs = (uint32_t)((capturedSamples * 1000UL) / kAudioCaptureSampleRate);
   Serial.println("RECORDING COMPLETE");
+  Serial.print("captured samples: ");
+  Serial.println((unsigned int)capturedSamples);
   Serial.print("recording bytes: ");
-  Serial.println(sizeof(audioCaptureBuffer));
+  Serial.println(capturedSamples * sizeof(int16_t));
   Serial.print("recording elapsed ms: ");
   Serial.println(elapsedMs);
+  Serial.print("actual audio duration ms: ");
+  Serial.println(actualDurationMs);
   Serial.print("pcm min/max: ");
   Serial.print(captureState.pcmMin);
   Serial.print(" / ");
   Serial.println(captureState.pcmMax);
   Serial.print("avg abs amplitude: ");
-  Serial.println((unsigned long)(captureState.absSum / kAudioCaptureSampleCount));
+  Serial.println((unsigned long)(captureState.absSum / capturedSamples));
   Serial.print("clipped sample count: ");
   Serial.println(captureState.clippedSampleCount);
 
   if (kEnableAudioDiagnostic)
   {
-    const size_t diagnosticSampleCount = min(kAudioDiagnosticSampleCount, kAudioCaptureSampleCount);
+    const size_t diagnosticSampleCount = min(kAudioDiagnosticSampleCount, capturedSamples);
     for (size_t sampleIndex = 0; sampleIndex < diagnosticSampleCount; ++sampleIndex)
     {
       Serial.print("sample[");
@@ -1702,7 +1768,7 @@ void serviceMicrophoneInput()
     Serial.printf("[Mic Monitor] Live Amp: %d | Trigger: %d\n", micState.amplitude, kMicSpikeThreshold);
   }
 
-  if (micState.amplitude > 300 && nowMs - micState.lastPrintMs >= 200)
+  if (micState.amplitude > 550 && nowMs - micState.lastPrintMs >= 200)
   {
     Serial.printf("[Voice Sensing] Amp: %d\n", micState.amplitude);
     micState.lastPrintMs = nowMs;
@@ -2020,9 +2086,13 @@ void performAudioUpload()
     return;
   }
 
+  const size_t capturedCount = (captureState.writeIndex > 0) ? captureState.writeIndex : kAudioCaptureSampleCount;
+  const size_t uploadBytes = capturedCount * sizeof(int16_t);
+  const uint32_t uploadDurationMs = (uint32_t)((capturedCount * 1000UL) / kAudioCaptureSampleRate);
+
   http.addHeader("Content-Type", "application/octet-stream");
   http.addHeader("X-Sample-Rate", String(kAudioCaptureSampleRate));
-  http.addHeader("X-Duration-Ms", String(kAudioCaptureDurationMs));
+  http.addHeader("X-Duration-Ms", String(uploadDurationMs));
   http.addHeader("X-Audio-Format", "raw_pcm_16le");
   http.addHeader("X-Stream-Audio", "true");
 
@@ -2030,7 +2100,7 @@ void performAudioUpload()
   http.collectHeaders(headerKeys, 5);
 
   uint8_t *payload = reinterpret_cast<uint8_t *>(audioCaptureBuffer);
-  const int httpCode = http.POST(payload, sizeof(audioCaptureBuffer));
+  const int httpCode = http.POST(payload, uploadBytes);
   if (httpCode == HTTP_CODE_OK || httpCode == 200)
   {
     setVoiceTurnState(VOICE_THINKING);

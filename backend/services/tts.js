@@ -43,7 +43,7 @@ const PIPER_MODEL_PATH = process.env.PIPER_MODEL_PATH || "";
 const PIPER_CONFIG_PATH = process.env.PIPER_CONFIG_PATH || "";
 const PIPER_VOICE = "local";
 
-const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "gu-IN-DhwaniNeural";
+const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "gu-IN-NiranjanNeural";
 const EDGE_LANG = process.env.EDGE_TTS_LANG || "gu-IN";
 
 function buildTtsFilename() {
@@ -122,7 +122,7 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
   }
 
   const isGujarati = /[\u0A80-\u0AFF]/.test(text);
-  const selectedVoice = voice || (isGujarati ? "gu-IN-DhwaniNeural" : EDGE_VOICE);
+  const selectedVoice = voice || (isGujarati ? "gu-IN-NiranjanNeural" : (EDGE_VOICE || "en-IN-PrabhatNeural"));
   const selectedLang = isGujarati ? "gu-IN" : EDGE_LANG;
   const normalizedFilename = buildTtsFilename();
   const normalizedPath = path.join(TTS_UPLOADS_DIR, normalizedFilename);
