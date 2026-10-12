@@ -109,7 +109,7 @@ static const uint32_t kWiFiRetryIntervalMs = 5000;
 static const uint32_t kHttpRetryIntervalMs = 15000;
 static const uint32_t kHttpTimeoutMs = 120000;
 static const uint32_t kAudioCaptureSampleRate = 8000;
-static const uint32_t kAudioCaptureDurationMs = 4000;
+static const uint32_t kAudioCaptureDurationMs = 5000;
 static const size_t kAudioCaptureSampleCount = (kAudioCaptureSampleRate * kAudioCaptureDurationMs) / 1000;
 static const uint32_t kAudioCaptureSampleIntervalUs = 1000000UL / kAudioCaptureSampleRate;
 static const uint16_t kAudioCaptureBaselineSamples = 128;
@@ -204,11 +204,11 @@ EyeReactionState eyeReactionState = {false, 0};
 NetworkState networkState = {false, false, false, 0, 0};
 AudioCaptureState captureState = {false, false, false, 0, 0, 0, 2048, 4095, 0, 32767, -32768, 0, 0};
 VoiceTurnManager voiceTurn = {VOICE_IDLE, 0, "", "", ""};
-static int16_t audioCaptureBuffer[kAudioCaptureSampleCount] = {0};
+static int16_t *audioCaptureBuffer = nullptr;
 bool startupSelfTestPassed = false;
 bool audioOutputInitialized = false;
 bool ttsStorageAvailable = false;
-static const uint32_t kVoiceRecordingTimeoutMs = 8000;
+static const uint32_t kVoiceRecordingTimeoutMs = 9000;
 static const uint32_t kVoiceUploadingTimeoutMs = 60000;
 static const uint32_t kVoiceThinkingTimeoutMs = 60000;
 static const uint32_t kVoiceDownloadingTtsTimeoutMs = 60000;
@@ -412,6 +412,22 @@ void setup()
   Serial.println(g_wifi_ssid.length() > 0 ? g_wifi_ssid : String(kWiFiSsid));
   Serial.print("Configured Backend Base URL: ");
   Serial.println(g_backend_url.length() > 0 ? g_backend_url : String(kBackendBaseUrl));
+
+  if (!audioCaptureBuffer)
+  {
+    audioCaptureBuffer = (int16_t *)malloc(kAudioCaptureSampleCount * sizeof(int16_t));
+    if (audioCaptureBuffer)
+    {
+      memset(audioCaptureBuffer, 0, kAudioCaptureSampleCount * sizeof(int16_t));
+      Serial.printf("[Audio] Allocated %u bytes for %.1fs audio capture buffer\n",
+                    (unsigned int)(kAudioCaptureSampleCount * sizeof(int16_t)),
+                    (float)kAudioCaptureDurationMs / 1000.0f);
+    }
+    else
+    {
+      Serial.println("[Audio] ERROR: Failed to allocate audio capture buffer on heap!");
+    }
+  }
 
   initDisplay();
   initEyes();
@@ -1440,16 +1456,18 @@ void applySoftwareAudioGain(size_t sampleCount)
     }
   }
 
-  // 3. Gentle gain: only scale if actual voice is present and quiet, never boost fan noise!
-  if (maxAbs > 400 && maxAbs < 12000)
+  // 3. Clean Anti-Clipping AGC:
+  // Only apply gentle gain if voice is quiet (< 5000 peak).
+  // If voice is already strong (>= 5000), no scaling is needed to guarantee 0% clipping and crystal-clear Whisper transcription!
+  if (maxAbs > 600 && maxAbs < 5000)
   {
-    float gain = 16000.0f / (float)maxAbs;
-    if (gain > 2.2f)
+    float gain = 9000.0f / (float)maxAbs;
+    if (gain > 1.8f)
     {
-      gain = 2.2f; // Cap at 2.2x so room fan noise isn't blown up
+      gain = 1.8f;
     }
 
-    Serial.printf("[Audio-AGC] Filtered peak was %d, applying %.2fx gentle gain\n", maxAbs, gain);
+    Serial.printf("[Audio-AGC] Filtered peak was %d, applying %.2fx gentle gain (headroom safe)\n", maxAbs, gain);
 
     uint64_t newAbsSum = 0;
     int16_t newMin = 32767;
@@ -1499,13 +1517,20 @@ void performSynchronousAudioCapture()
   const uint32_t startMs = millis();
   size_t capturedSamples = 0;
   static const size_t kMicDmaChunkSize = 256;
+  if (!audioCaptureBuffer)
+  {
+    Serial.println("[Audio] Capture buffer null! Aborting.");
+    resetVoiceTurnToIdle();
+    return;
+  }
+
   int32_t dmaChunk[kMicDmaChunkSize];
 
   // Voice Activity Detection (VAD) parameters
   static const int16_t kVadVoiceThreshold = 1800;    // Amplitude indicating foreground speech
-  static const uint32_t kVadInitialSilenceMs = 1800;  // Max initial silence before aborting false trigger
-  static const uint32_t kVadTrailingSilenceMs = 700;  // Natural silence after speech indicating finished speaking
-  static const uint32_t kVadMinSpeechMs = 450;        // Minimum speech duration before considering silence
+  static const uint32_t kVadInitialSilenceMs = 2200;  // Max initial silence before aborting false trigger
+  static const uint32_t kVadTrailingSilenceMs = 1250; // Natural silence after speech (1.25s breathing room)
+  static const uint32_t kVadMinSpeechMs = 600;        // Minimum speech duration before considering silence
 
   bool voiceDetected = false;
   uint32_t voiceStartMs = 0;

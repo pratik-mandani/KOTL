@@ -134,6 +134,7 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
     const tts = new EdgeTTS({
       voice: selectedVoice,
       lang: selectedLang,
+      rate: "+18%",
       outputFormat: "audio-24khz-48kbitrate-mono-mp3",
       timeout: 10000,
     });

@@ -119,7 +119,7 @@ async function transcribeWithOpenAi(filePath) {
     fileName,
     model,
     "auto",
-    "User speaks questions and commands in clear English or Gujarati."
+    "User speaks naturally in authentic Gujarati (ગુજરાતી) or conversational English. સામાન્ય વાક્યો: કેમ છો, તમે કેમ છો, તારું નામ શું છે, તું કોણ છે, વાર્તા કહો, આજે કેવું છે, KOTL, hello, what is your name."
   );
 
   console.log(`[STT openai] Sending request to OpenAI STT API. Model: ${model}, Language: ${language}, Prompt hint: "${prompt}"`);
@@ -196,7 +196,7 @@ async function transcribeWithGroq(filePath) {
     fileName,
     model,
     "auto",
-    "User speaks questions and commands in clear English or Gujarati."
+    "User speaks naturally in authentic Gujarati (ગુજરાતી) or conversational English. સામાન્ય વાક્યો: કેમ છો, તમે કેમ છો, તારું નામ શું છે, તું કોણ છે, વાર્તા કહો, આજે કેવું છે, KOTL, hello, what is your name."
   );
 
   console.log(`[STT groq] Sending request to Groq STT API. Model: ${model}, Language: ${language}, Prompt: "${prompt}"`);
