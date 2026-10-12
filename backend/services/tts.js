@@ -145,7 +145,8 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
       throw new Error("Edge-TTS failed to produce audio output");
     }
 
-    await normalizeWavFile(tempMp3Path, normalizedPath, 15000);
+    const { convertMp3FileToWavFile } = require("../utils/audio-converter");
+    await convertMp3FileToWavFile(tempMp3Path, normalizedPath, NORMALIZED_SAMPLE_RATE);
 
     const stats = fs.statSync(normalizedPath);
     console.log(`[TTS Edge] Success! Generated ${normalizedFilename} (${stats.size} bytes)`);

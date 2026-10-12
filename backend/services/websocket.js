@@ -48,26 +48,11 @@ async function synthesizeSentencePcm(text) {
 
   let pcmBuffer = Buffer.alloc(0);
   try {
-    pcmBuffer = execFileSync(
-      ffmpegBin,
-      [
-        "-y",
-        "-i",
-        tempMp3,
-        "-af",
-        "highpass=f=160,volume=0.8",
-        "-f",
-        "s16le",
-        "-acodec",
-        "pcm_s16le",
-        "-ac",
-        "1",
-        "-ar",
-        "16000",
-        "pipe:1",
-      ],
-      { stdio: ["ignore", "pipe", "ignore"], maxBuffer: 10 * 1024 * 1024 }
-    );
+    const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
+    const mp3Bytes = fs.readFileSync(tempMp3);
+    const wavBytes = await mp3BufferToWavBuffer(mp3Bytes, 16000);
+    // Strip 44-byte WAV header to get pure 16-bit mono 16kHz PCM stream
+    pcmBuffer = wavBytes.subarray(44);
   } finally {
     try {
       if (fs.existsSync(tempMp3)) fs.unlinkSync(tempMp3);
