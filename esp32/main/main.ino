@@ -69,9 +69,9 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 600;
-static const uint16_t kMicReleaseThreshold = 350;
-static const uint8_t kMicHighDebounceCount = 3;
+static const uint16_t kMicSpikeThreshold = 400;
+static const uint16_t kMicReleaseThreshold = 250;
+static const uint8_t kMicHighDebounceCount = 2;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 50;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -710,6 +710,7 @@ void initAudioOutput()
   i2sConfig.fixed_mclk = 0;
 
   i2s_pin_config_t pinConfig = {};
+  pinConfig.mck_io_num = I2S_PIN_NO_CHANGE;
   pinConfig.bck_io_num = I2S_BCLK_PIN;
   pinConfig.ws_io_num = I2S_LRC_PIN;
   pinConfig.data_out_num = I2S_DIN_PIN;
@@ -759,6 +760,7 @@ void initMicrophoneInput()
   i2sMicConfig.fixed_mclk = 0;
 
   i2s_pin_config_t micPinConfig = {};
+  micPinConfig.mck_io_num = I2S_PIN_NO_CHANGE;
   micPinConfig.bck_io_num = I2S_MIC_SCK_PIN;
   micPinConfig.ws_io_num = I2S_MIC_WS_PIN;
   micPinConfig.data_out_num = I2S_PIN_NO_CHANGE;
@@ -819,6 +821,9 @@ void runStartupSelfTest()
 
   drawStartupSelfTestScreen("KOTL", "INMP441 Mic Test", 2);
 
+  i2s_zero_dma_buffer(I2S_MIC_PORT);
+  delay(50);
+
   int32_t testChunk[256];
   size_t testBytesRead = 0;
   esp_err_t micTestErr = i2s_read(I2S_MIC_PORT, testChunk, sizeof(testChunk), &testBytesRead, pdMS_TO_TICKS(500));
@@ -837,8 +842,8 @@ void runStartupSelfTest()
   Serial.printf("INMP441 I2S test bytes: %u, max amp: %d, status: %s\n",
                 (unsigned int)testBytesRead, maxAmp, esp_err_to_name(micTestErr));
 
-  startupSelfTestPassed = (micTestErr == ESP_OK && testBytesRead == sizeof(testChunk));
-  Serial.println(startupSelfTestPassed ? "result: PASS (INMP441 OK)" : "result: FAIL (Check Wiring)");
+  startupSelfTestPassed = (micTestErr == ESP_OK && testBytesRead == sizeof(testChunk) && maxAmp > 0);
+  Serial.println(startupSelfTestPassed ? "result: PASS (INMP441 OK)" : "result: FAIL (Signal not detected)");
 
   if (startupSelfTestPassed)
   {
@@ -849,7 +854,7 @@ void runStartupSelfTest()
   else
   {
     Serial.println("===============================================================");
-    Serial.println("INMP441 NOT DETECTED! Check I2S Pin Wiring:");
+    Serial.println("INMP441 NOT DETECTED or SILENT! Check Wiring:");
     Serial.println("  INMP441 SCK -> ESP32 GPIO 32");
     Serial.println("  INMP441 WS  -> ESP32 GPIO 33");
     Serial.println("  INMP441 SD  -> ESP32 GPIO 35");
@@ -857,8 +862,8 @@ void runStartupSelfTest()
     Serial.println("  INMP441 VDD -> 3.3V (NOT 5V)");
     Serial.println("  INMP441 GND -> GND");
     Serial.println("===============================================================");
-    drawStartupSelfTestScreen("SERIAL MODE", "Check Mic Wiring", 2);
-    delay(800);
+    drawStartupSelfTestScreen("CHECK MIC", "Wiring / L/R GND", 2);
+    delay(1000);
     roboEyes.open();
     startupSelfTestPassed = true; // Allow serial mode to continue working
     captureState.isRecording = false;
@@ -1687,10 +1692,16 @@ void serviceMicrophoneInput()
   micState.rawValue = (uint16_t)min(peakAmp, (int32_t)32767);
   micState.amplitude = micState.rawValue;
 
-  if (kPrintMicDebug && nowMs - micState.lastPrintMs >= kMicPrintIntervalMs)
+  static uint32_t s_lastMicTelemetryMs = 0;
+  if (nowMs - s_lastMicTelemetryMs >= 2000)
   {
-    Serial.print("Mic I2S amplitude: ");
-    Serial.println(micState.amplitude);
+    s_lastMicTelemetryMs = nowMs;
+    Serial.printf("[Mic Monitor] Live Amp: %d | Trigger: %d\n", micState.amplitude, kMicSpikeThreshold);
+  }
+
+  if (micState.amplitude > 300 && nowMs - micState.lastPrintMs >= 200)
+  {
+    Serial.printf("[Voice Sensing] Amp: %d\n", micState.amplitude);
     micState.lastPrintMs = nowMs;
   }
 
