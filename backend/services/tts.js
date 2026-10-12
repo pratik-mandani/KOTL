@@ -26,7 +26,17 @@ try {
   ffmpegStaticPath = require("ffmpeg-static");
 } catch (e) {}
 
-const FFMPEG_BIN = process.env.FFMPEG_BIN || ffmpegStaticPath || (os.platform() === "win32" ? "D:/KOTL/tools/ffmpeg/bin/ffmpeg.exe" : "ffmpeg");
+function getFfmpegPath() {
+  if (process.env.FFMPEG_BIN && fs.existsSync(process.env.FFMPEG_BIN)) {
+    return process.env.FFMPEG_BIN;
+  }
+  if (ffmpegStaticPath && fs.existsSync(ffmpegStaticPath)) {
+    return ffmpegStaticPath;
+  }
+  return os.platform() === "win32" ? "D:/KOTL/tools/ffmpeg/bin/ffmpeg.exe" : "ffmpeg";
+}
+
+const FFMPEG_BIN = getFfmpegPath();
 const TTS_UPLOADS_DIR = path.join(__dirname, "..", "uploads", "tts");
 const PIPER_BIN = process.env.PIPER_BIN || "";
 const PIPER_MODEL_PATH = process.env.PIPER_MODEL_PATH || "";
@@ -396,11 +406,13 @@ async function generateOpenAiSpeech({ text, sessionId = null }) {
 async function generateSpeech({ text, sessionId = null, voice = null }) {
   const provider = (process.env.TTS_PROVIDER || "edge").trim().toLowerCase();
 
+  let edgeError = null;
   if (provider === "edge" || !process.env.OPENAI_API_KEY) {
     const edgeResult = await generateEdgeSpeech({ text, sessionId, voice });
     if (edgeResult.success) {
       return edgeResult;
     }
+    edgeError = edgeResult.error;
     console.warn(`[TTS] Edge TTS fallback triggered due to: ${edgeResult.error}`);
   }
 
@@ -423,7 +435,7 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
     provider: "edge",
     voice: voice || EDGE_VOICE,
     model: "neural",
-    error: "Edge TTS failed and no alternative TTS provider configured",
+    error: edgeError ? `Edge TTS failed: ${edgeError}` : "Edge TTS failed and no alternative TTS provider configured",
   };
 }
 

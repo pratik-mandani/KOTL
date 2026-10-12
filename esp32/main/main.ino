@@ -2119,6 +2119,24 @@ void performAudioUpload()
       String ttsError;
       parseAudioUploadResponse(responsePayload, &ttsReady, &ttsUrl, &transcript, &assistantReply, &turnStatus, &sttError, &assistantError, &ttsError);
 
+      Serial.println("[BACKEND JSON RESPONSE]");
+      if (transcript.length() > 0)
+      {
+        Serial.printf("  Transcript: \"%s\"\n", transcript.c_str());
+      }
+      if (assistantReply.length() > 0)
+      {
+        Serial.printf("  Assistant: \"%s\"\n", assistantReply.c_str());
+      }
+      if (sttError.length() > 0)
+      {
+        Serial.printf("  STT Error: \"%s\"\n", sttError.c_str());
+      }
+      if (ttsError.length() > 0)
+      {
+        Serial.printf("  TTS Error: \"%s\"\n", ttsError.c_str());
+      }
+
       if (ttsReady && ttsStorageAvailable)
       {
         setVoiceTurnState(VOICE_DOWNLOADING_TTS);
@@ -2129,6 +2147,10 @@ void performAudioUpload()
       }
       else
       {
+        if (assistantReply.length() > 0 && !ttsReady)
+        {
+          Serial.println("[NOTE] Assistant replied, but TTS audio was not ready.");
+        }
         resetVoiceTurnToIdle();
       }
     }
