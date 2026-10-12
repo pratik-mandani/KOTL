@@ -109,7 +109,7 @@ static const uint32_t kWiFiRetryIntervalMs = 5000;
 static const uint32_t kHttpRetryIntervalMs = 15000;
 static const uint32_t kHttpTimeoutMs = 120000;
 static const uint32_t kAudioCaptureSampleRate = 8000;
-static const uint32_t kAudioCaptureDurationMs = 5000;
+static const uint32_t kAudioCaptureDurationMs = 4000;
 static const size_t kAudioCaptureSampleCount = (kAudioCaptureSampleRate * kAudioCaptureDurationMs) / 1000;
 static const uint32_t kAudioCaptureSampleIntervalUs = 1000000UL / kAudioCaptureSampleRate;
 static const uint16_t kAudioCaptureBaselineSamples = 128;
@@ -204,7 +204,7 @@ EyeReactionState eyeReactionState = {false, 0};
 NetworkState networkState = {false, false, false, 0, 0};
 AudioCaptureState captureState = {false, false, false, 0, 0, 0, 2048, 4095, 0, 32767, -32768, 0, 0};
 VoiceTurnManager voiceTurn = {VOICE_IDLE, 0, "", "", ""};
-static int16_t *audioCaptureBuffer = nullptr;
+static int16_t audioCaptureBuffer[kAudioCaptureSampleCount] = {0};
 bool startupSelfTestPassed = false;
 bool audioOutputInitialized = false;
 bool ttsStorageAvailable = false;
@@ -382,7 +382,7 @@ void initFreeRtosTasks()
   xTaskCreatePinnedToCore(
     networkWorkerTask,
     "NetWorker",
-    12288,
+    16384,
     NULL,
     2,
     &s_hNetworkTask,
@@ -412,22 +412,6 @@ void setup()
   Serial.println(g_wifi_ssid.length() > 0 ? g_wifi_ssid : String(kWiFiSsid));
   Serial.print("Configured Backend Base URL: ");
   Serial.println(g_backend_url.length() > 0 ? g_backend_url : String(kBackendBaseUrl));
-
-  if (!audioCaptureBuffer)
-  {
-    audioCaptureBuffer = (int16_t *)malloc(kAudioCaptureSampleCount * sizeof(int16_t));
-    if (audioCaptureBuffer)
-    {
-      memset(audioCaptureBuffer, 0, kAudioCaptureSampleCount * sizeof(int16_t));
-      Serial.printf("[Audio] Allocated %u bytes for %.1fs audio capture buffer\n",
-                    (unsigned int)(kAudioCaptureSampleCount * sizeof(int16_t)),
-                    (float)kAudioCaptureDurationMs / 1000.0f);
-    }
-    else
-    {
-      Serial.println("[Audio] ERROR: Failed to allocate audio capture buffer on heap!");
-    }
-  }
 
   initDisplay();
   initEyes();
@@ -1517,13 +1501,6 @@ void performSynchronousAudioCapture()
   const uint32_t startMs = millis();
   size_t capturedSamples = 0;
   static const size_t kMicDmaChunkSize = 256;
-  if (!audioCaptureBuffer)
-  {
-    Serial.println("[Audio] Capture buffer null! Aborting.");
-    resetVoiceTurnToIdle();
-    return;
-  }
-
   int32_t dmaChunk[kMicDmaChunkSize];
 
   // Voice Activity Detection (VAD) parameters
@@ -2140,7 +2117,24 @@ void performAudioUpload()
   http.collectHeaders(headerKeys, 5);
 
   uint8_t *payload = reinterpret_cast<uint8_t *>(audioCaptureBuffer);
-  const int httpCode = http.POST(payload, uploadBytes);
+  int httpCode = http.POST(payload, uploadBytes);
+  if (httpCode < 0)
+  {
+    Serial.printf("[NetWorker] Upload attempt 1 returned %d (%s), retrying in 600ms...\n", httpCode, http.errorToString(httpCode).c_str());
+    http.end();
+    delay(600);
+    if (beginHttpWithOptionalSsl(http, sslClient, audioUrl))
+    {
+      http.addHeader("Content-Type", "application/octet-stream");
+      http.addHeader("X-Sample-Rate", String(kAudioCaptureSampleRate));
+      http.addHeader("X-Duration-Ms", String(uploadDurationMs));
+      http.addHeader("X-Audio-Format", "raw_pcm_16le");
+      http.addHeader("X-Stream-Audio", "true");
+      http.collectHeaders(headerKeys, 5);
+      httpCode = http.POST(payload, uploadBytes);
+    }
+  }
+
   if (httpCode == HTTP_CODE_OK || httpCode == 200)
   {
     setVoiceTurnState(VOICE_THINKING);

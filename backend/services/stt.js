@@ -52,12 +52,20 @@ const NOISE_FILTER_BLACKLIST = [
   "english subtitles",
   "please subscribe",
   "watching",
+  "the end",
+  "gajarati",
+  "gujarati",
+  "amara",
 ];
 
 function isBlacklistedNoiseTranscript(text) {
   if (!text || typeof text !== "string") return true;
   const clean = text.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
   if (clean.length === 0 || clean.length <= 2) return true;
+  const words = clean.split(/\s+/);
+  if (words.length === 1 && ["gajarati", "gujarati", "you", "yeah", "video", "subtitles", "bye"].includes(words[0])) {
+    return true;
+  }
   return NOISE_FILTER_BLACKLIST.some((phrase) => {
     const cleanPhrase = phrase.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
     return clean === cleanPhrase || clean.includes(cleanPhrase);
@@ -195,8 +203,8 @@ async function transcribeWithGroq(filePath) {
     audioBuffer,
     fileName,
     model,
-    "auto",
-    "User speaks naturally in authentic Gujarati (ગુજરાતી) or conversational English. સામાન્ય વાક્યો: કેમ છો, તમે કેમ છો, તારું નામ શું છે, તું કોણ છે, વાર્તા કહો, આજે કેવું છે, KOTL, hello, what is your name."
+    "gu",
+    "User speaks in authentic Gujarati (ગુજરાતી) or conversational English. સામાન્ય વાક્યો: કેમ છો, તમે કેમ છો, તારું નામ શું છે, તું કોણ છે, વાર્તા કહો, આજે કેવું છે, KOTL, hello, what is your name."
   );
 
   console.log(`[STT groq] Sending request to Groq STT API. Model: ${model}, Language: ${language}, Prompt: "${prompt}"`);

@@ -183,6 +183,7 @@ inline void serviceCaptivePortal() {
 inline bool beginHttpWithOptionalSsl(HTTPClient &http, WiFiClientSecure &sslClient, const String &url) {
   if (url.startsWith("https://")) {
     sslClient.setInsecure();
+    sslClient.setHandshakeTimeout(30);
     return http.begin(sslClient, url);
   }
   return http.begin(url);

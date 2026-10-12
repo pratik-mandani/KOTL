@@ -754,16 +754,39 @@ function isNoiseTranscript(text) {
     "please subscribe",
     "watching",
     "the end",
+    "gajarati",
+    "gujarati",
+    "amara",
   ];
   
   // Check if it exactly matches or contains any noise phrases
   if (noisePhrases.some(phrase => cleanText === phrase || cleanText.includes(phrase))) {
     return true;
   }
-  
-  // Ignore single-character noise or very short filler words (like "you", "yeah", "okay", "oh", "end") if they are alone
+
+  // Detect Whisper repetition loops (classic music/noise hallucination e.g. "word word word" or "phrase phrase")
   const words = cleanText.split(/\s+/);
-  if (words.length === 1 && ["you", "yeah", "okay", "oh", "yes", "no", "uh", "um", "end", "so", "bye", "a", "i"].includes(words[0])) {
+  if (words.length >= 3) {
+    const wordCounts = {};
+    for (const w of words) {
+      wordCounts[w] = (wordCounts[w] || 0) + 1;
+      if (wordCounts[w] >= 3) return true;
+    }
+    const unique = new Set(words);
+    if (words.length >= 4 && unique.size <= 2) return true;
+
+    // Detect n-gram consecutive repeated phrases (e.g. "a b c a b c")
+    for (let n = 2; n <= 4; n++) {
+      for (let i = 0; i + 2 * n <= words.length; i++) {
+        const p1 = words.slice(i, i + n).join(" ");
+        const p2 = words.slice(i + n, i + 2 * n).join(" ");
+        if (p1 === p2) return true;
+      }
+    }
+  }
+  
+  // Ignore single-character noise or very short filler words if they are alone
+  if (words.length === 1 && ["you", "yeah", "okay", "oh", "yes", "no", "uh", "um", "end", "so", "bye", "a", "i", "કેમ", "છો", "હું", "તે", "વાતચીત"].includes(words[0])) {
     return true;
   }
   
@@ -862,24 +885,33 @@ app.post(
         duration_ms: metadata.duration_ms,
       });
 
-      logAudioTurn(turnId, "stt started", { wav_filename: wavFilename });
-      const transcription = await transcribeAudio(wavPath);
-      if (transcription.success) {
-        metadata.transcript = transcription.text;
-        metadata.transcript_provider = transcription.provider;
-        metadata.confidence = transcription.confidence;
-        metadata.transcribed_at = new Date().toISOString();
-        logAudioTurn(turnId, "stt completed", {
-          provider: metadata.transcript_provider,
-          transcript: metadata.transcript,
+      if ((metadata.avg_abs_amplitude || 0) < 30 || (metadata.peak_to_peak || 0) < 150) {
+        logAudioTurn(turnId, "audio is pure silence or sub-threshold, skipping STT", {
+          avg_abs_amplitude: metadata.avg_abs_amplitude,
+          peak_to_peak: metadata.peak_to_peak,
         });
+        metadata.transcript = "";
+        metadata.turn_status = "silence_ignored";
       } else {
-        metadata.transcript_provider = transcription.provider;
-        metadata.stt_error = transcription.error;
-        logAudioTurn(turnId, "stt failed", {
-          provider: metadata.transcript_provider,
-          error: metadata.stt_error,
-        });
+        logAudioTurn(turnId, "stt started", { wav_filename: wavFilename });
+        const transcription = await transcribeAudio(wavPath);
+        if (transcription.success) {
+          metadata.transcript = transcription.text;
+          metadata.transcript_provider = transcription.provider;
+          metadata.confidence = transcription.confidence;
+          metadata.transcribed_at = new Date().toISOString();
+          logAudioTurn(turnId, "stt completed", {
+            provider: metadata.transcript_provider,
+            transcript: metadata.transcript,
+          });
+        } else {
+          metadata.transcript_provider = transcription.provider;
+          metadata.stt_error = transcription.error;
+          logAudioTurn(turnId, "stt failed", {
+            provider: metadata.transcript_provider,
+            error: metadata.stt_error,
+          });
+        }
       }
     } catch (error) {
       metadata.stt_error = error.message;
@@ -905,7 +937,7 @@ app.post(
     activeSessions.set(sessionId, now);
     console.log(`[Session ${sessionId}] Processing direct response turn. Session active.`);
 
-    if (!metadata.assistant_reply && typeof metadata.transcript === "string" && metadata.transcript.trim().length > 0) {
+    if (metadata.turn_status !== "silence_ignored" && !metadata.assistant_reply && typeof metadata.transcript === "string" && metadata.transcript.trim().length > 0) {
       try {
         logAudioTurn(turnId, "assistant started", { provider: "groq" });
         const assistantResult = await generateAssistantReply({
