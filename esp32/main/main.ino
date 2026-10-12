@@ -209,10 +209,10 @@ bool startupSelfTestPassed = false;
 bool audioOutputInitialized = false;
 bool ttsStorageAvailable = false;
 static const uint32_t kVoiceRecordingTimeoutMs = 8000;
-static const uint32_t kVoiceUploadingTimeoutMs = 20000;
-static const uint32_t kVoiceThinkingTimeoutMs = 30000;
-static const uint32_t kVoiceDownloadingTtsTimeoutMs = 20000;
-static const uint32_t kVoiceSpeakingTimeoutMs = 30000;
+static const uint32_t kVoiceUploadingTimeoutMs = 60000;
+static const uint32_t kVoiceThinkingTimeoutMs = 60000;
+static const uint32_t kVoiceDownloadingTtsTimeoutMs = 60000;
+static const uint32_t kVoiceSpeakingTimeoutMs = 45000;
 static uint32_t s_playbackCooldownUntilMs = 0;
 static const uint32_t kPlaybackCooldownMs = 1500;
 
