@@ -1476,6 +1476,9 @@ void applySoftwareAudioGain()
 void performSynchronousAudioCapture()
 {
   Serial.println("TURN START");
+  Serial.println("=================================================");
+  Serial.println(">>> RECORDING NOW! SPEAK YOUR QUESTION (4 SECONDS) <<<");
+  Serial.println("=================================================");
   Serial.println("RECORDING START (INMP441 I2S)");
   Serial.print("recording sample rate: ");
   Serial.println(kAudioCaptureSampleRate);
@@ -1657,8 +1660,8 @@ void serviceMicrophoneInput()
   const uint32_t nowMs = millis();
   const bool wasSoundHigh = micState.soundHigh;
 
-  // Don't poll mic while playing or downloading audio or during post-playback cooldown
-  if (audioState.isPlaying || audioState.isDownloading || (int32_t)(nowMs - s_playbackCooldownUntilMs) < 0)
+  // Don't poll mic while playing or downloading audio or during post-playback cooldown or while a voice turn is in progress!
+  if (voiceTurn.state != VOICE_IDLE || audioState.isPlaying || audioState.isDownloading || (int32_t)(nowMs - s_playbackCooldownUntilMs) < 0)
   {
     micState.amplitude = 0;
     micState.soundHigh = false;
