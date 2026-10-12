@@ -404,27 +404,89 @@ async function generateOpenAiSpeech({ text, sessionId = null }) {
   }
 }
 
+async function generateGoogleSpeech({ text, sessionId = null }) {
+  if (typeof text !== "string" || text.trim().length === 0) {
+    return { success: false, error: "empty text" };
+  }
+
+  const isGujarati = /[\u0A80-\u0AFF]/.test(text);
+  const lang = isGujarati ? "gu" : "en";
+  const normalizedFilename = buildTtsFilename();
+  const normalizedPath = path.join(TTS_UPLOADS_DIR, normalizedFilename);
+
+  ensureTtsUploadsDir();
+
+  // Free Google TTS endpoint (Supports all languages, never blocked by cloud datacenters)
+  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.trim().slice(0, 200))}&tl=${lang}&client=tw-ob`;
+
+  try {
+    const response = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Google TTS request failed: ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const mp3Buffer = Buffer.from(arrayBuffer);
+
+    const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
+    const wavBuffer = await mp3BufferToWavBuffer(mp3Buffer, NORMALIZED_SAMPLE_RATE);
+    fs.writeFileSync(normalizedPath, wavBuffer);
+
+    console.log(`[TTS Google] Success! Generated ${normalizedFilename} (${wavBuffer.length} bytes)`);
+
+    return {
+      success: true,
+      filename: normalizedFilename,
+      url: `/tts/${normalizedFilename}`,
+      provider: "google",
+      voice: lang,
+      model: "neural",
+      error: null,
+    };
+  } catch (err) {
+    console.error(`[TTS Google] Failed: ${err.message}`);
+    return {
+      success: false,
+      filename: null,
+      url: null,
+      provider: "google",
+      voice: lang,
+      model: "neural",
+      error: err.message,
+    };
+  }
+}
+
 async function generateSpeech({ text, sessionId = null, voice = null }) {
   const provider = (process.env.TTS_PROVIDER || "edge").trim().toLowerCase();
 
   let edgeError = null;
-  if (provider === "edge" || !process.env.OPENAI_API_KEY) {
-    const edgeResult = await generateEdgeSpeech({ text, sessionId, voice });
-    if (edgeResult.success) {
-      return edgeResult;
-    }
-    edgeError = edgeResult.error;
-    console.warn(`[TTS] Edge TTS fallback triggered due to: ${edgeResult.error}`);
+  // 1. Try Edge TTS
+  const edgeResult = await generateEdgeSpeech({ text, sessionId, voice });
+  if (edgeResult.success) {
+    return edgeResult;
+  }
+  edgeError = edgeResult.error;
+  console.warn(`[TTS] Edge TTS fallback triggered due to: ${edgeResult.error}`);
+
+  // 2. Instant Google Cloud TTS Fallback (never blocked on Render / cloud IPs)
+  const googleResult = await generateGoogleSpeech({ text, sessionId });
+  if (googleResult.success) {
+    return googleResult;
   }
 
+  // 3. Fallback to Piper if configured
   if (provider === "piper") {
     const piperResult = await generatePiperSpeech({ text, sessionId });
     if (piperResult.success) {
       return piperResult;
     }
-    console.warn(`[TTS] Piper fallback triggered due to: ${piperResult.error}`);
   }
 
+  // 4. Fallback to OpenAI if configured
   if (process.env.OPENAI_API_KEY) {
     return generateOpenAiSpeech({ text, sessionId });
   }
@@ -433,16 +495,17 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
     success: false,
     filename: null,
     url: null,
-    provider: "edge",
+    provider: "google",
     voice: voice || EDGE_VOICE,
     model: "neural",
-    error: edgeError ? `Edge TTS failed: ${edgeError}` : "Edge TTS failed and no alternative TTS provider configured",
+    error: `TTS failed: Edge (${edgeError}), Google (${googleResult.error})`,
   };
 }
 
 module.exports = {
   generateSpeech,
   generateEdgeSpeech,
+  generateGoogleSpeech,
   generatePiperSpeech,
   NORMALIZED_SAMPLE_RATE,
 };
