@@ -886,36 +886,18 @@ app.post(
       logAudioTurn(turnId, "stt failed", { error: metadata.stt_error });
     }
 
-    const isLowAmplitudeNoise = (metadata.avg_abs_amplitude !== null && metadata.avg_abs_amplitude < 180) &&
-                                (metadata.peak_to_peak !== null && metadata.peak_to_peak < 2200);
-
     const hasValidTranscript = typeof metadata.transcript === "string" && metadata.transcript.trim().length > 0;
     const isNoise = hasValidTranscript && isNoiseTranscript(metadata.transcript);
 
     if (!hasValidTranscript || isNoise) {
-      if (isLowAmplitudeNoise) {
-        logAudioTurn(turnId, "silence/ambient noise turn ignored without TTS to prevent feedback loop", {
-          avg_abs_amplitude: metadata.avg_abs_amplitude,
-          peak_to_peak: metadata.peak_to_peak,
-          transcript: metadata.transcript,
-        });
-        metadata.assistant_reply = null;
-        metadata.turn_status = "silence_ignored";
-      } else {
-        const assistantResult = await generateAssistantReply({ transcript: "", sessionId });
-        metadata.assistant_provider = assistantResult.provider;
-        metadata.assistant_model = assistantResult.model;
-        if (assistantResult.success) {
-          metadata.assistant_reply = assistantResult.reply;
-          metadata.assistant_generated_at = new Date().toISOString();
-        } else {
-          metadata.assistant_error = assistantResult.error;
-        }
-        logAudioTurn(turnId, "assistant prompt for unclear speech", {
-          info: isNoise ? `Noise ignored: "${metadata.transcript}"` : (metadata.stt_error || "empty transcript"),
-          reply: metadata.assistant_reply,
-        });
-      }
+      logAudioTurn(turnId, "empty/ambient sound or music ignored without TTS (speaker kept silent)", {
+        avg_abs_amplitude: metadata.avg_abs_amplitude,
+        peak_to_peak: metadata.peak_to_peak,
+        transcript: metadata.transcript,
+      });
+      metadata.assistant_reply = null;
+      metadata.tts_generated = false;
+      metadata.turn_status = "silence_ignored";
     }
 
     // Direct responses enabled: always allow turn and keep session active
@@ -999,7 +981,9 @@ app.post(
       metadata.tts_error = "tts skipped: empty assistant reply";
     }
 
-    if (metadata.tts_generated) {
+    if (metadata.turn_status === "silence_ignored") {
+      metadata.tts_error = null;
+    } else if (metadata.tts_generated) {
       metadata.turn_status = "complete";
     } else if (metadata.assistant_error && !metadata.assistant_reply) {
       metadata.turn_status = "assistant_failed";

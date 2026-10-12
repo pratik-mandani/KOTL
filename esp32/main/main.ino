@@ -1502,9 +1502,9 @@ void performSynchronousAudioCapture()
   int32_t dmaChunk[kMicDmaChunkSize];
 
   // Voice Activity Detection (VAD) parameters
-  static const int16_t kVadVoiceThreshold = 750;     // Amplitude indicating speech
+  static const int16_t kVadVoiceThreshold = 1800;    // Amplitude indicating foreground speech
   static const uint32_t kVadInitialSilenceMs = 1800;  // Max initial silence before aborting false trigger
-  static const uint32_t kVadTrailingSilenceMs = 750;  // Natural silence after speech indicating finished speaking
+  static const uint32_t kVadTrailingSilenceMs = 700;  // Natural silence after speech indicating finished speaking
   static const uint32_t kVadMinSpeechMs = 450;        // Minimum speech duration before considering silence
 
   bool voiceDetected = false;
@@ -1593,10 +1593,10 @@ void performSynchronousAudioCapture()
   const uint32_t elapsedMs = millis() - startMs;
   captureState.isRecording = false;
 
-  // False trigger check: if no voice was detected or peak was below speech level (~900):
-  if (!voiceDetected || peakSpeechAmp < 900 || capturedSamples < (kAudioCaptureSampleRate / 3))
+  // False trigger check: require genuine foreground speech (peak >= 2800)
+  if (!voiceDetected || peakSpeechAmp < 2800 || capturedSamples < (kAudioCaptureSampleRate / 3))
   {
-    Serial.printf("[VAD] False trigger / ambient noise ignored (voice=%d, peak=%d, samples=%u). Turn cancelled.\n",
+    Serial.printf("[VAD] Ambient noise/music rejected (voice=%d, peak=%d < 2800, samples=%u). Turn cancelled.\n",
                   voiceDetected, peakSpeechAmp, (unsigned int)capturedSamples);
     resetVoiceTurnToIdle();
     return;
@@ -1761,20 +1761,35 @@ void serviceMicrophoneInput()
   micState.rawValue = (uint16_t)min(peakAmp, (int32_t)32767);
   micState.amplitude = micState.rawValue;
 
+  // Adaptive Ambient Noise Floor Tracking (DSP rolling average)
+  static uint32_t s_ambientNoiseFloor = 400;
+  static uint32_t s_lastNoiseFloorUpdateMs = 0;
+  if (nowMs - s_lastNoiseFloorUpdateMs >= 100)
+  {
+    s_lastNoiseFloorUpdateMs = nowMs;
+    // Slow exponential moving average (alpha ~ 1/32)
+    s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
+  }
+
+  // Dynamic Trigger Threshold: Must be ambient floor + 1800, with minimum 2200
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)2200, s_ambientNoiseFloor + 1800);
+  const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
+
   static uint32_t s_lastMicTelemetryMs = 0;
   if (nowMs - s_lastMicTelemetryMs >= 2000)
   {
     s_lastMicTelemetryMs = nowMs;
-    Serial.printf("[Mic Monitor] Live Amp: %d | Trigger: %d\n", micState.amplitude, kMicSpikeThreshold);
+    Serial.printf("[Mic Monitor] Live: %d | Ambient: %u | Trigger: %u\n",
+                  micState.amplitude, (unsigned int)s_ambientNoiseFloor, (unsigned int)dynamicSpikeThreshold);
   }
 
-  if (micState.amplitude > 550 && nowMs - micState.lastPrintMs >= 200)
+  if (micState.amplitude > 1200 && nowMs - micState.lastPrintMs >= 200)
   {
-    Serial.printf("[Voice Sensing] Amp: %d\n", micState.amplitude);
+    Serial.printf("[Voice Sensing] Amp: %d (Trigger: %u)\n", micState.amplitude, (unsigned int)dynamicSpikeThreshold);
     micState.lastPrintMs = nowMs;
   }
 
-  if (micState.amplitude > kMicSpikeThreshold)
+  if (micState.amplitude > dynamicSpikeThreshold)
   {
     if (micState.consecutiveHighReadings < kMicHighDebounceCount)
     {
@@ -1794,7 +1809,7 @@ void serviceMicrophoneInput()
 
   if (micState.soundHigh)
   {
-    if (micState.amplitude < kMicReleaseThreshold)
+    if (micState.amplitude < dynamicReleaseThreshold)
     {
       if (micState.silenceStartMs == 0)
       {
