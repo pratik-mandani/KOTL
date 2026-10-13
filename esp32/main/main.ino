@@ -8,6 +8,7 @@
 #include <driver/adc.h>
 #include <driver/i2s.h>
 #include <esp_err.h>
+#define WEBSOCKETS_TCP_TIMEOUT 15000
 #include <WebSocketsClient.h>
 #include <freertos/stream_buffer.h>
 #include "../hello_sample.h"
