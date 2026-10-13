@@ -122,7 +122,7 @@ static const uint32_t kExpectedTtsSampleRate = 16000;
 static const uint16_t kExpectedTtsBitsPerSample = 16;
 static const uint16_t kExpectedTtsChannels = 1;
 static const size_t kExpectedWavHeaderSize = 44;
-static const uint8_t kSpeakerVolumePercent = 55; // 55% volume eliminates MAX98357A clipping and cone distortion
+static uint8_t s_speakerVolumePercent = 90; // Default 90% volume for loud and clear output
 
 static QueueHandle_t s_netQueue = NULL;
 static QueueHandle_t s_audioQueue = NULL;
@@ -1122,7 +1122,10 @@ void serviceAudioOutput()
 
 static inline int16_t applySpeakerVolume(int16_t sample)
 {
-  return (int16_t)(((int32_t)sample * kSpeakerVolumePercent) / 100);
+  int32_t amplified = ((int32_t)sample * (int32_t)s_speakerVolumePercent) / 100;
+  if (amplified > 32767) amplified = 32767;
+  else if (amplified < -32768) amplified = -32768;
+  return (int16_t)amplified;
 }
 
 void fillAudioChunk()
@@ -2372,6 +2375,21 @@ void serviceSerialInput()
     input.trim();
     if (input.length() > 0)
     {
+      if (input.startsWith("VOL=") || input.startsWith("VOLUME="))
+      {
+        int eqIndex = input.indexOf('=');
+        int newVol = input.substring(eqIndex + 1).toInt();
+        if (newVol >= 10 && newVol <= 150)
+        {
+          s_speakerVolumePercent = (uint8_t)newVol;
+          Serial.println();
+          Serial.println("=================================================");
+          Serial.printf("[VOLUME] Speaker volume set to %u%%\n", (unsigned int)s_speakerVolumePercent);
+          Serial.println("=================================================");
+          return;
+        }
+      }
+
       Serial.println();
       Serial.println("=================================================");
       Serial.printf("[SERIAL INPUT] Received Question: \"%s\"\n", input.c_str());

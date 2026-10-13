@@ -45,6 +45,7 @@ const PIPER_VOICE = "local";
 
 const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "hi-IN-MadhurNeural";
 const EDGE_LANG = process.env.EDGE_TTS_LANG || "hi-IN";
+const EDGE_VOLUME = process.env.EDGE_TTS_VOLUME || "+25%";
 
 function buildTtsFilename() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -94,7 +95,7 @@ async function normalizeWavFile(sourcePath, targetPath, timeoutMs = DEFAULT_TIME
       "-ar",
       String(NORMALIZED_SAMPLE_RATE),
       "-af",
-      `aresample=resampler=swr:osr=${NORMALIZED_SAMPLE_RATE}:dither_method=triangular,highpass=f=160,volume=0.8`,
+      `aresample=resampler=swr:osr=${NORMALIZED_SAMPLE_RATE}:dither_method=triangular,highpass=f=160,volume=1.0`,
       "-map_metadata",
       "-1",
       "-fflags",
@@ -135,6 +136,7 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
       voice: selectedVoice,
       lang: selectedLang,
       rate: "+18%",
+      volume: EDGE_VOLUME,
       outputFormat: "audio-24khz-48kbitrate-mono-mp3",
       timeout: 10000,
     });
