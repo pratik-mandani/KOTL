@@ -122,7 +122,7 @@ static const uint32_t kExpectedTtsSampleRate = 16000;
 static const uint16_t kExpectedTtsBitsPerSample = 16;
 static const uint16_t kExpectedTtsChannels = 1;
 static const size_t kExpectedWavHeaderSize = 44;
-static uint8_t s_speakerVolumePercent = 90; // Default 90% volume for loud and clear output
+static uint8_t s_speakerVolumePercent = 68; // 68% sweet spot (clear, loud, and eliminates MAX98357A cone distortion)
 
 static QueueHandle_t s_netQueue = NULL;
 static QueueHandle_t s_audioQueue = NULL;

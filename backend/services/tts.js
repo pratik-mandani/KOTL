@@ -45,7 +45,7 @@ const PIPER_VOICE = "local";
 
 const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "hi-IN-MadhurNeural";
 const EDGE_LANG = process.env.EDGE_TTS_LANG || "hi-IN";
-const EDGE_VOLUME = process.env.EDGE_TTS_VOLUME || "+25%";
+const EDGE_VOLUME = process.env.EDGE_TTS_VOLUME || "default";
 
 function buildTtsFilename() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");

@@ -35,18 +35,38 @@ async function mp3BufferToWavBuffer(mp3Buffer, targetSampleRate = 16000) {
   const rightChannel = channelData.length > 1 ? channelData[1] : leftChannel;
   const isStereo = channelData.length > 1;
 
-  // Resample to targetSampleRate (e.g., from 24000Hz to 16000Hz) and mix to Mono
+  // Resample to targetSampleRate (e.g., from 24000Hz to 16000Hz) with linear interpolation
   const ratio = sampleRate / targetSampleRate;
   const targetSampleCount = Math.floor(leftChannel.length / ratio);
   const pcmBytes = Buffer.alloc(targetSampleCount * 2);
 
-  for (let i = 0; i < targetSampleCount; i++) {
-    const srcIndex = Math.min(Math.floor(i * ratio), leftChannel.length - 1);
-    let sample = isStereo ? (leftChannel[srcIndex] + rightChannel[srcIndex]) * 0.5 : leftChannel[srcIndex];
+  // 160Hz high-pass filter to remove sub-bass rumble that causes small speakers to distort/sound ghogharo
+  const rc = 1.0 / (2.0 * Math.PI * 160);
+  const dt = 1.0 / targetSampleRate;
+  const alpha = rc / (rc + dt);
 
-    // Clamp to [-1.0, 1.0]
-    if (sample > 1.0) sample = 1.0;
-    else if (sample < -1.0) sample = -1.0;
+  let prevInput = 0;
+  let prevOutput = 0;
+
+  for (let i = 0; i < targetSampleCount; i++) {
+    const srcPos = i * ratio;
+    const index0 = Math.floor(srcPos);
+    const index1 = Math.min(index0 + 1, leftChannel.length - 1);
+    const frac = srcPos - index0;
+
+    const s0 = isStereo ? (leftChannel[index0] + rightChannel[index0]) * 0.5 : leftChannel[index0];
+    const s1 = isStereo ? (leftChannel[index1] + rightChannel[index1]) * 0.5 : leftChannel[index1];
+    const rawSample = s0 + frac * (s1 - s0);
+
+    // High-pass filter
+    const hpSample = alpha * (prevOutput + rawSample - prevInput);
+    prevInput = rawSample;
+    prevOutput = hpSample;
+
+    // Gentle soft-limit clamp to prevent digital clipping
+    let sample = hpSample;
+    if (sample > 0.95) sample = 0.95;
+    else if (sample < -0.95) sample = -0.95;
 
     const pcm16 = Math.round(sample * 32767);
     pcmBytes.writeInt16LE(pcm16, i * 2);
