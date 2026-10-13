@@ -8,6 +8,8 @@
 #include <driver/adc.h>
 #include <driver/i2s.h>
 #include <esp_err.h>
+#include <WebSocketsClient.h>
+#include <freertos/stream_buffer.h>
 #include "../hello_sample.h"
 #include "kotl_provisioning.h"
 
@@ -34,7 +36,8 @@ enum PlaybackSource
 {
   PLAYBACK_NONE,
   PLAYBACK_LOCAL_SAMPLE,
-  PLAYBACK_TTS_AUDIO
+  PLAYBACK_TTS_AUDIO,
+  PLAYBACK_STREAM_AUDIO
 };
 
 enum VoiceTurnState
@@ -61,6 +64,7 @@ enum AudioCmdType
   AUDIO_CMD_NONE = 0,
   AUDIO_CMD_PLAY_TTS,
   AUDIO_CMD_PLAY_LOCAL,
+  AUDIO_CMD_PLAY_STREAM,
   AUDIO_CMD_STOP
 };
 
@@ -129,6 +133,14 @@ static QueueHandle_t s_audioQueue = NULL;
 static SemaphoreHandle_t s_littleFsMutex = NULL;
 static TaskHandle_t s_hNetworkTask = NULL;
 static TaskHandle_t s_hAudioTask = NULL;
+
+static WebSocketsClient webSocket;
+static StreamBufferHandle_t s_audioStreamBuffer = NULL;
+static SemaphoreHandle_t s_wsMutex = NULL;
+static volatile bool s_wsConnected = false;
+static volatile bool s_wsStreamTtsActive = false;
+static volatile bool s_wsStreamTtsFinished = false;
+static volatile bool s_useWebSocketForCurrentTurn = false;
 
 struct AudioPlaybackState
 {
@@ -269,6 +281,11 @@ bool downloadTtsAudio(const String &ttsUrl);
 bool triggerLocalSamplePlayback();
 void triggerMicCapture();
 static volatile bool s_triggerMicCapturePending = false;
+void initWebSocketClient();
+void webSocketEvent(WStype_t type, uint8_t *payload, size_t length);
+bool wsSendTxtSafe(const char *txt);
+bool wsSendBinSafe(const uint8_t *data, size_t len);
+bool startStreamPlayback();
 void performTextChatRequest();
 void serviceSerialInput();
 static String s_serialPromptText = "";
@@ -292,17 +309,269 @@ void giveFsMutex()
   }
 }
 
+bool wsSendTxtSafe(const char *txt)
+{
+  if (!s_wsConnected || !s_wsMutex) return false;
+  if (xSemaphoreTake(s_wsMutex, pdMS_TO_TICKS(50)) == pdTRUE)
+  {
+    bool ok = webSocket.sendTXT(txt);
+    xSemaphoreGive(s_wsMutex);
+    return ok;
+  }
+  return false;
+}
+
+bool wsSendBinSafe(const uint8_t *data, size_t len)
+{
+  if (!s_wsConnected || !s_wsMutex) return false;
+  if (xSemaphoreTake(s_wsMutex, pdMS_TO_TICKS(50)) == pdTRUE)
+  {
+    bool ok = webSocket.sendBIN(data, len);
+    xSemaphoreGive(s_wsMutex);
+    return ok;
+  }
+  return false;
+}
+
+bool startStreamPlayback()
+{
+  if (!configureAudioSampleRate(16000))
+  {
+    Serial.println("[Stream] Failed to configure I2S sample rate to 16000 Hz");
+    return false;
+  }
+
+  audioState.activeSource = PLAYBACK_STREAM_AUDIO;
+  audioState.isPlaying = true;
+  setVoiceTurnState(VOICE_SPEAKING);
+  Serial.println("[Stream] Real-time stream playback started (16kHz direct I2S DMA)");
+  return true;
+}
+
+void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
+{
+  switch (type)
+  {
+  case WStype_DISCONNECTED:
+    s_wsConnected = false;
+    Serial.println("[WebSocket] Disconnected from backend.");
+    break;
+
+  case WStype_CONNECTED:
+    s_wsConnected = true;
+    Serial.println("[WebSocket] Connected to KOTL backend server!");
+    webSocket.sendTXT("{\"type\":\"register\",\"device_id\":\"KOTL-ESP32\"}");
+    break;
+
+  case WStype_TEXT:
+    {
+      String msg = String((char *)payload);
+      String msgType = "";
+      if (extractJsonString(msg, "type", &msgType))
+      {
+        if (msgType == "state")
+        {
+          String val = "";
+          if (extractJsonString(msg, "value", &val))
+          {
+            if (val == "THINKING")
+            {
+              setVoiceTurnState(VOICE_THINKING);
+            }
+            else if (val == "IDLE")
+            {
+              if (voiceTurn.state != VOICE_SPEAKING)
+              {
+                resetVoiceTurnToIdle();
+              }
+            }
+          }
+        }
+        else if (msgType == "eye_expression")
+        {
+          String expr = "";
+          if (extractJsonString(msg, "value", &expr) && expr.length() > 0)
+          {
+            applyVoiceEyeAnimation(expr);
+          }
+        }
+        else if (msgType == "transcript")
+        {
+          String text = "";
+          if (extractJsonString(msg, "text", &text))
+          {
+            voiceTurn.lastTranscript = text;
+            Serial.printf("[WebSocket] Transcript: \"%s\"\n", text.c_str());
+          }
+        }
+        else if (msgType == "reply_text")
+        {
+          String text = "";
+          if (extractJsonString(msg, "text", &text))
+          {
+            voiceTurn.lastAssistantReply = text;
+            Serial.printf("[WebSocket] Assistant: \"%s\"\n", text.c_str());
+          }
+          String expr = "";
+          if (extractJsonString(msg, "eye_expression", &expr) && expr.length() > 0)
+          {
+            applyVoiceEyeAnimation(expr);
+          }
+        }
+        else if (msgType == "tts_start")
+        {
+          Serial.println("⚡ [WebSocket] TTS Audio Stream starting!");
+          if (s_audioStreamBuffer)
+          {
+            xStreamBufferReset(s_audioStreamBuffer);
+          }
+          s_wsStreamTtsActive = true;
+          s_wsStreamTtsFinished = false;
+
+          AudioCmdType cmd = AUDIO_CMD_PLAY_STREAM;
+          if (s_audioQueue)
+          {
+            xQueueSend(s_audioQueue, &cmd, 0);
+          }
+          else
+          {
+            startStreamPlayback();
+          }
+        }
+        else if (msgType == "tts_end")
+        {
+          Serial.println("[WebSocket] Server finished sending TTS chunks.");
+          s_wsStreamTtsFinished = true;
+        }
+        else if (msgType == "error")
+        {
+          String err = "";
+          extractJsonString(msg, "message", &err);
+          Serial.printf("[WebSocket Error] %s\n", err.c_str());
+          failVoiceTurn(err.length() > 0 ? err : "WebSocket error");
+        }
+      }
+    }
+    break;
+
+  case WStype_BIN:
+    if (s_audioStreamBuffer && length > 0)
+    {
+      xStreamBufferSend(s_audioStreamBuffer, payload, length, 0);
+    }
+    break;
+
+  case WStype_ERROR:
+    Serial.println("[WebSocket] Socket error!");
+    break;
+
+  case WStype_PING:
+  case WStype_PONG:
+    break;
+  }
+}
+
+void initWebSocketClient()
+{
+  String base = (g_backend_url.length() > 0) ? g_backend_url : String(kBackendBaseUrl);
+  base.trim();
+  bool isSsl = false;
+  String host = "";
+  uint16_t port = 80;
+
+  if (base.startsWith("https://"))
+  {
+    isSsl = true;
+    base = base.substring(8);
+    port = 443;
+  }
+  else if (base.startsWith("http://"))
+  {
+    isSsl = false;
+    base = base.substring(7);
+    port = 80;
+  }
+  else if (base.startsWith("wss://"))
+  {
+    isSsl = true;
+    base = base.substring(6);
+    port = 443;
+  }
+  else if (base.startsWith("ws://"))
+  {
+    isSsl = false;
+    base = base.substring(5);
+    port = 80;
+  }
+
+  int slashIdx = base.indexOf('/');
+  if (slashIdx >= 0)
+  {
+    base = base.substring(0, slashIdx);
+  }
+
+  int colonIdx = base.indexOf(':');
+  if (colonIdx >= 0)
+  {
+    host = base.substring(0, colonIdx);
+    port = (uint16_t)base.substring(colonIdx + 1).toInt();
+  }
+  else
+  {
+    host = base;
+  }
+
+  Serial.println("=================================================");
+  Serial.printf("[WebSocket] Connecting to %s:%u (SSL: %s)...\n",
+                host.c_str(), port, isSsl ? "YES" : "NO");
+  Serial.println("=================================================");
+
+  webSocket.onEvent(webSocketEvent);
+  webSocket.setReconnectInterval(5000);
+  webSocket.enableHeartbeat(15000, 3000, 2);
+
+  if (isSsl)
+  {
+    webSocket.beginSSL(host.c_str(), port, "/ws", "", "");
+  }
+  else
+  {
+    webSocket.begin(host.c_str(), port, "/ws", "");
+  }
+}
+
 void networkWorkerTask(void *param)
 {
   Serial.println("[FreeRTOS] Network Worker Task started on Core 0");
   uint32_t lastHeartbeatCheckMs = 0;
+  static bool s_wsInitialized = false;
 
   for (;;)
   {
     serviceNetworking();
 
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      if (!s_wsInitialized)
+      {
+        initWebSocketClient();
+        s_wsInitialized = true;
+      }
+
+      if (s_wsMutex && xSemaphoreTake(s_wsMutex, pdMS_TO_TICKS(5)) == pdTRUE)
+      {
+        webSocket.loop();
+        xSemaphoreGive(s_wsMutex);
+      }
+    }
+    else
+    {
+      s_wsConnected = false;
+      s_wsInitialized = false;
+    }
+
     NetEventType event = NET_EVENT_NONE;
-    if (s_netQueue && xQueueReceive(s_netQueue, &event, pdMS_TO_TICKS(500)) == pdTRUE)
+    if (s_netQueue && xQueueReceive(s_netQueue, &event, pdMS_TO_TICKS(5)) == pdTRUE)
     {
       if (event == NET_EVENT_UPLOAD_AUDIO)
       {
@@ -334,7 +603,7 @@ void networkWorkerTask(void *param)
       }
     }
 
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(2));
   }
 }
 
@@ -354,6 +623,10 @@ void audioPlaybackTask(void *param)
         {
           failVoiceTurn("TTS playback failed to start");
         }
+      }
+      else if (cmd == AUDIO_CMD_PLAY_STREAM)
+      {
+        startStreamPlayback();
       }
       else if (cmd == AUDIO_CMD_PLAY_LOCAL)
       {
@@ -377,6 +650,8 @@ void audioPlaybackTask(void *param)
 void initFreeRtosTasks()
 {
   s_littleFsMutex = xSemaphoreCreateRecursiveMutex();
+  s_wsMutex = xSemaphoreCreateMutex();
+  s_audioStreamBuffer = xStreamBufferCreate(16384, 512);
   s_netQueue = xQueueCreate(4, sizeof(NetEventType));
   s_audioQueue = xQueueCreate(4, sizeof(AudioCmdType));
 
@@ -400,7 +675,7 @@ void initFreeRtosTasks()
     1
   );
 
-  Serial.println("[FreeRTOS] Dual-Core tasks successfully initialized!");
+  Serial.println("[FreeRTOS] Dual-Core tasks + WebSocket StreamBuffer initialized!");
 }
 
 void setup()
@@ -668,6 +943,8 @@ void clearVoiceTurnRuntimeState()
   captureState.writeIndex = 0;
   audioState.isDownloading = false;
   micState.soundActive = false;
+  s_wsStreamTtsActive = false;
+  s_wsStreamTtsFinished = false;
 }
 
 void failVoiceTurn(const String &errorText)
@@ -677,6 +954,8 @@ void failVoiceTurn(const String &errorText)
   {
     audioState.ttsFile.close();
   }
+  s_wsStreamTtsActive = false;
+  s_wsStreamTtsFinished = false;
   audioState.activeSource = PLAYBACK_NONE;
   audioState.pendingSource = PLAYBACK_NONE;
   audioState.isPlaying = false;
@@ -699,6 +978,7 @@ bool canStartVoiceTurn()
          !captureState.uploadPending &&
          !audioState.isDownloading &&
          !audioState.isPlaying &&
+         !s_wsStreamTtsActive &&
          ((int32_t)(millis() - s_playbackCooldownUntilMs) >= 0);
 }
 
@@ -1188,6 +1468,61 @@ void fillAudioChunk()
     return;
   }
 
+  if (audioState.isPlaying && audioState.activeSource == PLAYBACK_STREAM_AUDIO)
+  {
+    int16_t monoBlock[kI2SChunkFrames];
+    const size_t bytesToRead = sizeof(monoBlock);
+    size_t bytesRead = 0;
+
+    if (s_audioStreamBuffer)
+    {
+      bytesRead = xStreamBufferReceive(s_audioStreamBuffer, monoBlock, bytesToRead, 0);
+    }
+
+    if (bytesRead > 0)
+    {
+      const size_t framesRead = bytesRead / sizeof(int16_t);
+      for (size_t frameIndex = 0; frameIndex < framesRead; ++frameIndex)
+      {
+        const int16_t sample = applySpeakerVolume(monoBlock[frameIndex]);
+        audioState.dmaBuffer[frameIndex * 2] = sample;
+        audioState.dmaBuffer[(frameIndex * 2) + 1] = sample;
+      }
+      for (size_t frameIndex = framesRead; frameIndex < kI2SChunkFrames; ++frameIndex)
+      {
+        audioState.dmaBuffer[frameIndex * 2] = 0;
+        audioState.dmaBuffer[(frameIndex * 2) + 1] = 0;
+      }
+
+      audioState.pendingOffsetBytes = 0;
+      audioState.pendingBytes = sizeof(audioState.dmaBuffer);
+      return;
+    }
+
+    // bytesRead == 0: check if playback finished
+    if (s_wsStreamTtsFinished && (!s_audioStreamBuffer || xStreamBufferIsEmpty(s_audioStreamBuffer) == pdTRUE))
+    {
+      Serial.println("[Stream] Real-time stream playback finished!");
+      s_wsStreamTtsActive = false;
+      finishPlayback();
+      resetVoiceTurnToIdle();
+      audioState.pendingOffsetBytes = 0;
+      audioState.pendingBytes = 0;
+      return;
+    }
+
+    // Still waiting for next sentence chunk over network: output silence for 1 chunk
+    for (size_t frameIndex = 0; frameIndex < kI2SChunkFrames; ++frameIndex)
+    {
+      audioState.dmaBuffer[frameIndex * 2] = 0;
+      audioState.dmaBuffer[(frameIndex * 2) + 1] = 0;
+    }
+    audioState.pendingOffsetBytes = 0;
+    audioState.pendingBytes = sizeof(audioState.dmaBuffer);
+    vTaskDelay(pdMS_TO_TICKS(4));
+    return;
+  }
+
   for (size_t frameIndex = 0; frameIndex < kI2SChunkFrames; ++frameIndex)
   {
     const int16_t monoSample = applySpeakerVolume(nextMonoSample());
@@ -1281,6 +1616,11 @@ bool startPlayback(PlaybackSource source)
   if (source == PLAYBACK_TTS_AUDIO)
   {
     return startTtsPlayback();
+  }
+
+  if (source == PLAYBACK_STREAM_AUDIO)
+  {
+    return startStreamPlayback();
   }
 
   return false;
@@ -1460,8 +1800,9 @@ void finishPlayback()
   {
     Serial.println("Playback finished: local_sample");
   }
-  else if (finishedSource == PLAYBACK_TTS_AUDIO)
+  else if (finishedSource == PLAYBACK_TTS_AUDIO || finishedSource == PLAYBACK_STREAM_AUDIO)
   {
+    s_wsStreamTtsActive = false;
     Serial.println("PLAYBACK DONE");
     configureAudioSampleRate(kI2SSampleRate);
   }
@@ -1616,6 +1957,8 @@ void performSynchronousAudioCapture()
 
     size_t samplesGot = bytesRead / sizeof(int32_t);
     int32_t chunkPeak = 0;
+    int16_t streamChunkPcm[kMicDmaChunkSize];
+    size_t streamChunkCount = 0;
 
     for (size_t i = 0; i < samplesGot && capturedSamples < kAudioCaptureSampleCount; ++i)
     {
@@ -1635,6 +1978,7 @@ void performSynchronousAudioCapture()
 
       int16_t pcmSample = (int16_t)sample;
       audioCaptureBuffer[capturedSamples++] = pcmSample;
+      streamChunkPcm[streamChunkCount++] = pcmSample;
 
       int32_t absSample = abs((int)pcmSample);
       if (absSample > chunkPeak) chunkPeak = absSample;
@@ -1642,6 +1986,12 @@ void performSynchronousAudioCapture()
       if (pcmSample < captureState.pcmMin) captureState.pcmMin = pcmSample;
       if (pcmSample > captureState.pcmMax) captureState.pcmMax = pcmSample;
       captureState.absSum += (uint64_t)absSample;
+    }
+
+    // Stream binary PCM chunk live over WebSocket as child speaks!
+    if (s_useWebSocketForCurrentTurn && voiceDetected && streamChunkCount > 0)
+    {
+      wsSendBinSafe((const uint8_t *)streamChunkPcm, streamChunkCount * sizeof(int16_t));
     }
 
     const uint32_t nowMs = millis();
@@ -1686,14 +2036,13 @@ void performSynchronousAudioCapture()
   {
     Serial.printf("[VAD] Ambient noise/music rejected (voice=%d, peak=%d < 2800, samples=%u). Turn cancelled.\n",
                   voiceDetected, peakSpeechAmp, (unsigned int)capturedSamples);
+    if (s_useWebSocketForCurrentTurn)
+    {
+      wsSendTxtSafe("{\"type\":\"cancel\"}");
+    }
     resetVoiceTurnToIdle();
     return;
   }
-
-  captureState.writeIndex = capturedSamples;
-
-  // Apply Software Auto-Gain / High-pass filter to the captured samples
-  applySoftwareAudioGain(capturedSamples);
 
   const uint32_t actualDurationMs = (uint32_t)((capturedSamples * 1000UL) / kAudioCaptureSampleRate);
   Serial.println("RECORDING COMPLETE");
@@ -1705,6 +2054,21 @@ void performSynchronousAudioCapture()
   Serial.println(elapsedMs);
   Serial.print("actual audio duration ms: ");
   Serial.println(actualDurationMs);
+
+  if (s_useWebSocketForCurrentTurn)
+  {
+    Serial.println("⚡ [WebSocket] Speech stopped -> Notified server via stop_listen! Instant turn processing...");
+    wsSendTxtSafe("{\"type\":\"stop_listen\"}");
+    setVoiceTurnState(VOICE_THINKING);
+    // 0s upload wait! Core 0 WebSocket task handles incoming TTS chunks.
+    return;
+  }
+
+  captureState.writeIndex = capturedSamples;
+
+  // Apply Software Auto-Gain / High-pass filter to the captured samples (HTTP fallback)
+  applySoftwareAudioGain(capturedSamples);
+
   Serial.print("pcm min/max: ");
   Serial.print(captureState.pcmMin);
   Serial.print(" / ");
@@ -1726,7 +2090,7 @@ void performSynchronousAudioCapture()
     }
   }
 
-  // Queue upload to Network Worker on Core 0
+  // Queue upload to Network Worker on Core 0 (HTTP Fallback)
   captureState.uploadPending = false;
   captureState.isUploading = true;
   setVoiceTurnState(VOICE_UPLOADING);
@@ -1761,6 +2125,18 @@ void beginAudioCapture()
   voiceTurn.lastAssistantReply = "";
   voiceTurn.lastError = "";
   setVoiceTurnState(VOICE_RECORDING);
+
+  if (s_wsConnected)
+  {
+    s_useWebSocketForCurrentTurn = true;
+    wsSendTxtSafe("{\"type\":\"start_listen\",\"sample_rate\":8000}");
+    Serial.println("⚡ [WebSocket] Live audio streaming turn started!");
+  }
+  else
+  {
+    s_useWebSocketForCurrentTurn = false;
+    Serial.println("[HTTP Fallback] WebSocket not connected; will use HTTP upload");
+  }
 
   performSynchronousAudioCapture();
 }
@@ -2416,6 +2792,9 @@ void serviceSerialInput()
           Serial.println("=================================================");
           Serial.printf("[BACKEND] Backend URL updated to: %s\n", g_backend_url.c_str());
           Serial.println("=================================================");
+          webSocket.disconnect();
+          s_wsConnected = false;
+          initWebSocketClient();
           return;
         }
       }

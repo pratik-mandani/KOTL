@@ -14,6 +14,7 @@ const { writePcm16MonoWav } = require("../utils/wav");
 const { execFileSync } = require("child_process");
 const ffmpegBin = require("ffmpeg-static");
 const { EdgeTTS } = require("node-edge-tts");
+const { detectEyeExpression } = require("./eye-animation");
 
 const HEARTBEAT_INTERVAL_MS = 15000;
 const CLIENT_TIMEOUT_MS = 35000;
@@ -29,9 +30,9 @@ function splitIntoSentences(text) {
 async function synthesizeSentencePcm(text) {
   if (!text || !text.trim()) return Buffer.alloc(0);
 
-  const isGujarati = /[\u0A80-\u0AFF]/.test(text);
-  const voice = isGujarati ? "gu-IN-DhwaniNeural" : "en-US-JennyNeural";
-  const lang = isGujarati ? "gu-IN" : "en-US";
+  const isHindi = /[\u0900-\u097F]/.test(text);
+  const voice = process.env.EDGE_TTS_VOICE || "hi-IN-MadhurNeural";
+  const lang = isHindi ? "hi-IN" : (process.env.EDGE_TTS_LANG || "hi-IN");
   const tempMp3 = path.join(
     os.tmpdir(),
     `sentence-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.mp3`
@@ -40,6 +41,7 @@ async function synthesizeSentencePcm(text) {
   const tts = new EdgeTTS({
     voice,
     lang,
+    rate: "+18%",
     outputFormat: "audio-24khz-48kbitrate-mono-mp3",
     timeout: 10000,
   });
@@ -157,16 +159,18 @@ function initWebSocketServer(httpServer) {
             break;
 
           case "start_listen":
-            console.log(`[WebSocket ${ws.deviceId}] Listening started...`);
+            ws.sampleRate = (msg.sample_rate && Number(msg.sample_rate)) || 8000;
+            console.log(`[WebSocket ${ws.deviceId}] Listening started (sample rate: ${ws.sampleRate} Hz)...`);
             ws.audioChunks = [];
             ws.totalAudioBytes = 0;
             setState("LISTENING");
             break;
 
           case "stop_listen":
+            const audioRate = ws.sampleRate || 8000;
             console.log(
               `[WebSocket ${ws.deviceId}] Listening stopped. Received ${ws.totalAudioBytes} bytes (${(
-                ws.totalAudioBytes / 32000
+                ws.totalAudioBytes / (audioRate * 2)
               ).toFixed(2)}s)`
             );
             setState("THINKING");
@@ -244,7 +248,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     // 1. Write PCM buffer to temporary 16kHz WAV file for STT
     writePcm16MonoWav({
       wavPath: tempWavPath,
-      sampleRate: NORMALIZED_SAMPLE_RATE,
+      sampleRate: ws.sampleRate || 8000,
       audioDataBytes: rawPcmBuffer,
     });
 
@@ -275,13 +279,20 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     });
     const replyText = (assistantResult.reply || "").trim();
 
+    const eyeExpr = detectEyeExpression(transcript, replyText);
+    sendJson({
+      type: "eye_expression",
+      value: eyeExpr,
+    });
+
     sendJson({
       type: "reply_text",
       text: replyText,
+      eye_expression: eyeExpr,
       provider: assistantResult.provider,
       model: assistantResult.model,
     });
-    console.log(`[WebSocket ${ws.deviceId}] Reply: "${replyText}"`);
+    console.log(`[WebSocket ${ws.deviceId}] Reply: "${replyText}" (Eye: ${eyeExpr})`);
 
     // 4. Synthesize and Stream Speech in sentence chunks
     const sentences = splitIntoSentences(replyText);
