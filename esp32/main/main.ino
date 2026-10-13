@@ -1590,10 +1590,10 @@ void performSynchronousAudioCapture()
   int32_t dmaChunk[kMicDmaChunkSize];
 
   // Voice Activity Detection (VAD) parameters
-  static const int16_t kVadVoiceThreshold = 1800;    // Amplitude indicating foreground speech
-  static const uint32_t kVadInitialSilenceMs = 2200;  // Max initial silence before aborting false trigger
-  static const uint32_t kVadTrailingSilenceMs = 1250; // Natural silence after speech (1.25s breathing room)
-  static const uint32_t kVadMinSpeechMs = 600;        // Minimum speech duration before considering silence
+  static const int16_t kVadVoiceThreshold = 2200;    // Amplitude indicating foreground speech
+  static const uint32_t kVadInitialSilenceMs = 1800;  // Max initial silence before aborting false trigger
+  static const uint32_t kVadTrailingSilenceMs = 650;  // Fast end of speech detection (650ms silence)
+  static const uint32_t kVadMinSpeechMs = 400;        // Minimum speech duration before considering silence
 
   bool voiceDetected = false;
   uint32_t voiceStartMs = 0;
@@ -2112,11 +2112,12 @@ int streamHttpToFileWithYield(HTTPClient &http, File &file)
     return -1;
   }
 
-  uint8_t buff[512];
+  uint8_t buff[2048];
   int totalBytesWritten = 0;
   int remainingBytes = http.getSize();
   uint32_t lastDataMs = millis();
   const uint32_t streamTimeoutMs = 15000;
+  size_t bytesSinceYield = 0;
 
   Serial.printf("[Stream] Streaming HTTP audio to file (content length: %d)...\n", remainingBytes);
 
@@ -2131,14 +2132,18 @@ int streamHttpToFileWithYield(HTTPClient &http, File &file)
       {
         file.write(buff, bytesRead);
         totalBytesWritten += bytesRead;
+        bytesSinceYield += bytesRead;
         if (remainingBytes > 0)
         {
           remainingBytes -= bytesRead;
         }
         lastDataMs = millis();
       }
-      // CRITICAL: Yield every chunk so IDLE0 gets CPU time and watchdog never trips
-      vTaskDelay(pdMS_TO_TICKS(1));
+      if (bytesSinceYield >= 4096)
+      {
+        bytesSinceYield = 0;
+        taskYIELD();
+      }
     }
     else
     {
@@ -2151,7 +2156,7 @@ int streamHttpToFileWithYield(HTTPClient &http, File &file)
         Serial.println("[Stream] Timeout waiting for stream data");
         break;
       }
-      vTaskDelay(pdMS_TO_TICKS(5));
+      vTaskDelay(pdMS_TO_TICKS(2));
     }
   }
 
@@ -2385,6 +2390,31 @@ void serviceSerialInput()
           Serial.println();
           Serial.println("=================================================");
           Serial.printf("[VOLUME] Speaker volume set to %u%%\n", (unsigned int)s_speakerVolumePercent);
+          Serial.println("=================================================");
+          return;
+        }
+      }
+
+      if (input.startsWith("BACKEND="))
+      {
+        String val = input.substring(8);
+        val.trim();
+        if (val.equalsIgnoreCase("LOCAL"))
+        {
+          val = "http://192.168.1.13:3000";
+        }
+        else if (val.equalsIgnoreCase("RENDER"))
+        {
+          val = "https://kotl.onrender.com";
+        }
+
+        if (val.startsWith("http://") || val.startsWith("https://"))
+        {
+          g_backend_url = val;
+          prefs.putString("backend", val);
+          Serial.println();
+          Serial.println("=================================================");
+          Serial.printf("[BACKEND] Backend URL updated to: %s\n", g_backend_url.c_str());
           Serial.println("=================================================");
           return;
         }
