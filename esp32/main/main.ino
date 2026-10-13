@@ -138,7 +138,7 @@ static TaskHandle_t s_hAudioTask = NULL;
 static WebSocketsClient webSocket;
 static StreamBufferHandle_t s_audioStreamBuffer = NULL;
 static SemaphoreHandle_t s_wsMutex = NULL;
-static volatile bool s_wsConnected = false;
+volatile bool s_wsConnected = false;
 static volatile bool s_wsStreamTtsActive = false;
 static volatile bool s_wsStreamTtsFinished = false;
 static volatile bool s_useWebSocketForCurrentTurn = false;
@@ -355,12 +355,14 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
   {
   case WStype_DISCONNECTED:
     s_wsConnected = false;
-    Serial.println("[WebSocket] Disconnected from backend.");
+    Serial.printf("[WebSocket] Disconnected from backend (payload: %s)\n", (length > 0 && payload) ? (char *)payload : "none");
     break;
 
   case WStype_CONNECTED:
     s_wsConnected = true;
-    Serial.println("[WebSocket] Connected to KOTL backend server!");
+    Serial.println("=================================================");
+    Serial.println("⚡ [WebSocket] Connected to KOTL backend server!");
+    Serial.println("=================================================");
     webSocket.sendTXT("{\"type\":\"register\",\"device_id\":\"KOTL-ESP32\"}");
     break;
 
@@ -444,6 +446,10 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
           Serial.println("[WebSocket] Server finished sending TTS chunks.");
           s_wsStreamTtsFinished = true;
         }
+        else if (msgType == "registered" || msgType == "hello")
+        {
+          Serial.println("⚡ [WebSocket] Device registered & ready with KOTL cloud backend!");
+        }
         else if (msgType == "error")
         {
           String err = "";
@@ -463,7 +469,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     break;
 
   case WStype_ERROR:
-    Serial.println("[WebSocket] Socket error!");
+    Serial.printf("[WebSocket] Socket error! (payload: %s)\n", (length > 0 && payload) ? (char *)payload : "none");
     break;
 
   case WStype_PING:
@@ -533,7 +539,7 @@ void initWebSocketClient()
 
   if (isSsl)
   {
-    webSocket.beginSSL(host.c_str(), port, "/ws", "", "");
+    webSocket.beginSSL(host.c_str(), port, "/ws", NULL, "");
   }
   else
   {
@@ -2563,6 +2569,13 @@ void performAudioUpload()
   Serial.print("upload url: ");
   Serial.println(audioUrl);
 
+  if (!s_wsConnected)
+  {
+    // Disconnect idle WebSocket client to free MbedTLS internal heap for HTTP upload
+    webSocket.disconnect();
+    delay(50);
+  }
+
   if (!beginHttpWithOptionalSsl(http, sslClient, audioUrl))
   {
     captureState.isUploading = false;
@@ -2588,7 +2601,10 @@ void performAudioUpload()
   int httpCode = http.POST(payload, uploadBytes);
   if (httpCode < 0)
   {
-    Serial.printf("[NetWorker] Upload attempt 1 returned %d (%s), retrying in 600ms...\n", httpCode, http.errorToString(httpCode).c_str());
+    char tlsErrBuf[128] = {0};
+    sslClient.lastError(tlsErrBuf, sizeof(tlsErrBuf));
+    Serial.printf("[NetWorker] Upload attempt 1 returned %d (%s, TLS: %s), retrying in 600ms...\n",
+                  httpCode, http.errorToString(httpCode).c_str(), tlsErrBuf);
     http.end();
     delay(600);
     if (beginHttpWithOptionalSsl(http, sslClient, audioUrl))

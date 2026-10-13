@@ -19,11 +19,12 @@ static String g_backend_url = "";
 static int g_config_version = 1;
 static bool g_in_ap_mode = false;
 static uint32_t g_last_heartbeat_ms = 0;
-static const uint32_t kHeartbeatIntervalMs = 5000; // Check for Admin updates & web audio every 5s
+static const uint32_t kHeartbeatIntervalMs = 15000; // Check for Admin updates every 15s (if WS inactive)
 static String g_last_played_audio_id = "";
 static String g_last_handled_cmd_id = "";
 
 // Forward declarations from main sketch
+extern volatile bool s_wsConnected;
 extern bool downloadTtsAudio(const String &ttsUrl);
 extern bool canStartVoiceTurn();
 extern bool triggerLocalSamplePlayback();
@@ -197,6 +198,11 @@ inline void checkRemoteAdminUpdates() {
 
   // Never perform background network calls if audio capture or playback is active!
   if (!canStartVoiceTurn()) {
+    return;
+  }
+
+  // If live WebSocket is connected, background commands and events are handled over WS; skip HTTP polling
+  if (s_wsConnected) {
     return;
   }
 
