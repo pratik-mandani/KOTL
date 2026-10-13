@@ -43,8 +43,8 @@ const PIPER_MODEL_PATH = process.env.PIPER_MODEL_PATH || "";
 const PIPER_CONFIG_PATH = process.env.PIPER_CONFIG_PATH || "";
 const PIPER_VOICE = "local";
 
-const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "gu-IN-NiranjanNeural";
-const EDGE_LANG = process.env.EDGE_TTS_LANG || "gu-IN";
+const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "hi-IN-MadhurNeural";
+const EDGE_LANG = process.env.EDGE_TTS_LANG || "hi-IN";
 
 function buildTtsFilename() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -121,9 +121,9 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
     };
   }
 
-  const isGujarati = /[\u0A80-\u0AFF]/.test(text);
-  const selectedVoice = voice || (isGujarati ? "gu-IN-NiranjanNeural" : (EDGE_VOICE || "en-IN-PrabhatNeural"));
-  const selectedLang = isGujarati ? "gu-IN" : EDGE_LANG;
+  const isHindi = /[\u0900-\u097F]/.test(text);
+  const selectedVoice = voice || (isHindi ? "hi-IN-MadhurNeural" : (EDGE_VOICE || "hi-IN-MadhurNeural"));
+  const selectedLang = isHindi ? "hi-IN" : EDGE_LANG;
   const normalizedFilename = buildTtsFilename();
   const normalizedPath = path.join(TTS_UPLOADS_DIR, normalizedFilename);
   const tempMp3Path = path.join(os.tmpdir(), `${path.parse(normalizedFilename).name}-edge.mp3`);
@@ -410,8 +410,8 @@ async function generateGoogleSpeech({ text, sessionId = null }) {
     return { success: false, error: "empty text" };
   }
 
-  const isGujarati = /[\u0A80-\u0AFF]/.test(text);
-  const lang = isGujarati ? "gu" : "en";
+  const isHindi = /[\u0900-\u097F]/.test(text);
+  const lang = isHindi ? "hi" : "en";
   const normalizedFilename = buildTtsFilename();
   const normalizedPath = path.join(TTS_UPLOADS_DIR, normalizedFilename);
 

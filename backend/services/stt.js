@@ -63,7 +63,7 @@ function isBlacklistedNoiseTranscript(text) {
   const clean = text.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
   if (clean.length === 0 || clean.length <= 2) return true;
   const words = clean.split(/\s+/);
-  if (words.length === 1 && ["gajarati", "gujarati", "you", "yeah", "video", "subtitles", "bye"].includes(words[0])) {
+  if (words.length === 1 && ["you", "yeah", "video", "subtitles", "bye", "okay", "so", "oh", "yes", "no"].includes(words[0])) {
     return true;
   }
   return NOISE_FILTER_BLACKLIST.some((phrase) => {
@@ -126,8 +126,8 @@ async function transcribeWithOpenAi(filePath) {
     audioBuffer,
     fileName,
     model,
-    "auto",
-    "User speaks naturally in authentic Gujarati (ગુજરાતી) or conversational English. સામાન્ય વાક્યો: કેમ છો, તમે કેમ છો, તારું નામ શું છે, તું કોણ છે, વાર્તા કહો, આજે કેવું છે, KOTL, hello, what is your name."
+    "hi",
+    "KOTL AI Companion. Hindi and English conversational speech: नमस्ते, आप कैसे हो, क्या हाल है, KOTL, hello, how are you, tell me a story."
   );
 
   console.log(`[STT openai] Sending request to OpenAI STT API. Model: ${model}, Language: ${language}, Prompt hint: "${prompt}"`);
@@ -203,8 +203,8 @@ async function transcribeWithGroq(filePath) {
     audioBuffer,
     fileName,
     model,
-    "gu",
-    "User speaks in authentic Gujarati (ગુજરાતી) or conversational English. સામાન્ય વાક્યો: કેમ છો, તમે કેમ છો, તારું નામ શું છે, તું કોણ છે, વાર્તા કહો, આજે કેવું છે, KOTL, hello, what is your name."
+    "hi",
+    "KOTL AI Companion. Hindi and English conversational speech: नमस्ते, आप कैसे हो, क्या हाल है, KOTL, hello, how are you, tell me a story."
   );
 
   console.log(`[STT groq] Sending request to Groq STT API. Model: ${model}, Language: ${language}, Prompt: "${prompt}"`);

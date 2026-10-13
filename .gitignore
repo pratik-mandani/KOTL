@@ -28,6 +28,8 @@ tools/
 test.wav
 test2.wav
 test.wavecho
+latest_device_mic.wav
+*.wav
 *.raw
 
 # IDE / OS

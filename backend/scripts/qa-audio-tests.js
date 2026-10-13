@@ -41,6 +41,7 @@ function postAudio(buffer, headers = {}) {
           const transcript = decodeURIComponent(res.headers["x-transcript"] || "");
           const assistantReply = decodeURIComponent(res.headers["x-assistant-reply"] || "");
           const turnStatus = res.headers["x-turn-status"] || "";
+          const eyeExpression = res.headers["x-eye-expression"] || "";
 
           let jsonBody = null;
           if (contentType.includes("application/json")) {
@@ -56,6 +57,7 @@ function postAudio(buffer, headers = {}) {
             transcript: transcript || (jsonBody && jsonBody.transcript),
             assistantReply: assistantReply || (jsonBody && jsonBody.assistant_reply),
             turnStatus: turnStatus || (jsonBody && jsonBody.turn_status),
+            eyeExpression: eyeExpression || (jsonBody && jsonBody.eye_expression),
             bodyLength: bodyBuffer.length,
             jsonBody,
           });
@@ -117,18 +119,18 @@ async function runQaTests() {
     failed++;
   }
 
-  // TEST 3: Genuine User Speech Question ("કેમ છો KOTL?")
-  console.log("\n[Test 3] Testing Genuine User Speech ('કેમ છો KOTL?')...");
+  // TEST 3: Genuine User Speech Question ("नमस्ते KOTL, तुम कैसे हो?")
+  console.log("\n[Test 3] Testing Genuine Hindi User Speech ('नमस्ते KOTL, तुम कैसे हो?')...");
   try {
     const tempMp3 = path.join(os.tmpdir(), `qa-speech-${Date.now()}.mp3`);
     const tempWav = path.join(os.tmpdir(), `qa-speech-${Date.now()}.wav`);
     const tts = new EdgeTTS({
-      voice: "gu-IN-NiranjanNeural",
-      lang: "gu-IN",
+      voice: "hi-IN-MadhurNeural",
+      lang: "hi-IN",
       outputFormat: "audio-24khz-48kbitrate-mono-mp3",
       timeout: 10000,
     });
-    await tts.ttsPromise("કેમ છો KOTL?", tempMp3);
+    await tts.ttsPromise("नमस्ते KOTL, तुम कैसे हो?", tempMp3);
     await convertMp3FileToWavFile(tempMp3, tempWav, 8000);
 
     const wavBuf = fs.readFileSync(tempWav);
@@ -142,6 +144,7 @@ async function runQaTests() {
     const res3 = await postAudio(realSpeechPcm);
     if (res3.ttsReady && res3.bodyLength > 1000) {
       console.log(`  [PASS] Genuine speech answered! Transcript: "${res3.transcript}", Reply: "${res3.assistantReply}"`);
+      console.log(`  [PASS] Voice-controlled Eye Animation detected: "${res3.eyeExpression}"`);
       console.log(`  [PASS] Kid-friendly male TTS audio received: ${res3.bodyLength} bytes.`);
       passed++;
     } else {

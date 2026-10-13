@@ -272,6 +272,7 @@ static volatile bool s_triggerMicCapturePending = false;
 void performTextChatRequest();
 void serviceSerialInput();
 static String s_serialPromptText = "";
+void applyVoiceEyeAnimation(const String &expression);
 uint16_t readLe16(const uint8_t *buffer);
 uint32_t readLe32(const uint8_t *buffer);
 bool takeFsMutex(uint32_t timeoutMs = 2000)
@@ -529,6 +530,78 @@ void initEyes()
   roboEyes.setSpacebetween(10);
 }
 
+static String s_activeVoiceEyeExpr = "";
+
+void applyVoiceEyeAnimation(const String &expression)
+{
+  if (expression.length() == 0) return;
+  s_activeVoiceEyeExpr = expression;
+  Serial.print("[RoboEyes] Voice Eye Animation: ");
+  Serial.println(expression);
+
+  if (expression == "laugh")
+  {
+    roboEyes.setMood(HAPPY);
+    roboEyes.setPosition(DEFAULT);
+    roboEyes.anim_laugh();
+  }
+  else if (expression == "happy")
+  {
+    roboEyes.setMood(HAPPY);
+    roboEyes.setPosition(DEFAULT);
+  }
+  else if (expression == "angry")
+  {
+    roboEyes.setMood(ANGRY);
+    roboEyes.setPosition(DEFAULT);
+  }
+  else if (expression == "confused")
+  {
+    roboEyes.setMood(DEFAULT);
+    roboEyes.anim_confused();
+  }
+  else if (expression == "tired")
+  {
+    roboEyes.setMood(TIRED);
+    roboEyes.setPosition(DEFAULT);
+  }
+  else if (expression == "blink")
+  {
+    roboEyes.blink();
+  }
+  else if (expression == "look_up")
+  {
+    roboEyes.setIdleMode(OFF);
+    roboEyes.setPosition(N);
+  }
+  else if (expression == "look_down")
+  {
+    roboEyes.setIdleMode(OFF);
+    roboEyes.setPosition(S);
+  }
+  else if (expression == "look_left")
+  {
+    roboEyes.setIdleMode(OFF);
+    roboEyes.setPosition(W);
+  }
+  else if (expression == "look_right")
+  {
+    roboEyes.setIdleMode(OFF);
+    roboEyes.setPosition(E);
+  }
+  else if (expression == "default")
+  {
+    roboEyes.setMood(DEFAULT);
+    roboEyes.setPosition(DEFAULT);
+    roboEyes.setIdleMode(ON, 3, 1);
+  }
+  else
+  {
+    roboEyes.setMood(HAPPY);
+    roboEyes.setPosition(DEFAULT);
+  }
+}
+
 void setVoiceTurnState(VoiceTurnState newState, const String &errorText)
 {
   voiceTurn.state = newState;
@@ -541,8 +614,10 @@ void setVoiceTurnState(VoiceTurnState newState, const String &errorText)
   switch (newState)
   {
   case VOICE_IDLE:
+    s_activeVoiceEyeExpr = "";
     roboEyes.setMood(DEFAULT);
     roboEyes.setPosition(DEFAULT);
+    roboEyes.setIdleMode(ON, 3, 1);
     break;
   case VOICE_RECORDING:
   case VOICE_UPLOADING:
@@ -552,10 +627,18 @@ void setVoiceTurnState(VoiceTurnState newState, const String &errorText)
     roboEyes.setPosition(DEFAULT);
     break;
   case VOICE_SPEAKING:
-    roboEyes.setMood(HAPPY);
-    roboEyes.setPosition(DEFAULT);
+    if (s_activeVoiceEyeExpr.length() > 0)
+    {
+      applyVoiceEyeAnimation(s_activeVoiceEyeExpr);
+    }
+    else
+    {
+      roboEyes.setMood(HAPPY);
+      roboEyes.setPosition(DEFAULT);
+    }
     break;
   case VOICE_ERROR:
+    s_activeVoiceEyeExpr = "";
     roboEyes.setMood(ANGRY);
     roboEyes.setPosition(DEFAULT);
     break;
@@ -2113,8 +2196,8 @@ void performAudioUpload()
   http.addHeader("X-Audio-Format", "raw_pcm_16le");
   http.addHeader("X-Stream-Audio", "true");
 
-  const char *headerKeys[] = {"Content-Type", "X-Transcript", "X-Assistant-Reply", "X-TTS-Ready", "X-Turn-Status"};
-  http.collectHeaders(headerKeys, 5);
+  const char *headerKeys[] = {"Content-Type", "X-Transcript", "X-Assistant-Reply", "X-TTS-Ready", "X-Turn-Status", "X-Eye-Expression"};
+  http.collectHeaders(headerKeys, 6);
 
   uint8_t *payload = reinterpret_cast<uint8_t *>(audioCaptureBuffer);
   int httpCode = http.POST(payload, uploadBytes);
@@ -2130,7 +2213,7 @@ void performAudioUpload()
       http.addHeader("X-Duration-Ms", String(uploadDurationMs));
       http.addHeader("X-Audio-Format", "raw_pcm_16le");
       http.addHeader("X-Stream-Audio", "true");
-      http.collectHeaders(headerKeys, 5);
+      http.collectHeaders(headerKeys, 6);
       httpCode = http.POST(payload, uploadBytes);
     }
   }
@@ -2141,6 +2224,12 @@ void performAudioUpload()
     String contentType = http.header("Content-Type");
     String transcript = urlDecode(http.header("X-Transcript"));
     String assistantReply = urlDecode(http.header("X-Assistant-Reply"));
+    String eyeExpr = http.header("X-Eye-Expression");
+    if (eyeExpr.length() > 0)
+    {
+      s_activeVoiceEyeExpr = eyeExpr;
+      Serial.printf("[RoboEyes] Voice Eye Expression received: %s\n", eyeExpr.c_str());
+    }
 
     voiceTurn.lastTranscript = transcript;
     voiceTurn.lastAssistantReply = assistantReply;
@@ -2354,8 +2443,8 @@ void performTextChatRequest()
   }
 
   http.addHeader("Content-Type", "application/json");
-  const char *headerKeys[] = {"Content-Type", "X-Transcript", "X-Assistant-Reply", "X-TTS-Ready"};
-  http.collectHeaders(headerKeys, 4);
+  const char *headerKeys[] = {"Content-Type", "X-Transcript", "X-Assistant-Reply", "X-TTS-Ready", "X-Eye-Expression"};
+  http.collectHeaders(headerKeys, 5);
 
   String escapedPrompt = s_serialPromptText;
   escapedPrompt.replace("\"", "\\\"");
@@ -2366,6 +2455,13 @@ void performTextChatRequest()
   {
     String contentType = http.header("Content-Type");
     String assistantReply = urlDecode(http.header("X-Assistant-Reply"));
+    String eyeExpr = http.header("X-Eye-Expression");
+    if (eyeExpr.length() > 0)
+    {
+      s_activeVoiceEyeExpr = eyeExpr;
+      Serial.printf("[RoboEyes] Voice Eye Expression received: %s\n", eyeExpr.c_str());
+    }
+
     voiceTurn.lastTranscript = s_serialPromptText;
     voiceTurn.lastAssistantReply = assistantReply;
 
@@ -2496,6 +2592,13 @@ bool parseAudioUploadResponse(const String &payload, bool *ttsReady, String *tts
   if (ttsError != nullptr)
   {
     *ttsError = hasTtsError ? parsedTtsError : "";
+  }
+
+  String parsedEyeExpr;
+  if (extractJsonString(payload, "eye_expression", &parsedEyeExpr) && parsedEyeExpr.length() > 0)
+  {
+    s_activeVoiceEyeExpr = parsedEyeExpr;
+    Serial.printf("[RoboEyes] JSON Eye Expression received: %s\n", parsedEyeExpr.c_str());
   }
 
   return hasReady;

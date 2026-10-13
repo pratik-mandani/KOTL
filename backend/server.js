@@ -17,6 +17,7 @@ const { writePcm16MonoWav } = require("./utils/wav");
 const { getLocalIPv4Address } = require("./utils/network");
 const http = require("http");
 const { initWebSocketServer } = require("./services/websocket");
+const { detectEyeExpression } = require("./services/eye-animation");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -76,6 +77,7 @@ function buildAudioResponse(metadata, turnStatus) {
     assistant_error: metadata.assistant_error,
     tts_error: metadata.tts_error,
     turn_status: turnStatus,
+    eye_expression: metadata.eye_expression || "happy",
   };
 }
 
@@ -655,9 +657,10 @@ app.post("/api/chat-speak", async (req, res) => {
 
   try {
     const assistantResult = await generateAssistantReply({ transcript: text, sessionId, source: "serial" });
-    const reply = (assistantResult.reply || "નમસ્તે દોસ્ત!").trim();
+    const reply = (assistantResult.reply || "नमस्ते दोस्त!").trim();
     console.log(`[Chat-Speak] Assistant reply: "${reply}"`);
 
+    const eyeExpr = detectEyeExpression(text, reply);
     const ttsResult = await generateSpeech({ text: reply, sessionId });
 
     if (ttsResult.success && ttsResult.filename) {
@@ -670,6 +673,7 @@ app.post("/api/chat-speak", async (req, res) => {
           "X-Transcript": encodeURIComponent(text),
           "X-Assistant-Reply": encodeURIComponent(reply),
           "X-TTS-Ready": "true",
+          "X-Eye-Expression": eyeExpr,
           "Connection": "close",
         });
         const stream = fs.createReadStream(ttsFilePath);
@@ -677,7 +681,7 @@ app.post("/api/chat-speak", async (req, res) => {
       }
     }
 
-    return res.json({ success: true, prompt: text, reply: reply });
+    return res.json({ success: true, prompt: text, reply: reply, eye_expression: eyeExpr });
   } catch (err) {
     console.error("[Chat-Speak Error]", err);
     return res.status(500).json({ success: false, error: err.message });
@@ -754,9 +758,6 @@ function isNoiseTranscript(text) {
     "please subscribe",
     "watching",
     "the end",
-    "gajarati",
-    "gujarati",
-    "amara",
   ];
   
   // Check if it exactly matches or contains any noise phrases
@@ -764,8 +765,11 @@ function isNoiseTranscript(text) {
     return true;
   }
 
-  // Detect Whisper repetition loops (classic music/noise hallucination e.g. "word word word" or "phrase phrase")
+  // Detect Whisper repetition loops (classic music/noise hallucination e.g. "word word" or "phrase phrase")
   const words = cleanText.split(/\s+/);
+  if (words.length === 2 && words[0] === words[1]) {
+    return true;
+  }
   if (words.length >= 3) {
     const wordCounts = {};
     for (const w of words) {
@@ -786,7 +790,7 @@ function isNoiseTranscript(text) {
   }
   
   // Ignore single-character noise or very short filler words if they are alone
-  if (words.length === 1 && ["you", "yeah", "okay", "oh", "yes", "no", "uh", "um", "end", "so", "bye", "a", "i", "કેમ", "છો", "હું", "તે", "વાતચીત"].includes(words[0])) {
+  if (words.length === 1 && ["you", "yeah", "okay", "oh", "yes", "no", "uh", "um", "end", "so", "bye", "a", "i", "हा", "हाँ", "नहीं", "अरे"].includes(words[0])) {
     return true;
   }
   
@@ -852,6 +856,7 @@ app.post(
       tts_channels: null,
       tts_bits_per_sample: null,
       turn_status: "received",
+      eye_expression: "default",
     };
     Object.assign(metadata, analyzePcm16Mono(req.body));
 
@@ -970,6 +975,9 @@ app.post(
       }
     }
 
+    metadata.eye_expression = detectEyeExpression(metadata.transcript, metadata.assistant_reply);
+    logAudioTurn(turnId, "eye expression detected", { eye_expression: metadata.eye_expression });
+
     if (typeof metadata.assistant_reply === "string" && metadata.assistant_reply.trim().length > 0) {
       try {
         logAudioTurn(turnId, "tts started", { provider: process.env.TTS_PROVIDER || "openai" });
@@ -1045,6 +1053,7 @@ app.post(
             "X-TTS-Ready": "true",
             "X-Turn-Status": metadata.turn_status,
             "X-TTS-Filename": metadata.tts_filename,
+            "X-Eye-Expression": metadata.eye_expression || "happy",
             "Connection": "close",
           });
           const stream = fs.createReadStream(ttsFilePath);
