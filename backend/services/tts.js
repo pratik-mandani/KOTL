@@ -122,9 +122,22 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
     };
   }
 
+  const isGujarati = /[\u0A80-\u0AFF]/.test(text);
   const isHindi = /[\u0900-\u097F]/.test(text);
-  const selectedVoice = voice || (isHindi ? "hi-IN-MadhurNeural" : (EDGE_VOICE || "hi-IN-MadhurNeural"));
-  const selectedLang = isHindi ? "hi-IN" : EDGE_LANG;
+  let selectedVoice = voice;
+  let selectedLang = EDGE_LANG;
+  if (!selectedVoice) {
+    if (isGujarati) {
+      selectedVoice = "gu-IN-NiranjanNeural";
+      selectedLang = "gu-IN";
+    } else if (isHindi) {
+      selectedVoice = "hi-IN-MadhurNeural";
+      selectedLang = "hi-IN";
+    } else {
+      selectedVoice = "en-IN-PrabhatNeural";
+      selectedLang = "en-IN";
+    }
+  }
   const normalizedFilename = buildTtsFilename();
   const normalizedPath = path.join(TTS_UPLOADS_DIR, normalizedFilename);
   const tempMp3Path = path.join(os.tmpdir(), `${path.parse(normalizedFilename).name}-edge.mp3`);

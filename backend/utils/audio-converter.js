@@ -6,17 +6,6 @@
 
 const fs = require("fs");
 
-let _decoder = null;
-
-async function getDecoder() {
-  if (!_decoder) {
-    const { MPEGDecoder } = await import("mpg123-decoder");
-    _decoder = new MPEGDecoder();
-    await _decoder.ready;
-  }
-  return _decoder;
-}
-
 /**
  * Converts an MP3 Buffer into a 16-bit mono 16kHz WAV Buffer.
  * @param {Buffer} mp3Buffer 
@@ -24,8 +13,19 @@ async function getDecoder() {
  * @returns {Promise<Buffer>} Complete WAV file buffer (header + PCM)
  */
 async function mp3BufferToWavBuffer(mp3Buffer, targetSampleRate = 16000) {
-  const decoder = await getDecoder();
-  const { channelData, sampleRate } = decoder.decode(mp3Buffer);
+  const { MPEGDecoder } = await import("mpg123-decoder");
+  const decoder = new MPEGDecoder();
+  await decoder.ready;
+  let channelData, sampleRate;
+  try {
+    const res = decoder.decode(mp3Buffer);
+    channelData = res.channelData;
+    sampleRate = res.sampleRate;
+  } finally {
+    try {
+      decoder.free();
+    } catch (_) {}
+  }
 
   if (!channelData || channelData.length === 0 || channelData[0].length === 0) {
     throw new Error("MPEGDecoder produced empty channel data");

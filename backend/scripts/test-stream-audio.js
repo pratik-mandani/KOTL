@@ -26,16 +26,16 @@ async function prepareMockQuestionWav() {
     return wavPath;
   }
 
-  console.log("[Benchmark] Generating clean speech sample: 'નમસ્તે, તું કોણ છે?'...");
+  console.log("[Benchmark] Generating clean speech sample: 'नमस्ते KOTL, तुम कैसे हो?'...");
   const tempMp3 = path.join(os.tmpdir(), "mock_temp.mp3");
   const tts = new EdgeTTS({
-    voice: "gu-IN-NiranjanNeural",
-    lang: "gu-IN",
+    voice: "hi-IN-MadhurNeural",
+    lang: "hi-IN",
     outputFormat: "audio-24khz-48kbitrate-mono-mp3",
     timeout: 10000,
   });
 
-  await tts.ttsPromise("નમસ્તે, તું કોણ છે?", tempMp3);
+  await tts.ttsPromise("नमस्ते KOTL, तुम कैसे हो?", tempMp3);
 
   // Convert to 16kHz 16-bit PCM WAV using ffmpeg
   const ffmpeg = require("ffmpeg-static");

@@ -30,38 +30,62 @@ function splitIntoSentences(text) {
 async function synthesizeSentencePcm(text) {
   if (!text || !text.trim()) return Buffer.alloc(0);
 
+  const isGujarati = /[\u0A80-\u0AFF]/.test(text);
   const isHindi = /[\u0900-\u097F]/.test(text);
-  const voice = process.env.EDGE_TTS_VOICE || "hi-IN-MadhurNeural";
-  const lang = isHindi ? "hi-IN" : (process.env.EDGE_TTS_LANG || "hi-IN");
+  let voice = process.env.EDGE_TTS_VOICE || "hi-IN-MadhurNeural";
+  let lang = "hi-IN";
+  if (isGujarati) {
+    voice = "gu-IN-NiranjanNeural";
+    lang = "gu-IN";
+  } else if (isHindi) {
+    voice = "hi-IN-MadhurNeural";
+    lang = "hi-IN";
+  } else {
+    voice = "en-IN-PrabhatNeural";
+    lang = "en-IN";
+  }
   const tempMp3 = path.join(
     os.tmpdir(),
     `sentence-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.mp3`
   );
 
-  const tts = new EdgeTTS({
-    voice,
-    lang,
-    rate: "+18%",
-    outputFormat: "audio-24khz-48kbitrate-mono-mp3",
-    timeout: 10000,
-  });
+  const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
 
-  await tts.ttsPromise(text.trim(), tempMp3);
-
-  let pcmBuffer = Buffer.alloc(0);
   try {
-    const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
+    const tts = new EdgeTTS({
+      voice,
+      lang,
+      rate: "+18%",
+      outputFormat: "audio-24khz-48kbitrate-mono-mp3",
+      timeout: 10000,
+    });
+
+    await tts.ttsPromise(text.trim(), tempMp3);
     const mp3Bytes = fs.readFileSync(tempMp3);
     const wavBytes = await mp3BufferToWavBuffer(mp3Bytes, 16000);
-    // Strip 44-byte WAV header to get pure 16-bit mono 16kHz PCM stream
-    pcmBuffer = wavBytes.subarray(44);
+    return wavBytes.subarray(44);
+  } catch (edgeErr) {
+    console.warn(`[WebSocket TTS] Edge TTS failed (${edgeErr.message}). Seamlessly falling back to Google Cloud TTS...`);
+    try {
+      const langCode = isHindi ? "hi" : "en";
+      const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.trim().slice(0, 200))}&tl=${langCode}&client=tw-ob`;
+      const response = await fetch(googleUrl, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      });
+      if (response.ok) {
+        const mp3Buffer = Buffer.from(await response.arrayBuffer());
+        const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, 16000);
+        return wavBytes.subarray(44);
+      }
+    } catch (googleErr) {
+      console.error(`[WebSocket TTS] Google fallback failed: ${googleErr.message}`);
+    }
+    throw edgeErr;
   } finally {
     try {
       if (fs.existsSync(tempMp3)) fs.unlinkSync(tempMp3);
     } catch (_) {}
   }
-
-  return pcmBuffer;
 }
 
 function initWebSocketServer(httpServer) {
