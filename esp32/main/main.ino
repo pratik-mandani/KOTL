@@ -114,7 +114,7 @@ static const uint32_t kWiFiRetryIntervalMs = 5000;
 static const uint32_t kHttpRetryIntervalMs = 15000;
 static const uint32_t kHttpTimeoutMs = 120000;
 static const uint32_t kAudioCaptureSampleRate = 8000;
-static const uint32_t kAudioCaptureDurationMs = 4000;
+static const uint32_t kAudioCaptureDurationMs = 3000;
 static const size_t kAudioCaptureSampleCount = (kAudioCaptureSampleRate * kAudioCaptureDurationMs) / 1000;
 static const uint32_t kAudioCaptureSampleIntervalUs = 1000000UL / kAudioCaptureSampleRate;
 static const uint16_t kAudioCaptureBaselineSamples = 128;
@@ -217,7 +217,37 @@ EyeReactionState eyeReactionState = {false, 0};
 NetworkState networkState = {false, false, false, 0, 0};
 AudioCaptureState captureState = {false, false, false, 0, 0, 0, 2048, 4095, 0, 32767, -32768, 0, 0};
 VoiceTurnManager voiceTurn = {VOICE_IDLE, 0, "", "", ""};
-static int16_t audioCaptureBuffer[kAudioCaptureSampleCount] = {0};
+static int16_t *audioCaptureBuffer = NULL;
+static size_t audioCaptureBufferCapacity = 0;
+
+static inline void freeAudioCaptureBuffer()
+{
+  if (audioCaptureBuffer != NULL)
+  {
+    free(audioCaptureBuffer);
+    audioCaptureBuffer = NULL;
+    audioCaptureBufferCapacity = 0;
+  }
+}
+
+static inline bool allocateAudioCaptureBuffer(size_t sampleCount)
+{
+  if (audioCaptureBuffer != NULL && audioCaptureBufferCapacity >= sampleCount)
+  {
+    return true;
+  }
+  freeAudioCaptureBuffer();
+  audioCaptureBuffer = (int16_t *)malloc(sampleCount * sizeof(int16_t));
+  if (audioCaptureBuffer != NULL)
+  {
+    audioCaptureBufferCapacity = sampleCount;
+    return true;
+  }
+  Serial.printf("[Heap] ERROR: Failed to allocate %u bytes for audio capture buffer! (Free heap: %u)\n",
+                (unsigned int)(sampleCount * sizeof(int16_t)), ESP.getFreeHeap());
+  return false;
+}
+
 bool startupSelfTestPassed = false;
 bool audioOutputInitialized = false;
 bool ttsStorageAvailable = false;
@@ -355,13 +385,16 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
   {
   case WStype_DISCONNECTED:
     s_wsConnected = false;
-    Serial.printf("[WebSocket] Disconnected from backend (payload: %s)\n", (length > 0 && payload) ? (char *)payload : "none");
+    Serial.printf("[WebSocket] Disconnected from backend (payload: %s). Free Heap: %u bytes\n",
+                  (length > 0 && payload) ? (char *)payload : "none", ESP.getFreeHeap());
     break;
 
   case WStype_CONNECTED:
     s_wsConnected = true;
     Serial.println("=================================================");
     Serial.println("⚡ [WebSocket] Connected to KOTL backend server!");
+    Serial.printf("⚡ [WebSocket] Free Heap: %u bytes | Largest Block: %u bytes\n",
+                  ESP.getFreeHeap(), ESP.getMaxAllocHeap());
     Serial.println("=================================================");
     webSocket.sendTXT("{\"type\":\"register\",\"device_id\":\"KOTL-ESP32\"}");
     break;
@@ -531,6 +564,8 @@ void initWebSocketClient()
   Serial.println("=================================================");
   Serial.printf("[WebSocket] Connecting to %s:%u (SSL: %s)...\n",
                 host.c_str(), port, isSsl ? "YES" : "NO");
+  Serial.printf("[Heap Telemetry] Free Heap: %u bytes | Largest Contiguous Block: %u bytes\n",
+                ESP.getFreeHeap(), ESP.getMaxAllocHeap());
   Serial.println("=================================================");
 
   webSocket.onEvent(webSocketEvent);
@@ -658,14 +693,14 @@ void initFreeRtosTasks()
 {
   s_littleFsMutex = xSemaphoreCreateRecursiveMutex();
   s_wsMutex = xSemaphoreCreateMutex();
-  s_audioStreamBuffer = xStreamBufferCreate(16384, 512);
+  s_audioStreamBuffer = xStreamBufferCreate(8192, 512);
   s_netQueue = xQueueCreate(4, sizeof(NetEventType));
   s_audioQueue = xQueueCreate(4, sizeof(AudioCmdType));
 
   xTaskCreatePinnedToCore(
     networkWorkerTask,
     "NetWorker",
-    16384,
+    8192,
     NULL,
     2,
     &s_hNetworkTask,
@@ -682,7 +717,8 @@ void initFreeRtosTasks()
     1
   );
 
-  Serial.println("[FreeRTOS] Dual-Core tasks + WebSocket StreamBuffer initialized!");
+  Serial.printf("[FreeRTOS] Dual-Core tasks + StreamBuffer initialized! Free Heap: %u bytes (Max block: %u bytes)\n",
+                ESP.getFreeHeap(), ESP.getMaxAllocHeap());
 }
 
 void setup()
@@ -952,6 +988,7 @@ void clearVoiceTurnRuntimeState()
   micState.soundActive = false;
   s_wsStreamTtsActive = false;
   s_wsStreamTtsFinished = false;
+  freeAudioCaptureBuffer();
 }
 
 void failVoiceTurn(const String &errorText)
@@ -1838,7 +1875,7 @@ void finishPlayback()
 
 void applySoftwareAudioGain(size_t sampleCount)
 {
-  if (sampleCount == 0) return;
+  if (sampleCount == 0 || audioCaptureBuffer == NULL) return;
   // 1. Remove DC offset so waveform is perfectly centered at zero
   int64_t sampleSum = 0;
   for (size_t i = 0; i < sampleCount; ++i)
@@ -1914,7 +1951,7 @@ void performSynchronousAudioCapture()
 {
   Serial.println("TURN START");
   Serial.println("=================================================");
-  Serial.println(">>> RECORDING NOW! SPEAK YOUR QUESTION (UP TO 4 SECONDS) <<<");
+  Serial.println(">>> RECORDING NOW! SPEAK YOUR QUESTION (UP TO 3 SECONDS) <<<");
   Serial.println("=================================================");
   Serial.println("RECORDING START (INMP441 I2S + Dynamic VAD)");
   Serial.print("recording sample rate: ");
@@ -1984,7 +2021,11 @@ void performSynchronousAudioCapture()
       }
 
       int16_t pcmSample = (int16_t)sample;
-      audioCaptureBuffer[capturedSamples++] = pcmSample;
+      if (audioCaptureBuffer != NULL && capturedSamples < audioCaptureBufferCapacity)
+      {
+        audioCaptureBuffer[capturedSamples] = pcmSample;
+      }
+      capturedSamples++;
       streamChunkPcm[streamChunkCount++] = pcmSample;
 
       int32_t absSample = abs((int)pcmSample);
@@ -2085,7 +2126,7 @@ void performSynchronousAudioCapture()
   Serial.print("clipped sample count: ");
   Serial.println(captureState.clippedSampleCount);
 
-  if (kEnableAudioDiagnostic)
+  if (kEnableAudioDiagnostic && audioCaptureBuffer != NULL)
   {
     const size_t diagnosticSampleCount = min(kAudioDiagnosticSampleCount, capturedSamples);
     for (size_t sampleIndex = 0; sampleIndex < diagnosticSampleCount; ++sampleIndex)
@@ -2143,6 +2184,12 @@ void beginAudioCapture()
   {
     s_useWebSocketForCurrentTurn = false;
     Serial.println("[HTTP Fallback] WebSocket not connected; will use HTTP upload");
+    if (!allocateAudioCaptureBuffer(kAudioCaptureSampleCount))
+    {
+      Serial.println("[HTTP Fallback] Out of memory for capture buffer; aborting turn");
+      resetVoiceTurnToIdle();
+      return;
+    }
   }
 
   performSynchronousAudioCapture();
@@ -2576,6 +2623,14 @@ void performAudioUpload()
     delay(50);
   }
 
+  if (audioCaptureBuffer == NULL)
+  {
+    captureState.isUploading = false;
+    captureState.uploadPending = false;
+    failVoiceTurn("Audio upload aborted: buffer is NULL");
+    return;
+  }
+
   if (!beginHttpWithOptionalSsl(http, sslClient, audioUrl))
   {
     captureState.isUploading = false;
@@ -2618,6 +2673,9 @@ void performAudioUpload()
       httpCode = http.POST(payload, uploadBytes);
     }
   }
+
+  // Free audio buffer immediately after POST transmission to return heap for LittleFS / TLS
+  freeAudioCaptureBuffer();
 
   if (httpCode == HTTP_CODE_OK || httpCode == 200)
   {
