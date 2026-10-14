@@ -60,6 +60,10 @@ const NOISE_FILTER_BLACKLIST = [
 
 function isBlacklistedNoiseTranscript(text) {
   if (!text || typeof text !== "string") return true;
+  const trimmed = text.trim();
+  if (trimmed.startsWith("*") && trimmed.endsWith("*")) return true;
+  if (trimmed.startsWith("(") && trimmed.endsWith(")")) return true;
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) return true;
   const clean = text.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
   if (clean.length === 0 || clean.length <= 2) return true;
   const words = clean.split(/\s+/);

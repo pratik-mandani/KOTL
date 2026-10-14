@@ -127,7 +127,7 @@ static const uint32_t kExpectedTtsSampleRate = 16000;
 static const uint16_t kExpectedTtsBitsPerSample = 16;
 static const uint16_t kExpectedTtsChannels = 1;
 static const size_t kExpectedWavHeaderSize = 44;
-static uint8_t s_speakerVolumePercent = 68; // 68% sweet spot (clear, loud, and eliminates MAX98357A cone distortion)
+static uint8_t s_speakerVolumePercent = 45; // 45% clear, comfortable volume (eliminates MAX98357A toy speaker cone distortion)
 
 static QueueHandle_t s_netQueue = NULL;
 static QueueHandle_t s_audioQueue = NULL;
@@ -247,6 +247,20 @@ static inline bool allocateAudioCaptureBuffer(size_t sampleCount)
   Serial.printf("[Heap] ERROR: Failed to allocate %u bytes for audio capture buffer! (Free heap: %u)\n",
                 (unsigned int)(sampleCount * sizeof(int16_t)), ESP.getFreeHeap());
   return false;
+}
+
+// 1st order IIR DC-blocking High-Pass filter (~70Hz cutoff at 8000Hz)
+// Eliminates INMP441 DC offset bias so silence registers as 0 amplitude
+static inline int16_t filterDcBlock(int32_t rawSample, float &x1, float &y1)
+{
+  const float kR = 0.95f;
+  float x = (float)rawSample;
+  float y = x - x1 + kR * y1;
+  x1 = x;
+  y1 = y;
+  if (y > 32767.0f) y = 32767.0f;
+  else if (y < -32768.0f) y = -32768.0f;
+  return (int16_t)y;
 }
 
 bool startupSelfTestPassed = false;
@@ -2007,6 +2021,8 @@ void performSynchronousAudioCapture()
   uint32_t voiceStartMs = 0;
   uint32_t lastVoiceMs = 0;
   int32_t peakSpeechAmp = 0;
+  float recHpX1 = 0.0f;
+  float recHpY1 = 0.0f;
 
   while (capturedSamples < kAudioCaptureSampleCount)
   {
@@ -2030,20 +2046,10 @@ void performSynchronousAudioCapture()
     for (size_t i = 0; i < samplesGot && capturedSamples < kAudioCaptureSampleCount; ++i)
     {
       // INMP441 sends 24-bit audio MSB-aligned in 32-bit slot.
-      // Shifting >> 14 provides clean ~4x digital gain without clipping.
-      int32_t sample = dmaChunk[i] >> 14;
-      if (sample > 32767)
-      {
-        sample = 32767;
-        ++captureState.clippedSampleCount;
-      }
-      else if (sample < -32768)
-      {
-        sample = -32768;
-        ++captureState.clippedSampleCount;
-      }
+      // Filter out DC offset bias so silence stays centered at 0
+      int32_t rawSample = dmaChunk[i] >> 14;
+      int16_t pcmSample = filterDcBlock(rawSample, recHpX1, recHpY1);
 
-      int16_t pcmSample = (int16_t)sample;
       if (audioCaptureBuffer != NULL && capturedSamples < audioCaptureBufferCapacity)
       {
         audioCaptureBuffer[capturedSamples] = pcmSample;
@@ -2293,10 +2299,15 @@ void serviceMicrophoneInput()
   }
 
   size_t sampleCount = bytesRead / sizeof(int32_t);
+  static float s_idleHpX1 = 0.0f;
+  static float s_idleHpY1 = 0.0f;
+
   int32_t peakAmp = 0;
   for (size_t i = 0; i < sampleCount; ++i)
   {
-    int32_t amp = abs(sampleChunk[i] >> 14);
+    int32_t raw = sampleChunk[i] >> 14;
+    int16_t cleanPcm = filterDcBlock(raw, s_idleHpX1, s_idleHpY1);
+    int32_t amp = abs((int32_t)cleanPcm);
     if (amp > peakAmp)
     {
       peakAmp = amp;
@@ -2307,7 +2318,7 @@ void serviceMicrophoneInput()
   micState.amplitude = micState.rawValue;
 
   // Adaptive Ambient Noise Floor Tracking (DSP rolling average)
-  static uint32_t s_ambientNoiseFloor = 400;
+  static uint32_t s_ambientNoiseFloor = 150;
   static uint32_t s_lastNoiseFloorUpdateMs = 0;
   if (nowMs - s_lastNoiseFloorUpdateMs >= 100)
   {
@@ -2316,8 +2327,8 @@ void serviceMicrophoneInput()
     s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
   }
 
-  // Dynamic Trigger Threshold: Must be ambient floor + 2000, with minimum 2800
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)2800, s_ambientNoiseFloor + 2000);
+  // Dynamic Trigger Threshold: Must be ambient floor + 1500, with minimum 1800
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)1800, s_ambientNoiseFloor + 1500);
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   static uint32_t s_lastMicTelemetryMs = 0;

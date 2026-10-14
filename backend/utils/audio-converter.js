@@ -63,10 +63,8 @@ async function mp3BufferToWavBuffer(mp3Buffer, targetSampleRate = 16000) {
     prevInput = rawSample;
     prevOutput = hpSample;
 
-    // Gentle soft-limit clamp to prevent digital clipping
-    let sample = hpSample;
-    if (sample > 0.95) sample = 0.95;
-    else if (sample < -0.95) sample = -0.95;
+    // Studio-grade smooth soft-knee saturation (completely eliminates harsh square-wave clipping)
+    const sample = Math.tanh(hpSample * 0.85);
 
     const pcm16 = Math.round(sample * 32767);
     pcmBytes.writeInt16LE(pcm16, i * 2);
