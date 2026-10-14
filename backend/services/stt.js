@@ -51,11 +51,22 @@ const NOISE_FILTER_BLACKLIST = [
   "transcribed by",
   "english subtitles",
   "please subscribe",
+  "subscribe",
   "watching",
   "the end",
   "gajarati",
   "gujarati",
   "amara",
+  "प्रधान दृश्य",
+  "pradhan drishya",
+  "धन्यवाद",
+  "देखने के लिए धन्यवाद",
+  "सब्सक्राइब करें",
+  "लाइक करें",
+  "शेयर करें",
+  "thanks for watching",
+  "bye bye",
+  "shukriya",
 ];
 
 function isBlacklistedNoiseTranscript(text) {
@@ -66,10 +77,36 @@ function isBlacklistedNoiseTranscript(text) {
   if (trimmed.startsWith("[") && trimmed.endsWith("]")) return true;
   const clean = text.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
   if (clean.length === 0 || clean.length <= 2) return true;
-  const words = clean.split(/\s+/);
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+
   if (words.length === 1 && ["you", "yeah", "video", "subtitles", "bye", "okay", "so", "oh", "yes", "no"].includes(words[0])) {
     return true;
   }
+
+  // Detect Whisper looping hallucinations on faint noise/silence (e.g. repeated halves or repeated phrases)
+  if (words.length >= 2) {
+    if (words.length % 2 === 0) {
+      const half = words.length / 2;
+      const firstHalf = words.slice(0, half).join(" ");
+      const secondHalf = words.slice(half).join(" ");
+      if (firstHalf === secondHalf) return true;
+    }
+    const allSame = words.every((w) => w === words[0]);
+    if (allSame) return true;
+    if (words.length >= 4 && words.length % 2 === 0) {
+      const p1 = words[0] + " " + words[1];
+      let isRepeatingPair = true;
+      for (let i = 2; i < words.length; i += 2) {
+        if (words[i] + " " + words[i + 1] !== p1) {
+          isRepeatingPair = false;
+          break;
+        }
+      }
+      if (isRepeatingPair) return true;
+    }
+  }
+
   return NOISE_FILTER_BLACKLIST.some((phrase) => {
     const cleanPhrase = phrase.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
     return clean === cleanPhrase || clean.includes(cleanPhrase);

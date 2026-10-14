@@ -52,10 +52,11 @@ async function synthesizeSentencePcm(text) {
   const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
 
   try {
+    const speechRate = process.env.EDGE_TTS_RATE || "-15%";
     const tts = new EdgeTTS({
       voice,
       lang,
-      rate: "+0%",
+      rate: speechRate,
       outputFormat: "audio-24khz-48kbitrate-mono-mp3",
       timeout: 10000,
     });
@@ -271,13 +272,16 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
   try {
     // 0. Energy check: Ignore sub-threshold silence/noise before calling Whisper
     let peakSample = 0;
+    let sumAbs = 0;
     const numSamples = Math.floor(rawPcmBuffer.length / 2);
     for (let i = 0; i < numSamples; i++) {
       const s = Math.abs(rawPcmBuffer.readInt16LE(i * 2));
       if (s > peakSample) peakSample = s;
+      sumAbs += s;
     }
-    if (peakSample < 600) {
-      console.log(`[WebSocket ${ws.deviceId}] Sub-threshold silence/noise (Peak: ${peakSample} < 600), dismissing silently.`);
+    const avgAmp = numSamples > 0 ? Math.floor(sumAbs / numSamples) : 0;
+    if (peakSample < 2000 || avgAmp < 250) {
+      console.log(`[WebSocket ${ws.deviceId}] Sub-threshold silence/noise (Peak: ${peakSample} < 2000, Avg: ${avgAmp}), dismissing silently.`);
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;

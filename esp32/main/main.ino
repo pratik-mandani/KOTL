@@ -76,7 +76,7 @@ static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
 static const uint16_t kMicSpikeThreshold = 750;
 static const uint16_t kMicReleaseThreshold = 450;
-static const uint8_t kMicHighDebounceCount = 4;
+static const uint8_t kMicHighDebounceCount = 8;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 50;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -127,7 +127,7 @@ static const uint32_t kExpectedTtsSampleRate = 16000;
 static const uint16_t kExpectedTtsBitsPerSample = 16;
 static const uint16_t kExpectedTtsChannels = 1;
 static const size_t kExpectedWavHeaderSize = 44;
-static uint8_t s_speakerVolumePercent = 45; // 45% clear, comfortable volume (eliminates MAX98357A toy speaker cone distortion)
+static uint8_t s_speakerVolumePercent = 40; // 40% clear, comfortable volume (eliminates MAX98357A distortion and acoustic feedback)
 
 static QueueHandle_t s_netQueue = NULL;
 static QueueHandle_t s_audioQueue = NULL;
@@ -1257,7 +1257,7 @@ void runStartupSelfTest()
     const size_t testSamples = testBytesRead / sizeof(int32_t);
     for (size_t i = 0; i < testSamples; ++i)
     {
-      int32_t s = abs(testChunk[i] >> 14);
+      int32_t s = abs(testChunk[i] >> 15);
       if (s > maxAmp) maxAmp = s;
     }
   }
@@ -2012,7 +2012,7 @@ void performSynchronousAudioCapture()
   int32_t dmaChunk[kMicDmaChunkSize];
 
   // Voice Activity Detection (VAD) parameters
-  static const int16_t kVadVoiceThreshold = 2200;    // Amplitude indicating foreground speech
+  static const int16_t kVadVoiceThreshold = 3600;    // Amplitude indicating foreground speech
   static const uint32_t kVadInitialSilenceMs = 1800;  // Max initial silence before aborting false trigger
   static const uint32_t kVadTrailingSilenceMs = 650;  // Fast end of speech detection (650ms silence)
   static const uint32_t kVadMinSpeechMs = 400;        // Minimum speech duration before considering silence
@@ -2047,7 +2047,7 @@ void performSynchronousAudioCapture()
     {
       // INMP441 sends 24-bit audio MSB-aligned in 32-bit slot.
       // Filter out DC offset bias so silence stays centered at 0
-      int32_t rawSample = dmaChunk[i] >> 14;
+      int32_t rawSample = dmaChunk[i] >> 15;
       int16_t pcmSample = filterDcBlock(rawSample, recHpX1, recHpY1);
 
       if (audioCaptureBuffer != NULL && capturedSamples < audioCaptureBufferCapacity)
@@ -2108,10 +2108,10 @@ void performSynchronousAudioCapture()
   const uint32_t elapsedMs = millis() - startMs;
   captureState.isRecording = false;
 
-  // False trigger check: require genuine foreground speech (peak >= 2800)
-  if (!voiceDetected || peakSpeechAmp < 2800 || capturedSamples < (kAudioCaptureSampleRate / 3))
+  // False trigger check: require genuine foreground speech (peak >= 4000)
+  if (!voiceDetected || peakSpeechAmp < 4000 || capturedSamples < (kAudioCaptureSampleRate / 3))
   {
-    Serial.printf("[VAD] Ambient noise/music rejected (voice=%d, peak=%d < 2800, samples=%u). Turn cancelled.\n",
+    Serial.printf("[VAD] Ambient noise/music rejected (voice=%d, peak=%d < 4000, samples=%u). Turn cancelled.\n",
                   voiceDetected, peakSpeechAmp, (unsigned int)capturedSamples);
     if (s_useWebSocketForCurrentTurn)
     {
@@ -2305,7 +2305,7 @@ void serviceMicrophoneInput()
   int32_t peakAmp = 0;
   for (size_t i = 0; i < sampleCount; ++i)
   {
-    int32_t raw = sampleChunk[i] >> 14;
+    int32_t raw = sampleChunk[i] >> 15;
     int16_t cleanPcm = filterDcBlock(raw, s_idleHpX1, s_idleHpY1);
     int32_t amp = abs((int32_t)cleanPcm);
     if (amp > peakAmp)
@@ -2327,8 +2327,8 @@ void serviceMicrophoneInput()
     s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
   }
 
-  // Dynamic Trigger Threshold: Must be ambient floor + 1500, with minimum 1800
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)1800, s_ambientNoiseFloor + 1500);
+  // Dynamic Trigger Threshold: Must be ambient floor + 2000, with minimum 3200
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)3200, s_ambientNoiseFloor + 2000);
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   static uint32_t s_lastMicTelemetryMs = 0;
