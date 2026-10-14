@@ -7,7 +7,7 @@ const WebSocket = require("ws");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const { transcribeAudio } = require("./stt");
+const { transcribeAudio, isBlacklistedNoiseTranscript } = require("./stt");
 const { generateAssistantReply } = require("./assistant");
 const { generateSpeech, NORMALIZED_SAMPLE_RATE } = require("./tts");
 const { writePcm16MonoWav } = require("../utils/wav");
@@ -269,6 +269,20 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
   const tempWavPath = path.join(os.tmpdir(), `ws-turn-${Date.now()}.wav`);
 
   try {
+    // 0. Energy check: Ignore sub-threshold silence/noise before calling Whisper
+    let peakSample = 0;
+    const numSamples = Math.floor(rawPcmBuffer.length / 2);
+    for (let i = 0; i < numSamples; i++) {
+      const s = Math.abs(rawPcmBuffer.readInt16LE(i * 2));
+      if (s > peakSample) peakSample = s;
+    }
+    if (peakSample < 600) {
+      console.log(`[WebSocket ${ws.deviceId}] Sub-threshold silence/noise (Peak: ${peakSample} < 600), dismissing silently.`);
+      sendJson({ type: "state", value: "IDLE" });
+      setState("IDLE");
+      return;
+    }
+
     // 1. Write PCM buffer to temporary 16kHz WAV file for STT
     writePcm16MonoWav({
       wavPath: tempWavPath,
@@ -281,9 +295,10 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     const sttResult = await transcribeAudio(tempWavPath);
     const transcript = (sttResult.text || "").trim();
 
-    if (!transcript) {
-      console.log(`[WebSocket ${ws.deviceId}] Whisper returned empty transcript.`);
+    if (!transcript || isBlacklistedNoiseTranscript(transcript)) {
+      console.log(`[WebSocket ${ws.deviceId}] Empty or noise transcript ("${transcript}"), dismissing silently without TTS.`);
       sendJson({ type: "transcript", text: "" });
+      sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;
     }
@@ -303,6 +318,13 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       sessionId: ws.sessionId,
     });
     const replyText = (assistantResult.reply || "").trim();
+
+    if (!replyText) {
+      console.log(`[WebSocket ${ws.deviceId}] Assistant reply empty, returning to idle without speaking.`);
+      sendJson({ type: "state", value: "IDLE" });
+      setState("IDLE");
+      return;
+    }
 
     const eyeExpr = detectEyeExpression(transcript, replyText);
     sendJson({

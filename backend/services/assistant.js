@@ -222,11 +222,11 @@ async function generateAssistantReply({ transcript, prompt, sessionId = null, so
 
   if (!normalizedTranscript) {
     return {
-      success: true,
-      reply: "હા દોસ્ત! હું સાંભળી રહ્યો છું, કંઈક બોલો ને?",
-      provider: "groq",
+      success: false,
+      reply: "",
+      provider: "none",
       model: null,
-      error: null,
+      error: "empty transcript",
     };
   }
 
