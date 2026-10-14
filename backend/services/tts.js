@@ -128,7 +128,7 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
   let selectedLang = EDGE_LANG;
   if (!selectedVoice) {
     if (isGujarati) {
-      selectedVoice = "gu-IN-NiranjanNeural";
+      selectedVoice = "gu-IN-DhwaniNeural";
       selectedLang = "gu-IN";
     } else if (isHindi) {
       selectedVoice = "hi-IN-MadhurNeural";
@@ -148,7 +148,7 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
     const tts = new EdgeTTS({
       voice: selectedVoice,
       lang: selectedLang,
-      rate: "+18%",
+      rate: "+0%",
       volume: EDGE_VOLUME,
       outputFormat: "audio-24khz-48kbitrate-mono-mp3",
       timeout: 10000,

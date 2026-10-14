@@ -215,9 +215,10 @@ function getSessionHistory(sessionId) {
     }));
 }
 
-async function generateAssistantReply({ transcript, sessionId = null, source = "esp32", tts_url = null }) {
+async function generateAssistantReply({ transcript, prompt, sessionId = null, source = "esp32", tts_url = null }) {
   const systemPrompt = buildSystemPrompt();
-  const normalizedTranscript = typeof transcript === "string" ? transcript.trim() : "";
+  const rawText = transcript || prompt || "";
+  const normalizedTranscript = typeof rawText === "string" ? rawText.trim() : "";
 
   if (!normalizedTranscript) {
     return {

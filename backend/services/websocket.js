@@ -35,7 +35,7 @@ async function synthesizeSentencePcm(text) {
   let voice = process.env.EDGE_TTS_VOICE || "hi-IN-MadhurNeural";
   let lang = "hi-IN";
   if (isGujarati) {
-    voice = "gu-IN-NiranjanNeural";
+    voice = "gu-IN-DhwaniNeural";
     lang = "gu-IN";
   } else if (isHindi) {
     voice = "hi-IN-MadhurNeural";
@@ -55,7 +55,7 @@ async function synthesizeSentencePcm(text) {
     const tts = new EdgeTTS({
       voice,
       lang,
-      rate: "+18%",
+      rate: "+0%",
       outputFormat: "audio-24khz-48kbitrate-mono-mp3",
       timeout: 10000,
     });
@@ -298,6 +298,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     // 3. Generate Assistant Reply (Gemini 2.5 Flash)
     console.log(`[WebSocket ${ws.deviceId}] Asking Gemini...`);
     const assistantResult = await generateAssistantReply({
+      transcript: transcript,
       prompt: transcript,
       sessionId: ws.sessionId,
     });

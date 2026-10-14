@@ -76,7 +76,7 @@ static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
 static const uint16_t kMicSpikeThreshold = 750;
 static const uint16_t kMicReleaseThreshold = 450;
-static const uint8_t kMicHighDebounceCount = 3;
+static const uint8_t kMicHighDebounceCount = 4;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 50;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -142,6 +142,7 @@ volatile bool s_wsConnected = false;
 static volatile bool s_wsStreamTtsActive = false;
 static volatile bool s_wsStreamTtsFinished = false;
 static volatile bool s_useWebSocketForCurrentTurn = false;
+static volatile bool s_streamPrebuffering = true;
 
 struct AudioPlaybackState
 {
@@ -257,7 +258,7 @@ static const uint32_t kVoiceThinkingTimeoutMs = 60000;
 static const uint32_t kVoiceDownloadingTtsTimeoutMs = 60000;
 static const uint32_t kVoiceSpeakingTimeoutMs = 45000;
 static uint32_t s_playbackCooldownUntilMs = 0;
-static const uint32_t kPlaybackCooldownMs = 1500;
+static const uint32_t kPlaybackCooldownMs = 2500;
 
 void initDisplay();
 void initEyes();
@@ -372,10 +373,11 @@ bool startStreamPlayback()
     return false;
   }
 
+  s_streamPrebuffering = true;
   audioState.activeSource = PLAYBACK_STREAM_AUDIO;
   audioState.isPlaying = true;
   setVoiceTurnState(VOICE_SPEAKING);
-  Serial.println("[Stream] Real-time stream playback started (16kHz direct I2S DMA)");
+  Serial.println("[Stream] Real-time stream playback started (16kHz direct I2S DMA with jitter buffer)");
   return true;
 }
 
@@ -1431,6 +1433,11 @@ void serviceAudioOutput()
     fillAudioChunk();
   }
 
+  if (audioState.pendingBytes == 0)
+  {
+    return;
+  }
+
   size_t bytesWritten = 0;
   const uint8_t *writePtr = reinterpret_cast<const uint8_t *>(audioState.dmaBuffer) + audioState.pendingOffsetBytes;
   i2s_write(I2S_PORT, writePtr, audioState.pendingBytes, &bytesWritten, 100 / portTICK_PERIOD_MS);
@@ -1514,6 +1521,20 @@ void fillAudioChunk()
 
   if (audioState.isPlaying && audioState.activeSource == PLAYBACK_STREAM_AUDIO)
   {
+    if (s_streamPrebuffering)
+    {
+      const size_t available = (s_audioStreamBuffer != NULL) ? xStreamBufferBytesAvailable(s_audioStreamBuffer) : 0;
+      if (available < 2048 && !s_wsStreamTtsFinished)
+      {
+        // Pre-buffering jitter margin (64ms) to completely eliminate buffer underrun clicks
+        audioState.pendingBytes = 0;
+        audioState.pendingOffsetBytes = 0;
+        vTaskDelay(pdMS_TO_TICKS(5));
+        return;
+      }
+      s_streamPrebuffering = false;
+    }
+
     int16_t monoBlock[kI2SChunkFrames];
     const size_t bytesToRead = sizeof(monoBlock);
     size_t bytesRead = 0;
@@ -1532,14 +1553,9 @@ void fillAudioChunk()
         audioState.dmaBuffer[frameIndex * 2] = sample;
         audioState.dmaBuffer[(frameIndex * 2) + 1] = sample;
       }
-      for (size_t frameIndex = framesRead; frameIndex < kI2SChunkFrames; ++frameIndex)
-      {
-        audioState.dmaBuffer[frameIndex * 2] = 0;
-        audioState.dmaBuffer[(frameIndex * 2) + 1] = 0;
-      }
 
       audioState.pendingOffsetBytes = 0;
-      audioState.pendingBytes = sizeof(audioState.dmaBuffer);
+      audioState.pendingBytes = framesRead * 2 * sizeof(int16_t);
       return;
     }
 
@@ -1555,14 +1571,9 @@ void fillAudioChunk()
       return;
     }
 
-    // Still waiting for next sentence chunk over network: output silence for 1 chunk
-    for (size_t frameIndex = 0; frameIndex < kI2SChunkFrames; ++frameIndex)
-    {
-      audioState.dmaBuffer[frameIndex * 2] = 0;
-      audioState.dmaBuffer[(frameIndex * 2) + 1] = 0;
-    }
+    // Still waiting for next sentence chunk over network: wait gently without injecting fake silence
+    audioState.pendingBytes = 0;
     audioState.pendingOffsetBytes = 0;
-    audioState.pendingBytes = sizeof(audioState.dmaBuffer);
     vTaskDelay(pdMS_TO_TICKS(4));
     return;
   }
@@ -1850,6 +1861,18 @@ void finishPlayback()
     Serial.println("PLAYBACK DONE");
     configureAudioSampleRate(kI2SSampleRate);
   }
+
+  // Flush microphone I2S DMA buffer and reset mic state to eliminate acoustic feedback loop
+  i2s_zero_dma_buffer(I2S_MIC_PORT);
+  int32_t trashBuf[128];
+  size_t trashRead = 0;
+  while (i2s_read(I2S_MIC_PORT, trashBuf, sizeof(trashBuf), &trashRead, 0) == ESP_OK && trashRead > 0) {}
+
+  micState.amplitude = 0;
+  micState.soundHigh = false;
+  micState.soundActive = false;
+  micState.consecutiveHighReadings = 0;
+  micState.silenceStartMs = 0;
 
   s_playbackCooldownUntilMs = millis() + kPlaybackCooldownMs;
 
@@ -2252,6 +2275,10 @@ void serviceMicrophoneInput()
     micState.soundActive = false;
     micState.consecutiveHighReadings = 0;
     micState.silenceStartMs = 0;
+    // Drain any residual audio chunks from mic DMA so no speaker reverberation remains!
+    int32_t drainBuf[64];
+    size_t drainedBytes = 0;
+    i2s_read(I2S_MIC_PORT, drainBuf, sizeof(drainBuf), &drainedBytes, 0);
     return;
   }
 
@@ -2289,8 +2316,8 @@ void serviceMicrophoneInput()
     s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
   }
 
-  // Dynamic Trigger Threshold: Must be ambient floor + 1800, with minimum 2200
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)2200, s_ambientNoiseFloor + 1800);
+  // Dynamic Trigger Threshold: Must be ambient floor + 2000, with minimum 2800
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)2800, s_ambientNoiseFloor + 2000);
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   static uint32_t s_lastMicTelemetryMs = 0;
