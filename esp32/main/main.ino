@@ -263,6 +263,7 @@ static inline int16_t filterDcBlock(int32_t rawSample, float &x1, float &y1)
   return (int16_t)y;
 }
 
+bool displayInitialized = false;
 bool startupSelfTestPassed = false;
 bool audioOutputInitialized = false;
 bool ttsStorageAvailable = false;
@@ -273,6 +274,24 @@ static const uint32_t kVoiceDownloadingTtsTimeoutMs = 60000;
 static const uint32_t kVoiceSpeakingTimeoutMs = 45000;
 static uint32_t s_playbackCooldownUntilMs = 0;
 static const uint32_t kPlaybackCooldownMs = 2500;
+
+// Dynamic Room Acoustic Calibration
+static uint32_t s_ambientNoiseFloor = 400;       // Adaptive rolling baseline noise floor
+static uint32_t s_ambientPeakNoise = 800;         // Measured peak room noise
+static uint16_t s_calibratedSpikeThreshold = 2800; // Trigger threshold set by room acoustic calibration
+static uint16_t s_calibratedVadThreshold = 3400;   // VAD voice active threshold
+static uint16_t s_calibratedValidationGate = 3800; // Post-capture speech validation peak gate
+
+// Thread-Safe Cross-Core Eye Animation & Mood Management
+static char s_pendingEyeExpr[32] = {0};
+static volatile bool s_pendingEyeExprValid = false;
+static volatile int8_t s_pendingMood = -1; // -1 = none, 0 = DEFAULT, 1 = TIRED, 2 = ANGRY, 3 = HAPPY
+static SemaphoreHandle_t s_eyeMutex = NULL;
+
+void requestEyeExpression(const String &expr);
+void requestEyeMood(int8_t mood);
+void serviceEyeState();
+void calibrateRoomAcoustics();
 
 void initDisplay();
 void initEyes();
@@ -444,7 +463,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
           String expr = "";
           if (extractJsonString(msg, "value", &expr) && expr.length() > 0)
           {
-            applyVoiceEyeAnimation(expr);
+            requestEyeExpression(expr);
           }
         }
         else if (msgType == "transcript")
@@ -467,7 +486,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
           String expr = "";
           if (extractJsonString(msg, "eye_expression", &expr) && expr.length() > 0)
           {
-            applyVoiceEyeAnimation(expr);
+            requestEyeExpression(expr);
           }
         }
         else if (msgType == "tts_start")
@@ -709,6 +728,7 @@ void initFreeRtosTasks()
 {
   s_littleFsMutex = xSemaphoreCreateRecursiveMutex();
   s_wsMutex = xSemaphoreCreateMutex();
+  s_eyeMutex = xSemaphoreCreateMutex();
   s_audioStreamBuffer = xStreamBufferCreate(8192, 512);
   s_netQueue = xQueueCreate(4, sizeof(NetEventType));
   s_audioQueue = xQueueCreate(4, sizeof(AudioCmdType));
@@ -728,7 +748,7 @@ void initFreeRtosTasks()
     "AudioPump",
     4096,
     NULL,
-    4,
+    2,
     &s_hAudioTask,
     1
   );
@@ -782,6 +802,9 @@ void loop()
     delay(20);
     return;
   }
+
+  // Process any thread-safe eye expression or mood requests from other cores
+  serviceEyeState();
 
   // Butter-smooth 50 FPS OLED animations on Core 1 - immune to network delays!
   roboEyes.update();
@@ -839,13 +862,105 @@ void loop()
 void initDisplay()
 {
   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
-  Wire.setClock(400000);
+  Wire.setTimeOut(25);   // Protect against I2C hardware deadlocks
+  Wire.setClock(200000); // 200kHz Fast & Noise-Immune I2C clock (prevents breadboard/wire noise corruptions)
 
-  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS))
+  displayInitialized = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS);
+  if (!displayInitialized)
   {
-    for (;;)
+    Serial.println("[OLED] Warning: SSD1306 display not detected at 0x3C! Retrying at 100kHz...");
+    Wire.setClock(100000);
+    delay(50);
+    displayInitialized = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS);
+  }
+
+  if (displayInitialized)
+  {
+    display.clearDisplay();
+    display.display();
+    Serial.println("[OLED] SSD1306 OLED initialized successfully!");
+  }
+  else
+  {
+    Serial.println("[OLED] ERROR: SSD1306 display not responding. Continuing in headless mode.");
+  }
+}
+
+static String s_activeVoiceEyeExpr = "";
+
+void requestEyeExpression(const String &expr)
+{
+  if (expr.length() == 0) return;
+  if (s_eyeMutex && xSemaphoreTake(s_eyeMutex, pdMS_TO_TICKS(20)) == pdTRUE)
+  {
+    strncpy(s_pendingEyeExpr, expr.c_str(), sizeof(s_pendingEyeExpr) - 1);
+    s_pendingEyeExpr[sizeof(s_pendingEyeExpr) - 1] = '\0';
+    s_pendingEyeExprValid = true;
+    xSemaphoreGive(s_eyeMutex);
+  }
+}
+
+void requestEyeMood(int8_t mood)
+{
+  s_pendingMood = mood;
+}
+
+void serviceEyeState()
+{
+  if (s_pendingMood >= 0)
+  {
+    int8_t m = s_pendingMood;
+    s_pendingMood = -1;
+    if (m == 0)
     {
-      delay(1000);
+      s_activeVoiceEyeExpr = "";
+      roboEyes.setMood(DEFAULT);
+      roboEyes.setPosition(DEFAULT);
+      roboEyes.setIdleMode(ON, 3, 1);
+    }
+    else if (m == 1)
+    {
+      roboEyes.setMood(TIRED);
+      roboEyes.setPosition(DEFAULT);
+    }
+    else if (m == 2)
+    {
+      s_activeVoiceEyeExpr = "";
+      roboEyes.setMood(ANGRY);
+      roboEyes.setPosition(DEFAULT);
+    }
+    else if (m == 3)
+    {
+      if (s_activeVoiceEyeExpr.length() > 0)
+      {
+        applyVoiceEyeAnimation(s_activeVoiceEyeExpr);
+      }
+      else
+      {
+        roboEyes.setMood(HAPPY);
+        roboEyes.setPosition(DEFAULT);
+      }
+    }
+  }
+
+  if (s_pendingEyeExprValid)
+  {
+    char exprBuf[32];
+    bool gotExpr = false;
+    if (s_eyeMutex && xSemaphoreTake(s_eyeMutex, pdMS_TO_TICKS(5)) == pdTRUE)
+    {
+      if (s_pendingEyeExprValid)
+      {
+        strncpy(exprBuf, s_pendingEyeExpr, sizeof(exprBuf) - 1);
+        exprBuf[sizeof(exprBuf) - 1] = '\0';
+        s_pendingEyeExprValid = false;
+        gotExpr = true;
+      }
+      xSemaphoreGive(s_eyeMutex);
+    }
+    if (gotExpr && strlen(exprBuf) > 0)
+    {
+      applyVoiceEyeAnimation(String(exprBuf));
     }
   }
 }
@@ -863,8 +978,6 @@ void initEyes()
   roboEyes.setBorderradius(8, 8);
   roboEyes.setSpacebetween(10);
 }
-
-static String s_activeVoiceEyeExpr = "";
 
 void applyVoiceEyeAnimation(const String &expression)
 {
@@ -945,36 +1058,23 @@ void setVoiceTurnState(VoiceTurnState newState, const String &errorText)
     voiceTurn.lastError = errorText;
   }
 
+  // Pure decoupled mood request - completely thread-safe across all cores!
   switch (newState)
   {
   case VOICE_IDLE:
-    s_activeVoiceEyeExpr = "";
-    roboEyes.setMood(DEFAULT);
-    roboEyes.setPosition(DEFAULT);
-    roboEyes.setIdleMode(ON, 3, 1);
+    requestEyeMood(0); // DEFAULT
     break;
   case VOICE_RECORDING:
   case VOICE_UPLOADING:
   case VOICE_THINKING:
   case VOICE_DOWNLOADING_TTS:
-    roboEyes.setMood(TIRED);
-    roboEyes.setPosition(DEFAULT);
+    requestEyeMood(1); // TIRED
     break;
   case VOICE_SPEAKING:
-    if (s_activeVoiceEyeExpr.length() > 0)
-    {
-      applyVoiceEyeAnimation(s_activeVoiceEyeExpr);
-    }
-    else
-    {
-      roboEyes.setMood(HAPPY);
-      roboEyes.setPosition(DEFAULT);
-    }
+    requestEyeMood(3); // HAPPY
     break;
   case VOICE_ERROR:
-    s_activeVoiceEyeExpr = "";
-    roboEyes.setMood(ANGRY);
-    roboEyes.setPosition(DEFAULT);
+    requestEyeMood(2); // ANGRY
     break;
   }
 }
@@ -1227,6 +1327,76 @@ void initFileStorage()
   Serial.println("LittleFS ready for TTS storage");
 }
 
+void calibrateRoomAcoustics()
+{
+  Serial.println("=================================================");
+  Serial.println("  >>> KOTL ROOM ACOUSTIC CALIBRATION <<<");
+  Serial.println("  Profiling room ambient noise for 1500ms...");
+  Serial.println("=================================================");
+
+  drawStartupSelfTestScreen("CALIBRATING", "Room Noise...", 3);
+
+  i2s_zero_dma_buffer(I2S_MIC_PORT);
+  delay(100);
+
+  const uint32_t calStartMs = millis();
+  const uint32_t kCalDurationMs = 1500;
+  uint64_t sumAmp = 0;
+  uint32_t sampleCount = 0;
+  int32_t maxNoiseAmp = 0;
+  float calHpX1 = 0.0f;
+  float calHpY1 = 0.0f;
+  static const size_t kCalChunkSize = 64;
+  int32_t calChunk[kCalChunkSize];
+
+  while (millis() - calStartMs < kCalDurationMs)
+  {
+    size_t bytesRead = 0;
+    esp_err_t err = i2s_read(I2S_MIC_PORT, calChunk, sizeof(calChunk), &bytesRead, pdMS_TO_TICKS(50));
+    if (err == ESP_OK && bytesRead > 0)
+    {
+      const size_t n = bytesRead / sizeof(int32_t);
+      for (size_t i = 0; i < n; ++i)
+      {
+        int32_t raw = calChunk[i] >> 15;
+        int16_t pcm = filterDcBlock(raw, calHpX1, calHpY1);
+        int32_t amp = abs((int32_t)pcm);
+        sumAmp += amp;
+        sampleCount++;
+        if (amp > maxNoiseAmp)
+        {
+          maxNoiseAmp = amp;
+        }
+      }
+    }
+
+    uint8_t progress = (uint8_t)(((millis() - calStartMs) * 5) / kCalDurationMs) + 1;
+    char subText[32];
+    snprintf(subText, sizeof(subText), "Loudness: %d", maxNoiseAmp);
+    drawStartupSelfTestScreen("ROOM PROFILING", subText, progress);
+    taskYIELD();
+  }
+
+  const uint32_t measuredAvg = (sampleCount > 0) ? (uint32_t)(sumAmp / sampleCount) : 400;
+  s_ambientNoiseFloor = max(measuredAvg, (uint32_t)250);
+  s_ambientPeakNoise = max((uint32_t)maxNoiseAmp, (uint32_t)600);
+
+  // Dynamically calibrate trigger thresholds for this specific room environment
+  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)2800, s_ambientPeakNoise + 1600);
+  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)3400, s_ambientPeakNoise + 2000);
+  s_calibratedValidationGate = (uint16_t)max((uint32_t)3800, s_ambientPeakNoise + 2200);
+
+  Serial.printf("[Room Calibration] Samples: %u | Avg Floor: %u | Peak Noise: %u\n",
+                sampleCount, (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
+  Serial.printf("[Room Calibration] Trigger Threshold: %u | VAD Threshold: %u | Gate: %u\n",
+                s_calibratedSpikeThreshold, s_calibratedVadThreshold, s_calibratedValidationGate);
+
+  char line2[32];
+  snprintf(line2, sizeof(line2), "Floor:%u Peak:%u", (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
+  drawStartupSelfTestScreen("ROOM READY", line2, 5);
+  delay(800);
+}
+
 void runStartupSelfTest()
 {
   Serial.println("===== STARTUP SELF TEST =====");
@@ -1270,8 +1440,9 @@ void runStartupSelfTest()
 
   if (startupSelfTestPassed)
   {
-    drawStartupSelfTestScreen("INMP441 OK", "KOTL Ready", 5);
-    delay(800);
+    drawStartupSelfTestScreen("INMP441 OK", "Profiling Room...", 4);
+    delay(300);
+    calibrateRoomAcoustics();
     roboEyes.open();
   }
   else
@@ -1300,6 +1471,7 @@ void runStartupSelfTest()
 
 void drawStartupSelfTestScreen(const char *line1, const char *line2, uint8_t progressStep)
 {
+  if (!displayInitialized) return;
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(2);
@@ -1853,12 +2025,15 @@ bool startTtsPlayback()
 void finishPlayback()
 {
   const PlaybackSource finishedSource = audioState.activeSource;
-  takeFsMutex(500);
+  const bool hasMutex = takeFsMutex(500);
   if (audioState.ttsFile)
   {
     audioState.ttsFile.close();
   }
-  giveFsMutex();
+  if (hasMutex)
+  {
+    giveFsMutex();
+  }
 
   audioState.activeSource = PLAYBACK_NONE;
   audioState.isPlaying = false;
@@ -2011,8 +2186,8 @@ void performSynchronousAudioCapture()
   static const size_t kMicDmaChunkSize = 256;
   int32_t dmaChunk[kMicDmaChunkSize];
 
-  // Voice Activity Detection (VAD) parameters
-  static const int16_t kVadVoiceThreshold = 3600;    // Amplitude indicating foreground speech
+  // Voice Activity Detection (VAD) parameters set dynamically from room calibration
+  const int16_t kVadVoiceThreshold = s_calibratedVadThreshold;
   static const uint32_t kVadInitialSilenceMs = 1800;  // Max initial silence before aborting false trigger
   static const uint32_t kVadTrailingSilenceMs = 650;  // Fast end of speech detection (650ms silence)
   static const uint32_t kVadMinSpeechMs = 400;        // Minimum speech duration before considering silence
@@ -2072,6 +2247,14 @@ void performSynchronousAudioCapture()
     }
 
     const uint32_t nowMs = millis();
+    static uint32_t s_lastCaptureEyeMs = 0;
+    if (nowMs - s_lastCaptureEyeMs >= 30)
+    {
+      s_lastCaptureEyeMs = nowMs;
+      serviceEyeState();
+      roboEyes.update();
+    }
+
     if (chunkPeak > peakSpeechAmp)
     {
       peakSpeechAmp = chunkPeak;
@@ -2108,11 +2291,11 @@ void performSynchronousAudioCapture()
   const uint32_t elapsedMs = millis() - startMs;
   captureState.isRecording = false;
 
-  // False trigger check: require genuine foreground speech (peak >= 4000)
-  if (!voiceDetected || peakSpeechAmp < 4000 || capturedSamples < (kAudioCaptureSampleRate / 3))
+  // False trigger check: require genuine foreground speech relative to room calibration
+  if (!voiceDetected || peakSpeechAmp < s_calibratedValidationGate || capturedSamples < (kAudioCaptureSampleRate / 3))
   {
-    Serial.printf("[VAD] Ambient noise/music rejected (voice=%d, peak=%d < 4000, samples=%u). Turn cancelled.\n",
-                  voiceDetected, peakSpeechAmp, (unsigned int)capturedSamples);
+    Serial.printf("[VAD] Ambient noise/music rejected (voice=%d, peak=%d < %u, samples=%u). Turn cancelled.\n",
+                  voiceDetected, peakSpeechAmp, (unsigned int)s_calibratedValidationGate, (unsigned int)capturedSamples);
     if (s_useWebSocketForCurrentTurn)
     {
       wsSendTxtSafe("{\"type\":\"cancel\"}");
@@ -2317,8 +2500,7 @@ void serviceMicrophoneInput()
   micState.rawValue = (uint16_t)min(peakAmp, (int32_t)32767);
   micState.amplitude = micState.rawValue;
 
-  // Adaptive Ambient Noise Floor Tracking (DSP rolling average)
-  static uint32_t s_ambientNoiseFloor = 150;
+  // Adaptive Ambient Noise Floor Tracking (DSP rolling average initialized from room calibration)
   static uint32_t s_lastNoiseFloorUpdateMs = 0;
   if (nowMs - s_lastNoiseFloorUpdateMs >= 100)
   {
@@ -2327,8 +2509,8 @@ void serviceMicrophoneInput()
     s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
   }
 
-  // Dynamic Trigger Threshold: Must be ambient floor + 2000, with minimum 3200
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)3200, s_ambientNoiseFloor + 2000);
+  // Dynamic Trigger Threshold: Calibrated to room acoustics + slow ambient drift
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 1800);
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   static uint32_t s_lastMicTelemetryMs = 0;

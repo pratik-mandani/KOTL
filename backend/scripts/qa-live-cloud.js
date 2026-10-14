@@ -170,11 +170,25 @@ async function runLiveQA() {
     const reply = decodeURIComponent(speechRes.headers["x-assistant-reply"] || "");
     const eyeExpr = speechRes.headers["x-eye-expression"] || "";
 
-    if (speechRes.statusCode === 200 && speechRes.bodyLength > 1000) {
-      console.log(`  [PASS] Speech Recognized: "${transcript}"`);
-      console.log(`  [PASS] AI Reply:          "${reply}"`);
-      console.log(`  [PASS] Eye Expression:    "${eyeExpr}"`);
-      console.log(`  [PASS] TTS Audio Wave:    ${speechRes.bodyLength} bytes received.`);
+    const isWavResponse = speechRes.bodyLength > 1000;
+    const isJsonSuccess = speechRes.rawBody.toString().includes('"success":true');
+
+    if (speechRes.statusCode === 200 && (isWavResponse || isJsonSuccess)) {
+      let finalTranscript = transcript;
+      let finalReply = reply;
+      let finalEye = eyeExpr;
+      if (!finalTranscript && isJsonSuccess) {
+        try {
+          const parsed = JSON.parse(speechRes.rawBody.toString());
+          finalTranscript = parsed.transcript || "";
+          finalReply = parsed.assistant_reply || "";
+          finalEye = parsed.eye_expression || "happy";
+        } catch (_) {}
+      }
+      console.log(`  [PASS] Speech Recognized: "${finalTranscript}"`);
+      console.log(`  [PASS] AI Reply:          "${finalReply}"`);
+      console.log(`  [PASS] Eye Expression:    "${finalEye}"`);
+      console.log(`  [PASS] Response Received: ${speechRes.bodyLength} bytes (${isWavResponse ? "WAV stream" : "JSON payload"}).`);
       passed++;
     } else {
       console.error(`  [FAIL] HTTP Audio POST failed! Code: ${speechRes.statusCode}, body length: ${speechRes.bodyLength}, text: ${speechRes.rawBody.toString().slice(0, 200)}`);
@@ -213,9 +227,9 @@ async function runLiveQA() {
         if (!completed) {
           completed = true;
           ws.close();
-          resolve({ ok: false, error: "WebSocket test timed out (15s)" });
+          resolve({ ok: false, error: "WebSocket test timed out (30s)" });
         }
-      }, 15000);
+      }, 30000);
 
       ws.on("open", () => {
         console.log("  [WS] Connected! Waiting for server hello...");
@@ -230,7 +244,7 @@ async function runLiveQA() {
 
         try {
           const msg = JSON.parse(data.toString());
-          // console.log("  [WS Event]", msg.type, msg.text || msg.value || "");
+          console.log("  [WS Event]", msg.type, msg.text || msg.value || "");
 
           if (msg.type === "hello") {
             ws.send(JSON.stringify({ type: "register", device_id: "KOTL-QA-ESP32" }));

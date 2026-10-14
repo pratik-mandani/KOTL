@@ -6,7 +6,7 @@ try {
   } catch (__) {}
 }
 const DEFAULT_URL = "https://api.groq.com/openai/v1/chat/completions";
-const DEFAULT_MODEL = process.env.GROQ_CHAT_MODEL || "openai/gpt-oss-120b";
+const DEFAULT_MODEL = process.env.GROQ_CHAT_MODEL || "openai/gpt-oss-20b";
 const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.GROQ_TIMEOUT_MS || "", 10) || 15000;
 
 let lastGroqQuota = {
