@@ -18,45 +18,45 @@ function ensureUploadsDir() {
 }
 
 const DEFAULT_PROFILE = {
-  name: "આરવ (Aarav)",
-  age: "6 વર્ષ",
+  name: "Aarav",
+  age: "6 Years",
   avatar: "🧒",
   gender: "Boy",
   likes: [
-    "વાર્તાઓ સાંભળવી (Stories)",
-    "ડાયનાસોર (Dinosaurs)",
-    "ડ્રોઇંગ અને રંગ પૂરવા (Drawing)",
-    "અવકાશ અને તારા (Space & Stars)"
+    "Bedtime Stories",
+    "Dinosaurs & Fossils",
+    "Drawing & Coloring",
+    "Space & Rocket Science"
   ],
   dislikes: [
-    "લીલા શાકભાજી ખાવા (Bitter veggies)",
-    "અંધારામાં એકલા રહેવું (Darkness)",
-    "મોટો અવાજ કે ઘોંઘાટ (Loud noise)"
+    "Bitter Vegetables",
+    "Dark Rooms",
+    "Sudden Loud Noises"
   ],
   skills: {
     vocabulary: 84,
     curiosity: 92,
-    emotional_tone: "ઉત્સાહી, પ્રેમાળ અને આનંદી (Cheerful & Caring)",
-    languages: ["ગુજરાતી (મુખ્ય)", "Hindi", "English"]
+    emotional_tone: "Cheerful, Loving & Playful",
+    languages: ["English", "Gujarati", "Hindi"]
   },
   improvement_areas: [
     {
       id: "imp-1",
-      title: "લીલા શાકભાજી ખાવાની ટેવ (Healthy Food)",
+      title: "Eating Green Vegetables (Healthy Nutrition)",
       status: "in_progress",
-      action_plan: "KOTL વાતચીતમાં શાકભાજીથી સુપરહીરો જેવી શક્તિ મળે છે તેવી રસપ્રદ વાર્તાઓ કહી પ્રોત્સાહિત કરે છે."
+      action_plan: "KOTL enthusiastically shares stories of superheroes gaining stamina from spinach and carrots."
     },
     {
       id: "imp-2",
-      title: "નવા અંગ્રેજી શબ્દો શીખવા (English Words)",
+      title: "Building English Vocabulary",
       status: "in_progress",
-      action_plan: "દરરોજ વાર્તામાં 2 નવા અંગ્રેજી શબ્દો રમત-રમતમાં પૂછીને યાદ કરાવે છે."
+      action_plan: "KOTL playfully introduces two new vocabulary words during daily story sessions."
     },
     {
       id: "imp-3",
-      title: "રાત્રે 9 વાગ્યે સમયસર સૂઈ જવું (Bedtime)",
+      title: "Consistent 9:00 PM Bedtime Routine",
       status: "planning",
-      action_plan: "રાત્રે મીઠી લોરી અને સૂવાની શાંત વાર્તા સંભળાવીને નિયમિત સૂવાની ટેવ પાડશે."
+      action_plan: "KOTL narrates a calming bedtime tale with ambient soothing audio at 9:00 PM."
     }
   ],
   conversation_count: 14,
@@ -67,22 +67,22 @@ const DEFAULT_PROFILE = {
 const DEFAULT_MISSIONS = [
   {
     id: "mission-1",
-    title: "શાકભાજી ખાવા માટે બાળકને પ્રોત્સાહન આપો",
-    directive: "જ્યારે બાળક સાથે વાત કરો ત્યારે પાલક અને ગાજર ખાવાથી કેવી સુપર પાવર મળે છે તે વિશે પ્રેમથી કહો.",
+    title: "Encourage Eating Green Veggies",
+    directive: "Gently highlight how spinach and carrots give superheroes incredible energy whenever food is mentioned.",
     active: true,
     created_at: new Date().toISOString()
   },
   {
     id: "mission-2",
-    title: "રમ્યા પછી રમકડાં વ્યવસ્થિત ગોઠવવાની ટેવ",
-    directive: "વાતચીતમાં બાળકને પોતાના રમકડાં અને પુસ્તકો જગ્યા પર મૂકવા માટે શાબાશી અને પ્રોત્સાહન આપો.",
+    title: "Tidy Up Toys After Play",
+    directive: "Compliment and encourage placing toys back in the organizer box after playing.",
     active: true,
     created_at: new Date().toISOString()
   },
   {
     id: "mission-3",
-    title: "દરરોજ એક નવું કુતૂહલપ્રેરક જ્ઞાન આપો",
-    directive: "પક્ષીઓ કેમ ઉડે છે, આકાશ કેમ વાદળી છે જેવા મજેદાર વિજ્ઞાનના તથ્યો સરળ ભાષામાં સમજાવો.",
+    title: "Spark Daily Scientific Curiosity",
+    directive: "Ask intriguing questions like why the sky is blue or how birds fly to stimulate critical thinking.",
     active: true,
     created_at: new Date().toISOString()
   }

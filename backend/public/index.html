@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="gu" class="dark">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,27 +7,26 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Gujarati:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', '"Noto Sans Gujarati"', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
-            kotl: {
-              bg: '#121316',
-              surface: '#1b1d22',
-              card: '#23262d',
-              border: '#31353f',
-              muted: '#858b98',
-              accent: '#38bdf8',
-              emerald: '#10b981',
-              purple: '#a855f7',
-              pink: '#ec4899',
+            dark: {
+              bg: '#090a0f',
+              surface: '#11131a',
+              card: '#171923',
+              cardHover: '#1f2230',
+              border: '#242838',
+              borderSubtle: '#1b1e2b',
+              muted: '#71788e',
+              light: '#9da5be',
             }
           }
         }
@@ -36,277 +35,350 @@
   </script>
   <style>
     body {
-      background-color: #121316;
+      background-color: #090a0f;
       color: #f1f5f9;
     }
     .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
       background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #31353f;
+      background: #242838;
       border-radius: 9999px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #475060;
+      background: #3b4259;
     }
     .tab-active {
-      background: #23262d;
+      background: #171923;
       color: #38bdf8;
-      border-bottom: 2px solid #38bdf8;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+      border-color: rgba(56, 189, 248, 0.3);
+    }
+    .glass-card {
+      background: linear-gradient(135deg, rgba(23, 25, 35, 0.85) 0%, rgba(17, 19, 26, 0.95) 100%);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
     }
   </style>
 </head>
-<body class="h-screen w-screen overflow-hidden flex flex-col font-sans bg-kotl-bg text-slate-100 antialiased selection:bg-sky-500 selection:text-white">
+<body class="h-screen w-screen overflow-hidden flex flex-col font-sans bg-dark-bg text-slate-100 antialiased selection:bg-sky-500 selection:text-white">
 
-  <!-- Top Global Header -->
-  <header class="h-16 border-b border-kotl-border bg-kotl-surface/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 z-30">
-    <div class="flex items-center space-x-3">
-      <!-- Cute Animated Robot Icon -->
-      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 font-bold text-base shrink-0">
-        🤖
+  <!-- ======================================================== -->
+  <!-- TOP NAVIGATION HEADER                                    -->
+  <!-- ======================================================== -->
+  <header class="h-16 border-b border-dark-border bg-dark-surface/90 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between shrink-0 z-40">
+    <!-- Brand Info -->
+    <div class="flex items-center space-x-3.5">
+      <div class="relative flex items-center justify-center">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 font-bold text-sm tracking-wider">
+          K
+        </div>
+        <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-dark-surface animate-pulse"></span>
       </div>
       <div>
         <div class="flex items-center space-x-2">
-          <span class="font-extrabold text-base tracking-tight text-white">KOTL</span>
-          <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-500/40 text-sky-300 font-mono font-bold">v2.2</span>
-          <span class="text-xs text-kotl-muted font-normal hidden sm:inline">(કોટિલ • AI બાળ મિત્ર)</span>
+          <span class="font-extrabold text-sm sm:text-base tracking-tight text-white">KOTL</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/30 text-sky-400 font-mono font-bold">v2.2</span>
+          <span class="text-[11px] text-dark-muted hidden lg:inline">• AI Child Companion</span>
         </div>
-        <p class="text-[11px] text-kotl-muted truncate hidden xs:block">
-          બાળક વિકાસ રિપોર્ટ & વાલી કમાન્ડ ડેશબોર્ડ
+        <p class="text-[10px] sm:text-[11px] text-dark-muted truncate hidden sm:block">
+          Intelligence Analytics & Parent Directives
         </p>
       </div>
     </div>
 
-    <!-- Center Navigation Tabs -->
-    <nav class="hidden md:flex items-center bg-kotl-bg/80 p-1 rounded-xl border border-kotl-border space-x-1 text-xs font-medium">
-      <button id="tabBtnReport" onclick="switchTab('report')" class="px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 tab-active">
-        <span>📊</span>
-        <span>બાળક વિકાસ રિપોર્ટ</span>
+    <!-- Center Segmented Tab Navigation -->
+    <nav class="hidden md:flex items-center bg-dark-bg/80 p-1 rounded-xl border border-dark-border space-x-1 text-xs font-medium">
+      <button id="tabBtnAnalytics" onclick="switchTab('analytics')" class="px-3.5 py-1.5 rounded-lg border border-transparent transition-all flex items-center space-x-2 tab-active">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        <span>Child Analytics</span>
       </button>
-      <button id="tabBtnMissions" onclick="switchTab('missions')" class="px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 text-kotl-muted hover:text-white">
-        <span>🎯</span>
-        <span>પેરેન્ટ મિશન & કમાન્ડ્સ</span>
-        <span id="activeMissionsCountBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono">0</span>
+
+      <button id="tabBtnMissions" onclick="switchTab('missions')" class="px-3.5 py-1.5 rounded-lg border border-transparent transition-all flex items-center space-x-2 text-dark-light hover:text-white hover:bg-dark-card/50">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        <span>Parent Directives</span>
+        <span id="activeMissionsCountBadge" class="ml-0.5 px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-mono">0</span>
       </button>
-      <button id="tabBtnChat" onclick="switchTab('chat')" class="px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 text-kotl-muted hover:text-white">
-        <span>💬</span>
-        <span>સંવાદ & ઑડિયો હિસ્ટ્રી</span>
+
+      <button id="tabBtnChat" onclick="switchTab('chat')" class="px-3.5 py-1.5 rounded-lg border border-transparent transition-all flex items-center space-x-2 text-dark-light hover:text-white hover:bg-dark-card/50">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+        <span>Dialogue & Audio</span>
       </button>
     </nav>
 
-    <!-- Right Controls: Device Status & Modals -->
-    <div class="flex items-center space-x-2 sm:space-x-3 text-xs">
-      <!-- Live Device Status Badge -->
-      <div class="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl bg-kotl-card border border-kotl-border">
-        <span id="deviceStatusDot" class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
-        <span id="deviceStatusText" class="text-[11px] font-mono text-zinc-400">ESP32 Offline</span>
+    <!-- Right Controls: Status & System Modals -->
+    <div class="flex items-center space-x-2 sm:space-x-2.5 text-xs">
+      <!-- Live Device Status Pill -->
+      <div class="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl bg-dark-card border border-dark-border text-dark-light">
+        <span id="deviceStatusDot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+        <span id="deviceStatusText" class="text-[11px] font-mono">ESP32 Offline</span>
       </div>
 
-      <!-- Quick Action Buttons -->
-      <button id="openWifiModalBtn" class="p-2 rounded-xl bg-kotl-card hover:bg-kotl-border border border-kotl-border text-kotl-muted hover:text-white transition-colors" title="ESP32 Wi-Fi & Device Setup">
+      <!-- Wi-Fi Setup Button -->
+      <button id="openWifiModalBtn" class="p-2 rounded-xl bg-dark-card hover:bg-dark-cardHover border border-dark-border text-dark-light hover:text-white transition-all" title="ESP32 Wi-Fi & Device Config">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
         </svg>
       </button>
 
-      <button id="openHardwareModalBtn" class="p-2 rounded-xl bg-kotl-card hover:bg-kotl-border border border-kotl-border text-kotl-muted hover:text-white transition-colors" title="હાર્ડવેર ઓડિયો ડાયગ્નોસ્ટિક્સ">
+      <!-- Hardware Audio Test Button -->
+      <button id="openHardwareModalBtn" class="p-2 rounded-xl bg-dark-card hover:bg-dark-cardHover border border-dark-border text-dark-light hover:text-white transition-all" title="Hardware Audio Diagnostics">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.5v2.5m-4 0h8M7 5.5A5 5 0 0112 1a5 5 0 015 4.5m-10 0V10a5 5 0 0010 0V5.5M4 10a8 8 0 0016 0"></path>
         </svg>
       </button>
 
-      <button id="openQuotaModalBtn" class="p-2 rounded-xl bg-kotl-card hover:bg-kotl-border border border-kotl-border text-kotl-muted hover:text-white transition-colors" title="100% Free Tier Limits">
+      <!-- Quota Tracker Button -->
+      <button id="openQuotaModalBtn" class="p-2 rounded-xl bg-dark-card hover:bg-dark-cardHover border border-dark-border text-dark-light hover:text-white transition-all" title="Free API Limits">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
       </button>
     </div>
   </header>
 
-  <!-- Mobile Bottom Tab Navigation -->
-  <nav class="md:hidden flex items-center justify-around bg-kotl-surface border-b border-kotl-border py-2 text-xs font-medium shrink-0">
-    <button onclick="switchTab('report')" id="mobTabReport" class="flex flex-col items-center space-y-1 text-sky-400">
-      <span>📊</span>
-      <span class="text-[10px]">વિકાસ રિપોર્ટ</span>
+  <!-- Mobile Bottom Tab Bar -->
+  <nav class="md:hidden flex items-center justify-around bg-dark-surface border-b border-dark-border py-2 text-xs font-medium shrink-0">
+    <button onclick="switchTab('analytics')" id="mobTabAnalytics" class="flex flex-col items-center space-y-1 text-sky-400">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+      </svg>
+      <span class="text-[10px]">Analytics</span>
     </button>
-    <button onclick="switchTab('missions')" id="mobTabMissions" class="flex flex-col items-center space-y-1 text-kotl-muted">
-      <span>🎯</span>
-      <span class="text-[10px]">પેરેન્ટ મિશન</span>
+    <button onclick="switchTab('missions')" id="mobTabMissions" class="flex flex-col items-center space-y-1 text-dark-muted">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+      </svg>
+      <span class="text-[10px]">Directives</span>
     </button>
-    <button onclick="switchTab('chat')" id="mobTabChat" class="flex flex-col items-center space-y-1 text-kotl-muted">
-      <span>💬</span>
-      <span class="text-[10px]">સંવાદ હિસ્ટ્રી</span>
+    <button onclick="switchTab('chat')" id="mobTabChat" class="flex flex-col items-center space-y-1 text-dark-muted">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+      </svg>
+      <span class="text-[10px]">Dialogue</span>
     </button>
   </nav>
 
-  <!-- Main View Container -->
+  <!-- ======================================================== -->
+  <!-- MAIN CONTENT AREA                                        -->
+  <!-- ======================================================== -->
   <main class="flex-1 overflow-hidden relative">
 
-    <!-- ========================================== -->
-    <!-- TAB 1: CHILD GROWTH & ANALYTICS REPORT     -->
-    <!-- ========================================== -->
-    <section id="viewReport" class="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 custom-scrollbar max-w-6xl mx-auto">
+    <!-- ======================================================== -->
+    <!-- TAB 1: CHILD INTELLIGENCE & ANALYTICS                    -->
+    <!-- ======================================================== -->
+    <section id="viewAnalytics" class="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 custom-scrollbar max-w-6xl mx-auto">
       
-      <!-- Child Overview Card -->
-      <div class="bg-gradient-to-r from-kotl-card via-kotl-card to-kotl-surface border border-kotl-border rounded-3xl p-6 shadow-xl relative overflow-hidden">
-        <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <!-- Profile Summary Card -->
+      <div class="glass-card rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
           <div class="flex items-center space-x-4">
-            <div id="childAvatar" class="w-16 h-16 rounded-2xl bg-sky-500/20 border-2 border-sky-400/40 flex items-center justify-center text-3xl shadow-inner">
+            <div id="childAvatar" class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 border border-sky-500/30 flex items-center justify-center text-2xl shadow-inner shrink-0">
               🧒
             </div>
             <div>
-              <div class="flex items-center space-x-2">
-                <h2 id="childNameText" class="text-xl sm:text-2xl font-bold text-white tracking-tight">આરવ (Aarav)</h2>
-                <span id="childAgeBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-medium">6 વર્ષ</span>
+              <div class="flex items-center space-x-2.5">
+                <h2 id="childNameText" class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Aarav</h2>
+                <span id="childAgeBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">6 Years Old</span>
               </div>
-              <p class="text-xs text-kotl-muted mt-1 flex items-center space-x-2">
-                <span>મુખ્ય ભાષા: <strong class="text-slate-300">ગુજરાતી & અંગ્રેજી</strong></span>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-dark-muted mt-1.5">
+                <span class="flex items-center space-x-1">
+                  <span class="text-dark-light">Languages:</span>
+                  <strong class="text-slate-200 font-medium">English, Gujarati, Hindi</strong>
+                </span>
                 <span>•</span>
-                <span>કુલ સંવાદો: <strong id="totalDialoguesText" class="text-sky-300 font-mono">14</strong></span>
-              </p>
+                <span class="flex items-center space-x-1">
+                  <span class="text-dark-light">Dialogues:</span>
+                  <strong id="totalDialoguesText" class="text-sky-400 font-mono font-bold">14</strong>
+                </span>
+                <span>•</span>
+                <span class="flex items-center space-x-1">
+                  <span class="text-dark-light">Voice Accent:</span>
+                  <strong class="text-slate-200 font-medium">Natural Kotil</strong>
+                </span>
+              </div>
             </div>
           </div>
 
-          <div class="flex items-center space-x-2.5 self-end sm:self-center">
-            <button onclick="openEditProfileModal()" class="px-3.5 py-2 rounded-xl bg-kotl-border/80 hover:bg-kotl-border text-white text-xs font-medium transition-all flex items-center space-x-1.5">
-              <span>✏️</span>
-              <span>પ્રોફાઇલ એડિટ કરો</span>
-            </button>
-          </div>
+          <button onclick="openEditProfileModal()" class="px-3.5 py-2 rounded-xl bg-dark-card hover:bg-dark-cardHover border border-dark-border text-slate-200 hover:text-white text-xs font-medium transition-all flex items-center space-x-1.5 shadow-sm self-end sm:self-center">
+            <svg class="w-3.5 h-3.5 text-dark-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+            </svg>
+            <span>Edit Profile</span>
+          </button>
         </div>
       </div>
 
-      <!-- Skills Matrix & Curiosity Gauge -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Vocabulary Skill Card -->
-        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3">
+      <!-- Cognitive Matrix: 4 Metrics Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Metric 1: Vocabulary Growth -->
+        <div class="glass-card rounded-2xl p-5 space-y-3 flex flex-col justify-between">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <span class="text-xl">🗣️</span>
-              <h3 class="font-bold text-sm text-white">શબ્દભંડોળ (Vocabulary)</h3>
-            </div>
+            <span class="text-xs font-semibold text-dark-light uppercase tracking-wider">Vocabulary</span>
             <span id="vocabScoreText" class="text-sm font-mono font-bold text-sky-400">84%</span>
           </div>
-          <div class="w-full bg-kotl-bg rounded-full h-2.5 overflow-hidden">
-            <div id="vocabProgressBar" class="bg-sky-400 h-full rounded-full transition-all duration-500" style="width: 84%"></div>
+          <div>
+            <div class="w-full bg-dark-bg rounded-full h-2 overflow-hidden mb-2">
+              <div id="vocabProgressBar" class="bg-gradient-to-r from-sky-500 to-indigo-500 h-full rounded-full transition-all duration-500" style="width: 84%"></div>
+            </div>
+            <p class="text-[11px] text-dark-muted leading-relaxed">
+              Lexical range and sentence comprehension.
+            </p>
           </div>
-          <p class="text-[11px] text-kotl-muted">
-            નવા ગુજરાતી & અંગ્રેજી શબ્દો ઝડપથી ગ્રહણ કરવાની ક્ષમતા.
-          </p>
         </div>
 
-        <!-- Curiosity Skill Card -->
-        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3">
+        <!-- Metric 2: Curiosity Index -->
+        <div class="glass-card rounded-2xl p-5 space-y-3 flex flex-col justify-between">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <span class="text-xl">🔍</span>
-              <h3 class="font-bold text-sm text-white">જિજ્ઞાસા (Curiosity)</h3>
-            </div>
+            <span class="text-xs font-semibold text-dark-light uppercase tracking-wider">Curiosity</span>
             <span id="curiosityScoreText" class="text-sm font-mono font-bold text-emerald-400">92%</span>
           </div>
-          <div class="w-full bg-kotl-bg rounded-full h-2.5 overflow-hidden">
-            <div id="curiosityProgressBar" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 92%"></div>
+          <div>
+            <div class="w-full bg-dark-bg rounded-full h-2 overflow-hidden mb-2">
+              <div id="curiosityProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500" style="width: 92%"></div>
+            </div>
+            <p class="text-[11px] text-dark-muted leading-relaxed">
+              Frequency of exploratory questions and wonders.
+            </p>
           </div>
-          <p class="text-[11px] text-kotl-muted">
-            કુદરત, વિજ્ઞાન અને દુનિયા વિશે રસપ્રદ પ્રશ્નો પૂછવાનું સ્તર.
-          </p>
         </div>
 
-        <!-- Emotional Tone Card -->
-        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3">
+        <!-- Metric 3: Sentiment & Mood -->
+        <div class="glass-card rounded-2xl p-5 space-y-3 flex flex-col justify-between">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <span class="text-xl">💖</span>
-              <h3 class="font-bold text-sm text-white">ભાવનાત્મક મૂડ (Mood)</h3>
-            </div>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 font-medium border border-pink-500/30">પોઝિટિવ</span>
+            <span class="text-xs font-semibold text-dark-light uppercase tracking-wider">Sentiment</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 font-mono font-bold border border-rose-500/20">Positive</span>
           </div>
-          <div class="bg-kotl-bg/60 p-2.5 rounded-xl border border-kotl-border/60">
-            <p id="emotionalToneText" class="text-xs text-white font-medium">
-              ઉત્સાહી, પ્રેમાળ અને આનંદી (Cheerful & Caring)
+          <div>
+            <div class="text-xs font-medium text-slate-200 mb-1" id="emotionalToneText">
+              Cheerful, Loving & Playful
+            </div>
+            <p class="text-[11px] text-dark-muted leading-relaxed">
+              Emotional tone observed during voice turns.
             </p>
           </div>
-          <p class="text-[11px] text-kotl-muted">
-            KOTL સાથે વાતચીત વખતે બાળકનો સંતોષ અને ખુશી.
-          </p>
+        </div>
+
+        <!-- Metric 4: Speech Clarity -->
+        <div class="glass-card rounded-2xl p-5 space-y-3 flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-dark-light uppercase tracking-wider">Acoustic Clarity</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 font-mono font-bold border border-indigo-500/20">Optimal</span>
+          </div>
+          <div>
+            <div class="text-xs font-medium text-slate-200 mb-1">
+              16kHz PCM • Room Calibrated
+            </div>
+            <p class="text-[11px] text-dark-muted leading-relaxed">
+              Real-time ESP32 I2S & AGC speech capture.
+            </p>
+          </div>
         </div>
       </div>
 
-      <!-- Likes and Dislikes Section -->
+      <!-- Interests vs Sensitivities (2 Columns) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Likes Card -->
-        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3 flex flex-col justify-between">
+        <!-- Passions & Interests Card -->
+        <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4 flex flex-col justify-between">
           <div>
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between pb-1">
               <h3 class="font-bold text-sm text-white flex items-center space-x-2">
-                <span class="text-emerald-400">💖</span>
-                <span>શું વધુ ગમે છે? (Likes & Passions)</span>
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                </svg>
+                <span>Passions & Interests</span>
               </h3>
-              <span class="text-[10px] text-kotl-muted font-mono">KOTL મેમરી</span>
+              <span class="text-[10px] text-dark-muted font-mono uppercase tracking-wider">AI Memory</span>
             </div>
-            <p class="text-[11px] text-kotl-muted mb-3">
-              બાળકના શોખ અને રુચિઓ જેને KOTL વાર્તાઓ અને રમતોમાં જોડે છે.
+            <p class="text-xs text-dark-muted leading-relaxed mb-3">
+              Topics Aarav loves that KOTL naturally incorporates into playful stories and games.
             </p>
+
             <div id="likesContainer" class="flex flex-wrap gap-2">
-              <!-- Dynamically rendered -->
+              <!-- Dynamically populated chips -->
             </div>
           </div>
 
-          <div class="pt-3 border-t border-kotl-border/80 flex items-center space-x-2">
-            <input id="newLikeInput" type="text" placeholder="નવો શોખ ઉમેરો (e.g. કાર, સંગીત)" class="flex-1 bg-kotl-bg border border-kotl-border rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
-            <button onclick="addInterest('likes')" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all">
-              + ઉમેરો
+          <div class="pt-3 border-t border-dark-border/80 flex items-center space-x-2">
+            <input
+              id="newLikeInput"
+              type="text"
+              placeholder="Add interest (e.g. Space, Painting)..."
+              class="flex-1 bg-dark-bg border border-dark-border rounded-xl px-3 py-1.5 text-xs text-white placeholder-dark-muted focus:outline-none focus:border-sky-500 font-sans"
+            />
+            <button onclick="addInterest('likes')" class="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition-all">
+              + Add
             </button>
           </div>
         </div>
 
-        <!-- Dislikes / Fears Card -->
-        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3 flex flex-col justify-between">
+        <!-- Sensitivities & Dislikes Card -->
+        <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4 flex flex-col justify-between">
           <div>
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between pb-1">
               <h3 class="font-bold text-sm text-white flex items-center space-x-2">
-                <span class="text-rose-400">🚫</span>
-                <span>શું નથી ગમતું / ડર? (Dislikes & Fears)</span>
+                <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <span>Sensitivities & Dislikes</span>
               </h3>
-              <span class="text-[10px] text-kotl-muted font-mono">સંવેદનશીલતા</span>
+              <span class="text-[10px] text-dark-muted font-mono uppercase tracking-wider">Mindful AI</span>
             </div>
-            <p class="text-[11px] text-kotl-muted mb-3">
-              જે બાબતોથી બાળકને અણગમો છે કે ડર લાગે છે. KOTL આનો આદર રાખે છે.
+            <p class="text-xs text-dark-muted leading-relaxed mb-3">
+              Sensitivities and fears KOTL treats with gentleness and thoughtful care.
             </p>
+
             <div id="dislikesContainer" class="flex flex-wrap gap-2">
-              <!-- Dynamically rendered -->
+              <!-- Dynamically populated chips -->
             </div>
           </div>
 
-          <div class="pt-3 border-t border-kotl-border/80 flex items-center space-x-2">
-            <input id="newDislikeInput" type="text" placeholder="નવો અણગમો ઉમેરો (e.g. કારેલા, ઇન્જેક્શન)" class="flex-1 bg-kotl-bg border border-kotl-border rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
-            <button onclick="addInterest('dislikes')" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-all">
-              + ઉમેરો
+          <div class="pt-3 border-t border-dark-border/80 flex items-center space-x-2">
+            <input
+              id="newDislikeInput"
+              type="text"
+              placeholder="Add sensitivity (e.g. Loud Sounds)..."
+              class="flex-1 bg-dark-bg border border-dark-border rounded-xl px-3 py-1.5 text-xs text-white placeholder-dark-muted focus:outline-none focus:border-sky-500 font-sans"
+            />
+            <button onclick="addInterest('dislikes')" class="px-3.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold transition-all">
+              + Add
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Improvement Areas & Action Plan -->
-      <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 sm:p-6 space-y-4">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-kotl-border/80 pb-3">
+      <!-- Growth Roadmap & KOTL Action Plan -->
+      <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-dark-border/80 pb-3">
           <div>
             <h3 class="font-bold text-sm sm:text-base text-white flex items-center space-x-2">
-              <span class="text-amber-400">🚀</span>
-              <span>વિકાસ અને સુધારણા પ્લાનિંગ (Improvement Roadmap)</span>
+              <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+              </svg>
+              <span>Development Goals & KOTL Strategy</span>
             </h3>
-            <p class="text-[11px] text-kotl-muted mt-0.5">
-              બાળકના વિકાસ માટે જરૂરી લક્ષ્યો અને KOTL કઈ રીતે મદદ કરે છે તેનું સ્ટેપ-બાય-સ્ટેપ પ્લાનિંગ.
+            <p class="text-xs text-dark-muted mt-0.5">
+              Targeted developmental milestones and how KOTL autonomously coaches Aarav.
             </p>
           </div>
-          <button onclick="openAddImprovementModal()" class="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium transition-all flex items-center space-x-1 shrink-0">
-            <span>+ નવું લક્ષ્ય ઉમેરો</span>
+
+          <button onclick="openAddImprovementModal()" class="px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-sm shrink-0">
+            <span>+ Add Growth Goal</span>
           </button>
         </div>
 
@@ -317,63 +389,93 @@
 
     </section>
 
-    <!-- ========================================== -->
-    <!-- TAB 2: PARENT MISSIONS & DIRECTIVES        -->
-    <!-- ========================================== -->
+    <!-- ======================================================== -->
+    <!-- TAB 2: PARENT DIRECTIVES & MISSIONS                      -->
+    <!-- ======================================================== -->
     <section id="viewMissions" class="hidden h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 custom-scrollbar max-w-5xl mx-auto">
       
-      <!-- Missions Hero Banner -->
-      <div class="bg-gradient-to-r from-amber-500/10 via-kotl-card to-kotl-surface border border-amber-500/30 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+      <!-- Missions Hero Card -->
+      <div class="glass-card rounded-2xl p-6 shadow-xl relative overflow-hidden border-indigo-500/20">
         <div class="flex items-start justify-between gap-4">
           <div class="space-y-2">
-            <div class="flex items-center space-x-2">
-              <span class="text-2xl">🎯</span>
-              <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">
-                પેરેન્ટ મિશન & AI કમાન્ડ્સ (Parent Missions)
+            <div class="flex items-center space-x-2.5">
+              <div class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
+                🎯
+              </div>
+              <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">
+                Parent Guidance Directives
               </h2>
             </div>
-            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
-              તમે ઇચ્છો છો કે બાળક કોઈ સારી ટેવ પાડે (જેમ કે શાકભાજી ખાવું, સમયસર સૂઈ જવું, રમકડાં ગોઠવવા)? 
-              અહીં KOTL ને કમાન્ડ આપો. KOTL બાળકની વાતચીતમાં પ્રેમ અને વાર્તા દ્વારા આપોઆપ તે શીખવશે!
+            <p class="text-xs sm:text-sm text-dark-light leading-relaxed max-w-2xl">
+              Assign behavioral, dietary, or learning goals to KOTL. The AI smoothly weaves encouragement for these missions into conversations without sounding didactic or boring.
             </p>
           </div>
-          <span class="hidden sm:inline px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-mono font-semibold">
-            Auto-Guidance Mode
+          <span class="hidden sm:inline px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs font-mono font-medium">
+            Autonomous Prompt Injection
           </span>
         </div>
       </div>
 
       <!-- Add New Mission Box -->
-      <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3">
-        <h3 class="font-bold text-xs uppercase tracking-wider text-sky-400 font-mono">
-          + નવું મિશન સોંપો (Assign New Mission to KOTL)
-        </h3>
+      <div class="glass-card rounded-2xl p-5 space-y-3.5">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-xs uppercase tracking-wider text-sky-400 font-mono">
+            + Create New Directive
+          </h3>
+          <!-- Quick Template Chips -->
+          <div class="hidden sm:flex items-center space-x-2 text-[11px]">
+            <span class="text-dark-muted">Templates:</span>
+            <button onclick="applyPreset('Encourage Vegetables', 'Gently explain how spinach and carrots give superheroes incredible energy whenever food is mentioned.')" class="px-2 py-0.5 rounded-lg bg-dark-bg hover:bg-dark-card border border-dark-border text-dark-light hover:text-white transition-colors">
+              🥦 Healthy Food
+            </button>
+            <button onclick="applyPreset('Tidy Up Toys After Play', 'Warmly compliment and remind placing toys back in the organizer box after playing.')" class="px-2 py-0.5 rounded-lg bg-dark-bg hover:bg-dark-card border border-dark-border text-dark-light hover:text-white transition-colors">
+              🧸 Tidy Up
+            </button>
+            <button onclick="applyPreset('Ask Scientific Wonders', 'Ask intriguing questions about how birds fly or why stars twinkle to stimulate curiosity.')" class="px-2 py-0.5 rounded-lg bg-dark-bg hover:bg-dark-card border border-dark-border text-dark-light hover:text-white transition-colors">
+              🔭 Curiosity
+            </button>
+          </div>
+        </div>
+
         <form id="newMissionForm" class="space-y-3" onsubmit="handleCreateMission(event)">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-[11px] text-kotl-muted mb-1">મિશન શીર્ષક (Mission Title)</label>
-              <input id="missionTitleInput" type="text" placeholder="e.g. દરરોજ એક ગ્લાસ દૂધ પીવા માટે પ્રોત્સાહિત કરો" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-400" required />
+              <label class="block text-[11px] text-dark-muted mb-1 font-medium">Goal Title</label>
+              <input
+                id="missionTitleInput"
+                type="text"
+                placeholder="e.g. Encourage Drinking Milk"
+                class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-xs text-white placeholder-dark-muted focus:outline-none focus:border-sky-500"
+                required
+              />
             </div>
             <div>
-              <label class="block text-[11px] text-kotl-muted mb-1">KOTL માટે સૂચના (AI Directive)</label>
-              <input id="missionDirectiveInput" type="text" placeholder="e.g. વાતચીતમાં કહો કે દૂધ પીવાથી સુપર પાવર અને હાડકાં મજબૂત બને છે." class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-400" required />
+              <label class="block text-[11px] text-dark-muted mb-1 font-medium">Instruction for KOTL (AI Directive)</label>
+              <input
+                id="missionDirectiveInput"
+                type="text"
+                placeholder="e.g. Playfully explain that warm milk builds strong bones like an astronaut."
+                class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-xs text-white placeholder-dark-muted focus:outline-none focus:border-sky-500"
+                required
+              />
             </div>
           </div>
-          <div class="flex justify-end">
-            <button type="submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md">
-              🎯 KOTL ને મિશન સોંપો
+
+          <div class="flex justify-end pt-1">
+            <button type="submit" class="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-black text-xs font-bold transition-all shadow-md flex items-center space-x-1.5">
+              <span>Assign to KOTL</span>
             </button>
           </div>
         </form>
       </div>
 
-      <!-- Missions List -->
+      <!-- Active Missions Deck -->
       <div class="space-y-3">
         <div class="flex items-center justify-between px-1">
-          <h3 class="font-bold text-xs text-kotl-muted uppercase tracking-wider font-mono">
-            હાલના સક્રિય મિશન્સ (Active Missions)
+          <h3 class="font-bold text-xs text-dark-muted uppercase tracking-wider font-mono">
+            Active Directives
           </h3>
-          <span class="text-[11px] text-kotl-muted">ટોગલ સ્વીચથી ચાલુ/બંધ કરો</span>
+          <span class="text-[11px] text-dark-muted">Toggle to enable or pause</span>
         </div>
 
         <div id="missionsListContainer" class="space-y-3">
@@ -383,54 +485,54 @@
 
     </section>
 
-    <!-- ========================================== -->
-    <!-- TAB 3: CONVERSATION HISTORY & LIVE CHAT    -->
-    <!-- ========================================== -->
+    <!-- ======================================================== -->
+    <!-- TAB 3: DIALOGUE HISTORY & REAL-TIME AUDIO                -->
+    <!-- ======================================================== -->
     <section id="viewChat" class="hidden h-full flex flex-col justify-between overflow-hidden relative">
       
-      <!-- Sub-header with Clear & Sync Info -->
-      <div class="h-10 border-b border-kotl-border/60 px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-kotl-muted bg-kotl-surface/50">
+      <!-- Sub-header Bar -->
+      <div class="h-10 border-b border-dark-border/80 px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-dark-muted bg-dark-surface/50">
         <div class="flex items-center space-x-2">
-          <span>📜 સંપૂર્ણ સંવાદ આર્કાઇવ (Audio & Text History)</span>
-          <span class="text-[10px] px-1.5 py-0.2 rounded bg-kotl-card text-emerald-400">Live Synced</span>
+          <span>Dialogue Archive</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Live Audio Stream</span>
         </div>
-        <button onclick="clearSessionChat()" class="text-xs text-kotl-muted hover:text-rose-400 transition-colors">
-          🗑️ હિસ્ટ્રી ક્લીયર કરો
+        <button onclick="clearSessionChat()" class="text-xs text-dark-muted hover:text-rose-400 transition-colors">
+          Clear History
         </button>
       </div>
 
-      <!-- Chat Messages Scroll Stream -->
+      <!-- Chat Messages Scroll Area -->
       <div id="chatScrollArea" class="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-4 custom-scrollbar flex flex-col items-center w-full">
         <div id="chatContainer" class="w-full max-w-3xl space-y-4">
-          <!-- Dynamic conversation turns -->
+          <!-- Dynamically populated turns -->
         </div>
       </div>
 
-      <!-- Active Recording Waveform Banner -->
+      <!-- Active Voice Recording Waveform Bar -->
       <div id="recordingWaveformContainer" class="hidden w-full max-w-3xl mx-auto px-4 mb-2">
-        <div class="bg-black/90 border border-white/20 rounded-2xl p-3 flex items-center justify-between shadow-2xl backdrop-blur-xl">
+        <div class="bg-black/95 border border-sky-500/30 rounded-2xl p-3 flex items-center justify-between shadow-2xl backdrop-blur-xl">
           <div class="flex items-center space-x-3">
-            <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
-            <span class="text-xs font-mono text-white font-medium">બાળકનો અવાજ સાંભળી રહ્યો છું (ગુજરાતી / English)...</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+            <span class="text-xs font-mono text-white font-medium">Listening to speech (English / Gujarati / Hindi)...</span>
           </div>
-          <div class="h-6 w-32 bg-black rounded-lg overflow-hidden flex items-center">
+          <div class="h-6 w-32 bg-dark-bg rounded-lg overflow-hidden flex items-center border border-dark-border">
             <canvas id="visualizerCanvas" class="w-full h-full"></canvas>
           </div>
-          <button id="cancelRecordBtn" class="text-xs font-mono text-kotl-muted hover:text-white px-2 py-0.5 rounded bg-kotl-card">
+          <button id="cancelRecordBtn" class="text-xs font-mono text-dark-light hover:text-white px-2.5 py-1 rounded-lg bg-dark-card border border-dark-border">
             Done
           </button>
         </div>
       </div>
 
       <!-- Bottom Chat Input Bar -->
-      <div class="w-full p-4 sm:p-5 shrink-0 flex flex-col items-center justify-center bg-gradient-to-t from-kotl-bg via-kotl-bg to-transparent border-t border-kotl-border/60">
-        <div class="w-full max-w-3xl relative flex items-center bg-kotl-card border border-kotl-border rounded-2xl shadow-lg focus-within:border-sky-400 transition-all px-3 py-2">
+      <div class="w-full p-4 sm:p-5 shrink-0 flex flex-col items-center justify-center bg-gradient-to-t from-dark-bg via-dark-bg to-transparent border-t border-dark-border/60">
+        <div class="w-full max-w-3xl relative flex items-center bg-dark-card border border-dark-border rounded-2xl shadow-xl focus-within:border-sky-500 transition-all px-3 py-2">
           
           <input
             id="chatInput"
             type="text"
-            placeholder="KOTL (કોટિલ) ને ગુજરાતી કે અંગ્રેજીમાં પૂછો..."
-            class="flex-1 bg-transparent border-none text-sm text-white placeholder-kotl-muted focus:outline-none px-3 py-1 font-sans"
+            placeholder="Type a message or click mic to speak to KOTL..."
+            class="flex-1 bg-transparent border-none text-xs sm:text-sm text-white placeholder-dark-muted focus:outline-none px-3 py-1 font-sans"
             autocomplete="off"
           />
 
@@ -439,13 +541,13 @@
             <button
               id="recordBtn"
               type="button"
-              title="Speak (Push to Talk)"
-              class="w-8 h-8 rounded-full bg-kotl-surface hover:bg-kotl-border text-white flex items-center justify-center transition-all focus:outline-none border border-kotl-border"
+              title="Push to Talk"
+              class="w-8 h-8 rounded-full bg-dark-surface hover:bg-dark-cardHover text-white flex items-center justify-center transition-all focus:outline-none border border-dark-border"
             >
-              <svg id="micIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg id="micIcon" class="w-4 h-4 text-dark-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3z"></path>
               </svg>
-              <div id="recordingSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <div id="recordingSpinner" class="hidden w-4 h-4 border-2 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
             </button>
 
             <!-- Send Button -->
@@ -463,8 +565,8 @@
           </div>
         </div>
 
-        <p class="text-[11px] text-kotl-muted mt-2 text-center font-mono">
-          KOTL v2.2 • કુદરતી "કોટિલ" ઉચ્ચારણ • મલ્ટીલિંગ્વલ AI બ્રેઈન
+        <p class="text-[11px] text-dark-muted mt-2 text-center font-mono">
+          KOTL v2.2 • Natural "Kotil" Phonetics • Groq & Gemini Multilingual Brain
         </p>
       </div>
 
@@ -472,110 +574,106 @@
 
   </main>
 
-  <!-- Audio Player for Voice Playback -->
+  <!-- Hidden Audio Player for Speech Playback -->
   <audio id="ttsAudioPlayer" class="hidden" autoplay></audio>
 
-  <!-- ========================================== -->
-  <!-- MODAL 1: EDIT PROFILE MODAL                -->
-  <!-- ========================================== -->
-  <div id="editProfileModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
-        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
-          <span>✏️ બાળકની પ્રોફાઇલ એડિટ કરો</span>
-        </h3>
-        <button onclick="closeEditProfileModal()" class="text-kotl-muted hover:text-white text-sm">✕</button>
+  <!-- ======================================================== -->
+  <!-- MODAL 1: EDIT PROFILE                                    -->
+  <!-- ======================================================== -->
+  <div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-dark-border">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <h3 class="font-bold text-sm text-white">Edit Child Profile</h3>
+        <button onclick="closeEditProfileModal()" class="text-dark-muted hover:text-white text-sm">✕</button>
       </div>
 
-      <form id="editProfileForm" onsubmit="saveProfileChanges(event)" class="space-y-3 text-xs">
+      <form id="editProfileForm" onsubmit="saveProfileChanges(event)" class="space-y-3.5 text-xs">
         <div>
-          <label class="block text-kotl-muted mb-1">બાળકનું નામ (Child's Name)</label>
-          <input id="editChildName" type="text" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" required />
+          <label class="block text-dark-muted mb-1 font-medium">Child's Name</label>
+          <input id="editChildName" type="text" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" required />
         </div>
         <div>
-          <label class="block text-kotl-muted mb-1">ઉંમર (Age)</label>
-          <input id="editChildAge" type="text" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" required />
+          <label class="block text-dark-muted mb-1 font-medium">Age Description</label>
+          <input id="editChildAge" type="text" placeholder="e.g. 6 Years" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" required />
         </div>
         <div>
-          <label class="block text-kotl-muted mb-1">અવતાર ઈમોજી (Avatar)</label>
-          <input id="editChildAvatar" type="text" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" />
+          <label class="block text-dark-muted mb-1 font-medium">Avatar Emoji</label>
+          <input id="editChildAvatar" type="text" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" />
         </div>
 
         <div class="flex justify-end space-x-2 pt-2">
-          <button type="button" onclick="closeEditProfileModal()" class="px-3 py-1.5 rounded-xl bg-kotl-border text-kotl-muted hover:text-white">રદ કરો</button>
-          <button type="submit" class="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold">સેવ કરો</button>
+          <button type="button" onclick="closeEditProfileModal()" class="px-3.5 py-1.5 rounded-xl bg-dark-card text-dark-light hover:text-white border border-dark-border">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold">Save Changes</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 2: ADD IMPROVEMENT GOAL MODAL        -->
-  <!-- ========================================== -->
-  <div id="addImprovementModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
-        <h3 class="font-bold text-sm text-white">🚀 નવું સુધારણા લક્ષ્ય ઉમેરો</h3>
-        <button onclick="closeAddImprovementModal()" class="text-kotl-muted hover:text-white text-sm">✕</button>
+  <!-- ======================================================== -->
+  <!-- MODAL 2: ADD GROWTH GOAL                                 -->
+  <!-- ======================================================== -->
+  <div id="addImprovementModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-dark-border">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <h3 class="font-bold text-sm text-white">Add Development Goal</h3>
+        <button onclick="closeAddImprovementModal()" class="text-dark-muted hover:text-white text-sm">✕</button>
       </div>
 
-      <form id="addImprovementForm" onsubmit="handleSaveImprovement(event)" class="space-y-3 text-xs">
+      <form id="addImprovementForm" onsubmit="handleSaveImprovement(event)" class="space-y-3.5 text-xs">
         <div>
-          <label class="block text-kotl-muted mb-1">લક્ષ્યનું નામ (Goal Title)</label>
-          <input id="newGoalTitle" type="text" placeholder="e.g. રાત્રે દાંત બ્રશ કરવાની ટેવ" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" required />
+          <label class="block text-dark-muted mb-1 font-medium">Goal Title</label>
+          <input id="newGoalTitle" type="text" placeholder="e.g. Bedtime Dental Hygiene" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" required />
         </div>
         <div>
-          <label class="block text-kotl-muted mb-1">સ્થિતિ (Status)</label>
-          <select id="newGoalStatus" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400">
-            <option value="in_progress">ચાલુ છે (In Progress)</option>
-            <option value="planning">આયોજનમાં છે (Planning)</option>
-            <option value="completed">પૂર્ણ થયું (Completed)</option>
+          <label class="block text-dark-muted mb-1 font-medium">Status</label>
+          <select id="newGoalStatus" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+            <option value="in_progress">In Progress</option>
+            <option value="planning">Planning</option>
+            <option value="completed">Completed</option>
           </select>
         </div>
         <div>
-          <label class="block text-kotl-muted mb-1">KOTL નો એક્શન પ્લાન (Action Plan)</label>
-          <textarea id="newGoalPlan" rows="3" placeholder="e.g. KOTL રાત્રે વાર્તા પછી યાદ કરાવશે કે સ્વચ્છ દાંત ચમકે છે." class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" required></textarea>
+          <label class="block text-dark-muted mb-1 font-medium">KOTL Coaching Action Plan</label>
+          <textarea id="newGoalPlan" rows="3" placeholder="e.g. KOTL reminds how clean teeth shine bright after daily storytelling." class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" required></textarea>
         </div>
 
         <div class="flex justify-end space-x-2 pt-2">
-          <button type="button" onclick="closeAddImprovementModal()" class="px-3 py-1.5 rounded-xl bg-kotl-border text-kotl-muted hover:text-white">રદ કરો</button>
-          <button type="submit" class="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold">ઉમેરો</button>
+          <button type="button" onclick="closeAddImprovementModal()" class="px-3.5 py-1.5 rounded-xl bg-dark-card text-dark-light hover:text-white border border-dark-border">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold">Add Goal</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 3: ESP32 WI-FI CONFIG MODAL          -->
-  <!-- ========================================== -->
-  <div id="wifiModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
-        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
-          <span>📡 ESP32 Wi-Fi & Device Manager</span>
-        </h3>
-        <button id="closeWifiModalBtn" class="text-kotl-muted hover:text-white text-sm">✕</button>
+  <!-- ======================================================== -->
+  <!-- MODAL 3: ESP32 WI-FI CONFIG                              -->
+  <!-- ======================================================== -->
+  <div id="wifiModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-dark-border">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <h3 class="font-bold text-sm text-white">ESP32 Wi-Fi & Device Manager</h3>
+        <button id="closeWifiModalBtn" class="text-dark-muted hover:text-white text-sm">✕</button>
       </div>
 
-      <p class="text-xs text-kotl-muted">
-        Wi-Fi નેટવર્ક અને બેકએન્ડ URL અપડેટ કરો. ESP32 રીફ્લેશિંગ વગર જાતે સિંક કરશે.
+      <p class="text-xs text-dark-muted leading-relaxed">
+        Update Wi-Fi credentials and backend cloud URL. ESP32 syncs automatically without re-flashing code.
       </p>
 
       <form id="wifiConfigForm" class="space-y-3 text-xs font-mono">
         <div>
-          <label class="block text-slate-300 mb-1 text-[11px]">Wi-Fi SSID (નેટવર્ક નામ)</label>
-          <input id="cfgWifiSsid" type="text" placeholder="e.g. Altius" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400 text-xs" required />
+          <label class="block text-dark-light mb-1 text-[11px]">Wi-Fi SSID (Network Name)</label>
+          <input id="cfgWifiSsid" type="text" placeholder="e.g. Altius" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500 text-xs" required />
         </div>
         <div>
-          <label class="block text-slate-300 mb-1 text-[11px]">Wi-Fi પાસવર્ડ</label>
+          <label class="block text-dark-light mb-1 text-[11px]">Wi-Fi Password</label>
           <div class="relative">
-            <input id="cfgWifiPass" type="password" placeholder="Wi-Fi પાસવર્ડ લખો" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400 text-xs pr-10" />
-            <button type="button" id="togglePassBtn" class="absolute right-3 top-2.5 text-kotl-muted hover:text-white">👁️</button>
+            <input id="cfgWifiPass" type="password" placeholder="Enter Wi-Fi password" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500 text-xs pr-10" />
+            <button type="button" id="togglePassBtn" class="absolute right-3 top-2.5 text-dark-muted hover:text-white">👁️</button>
           </div>
         </div>
         <div>
-          <label class="block text-slate-300 mb-1 text-[11px]">Backend Cloud URL</label>
-          <input id="cfgBackendUrl" type="text" placeholder="https://kotl.onrender.com" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400 text-xs" required />
+          <label class="block text-dark-light mb-1 text-[11px]">Backend Cloud URL</label>
+          <input id="cfgBackendUrl" type="text" placeholder="https://kotl.onrender.com" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500 text-xs" required />
         </div>
 
         <button type="submit" id="saveConfigBtn" class="w-full bg-sky-500 hover:bg-sky-400 text-black font-bold py-2.5 rounded-xl transition-all text-xs">
@@ -584,7 +682,7 @@
         <p id="configStatusMsg" class="text-[11px] text-center pt-1 hidden font-mono"></p>
       </form>
 
-      <div class="p-3 bg-kotl-bg rounded-xl border border-kotl-border text-[11px] font-mono text-kotl-muted space-y-1">
+      <div class="p-3 bg-dark-bg rounded-xl border border-dark-border text-[11px] font-mono text-dark-muted space-y-1">
         <div class="flex justify-between">
           <span>Config Version:</span>
           <span id="cfgVersionText" class="text-white font-mono">v1</span>
@@ -597,52 +695,47 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 4: HARDWARE DIAGNOSTICS & TEST       -->
-  <!-- ========================================== -->
-  <div id="hardwareModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
-        <div class="flex items-center space-x-2">
-          <span class="text-emerald-400 font-mono text-base">🛠️</span>
-          <h3 class="font-bold text-sm text-white">હાર્ડવેર ઓડિયો ડાયગ્નોસ્ટિક્સ (Hardware Test)</h3>
-        </div>
-        <button id="closeHardwareModalBtn" class="text-kotl-muted hover:text-white text-sm">✕</button>
+  <!-- ======================================================== -->
+  <!-- MODAL 4: HARDWARE DIAGNOSTICS & TEST                     -->
+  <!-- ======================================================== -->
+  <div id="hardwareModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar border border-dark-border">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <h3 class="font-bold text-sm text-white">Hardware Audio Diagnostics</h3>
+        <button id="closeHardwareModalBtn" class="text-dark-muted hover:text-white text-sm">✕</button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
         <!-- Physical Mic Card -->
-        <div class="p-4 bg-kotl-bg rounded-xl border border-kotl-border space-y-3">
+        <div class="p-4 bg-dark-bg rounded-xl border border-dark-border space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-white font-bold">🎙️ ESP32 Physical Mic</span>
-            <span id="espMicBadge" class="text-[10px] px-2 py-0.5 rounded bg-kotl-card text-zinc-300">Ready</span>
+            <span class="text-white font-bold">🎙️ ESP32 Mic (Pin 34)</span>
+            <span id="espMicBadge" class="text-[10px] px-2 py-0.5 rounded bg-dark-card text-dark-light">Ready</span>
           </div>
-          <p class="text-[11px] text-kotl-muted">
-            ESP32 ના Pin 34 પરથી 4 સેકન્ડ રેકોર્ડ કરી એકોસ્ટિક્સ ચકાસો.
+          <p class="text-[11px] text-dark-muted">
+            Direct ADC recording for 4s with room calibration.
           </p>
           <button id="triggerEspMicBtn" type="button" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2 rounded-xl transition-all shadow flex items-center justify-center space-x-1.5">
-            <span>🎙️</span>
             <span>Record 4s from ESP32</span>
           </button>
-          <div id="espMicStatusText" class="text-[11px] text-kotl-muted min-h-[24px]">
+          <div id="espMicStatusText" class="text-[11px] text-dark-muted min-h-[24px]">
             Ready.
           </div>
         </div>
 
         <!-- Speaker Output Card -->
-        <div class="p-4 bg-kotl-bg rounded-xl border border-kotl-border space-y-3">
+        <div class="p-4 bg-dark-bg rounded-xl border border-dark-border space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-white font-bold">🔊 ESP32 Speaker (I2S)</span>
-            <span id="speakerTestBadge" class="text-[10px] px-2 py-0.5 rounded bg-kotl-card text-zinc-300">Ready</span>
+            <span class="text-white font-bold">🔊 MAX98357A I2S Speaker</span>
+            <span id="speakerTestBadge" class="text-[10px] px-2 py-0.5 rounded bg-dark-card text-dark-light">Ready</span>
           </div>
-          <p class="text-[11px] text-kotl-muted">
-            MAX98357A I2S સ્પીકર પર ટેસ્ટ વોઇસ પ્લે કરો.
+          <p class="text-[11px] text-dark-muted">
+            Plays spoken "Kotil" voice sample over I2S.
           </p>
           <button id="testSpeakerBtn" type="button" class="w-full bg-sky-500 hover:bg-sky-400 text-black font-bold py-2 rounded-xl transition-all shadow flex items-center justify-center space-x-1.5">
-            <span>🗣️</span>
-            <span>Test "Kotil" Spoken Voice</span>
+            <span>Play Test Voice</span>
           </button>
-          <div id="speakerTestStatusText" class="text-[11px] text-kotl-muted min-h-[24px]">
+          <div id="speakerTestStatusText" class="text-[11px] text-dark-muted min-h-[24px]">
             Ready.
           </div>
         </div>
@@ -650,64 +743,64 @@
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- MODAL 5: FREE QUOTA LIMITS MODAL           -->
-  <!-- ========================================== -->
-  <div id="quotaModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
-        <h3 class="font-bold text-sm text-white">🎁 100% Free Tier Quota Limits</h3>
-        <button id="closeQuotaModalBtn" class="text-kotl-muted hover:text-white text-sm">✕</button>
+  <!-- ======================================================== -->
+  <!-- MODAL 5: FREE QUOTA LIMITS TRACKER                       -->
+  <!-- ======================================================== -->
+  <div id="quotaModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-dark-border">
+      <div class="flex items-center justify-between border-b border-dark-border pb-3">
+        <h3 class="font-bold text-sm text-white">Free Tier API Quotas</h3>
+        <button id="closeQuotaModalBtn" class="text-dark-muted hover:text-white text-sm">✕</button>
       </div>
 
       <div class="space-y-3 text-xs font-mono">
-        <div class="p-3 bg-kotl-bg rounded-xl border border-kotl-border space-y-1">
+        <div class="p-3 bg-dark-bg rounded-xl border border-dark-border space-y-1">
           <div class="flex justify-between text-slate-300">
             <span>Groq LLM Quota:</span>
             <span class="text-white font-bold">14,400 RPD</span>
           </div>
-          <span class="text-[11px] text-kotl-muted block">Active & Free</span>
+          <span class="text-[11px] text-dark-muted block">Tier: 100% Free Tier</span>
         </div>
 
-        <div class="p-3 bg-kotl-bg rounded-xl border border-kotl-border flex justify-between items-center">
+        <div class="p-3 bg-dark-bg rounded-xl border border-dark-border flex justify-between items-center">
           <div>
             <span class="text-white block">Microsoft Edge-TTS:</span>
-            <span class="text-[11px] text-kotl-muted">Dhwani (Gujarati) & Madhur (Hindi)</span>
+            <span class="text-[11px] text-dark-muted">Natural Voice Synthesis</span>
           </div>
-          <span class="text-[11px] px-2 py-0.5 rounded bg-kotl-card text-emerald-400 font-bold">Unlimited Free</span>
+          <span class="text-[11px] px-2 py-0.5 rounded bg-dark-card text-emerald-400 font-bold">Unlimited Free</span>
         </div>
 
-        <div class="p-3 bg-kotl-bg rounded-xl border border-kotl-border flex justify-between items-center">
+        <div class="p-3 bg-dark-bg rounded-xl border border-dark-border flex justify-between items-center">
           <div>
             <span class="text-white block">Groq Whisper STT:</span>
-            <span class="text-[11px] text-kotl-muted">Real-time Multilingual Speech</span>
+            <span class="text-[11px] text-dark-muted">Multilingual Speech Recognition</span>
           </div>
-          <span class="text-[11px] px-2 py-0.5 rounded bg-kotl-card text-white font-bold">7,200s/day</span>
+          <span class="text-[11px] px-2 py-0.5 rounded bg-dark-card text-white font-bold">7,200s/day</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- CLIENT JAVASCRIPT LOGIC                    -->
-  <!-- ========================================== -->
+  <!-- ======================================================== -->
+  <!-- CLIENT LOGIC & DATA SYNCHRONIZATION                      -->
+  <!-- ======================================================== -->
   <script>
-    // Tab Switching
-    let currentTab = 'report';
+    // Tab Navigation
+    let currentTab = 'analytics';
     function switchTab(tab) {
       currentTab = tab;
       const views = {
-        report: document.getElementById('viewReport'),
+        analytics: document.getElementById('viewAnalytics'),
         missions: document.getElementById('viewMissions'),
         chat: document.getElementById('viewChat')
       };
       const buttons = {
-        report: document.getElementById('tabBtnReport'),
+        analytics: document.getElementById('tabBtnAnalytics'),
         missions: document.getElementById('tabBtnMissions'),
         chat: document.getElementById('tabBtnChat')
       };
       const mobButtons = {
-        report: document.getElementById('mobTabReport'),
+        analytics: document.getElementById('mobTabAnalytics'),
         missions: document.getElementById('mobTabMissions'),
         chat: document.getElementById('mobTabChat')
       };
@@ -716,7 +809,7 @@
         if (key === tab) {
           views[key].classList.remove('hidden');
           if (buttons[key]) {
-            buttons[key].className = 'px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 tab-active';
+            buttons[key].className = 'px-3.5 py-1.5 rounded-lg border border-transparent transition-all flex items-center space-x-2 tab-active';
           }
           if (mobButtons[key]) {
             mobButtons[key].className = 'flex flex-col items-center space-y-1 text-sky-400';
@@ -724,10 +817,10 @@
         } else {
           views[key].classList.add('hidden');
           if (buttons[key]) {
-            buttons[key].className = 'px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 text-kotl-muted hover:text-white';
+            buttons[key].className = 'px-3.5 py-1.5 rounded-lg border border-transparent transition-all flex items-center space-x-2 text-dark-light hover:text-white hover:bg-dark-card/50';
           }
           if (mobButtons[key]) {
-            mobButtons[key].className = 'flex flex-col items-center space-y-1 text-kotl-muted';
+            mobButtons[key].className = 'flex flex-col items-center space-y-1 text-dark-muted';
           }
         }
       });
@@ -737,7 +830,7 @@
       }
     }
 
-    // Modal Handlers
+    // Modal Triggers
     const wifiModal = document.getElementById('wifiModal');
     const openWifiModalBtn = document.getElementById('openWifiModalBtn');
     const closeWifiModalBtn = document.getElementById('closeWifiModalBtn');
@@ -764,7 +857,7 @@
     function openAddImprovementModal() { addImprovementModal.classList.remove('hidden'); }
     function closeAddImprovementModal() { addImprovementModal.classList.add('hidden'); }
 
-    // Child Profile State & Render
+    // Child Profile State & Operations
     let currentChildProfile = null;
 
     async function loadChildProfile() {
@@ -782,8 +875,8 @@
 
     function renderChildProfile(p) {
       if (!p) return;
-      document.getElementById('childNameText').textContent = p.name || 'આરવ (Aarav)';
-      document.getElementById('childAgeBadge').textContent = p.age || '6 વર્ષ';
+      document.getElementById('childNameText').textContent = p.name || 'Aarav';
+      document.getElementById('childAgeBadge').textContent = p.age || '6 Years Old';
       document.getElementById('childAvatar').textContent = p.avatar || '🧒';
       document.getElementById('totalDialoguesText').textContent = p.conversation_count || 14;
 
@@ -791,47 +884,47 @@
       document.getElementById('editChildAge').value = p.age || '';
       document.getElementById('editChildAvatar').value = p.avatar || '🧒';
 
-      // Skills
+      // Cognitive Metrics
       const vocab = p.skills?.vocabulary || 84;
       const cur = p.skills?.curiosity || 92;
       document.getElementById('vocabScoreText').textContent = vocab + '%';
       document.getElementById('vocabProgressBar').style.width = vocab + '%';
       document.getElementById('curiosityScoreText').textContent = cur + '%';
       document.getElementById('curiosityProgressBar').style.width = cur + '%';
-      document.getElementById('emotionalToneText').textContent = p.skills?.emotional_tone || 'ઉત્સાહી, પ્રેમાળ અને આનંદી (Cheerful & Caring)';
+      document.getElementById('emotionalToneText').textContent = p.skills?.emotional_tone || 'Cheerful, Loving & Playful';
 
-      // Likes
+      // Passions / Likes Chips
       const likesCont = document.getElementById('likesContainer');
       likesCont.innerHTML = '';
       (p.likes || []).forEach(item => {
         const tag = document.createElement('span');
-        tag.className = 'px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium flex items-center space-x-1.5 shadow-sm';
-        tag.innerHTML = `<span>${escapeHtml(item)}</span><button onclick="removeInterest('likes', '${escapeHtml(item)}')" class="hover:text-white text-emerald-400 font-bold ml-1">✕</button>`;
+        tag.className = 'px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium flex items-center space-x-1.5 shadow-sm';
+        tag.innerHTML = `<span>${escapeHtml(item)}</span><button onclick="removeInterest('likes', '${escapeHtml(item)}')" class="hover:text-white text-emerald-400 font-bold ml-1 text-xs">✕</button>`;
         likesCont.appendChild(tag);
       });
 
-      // Dislikes
+      // Sensitivities / Dislikes Chips
       const dislikesCont = document.getElementById('dislikesContainer');
       dislikesCont.innerHTML = '';
       (p.dislikes || []).forEach(item => {
         const tag = document.createElement('span');
-        tag.className = 'px-3 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center space-x-1.5 shadow-sm';
-        tag.innerHTML = `<span>${escapeHtml(item)}</span><button onclick="removeInterest('dislikes', '${escapeHtml(item)}')" class="hover:text-white text-rose-400 font-bold ml-1">✕</button>`;
+        tag.className = 'px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium flex items-center space-x-1.5 shadow-sm';
+        tag.innerHTML = `<span>${escapeHtml(item)}</span><button onclick="removeInterest('dislikes', '${escapeHtml(item)}')" class="hover:text-white text-rose-400 font-bold ml-1 text-xs">✕</button>`;
         dislikesCont.appendChild(tag);
       });
 
-      // Improvement Areas
+      // Development Goals & Roadmap
       const impCont = document.getElementById('improvementAreasContainer');
       impCont.innerHTML = '';
       (p.improvement_areas || []).forEach(area => {
         const card = document.createElement('div');
-        card.className = 'bg-kotl-bg/80 border border-kotl-border/80 rounded-xl p-4 space-y-2 flex flex-col justify-between';
+        card.className = 'bg-dark-bg/80 border border-dark-border rounded-xl p-4 space-y-2 flex flex-col justify-between';
         
-        let statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">ચાલુ છે</span>';
+        let statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 font-mono">In Progress</span>';
         if (area.status === 'planning') {
-          statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">આયોજનમાં છે</span>';
+          statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">Planning</span>';
         } else if (area.status === 'completed') {
-          statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">પૂર્ણ થયું</span>';
+          statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Completed</span>';
         }
 
         card.innerHTML = `
@@ -840,8 +933,8 @@
               <h4 class="font-bold text-xs text-white">${escapeHtml(area.title)}</h4>
               ${statusBadge}
             </div>
-            <p class="text-[11px] text-kotl-muted leading-relaxed">
-              <strong class="text-slate-300">KOTL સહાય:</strong> ${escapeHtml(area.action_plan)}
+            <p class="text-[11px] text-dark-muted leading-relaxed">
+              <strong class="text-slate-300">KOTL Strategy:</strong> ${escapeHtml(area.action_plan)}
             </p>
           </div>
         `;
@@ -911,8 +1004,13 @@
       }
     }
 
-    // Parent Missions State & Handlers
+    // Parent Directives Logic
     let parentMissions = [];
+
+    function applyPreset(title, directive) {
+      document.getElementById('missionTitleInput').value = title;
+      document.getElementById('missionDirectiveInput').value = directive;
+    }
 
     async function loadParentMissions() {
       try {
@@ -935,8 +1033,8 @@
 
       if (missions.length === 0) {
         cont.innerHTML = `
-          <div class="p-6 bg-kotl-card/50 rounded-2xl border border-kotl-border text-center text-xs text-kotl-muted">
-            કોઈ સક્રિય મિશન નથી. ઉપરથી નવું મિશન સોંપો.
+          <div class="p-8 bg-dark-card/50 rounded-2xl border border-dark-border text-center text-xs text-dark-muted">
+            No active directives configured. Create a directive above to guide KOTL's conversations.
           </div>
         `;
         return;
@@ -944,27 +1042,27 @@
 
       missions.forEach(m => {
         const card = document.createElement('div');
-        card.className = 'bg-kotl-card border ' + (m.active ? 'border-amber-500/40 bg-amber-500/[0.02]' : 'border-kotl-border') + ' rounded-2xl p-4.5 space-y-2.5 transition-all shadow-sm';
+        card.className = 'glass-card rounded-2xl p-4.5 space-y-2.5 transition-all shadow-sm ' + (m.active ? 'border-indigo-500/30' : 'border-dark-border');
         
         card.innerHTML = `
           <div class="flex items-start justify-between gap-3">
             <div class="space-y-1">
               <div class="flex items-center space-x-2">
-                <span class="text-base">${m.active ? '🎯' : '⏸️'}</span>
+                <span class="text-sm">${m.active ? '🎯' : '⏸️'}</span>
                 <h4 class="font-bold text-sm text-white">${escapeHtml(m.title)}</h4>
-                ${m.active ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono">KOTL સક્રિય</span>' : '<span class="text-[9px] px-1.5 py-0.2 rounded bg-kotl-bg text-zinc-400">બંધ</span>'}
+                ${m.active ? '<span class="text-[9px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 font-mono">Active in Prompt</span>' : '<span class="text-[9px] px-2 py-0.5 rounded-full bg-dark-bg text-dark-muted">Paused</span>'}
               </div>
-              <p class="text-xs text-slate-300 leading-relaxed pl-6">
-                <strong class="text-kotl-muted">સૂચના:</strong> ${escapeHtml(m.directive)}
+              <p class="text-xs text-dark-light leading-relaxed pl-5">
+                <strong class="text-dark-muted font-normal">AI Instruction:</strong> ${escapeHtml(m.directive)}
               </p>
             </div>
 
             <div class="flex items-center space-x-2 shrink-0">
-              <button onclick="toggleMission('${m.id}', ${!m.active})" class="px-2.5 py-1 rounded-lg text-xs font-semibold ${m.active ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40' : 'bg-kotl-bg text-zinc-400 hover:text-white border border-kotl-border'}">
-                ${m.active ? 'ચાલુ' : 'બંધ'}
+              <button onclick="toggleMission('${m.id}', ${!m.active})" class="px-2.5 py-1 rounded-lg text-xs font-semibold ${m.active ? 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30' : 'bg-dark-bg text-dark-muted hover:text-white border border-dark-border'}">
+                ${m.active ? 'Active' : 'Paused'}
               </button>
-              <button onclick="deleteMission('${m.id}')" class="p-1 rounded-lg text-kotl-muted hover:text-rose-400 transition-colors" title="Delete">
-                🗑️
+              <button onclick="deleteMission('${m.id}')" class="p-1 rounded-lg text-dark-muted hover:text-rose-400 transition-colors" title="Delete Directive">
+                ✕
               </button>
             </div>
           </div>
@@ -1014,7 +1112,7 @@
     }
 
     async function deleteMission(id) {
-      if (!confirm('આ મિશન ડિલીટ કરવું છે?')) return;
+      if (!confirm('Are you sure you want to remove this directive?')) return;
       try {
         const res = await fetch('/api/parent/missions/' + id, { method: 'DELETE' });
         if (res.ok) {
@@ -1027,7 +1125,7 @@
       }
     }
 
-    // Chat Conversation & History
+    // Chat Conversation & Real-Time Sync
     const chatContainer = document.getElementById('chatContainer');
     const chatScrollArea = document.getElementById('chatScrollArea');
     const chatInput = document.getElementById('chatInput');
@@ -1074,46 +1172,46 @@
       const timeStr = formatTime(msg.timestamp);
       const isEsp = msg.source === 'esp32' || msg.source === 'device';
       const sourceBadge = isEsp 
-        ? `<span class="px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 text-[9px] font-mono">🎙️ ESP32 સ્પીકર</span>`
-        : `<span class="px-1.5 py-0.5 rounded bg-kotl-bg text-zinc-400 text-[9px] font-mono">💻 Web</span>`;
+        ? `<span class="px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 text-[9px] font-mono">🎙️ ESP32 Device</span>`
+        : `<span class="px-1.5 py-0.5 rounded bg-dark-bg text-dark-muted text-[9px] font-mono">💻 Web</span>`;
 
       if (msg.role === 'user') {
         msgDiv.innerHTML = `
-          <div class="max-w-[88%] sm:max-w-[80%] bg-sky-950/40 text-white rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-sm leading-relaxed shadow-sm border border-sky-500/30 space-y-1 break-words">
-            <div class="flex items-center justify-end space-x-1.5 text-[10px] text-kotl-muted font-mono">
-              <span class="text-sky-300 font-semibold">🧒 બાળક</span>
+          <div class="max-w-[88%] sm:max-w-[78%] bg-sky-950/40 text-white rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm border border-sky-500/30 space-y-1 break-words">
+            <div class="flex items-center justify-end space-x-1.5 text-[10px] text-dark-muted font-mono">
+              <span class="text-sky-300 font-medium">Child</span>
               <span>•</span>
               ${sourceBadge}
               <span>${timeStr}</span>
             </div>
-            <div class="break-words font-sans">${escapeHtml(msg.text || msg.content || '')}</div>
+            <div class="break-words font-sans text-slate-100">${escapeHtml(msg.text || msg.content || '')}</div>
           </div>
         `;
       } else {
         const audioBtn = msg.tts_url ? `
-          <button onclick="playAudioClip('${msg.tts_url}')" class="mt-1.5 inline-flex items-center space-x-1.5 text-xs font-mono text-kotl-muted hover:text-white px-2.5 py-1 rounded-lg bg-kotl-bg hover:bg-kotl-border border border-kotl-border transition-all shadow-sm">
-            <span class="text-emerald-400">🔊</span>
-            <span>અવાજ સાંભળો (Play Audio)</span>
+          <button onclick="playAudioClip('${msg.tts_url}')" class="mt-2 inline-flex items-center space-x-1.5 text-xs font-mono text-dark-light hover:text-white px-2.5 py-1 rounded-lg bg-dark-bg hover:bg-dark-card border border-dark-border transition-all shadow-sm">
+            <span class="text-emerald-400">▶</span>
+            <span>Play Spoken Voice</span>
           </button>
         ` : '';
 
         const eyeBadge = msg.eye_expression 
-          ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">👀 ${msg.eye_expression}</span>` 
+          ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 font-mono">Emotion: ${msg.eye_expression}</span>` 
           : '';
 
         msgDiv.innerHTML = `
-          <div class="flex items-start space-x-2.5 sm:space-x-3 max-w-[95%] sm:max-w-[85%]">
-            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 shadow-md">
-              🤖
+          <div class="flex items-start space-x-3 max-w-[95%] sm:max-w-[85%]">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 shadow-md">
+              K
             </div>
             <div class="space-y-1 min-w-0 flex-1">
-              <div class="flex items-center space-x-2 text-[10px] text-kotl-muted font-mono">
-                <span class="text-white font-semibold">KOTL (કોટિલ)</span>
+              <div class="flex items-center space-x-2 text-[10px] text-dark-muted font-mono">
+                <span class="text-white font-semibold">KOTL</span>
                 ${eyeBadge}
                 <span>•</span>
                 <span>${timeStr}</span>
               </div>
-              <div class="text-sm text-slate-100 leading-relaxed font-sans break-words bg-kotl-card/80 p-3 rounded-2xl border border-kotl-border/80">
+              <div class="text-sm text-slate-100 leading-relaxed font-sans break-words bg-dark-card/90 p-3.5 rounded-2xl border border-dark-border">
                 ${escapeHtml(msg.text || msg.content || '')}
               </div>
               ${audioBtn}
@@ -1135,12 +1233,12 @@
             if (data.history.length === 0 && chatContainer.children.length === 0) {
               chatContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center min-h-[40vh] text-center space-y-3">
-                  <div class="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-2xl font-bold font-mono">
-                    🤖
+                  <div class="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-400 flex items-center justify-center text-xl font-bold font-mono border border-sky-500/20">
+                    K
                   </div>
-                  <h3 class="text-lg font-bold text-white">કોઈ સંવાદ હિસ્ટ્રી નથી</h3>
-                  <p class="text-xs text-kotl-muted max-w-sm">
-                    ESP32 સ્પીકરથી વાત કરો અથવા નીચે પ્રશ્ન પૂછો. KOTL કુદરતી ગુજરાતી/અંગ્રેજીમાં જવાબ આપશે.
+                  <h3 class="text-base font-bold text-white">No Conversation History Yet</h3>
+                  <p class="text-xs text-dark-muted max-w-sm">
+                    Speak through the ESP32 physical microphone or type your question below.
                   </p>
                 </div>
               `;
@@ -1163,8 +1261,8 @@
                     if (btnCont) {
                       const btn = document.createElement('button');
                       btn.onclick = () => playAudioClip(item.tts_url);
-                      btn.className = 'mt-1.5 inline-flex items-center space-x-1.5 text-xs font-mono text-kotl-muted hover:text-white px-2.5 py-1 rounded-lg bg-kotl-bg hover:bg-kotl-border border border-kotl-border transition-all shadow-sm';
-                      btn.innerHTML = '<span class="text-emerald-400">🔊</span><span>અવાજ સાંભળો (Play Audio)</span>';
+                      btn.className = 'mt-2 inline-flex items-center space-x-1.5 text-xs font-mono text-dark-light hover:text-white px-2.5 py-1 rounded-lg bg-dark-bg hover:bg-dark-card border border-dark-border transition-all shadow-sm';
+                      btn.innerHTML = '<span class="text-emerald-400">▶</span><span>Play Spoken Voice</span>';
                       btnCont.appendChild(btn);
                     }
                   }
@@ -1181,7 +1279,7 @@
     }
 
     async function clearSessionChat() {
-      if (!confirm('શું તમે વાતચીત હિસ્ટ્રી રીસેટ કરવા માંગો છો?')) return;
+      if (!confirm('Clear all conversation history?')) return;
       try {
         await fetch('/api/reset-session', {
           method: 'POST',
@@ -1226,7 +1324,7 @@
           await loadChildProfile();
         }
       } catch (err) {
-        console.error('Chat error:', err);
+        console.error('Chat submission error:', err);
       }
     }
 
@@ -1246,7 +1344,7 @@
       return div.innerHTML;
     }
 
-    // Audio Visualizer & Recording
+    // Audio Visualizer & Voice Push-to-Talk
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
@@ -1297,9 +1395,9 @@
       isRecording = false;
       if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
       recordingWaveformContainer.classList.add('hidden');
-      recordBtn.className = 'w-8 h-8 rounded-full bg-kotl-surface hover:bg-kotl-border text-white flex items-center justify-center transition-all border border-kotl-border';
-      micIcon.classList.add('hidden');
-      recordingSpinner.classList.remove('hidden');
+      recordBtn.className = 'w-8 h-8 rounded-full bg-dark-surface hover:bg-dark-cardHover text-white flex items-center justify-center transition-all border border-dark-border';
+      micIcon.classList.remove('hidden');
+      recordingSpinner.classList.add('hidden');
     }
 
     async function processVoiceUpload(audioBlob) {
@@ -1334,7 +1432,7 @@
       function draw() {
         animId = requestAnimationFrame(draw);
         analyser.getByteFrequencyData(dataArray);
-        canvasCtx.fillStyle = '#000000';
+        canvasCtx.fillStyle = '#090a0f';
         canvasCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
 
         const barWidth = (visualizerCanvas.width / bufferLength) * 2;
@@ -1354,7 +1452,7 @@
       if (audioContext && audioContext.state !== 'closed') audioContext.close();
     }
 
-    // Hardware Diagnostics & Status
+    // Hardware & Device Diagnostics
     async function checkDeviceStatus() {
       try {
         const res = await fetch('/api/device/config');
@@ -1365,13 +1463,13 @@
           const isOnline = data.device_status?.online;
 
           if (isOnline) {
-            dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50';
+            dot.className = 'w-2 h-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50';
             txt.textContent = `ESP32 Online (${data.device_status.rssi || -60}dBm)`;
             txt.className = 'text-[11px] font-mono text-emerald-400 font-semibold';
           } else {
-            dot.className = 'w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse';
+            dot.className = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
             txt.textContent = 'ESP32 Offline';
-            txt.className = 'text-[11px] font-mono text-zinc-400';
+            txt.className = 'text-[11px] font-mono text-dark-muted';
           }
         }
       } catch (e) {}
@@ -1404,7 +1502,7 @@
           body: JSON.stringify({ wifi_ssid, wifi_pass, backend_url })
         });
         if (res.ok) {
-          msg.textContent = '✅ સેવ થયું! ESP32 10 સેકન્ડમાં સિંક કરશે.';
+          msg.textContent = 'Saved! ESP32 will sync within 10s.';
           msg.className = 'text-[11px] text-center pt-1 text-emerald-400 font-mono block';
           setTimeout(() => msg.classList.add('hidden'), 4000);
         }
@@ -1421,16 +1519,16 @@
 
     document.getElementById('testSpeakerBtn').onclick = async () => {
       const st = document.getElementById('speakerTestStatusText');
-      st.textContent = '🔊 Generating spoken "Kotil" voice on speaker...';
+      st.textContent = 'Generating speech test sample...';
       try {
         const res = await fetch('/api/speak', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: "નમસ્તે દોસ્ત, મારું નામ કોટિલ છે! હું તમારો રોબોટ મિત્ર છું." })
+          body: JSON.stringify({ text: "Hello friend! I am Kotil, your intelligent robot companion." })
         });
         const d = await res.json();
         if (d.url) {
-          st.textContent = '✅ Voice generated and broadcast to ESP32 speaker!';
+          st.textContent = 'Test voice streamed to ESP32 speaker!';
           playAudioClip(d.url);
         }
       } catch (e) {
@@ -1440,16 +1538,16 @@
 
     document.getElementById('triggerEspMicBtn').onclick = async () => {
       const st = document.getElementById('espMicStatusText');
-      st.textContent = '🎙️ ESP32 ને 4 સેકન્ડ રેકોર્ડિંગ કરવા આદેશ મોકલ્યો...';
+      st.textContent = 'Triggered 4s recording command to ESP32...';
       try {
         await fetch('/api/device/trigger-mic', { method: 'POST' });
-        st.textContent = 'ESP32 રેકોર્ડિંગ શરૂ કરી રહ્યું છે. માઇક પાસે બોલો...';
+        st.textContent = 'ESP32 recording initiated. Speak near the robot.';
       } catch (e) {
         st.textContent = 'Error: ' + e.message;
       }
     };
 
-    // Initial Startup
+    // Initialization
     loadChildProfile();
     loadParentMissions();
     syncLiveServerHistory();
