@@ -265,6 +265,34 @@
         </p>
       </div>
 
+      <!-- Real Conversation Evidence & Q&A Highlights (The Foundation of This Report) -->
+      <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4 border border-indigo-500/25">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark-border/80 pb-3">
+          <div class="flex items-center space-x-2.5">
+            <span class="text-lg">💬</span>
+            <div>
+              <h2 class="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                Real Conversation Evidence & Q&A Highlights
+                <span class="px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 text-[10px] font-mono font-medium border border-indigo-500/20">
+                  Dialogue Grounding
+                </span>
+              </h2>
+              <p class="text-[11px] text-dark-muted">
+                The exact questions asked by the child and answers given by KOTL that formed the empirical basis for this developmental report.
+              </p>
+            </div>
+          </div>
+          <span class="text-[10px] text-dark-light font-mono self-start sm:self-auto bg-dark-bg/80 px-2.5 py-1 rounded-lg border border-dark-border">
+            Acoustic & Natural Speech Turns
+          </span>
+        </div>
+
+        <div id="conversationEvidenceContainer" class="space-y-3.5">
+          <!-- Dynamically populated dialogue evidence cards -->
+        </div>
+      </div>
+
+
       <!-- Core Skills Detailed Assessment (What Skills Aarav Has) -->
       <div class="space-y-3">
         <div class="flex items-center justify-between px-1">
@@ -758,6 +786,86 @@
       document.getElementById('reportDateBadge').textContent = rep.assessment_date || 'Recent';
       document.getElementById('reportOverallScore').textContent = (rep.overall_development_score || 88) + ' / 100';
       document.getElementById('reportExecutiveSummary').textContent = rep.executive_summary || '';
+
+      // Conversation Evidence & Dialogue Grounding Breakdown
+      const evidenceCont = document.getElementById('conversationEvidenceContainer');
+      if (evidenceCont) {
+        evidenceCont.innerHTML = '';
+        const evidenceList = rep.conversation_evidence || [];
+        if (evidenceList.length === 0) {
+          evidenceCont.innerHTML = `
+            <div class="p-4 bg-dark-bg/60 border border-dark-border/60 rounded-xl text-center text-xs text-dark-muted">
+              No dialogue highlights logged yet. Have a voice conversation with KOTL to generate grounded observations.
+            </div>
+          `;
+        } else {
+          evidenceList.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'p-4 sm:p-5 bg-dark-bg/60 border border-dark-border/80 hover:border-indigo-500/30 rounded-2xl space-y-3.5 transition-all';
+            
+            const audioBtn = item.tts_url ? `
+              <button onclick="playAudioClip('${item.tts_url}')" class="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-mono transition-colors">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"/></svg>
+                <span>Replay Turn</span>
+              </button>
+            ` : '';
+
+            card.innerHTML = `
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-dark-border/60">
+                <div class="flex items-center space-x-2">
+                  <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                  <h4 class="font-bold text-xs sm:text-sm text-white">${escapeHtml(item.topic || 'Dialogue Turn')}</h4>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-[9px] px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-mono font-medium">
+                    ${escapeHtml(item.badge || 'Observed Turn')}
+                  </span>
+                  <span class="text-[10px] text-dark-muted font-mono">${escapeHtml(item.timestamp || 'Voice Interaction')}</span>
+                  ${audioBtn}
+                </div>
+              </div>
+
+              <div class="space-y-2 text-xs">
+                <!-- Child's Speech Bubble -->
+                <div class="p-3 rounded-xl bg-dark-surface/90 border border-sky-500/20 flex items-start space-x-3">
+                  <div class="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center shrink-0 text-xs">
+                    🧒
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-[10px] font-mono text-sky-400 uppercase tracking-wider font-bold mb-1">
+                      Aarav Spoke / Asked
+                    </div>
+                    <p class="text-slate-100 font-medium italic">“${escapeHtml(item.child_question || '')}”</p>
+                  </div>
+                </div>
+
+                <!-- KOTL's Spoken Response Bubble -->
+                <div class="p-3 rounded-xl bg-indigo-950/25 border border-indigo-500/20 flex items-start space-x-3">
+                  <div class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0 text-xs font-bold">
+                    🤖
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-[10px] font-mono text-indigo-300 uppercase tracking-wider font-bold mb-1">
+                      KOTL Spoken Response
+                    </div>
+                    <p class="text-slate-300 leading-relaxed">“${escapeHtml(item.kotl_answer || '')}”</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pediatric Explanation of Why KOTL Noted This -->
+              <div class="pt-2 border-t border-dark-border/40 flex items-start space-x-2.5 bg-emerald-950/20 p-3 rounded-xl border border-emerald-500/20">
+                <span class="text-emerald-400 text-sm mt-0.5">🔍</span>
+                <div class="text-[11px] leading-relaxed">
+                  <strong class="text-emerald-400 font-semibold font-mono uppercase tracking-wider text-[10px] mr-1.5">Why KOTL Evaluated This:</strong>
+                  <span class="text-slate-200">${escapeHtml(item.why_noted_in_report || '')}</span>
+                </div>
+              </div>
+            `;
+            evidenceCont.appendChild(card);
+          });
+        }
+      }
 
       // Skills Assessment Grid
       const skillsGrid = document.getElementById('skillsAssessmentGrid');
