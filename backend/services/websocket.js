@@ -15,6 +15,8 @@ const { execFileSync } = require("child_process");
 const ffmpegBin = require("ffmpeg-static");
 const { EdgeTTS } = require("node-edge-tts");
 const { detectEyeExpression } = require("./eye-animation");
+const { toPhoneticSpokenText } = require("../utils/phonetic");
+const { extractMemoryFromDialogue } = require("./child-memory");
 
 const HEARTBEAT_INTERVAL_MS = 15000;
 const CLIENT_TIMEOUT_MS = 35000;
@@ -61,15 +63,17 @@ async function synthesizeSentencePcm(text) {
       timeout: 10000,
     });
 
-    await tts.ttsPromise(text.trim(), tempMp3);
+    const spokenText = toPhoneticSpokenText(text.trim(), lang);
+    await tts.ttsPromise(spokenText, tempMp3);
     const mp3Bytes = fs.readFileSync(tempMp3);
     const wavBytes = await mp3BufferToWavBuffer(mp3Bytes, 16000);
     return wavBytes.subarray(44);
   } catch (edgeErr) {
     console.warn(`[WebSocket TTS] Edge TTS failed (${edgeErr.message}). Seamlessly falling back to Google Cloud TTS...`);
     try {
-      const langCode = isHindi ? "hi" : "en";
-      const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text.trim().slice(0, 200))}&tl=${langCode}&client=tw-ob`;
+      const spokenText = toPhoneticSpokenText(text.trim(), lang);
+      const langCode = isHindi ? "hi" : (isGujarati ? "gu" : "en");
+      const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(spokenText.slice(0, 200))}&tl=${langCode}&client=tw-ob`;
       const response = await fetch(googleUrl, {
         headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
       });
@@ -344,6 +348,12 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       model: assistantResult.model,
     });
     console.log(`[WebSocket ${ws.deviceId}] Reply: "${replyText}" (Eye: ${eyeExpr})`);
+
+    try {
+      extractMemoryFromDialogue(transcript, replyText);
+    } catch (memErr) {
+      console.warn(`[WebSocket Memory] Error extracting profile memory:`, memErr.message);
+    }
 
     // 4. Synthesize and Stream Speech in sentence chunks
     const sentences = splitIntoSentences(replyText);

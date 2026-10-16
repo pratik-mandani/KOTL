@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="gu" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KOTL AI - ChatGPT Companion</title>
+  <title>KOTL v2.2 - Child AI Companion & Parent Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+Gujarati:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            sans: ['"Plus Jakarta Sans"', '"Noto Sans Gujarati"', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
-            gpt: {
-              sidebar: '#171717',
-              main: '#212121',
-              card: '#2f2f2f',
-              input: '#2f2f2f',
-              border: '#333333',
-              subtle: '#424242',
-              muted: '#8e8e8e',
-              light: '#b4b4b4',
-              white: '#ececec',
+            kotl: {
+              bg: '#121316',
+              surface: '#1b1d22',
+              card: '#23262d',
+              border: '#31353f',
+              muted: '#858b98',
+              accent: '#38bdf8',
+              emerald: '#10b981',
+              purple: '#a855f7',
+              pink: '#ec4899',
             }
           }
         }
@@ -36,282 +36,555 @@
   </script>
   <style>
     body {
-      background-color: #212121;
-      color: #ececec;
+      background-color: #121316;
+      color: #f1f5f9;
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
+      height: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
       background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #424242;
+      background: #31353f;
       border-radius: 9999px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #565656;
+      background: #475060;
+    }
+    .tab-active {
+      background: #23262d;
+      color: #38bdf8;
+      border-bottom: 2px solid #38bdf8;
     }
   </style>
 </head>
-<body class="h-screen w-screen overflow-hidden flex font-sans bg-gpt-main text-gpt-white antialiased selection:bg-white selection:text-black">
+<body class="h-screen w-screen overflow-hidden flex flex-col font-sans bg-kotl-bg text-slate-100 antialiased selection:bg-sky-500 selection:text-white">
 
-  <!-- Left Sidebar (ChatGPT-style Mobile Responsive Drawer) -->
-  <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] bg-gpt-sidebar border-r border-gpt-border flex flex-col justify-between transition-transform duration-300 ease-in-out -translate-x-full md:relative md:translate-x-0 md:w-64 md:z-30 shrink-0 select-none shadow-2xl md:shadow-none">
-    
-    <!-- Top Sidebar Section -->
-    <div class="p-3 flex flex-col space-y-3">
-      
-      <!-- Brand & Sidebar Toggle -->
-      <div class="flex items-center justify-between px-2 py-1.5">
-        <div class="flex items-center space-x-2.5">
-          <div class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-black font-bold text-sm font-mono">
-            K
-          </div>
-          <span class="font-bold text-sm tracking-tight text-white">KOTL 2.1</span>
+  <!-- Top Global Header -->
+  <header class="h-16 border-b border-kotl-border bg-kotl-surface/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 z-30">
+    <div class="flex items-center space-x-3">
+      <!-- Cute Animated Robot Icon -->
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 font-bold text-base shrink-0">
+        🤖
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-extrabold text-base tracking-tight text-white">KOTL</span>
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 border border-sky-500/40 text-sky-300 font-mono font-bold">v2.2</span>
+          <span class="text-xs text-kotl-muted font-normal hidden sm:inline">(કોટિલ • AI બાળ મિત્ર)</span>
         </div>
-        <button id="sidebarToggleBtn" class="p-1.5 rounded-lg text-gpt-muted hover:text-white hover:bg-gpt-card transition-colors" title="Close / Toggle Sidebar">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
+        <p class="text-[11px] text-kotl-muted truncate hidden xs:block">
+          બાળક વિકાસ રિપોર્ટ & વાલી કમાન્ડ ડેશબોર્ડ
+        </p>
+      </div>
+    </div>
+
+    <!-- Center Navigation Tabs -->
+    <nav class="hidden md:flex items-center bg-kotl-bg/80 p-1 rounded-xl border border-kotl-border space-x-1 text-xs font-medium">
+      <button id="tabBtnReport" onclick="switchTab('report')" class="px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 tab-active">
+        <span>📊</span>
+        <span>બાળક વિકાસ રિપોર્ટ</span>
+      </button>
+      <button id="tabBtnMissions" onclick="switchTab('missions')" class="px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 text-kotl-muted hover:text-white">
+        <span>🎯</span>
+        <span>પેરેન્ટ મિશન & કમાન્ડ્સ</span>
+        <span id="activeMissionsCountBadge" class="ml-1 px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono">0</span>
+      </button>
+      <button id="tabBtnChat" onclick="switchTab('chat')" class="px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 text-kotl-muted hover:text-white">
+        <span>💬</span>
+        <span>સંવાદ & ઑડિયો હિસ્ટ્રી</span>
+      </button>
+    </nav>
+
+    <!-- Right Controls: Device Status & Modals -->
+    <div class="flex items-center space-x-2 sm:space-x-3 text-xs">
+      <!-- Live Device Status Badge -->
+      <div class="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl bg-kotl-card border border-kotl-border">
+        <span id="deviceStatusDot" class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+        <span id="deviceStatusText" class="text-[11px] font-mono text-zinc-400">ESP32 Offline</span>
       </div>
 
-      <!-- New Chat Button -->
-      <button id="newChatBtn" class="flex items-center justify-between w-full px-3 py-2.5 rounded-xl bg-transparent hover:bg-gpt-card border border-transparent hover:border-gpt-border transition-all text-xs font-medium text-white group">
-        <div class="flex items-center space-x-2">
-          <svg class="w-4 h-4 text-gpt-light group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          <span>New chat</span>
-        </div>
-        <span class="text-[10px] text-gpt-muted font-mono hidden sm:inline">Ctrl+K</span>
+      <!-- Quick Action Buttons -->
+      <button id="openWifiModalBtn" class="p-2 rounded-xl bg-kotl-card hover:bg-kotl-border border border-kotl-border text-kotl-muted hover:text-white transition-colors" title="ESP32 Wi-Fi & Device Setup">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
+        </svg>
       </button>
 
-      <!-- Navigation / Menu Links -->
-      <div class="pt-2 border-t border-gpt-border/60 space-y-1 text-xs">
-        <button id="openWifiModalBtn" class="flex items-center space-x-2.5 w-full px-3 py-2 rounded-xl text-gpt-light hover:text-white hover:bg-gpt-card transition-colors">
-          <svg class="w-4 h-4 text-gpt-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
-          </svg>
-          <span>ESP32 Wi-Fi & Device</span>
-        </button>
+      <button id="openHardwareModalBtn" class="p-2 rounded-xl bg-kotl-card hover:bg-kotl-border border border-kotl-border text-kotl-muted hover:text-white transition-colors" title="હાર્ડવેર ઓડિયો ડાયગ્નોસ્ટિક્સ">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.5v2.5m-4 0h8M7 5.5A5 5 0 0112 1a5 5 0 015 4.5m-10 0V10a5 5 0 0010 0V5.5M4 10a8 8 0 0016 0"></path>
+        </svg>
+      </button>
 
-        <button id="openQuotaModalBtn" class="flex items-center space-x-2.5 w-full px-3 py-2 rounded-xl text-gpt-light hover:text-white hover:bg-gpt-card transition-colors">
-          <svg class="w-4 h-4 text-gpt-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-          </svg>
-          <span>Free Quotas & Limits</span>
-        </button>
+      <button id="openQuotaModalBtn" class="p-2 rounded-xl bg-kotl-card hover:bg-kotl-border border border-kotl-border text-kotl-muted hover:text-white transition-colors" title="100% Free Tier Limits">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
 
-        <button id="openHardwareTestModalBtn" class="flex items-center space-x-2.5 w-full px-3 py-2 rounded-xl text-gpt-light hover:text-white hover:bg-gpt-card transition-colors">
-          <svg class="w-4 h-4 text-gpt-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.5v2.5m-4 0h8M7 5.5A5 5 0 0112 1a5 5 0 015 4.5m-10 0V10a5 5 0 0010 0V5.5M4 10a8 8 0 0016 0"></path>
-          </svg>
-          <span>Hardware Test</span>
-        </button>
-      </div>
+  <!-- Mobile Bottom Tab Navigation -->
+  <nav class="md:hidden flex items-center justify-around bg-kotl-surface border-b border-kotl-border py-2 text-xs font-medium shrink-0">
+    <button onclick="switchTab('report')" id="mobTabReport" class="flex flex-col items-center space-y-1 text-sky-400">
+      <span>📊</span>
+      <span class="text-[10px]">વિકાસ રિપોર્ટ</span>
+    </button>
+    <button onclick="switchTab('missions')" id="mobTabMissions" class="flex flex-col items-center space-y-1 text-kotl-muted">
+      <span>🎯</span>
+      <span class="text-[10px]">પેરેન્ટ મિશન</span>
+    </button>
+    <button onclick="switchTab('chat')" id="mobTabChat" class="flex flex-col items-center space-y-1 text-kotl-muted">
+      <span>💬</span>
+      <span class="text-[10px]">સંવાદ હિસ્ટ્રી</span>
+    </button>
+  </nav>
 
-      <!-- Recent Conversations List -->
-      <div class="pt-3 border-t border-gpt-border/60">
-        <p class="text-[10px] font-mono uppercase tracking-wider text-gpt-muted px-3 mb-2">Recent</p>
-        <div class="space-y-1 overflow-y-auto max-h-[35vh] custom-scrollbar text-xs">
-          <div class="px-3 py-2 rounded-xl bg-gpt-card text-white flex items-center justify-between cursor-pointer">
-            <span class="truncate">Current Conversation</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+  <!-- Main View Container -->
+  <main class="flex-1 overflow-hidden relative">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: CHILD GROWTH & ANALYTICS REPORT     -->
+    <!-- ========================================== -->
+    <section id="viewReport" class="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 custom-scrollbar max-w-6xl mx-auto">
+      
+      <!-- Child Overview Card -->
+      <div class="bg-gradient-to-r from-kotl-card via-kotl-card to-kotl-surface border border-kotl-border rounded-3xl p-6 shadow-xl relative overflow-hidden">
+        <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+          <div class="flex items-center space-x-4">
+            <div id="childAvatar" class="w-16 h-16 rounded-2xl bg-sky-500/20 border-2 border-sky-400/40 flex items-center justify-center text-3xl shadow-inner">
+              🧒
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h2 id="childNameText" class="text-xl sm:text-2xl font-bold text-white tracking-tight">આરવ (Aarav)</h2>
+                <span id="childAgeBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-medium">6 વર્ષ</span>
+              </div>
+              <p class="text-xs text-kotl-muted mt-1 flex items-center space-x-2">
+                <span>મુખ્ય ભાષા: <strong class="text-slate-300">ગુજરાતી & અંગ્રેજી</strong></span>
+                <span>•</span>
+                <span>કુલ સંવાદો: <strong id="totalDialoguesText" class="text-sky-300 font-mono">14</strong></span>
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2.5 self-end sm:self-center">
+            <button onclick="openEditProfileModal()" class="px-3.5 py-2 rounded-xl bg-kotl-border/80 hover:bg-kotl-border text-white text-xs font-medium transition-all flex items-center space-x-1.5">
+              <span>✏️</span>
+              <span>પ્રોફાઇલ એડિટ કરો</span>
+            </button>
           </div>
         </div>
       </div>
 
-    </div>
-
-    <!-- Bottom Sidebar Section (Status & Hardware info) -->
-    <div class="p-3 border-t border-gpt-border/60 bg-black/20 text-xs font-mono">
-      <div class="flex items-center justify-between p-2 rounded-xl bg-gpt-card/60 border border-gpt-border">
-        <div class="flex items-center space-x-2 overflow-hidden">
-          <span id="sidebarStatusDot" class="w-2 h-2 rounded-full bg-red-500 shrink-0 transition-all duration-300"></span>
-          <span id="sidebarStatusText" class="truncate text-[11px] text-zinc-400 font-mono">ESP32 Offline</span>
+      <!-- Skills Matrix & Curiosity Gauge -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Vocabulary Skill Card -->
+        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-xl">🗣️</span>
+              <h3 class="font-bold text-sm text-white">શબ્દભંડોળ (Vocabulary)</h3>
+            </div>
+            <span id="vocabScoreText" class="text-sm font-mono font-bold text-sky-400">84%</span>
+          </div>
+          <div class="w-full bg-kotl-bg rounded-full h-2.5 overflow-hidden">
+            <div id="vocabProgressBar" class="bg-sky-400 h-full rounded-full transition-all duration-500" style="width: 84%"></div>
+          </div>
+          <p class="text-[11px] text-kotl-muted">
+            નવા ગુજરાતી & અંગ્રેજી શબ્દો ઝડપથી ગ્રહણ કરવાની ક્ષમતા.
+          </p>
         </div>
-        <span class="text-[10px] px-1.5 py-0.5 rounded bg-black text-emerald-400 font-mono font-bold">v2.1</span>
-      </div>
-    </div>
 
-  </aside>
+        <!-- Curiosity Skill Card -->
+        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-xl">🔍</span>
+              <h3 class="font-bold text-sm text-white">જિજ્ઞાસા (Curiosity)</h3>
+            </div>
+            <span id="curiosityScoreText" class="text-sm font-mono font-bold text-emerald-400">92%</span>
+          </div>
+          <div class="w-full bg-kotl-bg rounded-full h-2.5 overflow-hidden">
+            <div id="curiosityProgressBar" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 92%"></div>
+          </div>
+          <p class="text-[11px] text-kotl-muted">
+            કુદરત, વિજ્ઞાન અને દુનિયા વિશે રસપ્રદ પ્રશ્નો પૂછવાનું સ્તર.
+          </p>
+        </div>
 
-  <!-- Mobile Sidebar Backdrop Overlay -->
-  <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300"></div>
-
-  <!-- Main Chat Content Area -->
-  <main class="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden bg-gpt-main">
-    
-    <!-- Top Header Bar -->
-    <header class="h-14 border-b border-gpt-border/60 flex items-center justify-between px-3 sm:px-6 shrink-0 bg-gpt-main/90 backdrop-blur-md z-10">
-      <div class="flex items-center space-x-2 sm:space-x-3 overflow-hidden">
-        <button id="mobileSidebarToggleBtn" class="p-2 -ml-1 rounded-lg text-gpt-muted hover:text-white hover:bg-gpt-card md:hidden shrink-0" title="Open Menu">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </button>
-        <div class="flex items-center space-x-2 truncate">
-          <span class="font-bold text-sm text-white truncate">KOTL Assistant</span>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-gpt-card border border-gpt-border text-gpt-light hidden xs:inline shrink-0">Free AI Brain</span>
+        <!-- Emotional Tone Card -->
+        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-xl">💖</span>
+              <h3 class="font-bold text-sm text-white">ભાવનાત્મક મૂડ (Mood)</h3>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 font-medium border border-pink-500/30">પોઝિટિવ</span>
+          </div>
+          <div class="bg-kotl-bg/60 p-2.5 rounded-xl border border-kotl-border/60">
+            <p id="emotionalToneText" class="text-xs text-white font-medium">
+              ઉત્સાહી, પ્રેમાળ અને આનંદી (Cheerful & Caring)
+            </p>
+          </div>
+          <p class="text-[11px] text-kotl-muted">
+            KOTL સાથે વાતચીત વખતે બાળકનો સંતોષ અને ખુશી.
+          </p>
         </div>
       </div>
 
-      <div class="flex items-center space-x-2 sm:space-x-3 text-xs font-mono shrink-0">
-        <span id="backendIpText" class="hidden lg:inline text-gpt-muted text-[11px]">https://kotl.onrender.com</span>
-        <button id="clearChatBtn" class="text-gpt-muted hover:text-white px-2.5 py-1 rounded-lg hover:bg-gpt-card transition-colors text-xs">
-          Clear
-        </button>
-      </div>
-    </header>
+      <!-- Likes and Dislikes Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Likes Card -->
+        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                <span class="text-emerald-400">💖</span>
+                <span>શું વધુ ગમે છે? (Likes & Passions)</span>
+              </h3>
+              <span class="text-[10px] text-kotl-muted font-mono">KOTL મેમરી</span>
+            </div>
+            <p class="text-[11px] text-kotl-muted mb-3">
+              બાળકના શોખ અને રુચિઓ જેને KOTL વાર્તાઓ અને રમતોમાં જોડે છે.
+            </p>
+            <div id="likesContainer" class="flex flex-wrap gap-2">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
 
-    <!-- Chat Messages Scroll Stream (ChatGPT Center layout) -->
-    <div id="chatScrollArea" class="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 custom-scrollbar flex flex-col items-center w-full">
+          <div class="pt-3 border-t border-kotl-border/80 flex items-center space-x-2">
+            <input id="newLikeInput" type="text" placeholder="નવો શોખ ઉમેરો (e.g. કાર, સંગીત)" class="flex-1 bg-kotl-bg border border-kotl-border rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
+            <button onclick="addInterest('likes')" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all">
+              + ઉમેરો
+            </button>
+          </div>
+        </div>
+
+        <!-- Dislikes / Fears Card -->
+        <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                <span class="text-rose-400">🚫</span>
+                <span>શું નથી ગમતું / ડર? (Dislikes & Fears)</span>
+              </h3>
+              <span class="text-[10px] text-kotl-muted font-mono">સંવેદનશીલતા</span>
+            </div>
+            <p class="text-[11px] text-kotl-muted mb-3">
+              જે બાબતોથી બાળકને અણગમો છે કે ડર લાગે છે. KOTL આનો આદર રાખે છે.
+            </p>
+            <div id="dislikesContainer" class="flex flex-wrap gap-2">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-kotl-border/80 flex items-center space-x-2">
+            <input id="newDislikeInput" type="text" placeholder="નવો અણગમો ઉમેરો (e.g. કારેલા, ઇન્જેક્શન)" class="flex-1 bg-kotl-bg border border-kotl-border rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-sky-400" />
+            <button onclick="addInterest('dislikes')" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold transition-all">
+              + ઉમેરો
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Improvement Areas & Action Plan -->
+      <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-kotl-border/80 pb-3">
+          <div>
+            <h3 class="font-bold text-sm sm:text-base text-white flex items-center space-x-2">
+              <span class="text-amber-400">🚀</span>
+              <span>વિકાસ અને સુધારણા પ્લાનિંગ (Improvement Roadmap)</span>
+            </h3>
+            <p class="text-[11px] text-kotl-muted mt-0.5">
+              બાળકના વિકાસ માટે જરૂરી લક્ષ્યો અને KOTL કઈ રીતે મદદ કરે છે તેનું સ્ટેપ-બાય-સ્ટેપ પ્લાનિંગ.
+            </p>
+          </div>
+          <button onclick="openAddImprovementModal()" class="px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium transition-all flex items-center space-x-1 shrink-0">
+            <span>+ નવું લક્ષ્ય ઉમેરો</span>
+          </button>
+        </div>
+
+        <div id="improvementAreasContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: PARENT MISSIONS & DIRECTIVES        -->
+    <!-- ========================================== -->
+    <section id="viewMissions" class="hidden h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 custom-scrollbar max-w-5xl mx-auto">
       
-      <div id="chatContainer" class="w-full max-w-3xl space-y-4 sm:space-y-6">
-        <!-- Messages loaded dynamically -->
+      <!-- Missions Hero Banner -->
+      <div class="bg-gradient-to-r from-amber-500/10 via-kotl-card to-kotl-surface border border-amber-500/30 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+        <div class="flex items-start justify-between gap-4">
+          <div class="space-y-2">
+            <div class="flex items-center space-x-2">
+              <span class="text-2xl">🎯</span>
+              <h2 class="text-lg sm:text-xl font-bold text-white tracking-tight">
+                પેરેન્ટ મિશન & AI કમાન્ડ્સ (Parent Missions)
+              </h2>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
+              તમે ઇચ્છો છો કે બાળક કોઈ સારી ટેવ પાડે (જેમ કે શાકભાજી ખાવું, સમયસર સૂઈ જવું, રમકડાં ગોઠવવા)? 
+              અહીં KOTL ને કમાન્ડ આપો. KOTL બાળકની વાતચીતમાં પ્રેમ અને વાર્તા દ્વારા આપોઆપ તે શીખવશે!
+            </p>
+          </div>
+          <span class="hidden sm:inline px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-mono font-semibold">
+            Auto-Guidance Mode
+          </span>
+        </div>
       </div>
 
-    </div>
+      <!-- Add New Mission Box -->
+      <div class="bg-kotl-card border border-kotl-border rounded-2xl p-5 space-y-3">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-sky-400 font-mono">
+          + નવું મિશન સોંપો (Assign New Mission to KOTL)
+        </h3>
+        <form id="newMissionForm" class="space-y-3" onsubmit="handleCreateMission(event)">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] text-kotl-muted mb-1">મિશન શીર્ષક (Mission Title)</label>
+              <input id="missionTitleInput" type="text" placeholder="e.g. દરરોજ એક ગ્લાસ દૂધ પીવા માટે પ્રોત્સાહિત કરો" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-400" required />
+            </div>
+            <div>
+              <label class="block text-[11px] text-kotl-muted mb-1">KOTL માટે સૂચના (AI Directive)</label>
+              <input id="missionDirectiveInput" type="text" placeholder="e.g. વાતચીતમાં કહો કે દૂધ પીવાથી સુપર પાવર અને હાડકાં મજબૂત બને છે." class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-400" required />
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button type="submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md">
+              🎯 KOTL ને મિશન સોંપો
+            </button>
+          </div>
+        </form>
+      </div>
 
-    <!-- Active Recording Waveform Banner (Floats right above input bar) -->
-    <div id="recordingWaveformContainer" class="hidden w-full max-w-3xl mx-auto px-4 mb-2">
-      <div class="bg-black/90 border border-white/20 rounded-2xl p-3 flex items-center justify-between shadow-2xl backdrop-blur-xl">
-        <div class="flex items-center space-x-3">
-          <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
-          <span class="text-xs font-mono text-white font-medium">Listening to your voice (Gujarati / English)...</span>
+      <!-- Missions List -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+          <h3 class="font-bold text-xs text-kotl-muted uppercase tracking-wider font-mono">
+            હાલના સક્રિય મિશન્સ (Active Missions)
+          </h3>
+          <span class="text-[11px] text-kotl-muted">ટોગલ સ્વીચથી ચાલુ/બંધ કરો</span>
         </div>
-        <div class="h-6 w-32 bg-black rounded-lg overflow-hidden flex items-center">
-          <canvas id="visualizerCanvas" class="w-full h-full"></canvas>
+
+        <div id="missionsListContainer" class="space-y-3">
+          <!-- Dynamically populated -->
         </div>
-        <button id="cancelRecordBtn" class="text-xs font-mono text-gpt-muted hover:text-white px-2 py-0.5 rounded bg-gpt-card">
-          Done
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: CONVERSATION HISTORY & LIVE CHAT    -->
+    <!-- ========================================== -->
+    <section id="viewChat" class="hidden h-full flex flex-col justify-between overflow-hidden relative">
+      
+      <!-- Sub-header with Clear & Sync Info -->
+      <div class="h-10 border-b border-kotl-border/60 px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-kotl-muted bg-kotl-surface/50">
+        <div class="flex items-center space-x-2">
+          <span>📜 સંપૂર્ણ સંવાદ આર્કાઇવ (Audio & Text History)</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded bg-kotl-card text-emerald-400">Live Synced</span>
+        </div>
+        <button onclick="clearSessionChat()" class="text-xs text-kotl-muted hover:text-rose-400 transition-colors">
+          🗑️ હિસ્ટ્રી ક્લીયર કરો
         </button>
       </div>
-    </div>
 
-    <!-- Bottom ChatGPT-Style Input Bar -->
-    <div class="w-full p-4 sm:p-6 shrink-0 flex flex-col items-center justify-center bg-gradient-to-t from-gpt-main via-gpt-main to-transparent">
-      
-      <!-- Input Pill Box -->
-      <div class="w-full max-w-3xl relative flex items-center bg-gpt-input border border-gpt-border rounded-[26px] shadow-lg focus-within:border-gpt-subtle transition-all px-3 py-2">
-        
-        <!-- Text Input Field -->
-        <input
-          id="chatInput"
-          type="text"
-          placeholder="Ask KOTL in Gujarati or English..."
-          class="flex-1 bg-transparent border-none text-sm text-white placeholder-gpt-muted focus:outline-none px-3 py-1 font-sans"
-          autocomplete="off"
-        />
+      <!-- Chat Messages Scroll Stream -->
+      <div id="chatScrollArea" class="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-4 custom-scrollbar flex flex-col items-center w-full">
+        <div id="chatContainer" class="w-full max-w-3xl space-y-4">
+          <!-- Dynamic conversation turns -->
+        </div>
+      </div>
 
-        <!-- Right Action Controls (Voice Button + Send Button Side-by-Side!) -->
-        <div class="flex items-center space-x-2 shrink-0">
+      <!-- Active Recording Waveform Banner -->
+      <div id="recordingWaveformContainer" class="hidden w-full max-w-3xl mx-auto px-4 mb-2">
+        <div class="bg-black/90 border border-white/20 rounded-2xl p-3 flex items-center justify-between shadow-2xl backdrop-blur-xl">
+          <div class="flex items-center space-x-3">
+            <span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>
+            <span class="text-xs font-mono text-white font-medium">બાળકનો અવાજ સાંભળી રહ્યો છું (ગુજરાતી / English)...</span>
+          </div>
+          <div class="h-6 w-32 bg-black rounded-lg overflow-hidden flex items-center">
+            <canvas id="visualizerCanvas" class="w-full h-full"></canvas>
+          </div>
+          <button id="cancelRecordBtn" class="text-xs font-mono text-kotl-muted hover:text-white px-2 py-0.5 rounded bg-kotl-card">
+            Done
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Chat Input Bar -->
+      <div class="w-full p-4 sm:p-5 shrink-0 flex flex-col items-center justify-center bg-gradient-to-t from-kotl-bg via-kotl-bg to-transparent border-t border-kotl-border/60">
+        <div class="w-full max-w-3xl relative flex items-center bg-kotl-card border border-kotl-border rounded-2xl shadow-lg focus-within:border-sky-400 transition-all px-3 py-2">
           
-          <!-- Voice Record Button (Highlighted in your screenshot) -->
-          <button
-            id="recordBtn"
-            type="button"
-            title="Speak (Push to Talk)"
-            class="w-8 h-8 rounded-full bg-gpt-card hover:bg-gpt-subtle text-white flex items-center justify-center transition-all focus:outline-none border border-gpt-border"
-          >
-            <svg id="micIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3z"></path>
-            </svg>
-            <div id="recordingSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          </button>
+          <input
+            id="chatInput"
+            type="text"
+            placeholder="KOTL (કોટિલ) ને ગુજરાતી કે અંગ્રેજીમાં પૂછો..."
+            class="flex-1 bg-transparent border-none text-sm text-white placeholder-kotl-muted focus:outline-none px-3 py-1 font-sans"
+            autocomplete="off"
+          />
 
-          <!-- Send Button (ChatGPT Up Arrow Style) -->
-          <button
-            id="sendBtn"
-            type="button"
-            title="Send Message"
-            class="w-8 h-8 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center transition-all focus:outline-none font-bold disabled:opacity-30 disabled:hover:bg-white"
-            disabled
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
-            </svg>
-          </button>
+          <div class="flex items-center space-x-2 shrink-0">
+            <!-- Push to Talk Mic Button -->
+            <button
+              id="recordBtn"
+              type="button"
+              title="Speak (Push to Talk)"
+              class="w-8 h-8 rounded-full bg-kotl-surface hover:bg-kotl-border text-white flex items-center justify-center transition-all focus:outline-none border border-kotl-border"
+            >
+              <svg id="micIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3z"></path>
+              </svg>
+              <div id="recordingSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </button>
 
+            <!-- Send Button -->
+            <button
+              id="sendBtn"
+              type="button"
+              title="Send Message"
+              class="w-8 h-8 rounded-full bg-sky-500 hover:bg-sky-400 text-black flex items-center justify-center transition-all focus:outline-none font-bold disabled:opacity-30"
+              disabled
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+              </svg>
+            </button>
+          </div>
         </div>
 
+        <p class="text-[11px] text-kotl-muted mt-2 text-center font-mono">
+          KOTL v2.2 • કુદરતી "કોટિલ" ઉચ્ચારણ • મલ્ટીલિંગ્વલ AI બ્રેઈન
+        </p>
       </div>
 
-      <p class="text-[11px] text-gpt-muted mt-2 text-center font-mono">
-        KOTL 2.1 • Multilingual AI with Edge Neural Voice • Gemini / Groq Brain
-      </p>
-
-    </div>
-
-    <!-- Hidden Audio Player for Speech Playback -->
-    <audio id="ttsAudioPlayer" class="hidden" autoplay></audio>
+    </section>
 
   </main>
 
-  <!-- ESP32 Wi-Fi & Device Configuration Modal -->
+  <!-- Audio Player for Voice Playback -->
+  <audio id="ttsAudioPlayer" class="hidden" autoplay></audio>
+
+  <!-- ========================================== -->
+  <!-- MODAL 1: EDIT PROFILE MODAL                -->
+  <!-- ========================================== -->
+  <div id="editProfileModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
+        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+          <span>✏️ બાળકની પ્રોફાઇલ એડિટ કરો</span>
+        </h3>
+        <button onclick="closeEditProfileModal()" class="text-kotl-muted hover:text-white text-sm">✕</button>
+      </div>
+
+      <form id="editProfileForm" onsubmit="saveProfileChanges(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-kotl-muted mb-1">બાળકનું નામ (Child's Name)</label>
+          <input id="editChildName" type="text" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" required />
+        </div>
+        <div>
+          <label class="block text-kotl-muted mb-1">ઉંમર (Age)</label>
+          <input id="editChildAge" type="text" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" required />
+        </div>
+        <div>
+          <label class="block text-kotl-muted mb-1">અવતાર ઈમોજી (Avatar)</label>
+          <input id="editChildAvatar" type="text" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" />
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeEditProfileModal()" class="px-3 py-1.5 rounded-xl bg-kotl-border text-kotl-muted hover:text-white">રદ કરો</button>
+          <button type="submit" class="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold">સેવ કરો</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 2: ADD IMPROVEMENT GOAL MODAL        -->
+  <!-- ========================================== -->
+  <div id="addImprovementModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
+        <h3 class="font-bold text-sm text-white">🚀 નવું સુધારણા લક્ષ્ય ઉમેરો</h3>
+        <button onclick="closeAddImprovementModal()" class="text-kotl-muted hover:text-white text-sm">✕</button>
+      </div>
+
+      <form id="addImprovementForm" onsubmit="handleSaveImprovement(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-kotl-muted mb-1">લક્ષ્યનું નામ (Goal Title)</label>
+          <input id="newGoalTitle" type="text" placeholder="e.g. રાત્રે દાંત બ્રશ કરવાની ટેવ" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" required />
+        </div>
+        <div>
+          <label class="block text-kotl-muted mb-1">સ્થિતિ (Status)</label>
+          <select id="newGoalStatus" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400">
+            <option value="in_progress">ચાલુ છે (In Progress)</option>
+            <option value="planning">આયોજનમાં છે (Planning)</option>
+            <option value="completed">પૂર્ણ થયું (Completed)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-kotl-muted mb-1">KOTL નો એક્શન પ્લાન (Action Plan)</label>
+          <textarea id="newGoalPlan" rows="3" placeholder="e.g. KOTL રાત્રે વાર્તા પછી યાદ કરાવશે કે સ્વચ્છ દાંત ચમકે છે." class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400" required></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeAddImprovementModal()" class="px-3 py-1.5 rounded-xl bg-kotl-border text-kotl-muted hover:text-white">રદ કરો</button>
+          <button type="submit" class="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold">ઉમેરો</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL 3: ESP32 WI-FI CONFIG MODAL          -->
+  <!-- ========================================== -->
   <div id="wifiModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-gpt-sidebar border border-gpt-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-gpt-border pb-3">
+    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
         <h3 class="font-bold text-sm text-white flex items-center space-x-2">
           <span>📡 ESP32 Wi-Fi & Device Manager</span>
         </h3>
-        <button id="closeWifiModalBtn" class="text-gpt-muted hover:text-white text-sm">✕</button>
+        <button id="closeWifiModalBtn" class="text-kotl-muted hover:text-white text-sm">✕</button>
       </div>
 
-      <p class="text-xs text-gpt-muted">
-        Update Wi-Fi credentials and Hostinger/Backend URL remotely. ESP32 syncs automatically without code re-flashing.
+      <p class="text-xs text-kotl-muted">
+        Wi-Fi નેટવર્ક અને બેકએન્ડ URL અપડેટ કરો. ESP32 રીફ્લેશિંગ વગર જાતે સિંક કરશે.
       </p>
 
       <form id="wifiConfigForm" class="space-y-3 text-xs font-mono">
         <div>
-          <label class="block text-gpt-light mb-1 text-[11px]">Wi-Fi SSID (Network Name)</label>
-          <input
-            id="cfgWifiSsid"
-            type="text"
-            placeholder="e.g. Altius"
-            class="w-full bg-gpt-main border border-gpt-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-white text-xs"
-            required
-          />
+          <label class="block text-slate-300 mb-1 text-[11px]">Wi-Fi SSID (નેટવર્ક નામ)</label>
+          <input id="cfgWifiSsid" type="text" placeholder="e.g. Altius" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400 text-xs" required />
         </div>
-
         <div>
-          <label class="block text-gpt-light mb-1 text-[11px]">Wi-Fi Password</label>
+          <label class="block text-slate-300 mb-1 text-[11px]">Wi-Fi પાસવર્ડ</label>
           <div class="relative">
-            <input
-              id="cfgWifiPass"
-              type="password"
-              placeholder="Enter new Wi-Fi password"
-              autocomplete="current-password"
-              class="w-full bg-gpt-main border border-gpt-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-white text-xs pr-10"
-            />
-            <button type="button" id="togglePassBtn" class="absolute right-3 top-2.5 text-gpt-muted hover:text-white">👁️</button>
+            <input id="cfgWifiPass" type="password" placeholder="Wi-Fi પાસવર્ડ લખો" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400 text-xs pr-10" />
+            <button type="button" id="togglePassBtn" class="absolute right-3 top-2.5 text-kotl-muted hover:text-white">👁️</button>
           </div>
         </div>
-
         <div>
-          <label class="block text-gpt-light mb-1 text-[11px]">Backend Cloud / Hostinger URL</label>
-          <input
-            id="cfgBackendUrl"
-            type="text"
-            placeholder="http://192.168.1.13:3000 or https://yourdomain.com"
-            class="w-full bg-gpt-main border border-gpt-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-white text-xs"
-            required
-          />
+          <label class="block text-slate-300 mb-1 text-[11px]">Backend Cloud URL</label>
+          <input id="cfgBackendUrl" type="text" placeholder="https://kotl.onrender.com" class="w-full bg-kotl-bg border border-kotl-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-400 text-xs" required />
         </div>
 
-        <button
-          type="submit"
-          id="saveConfigBtn"
-          class="w-full bg-white hover:bg-neutral-200 text-black font-semibold py-2.5 rounded-xl transition-all text-xs"
-        >
+        <button type="submit" id="saveConfigBtn" class="w-full bg-sky-500 hover:bg-sky-400 text-black font-bold py-2.5 rounded-xl transition-all text-xs">
           Save & Push to ESP32
         </button>
         <p id="configStatusMsg" class="text-[11px] text-center pt-1 hidden font-mono"></p>
       </form>
 
-      <div class="p-3 bg-gpt-main rounded-xl border border-gpt-border text-[11px] font-mono text-gpt-muted space-y-1">
+      <div class="p-3 bg-kotl-bg rounded-xl border border-kotl-border text-[11px] font-mono text-kotl-muted space-y-1">
         <div class="flex justify-between">
           <span>Config Version:</span>
           <span id="cfgVersionText" class="text-white font-mono">v1</span>
@@ -324,183 +597,437 @@
     </div>
   </div>
 
-  <!-- Hardware Test Modal -->
-  <div id="hardwareTestModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-gpt-sidebar border border-gpt-border rounded-2xl max-w-3xl w-full p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar">
-      <div class="flex items-center justify-between border-b border-gpt-border pb-3">
+  <!-- ========================================== -->
+  <!-- MODAL 4: HARDWARE DIAGNOSTICS & TEST       -->
+  <!-- ========================================== -->
+  <div id="hardwareModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
         <div class="flex items-center space-x-2">
           <span class="text-emerald-400 font-mono text-base">🛠️</span>
-          <h3 class="font-bold text-sm text-white">Hardware Diagnostics & Audio Test</h3>
+          <h3 class="font-bold text-sm text-white">હાર્ડવેર ઓડિયો ડાયગ્નોસ્ટિક્સ (Hardware Test)</h3>
         </div>
-        <button id="closeHardwareTestModalBtn" class="text-gpt-muted hover:text-white text-sm px-2 py-1 rounded hover:bg-gpt-card transition-colors">✕</button>
-      </div>
-
-      <!-- Live ESP32 Status Bar -->
-      <div class="p-3 bg-gpt-main rounded-xl border border-gpt-border flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-        <div class="flex items-center space-x-2">
-          <span class="text-gpt-muted">Device Status:</span>
-          <span id="hardwareDeviceStatusText" class="text-zinc-300 font-bold">Checking...</span>
-        </div>
-        <button id="refreshHardwareStatusBtn" type="button" class="bg-gpt-card hover:bg-gpt-subtle border border-gpt-border text-white text-[11px] px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1">
-          <span>🔄</span>
-          <span>Refresh</span>
-        </button>
+        <button id="closeHardwareModalBtn" class="text-kotl-muted hover:text-white text-sm">✕</button>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-        <!-- Card 1: Physical ESP32 Microphone Test -->
-        <div class="p-4 bg-gpt-main rounded-xl border border-gpt-border space-y-3 flex flex-col justify-between">
-          <div class="space-y-2.5">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-white font-bold flex items-center space-x-1.5">
-                  <span>🎙️</span>
-                  <span>ESP32 Physical Mic (Pin 34)</span>
-                </p>
-                <p class="text-[11px] text-gpt-muted">Direct ADC pin recording & audio upload</p>
-              </div>
-              <span id="espMicBadge" class="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">Idle</span>
-            </div>
-
-            <p class="text-[11px] text-zinc-400 leading-relaxed">
-              Triggers ESP32 to record 4s directly from its physical microphone, apply AGC gain boost, and send audio here.
-            </p>
-
-            <button id="triggerEspMicBtn" type="button" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2.5 rounded-xl transition-all shadow flex items-center justify-center space-x-2">
-              <span>🎙️</span>
-              <span>Record 4s from ESP32 Mic</span>
-            </button>
-
-            <div id="espMicStatusText" class="text-[11px] text-gpt-muted min-h-[32px] pt-1">
-              Ready. Speak near the robot after clicking Record.
-            </div>
-
-            <!-- Mic Analysis Metrics -->
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <div class="bg-black/50 p-2 rounded-lg border border-gpt-border/80">
-                <span class="text-[10px] text-gpt-muted block uppercase">Peak-To-Peak</span>
-                <span id="espMicP2pText" class="text-white font-bold text-xs">-</span>
-              </div>
-              <div class="bg-black/50 p-2 rounded-lg border border-gpt-border/80">
-                <span class="text-[10px] text-gpt-muted block uppercase">Avg Amplitude</span>
-                <span id="espMicAvgAmpText" class="text-white font-bold text-xs">-</span>
-              </div>
-            </div>
-
-            <div class="bg-black/50 p-2 rounded-lg border border-gpt-border/80">
-              <span class="text-[10px] text-gpt-muted block uppercase">Recognized Speech (STT)</span>
-              <span id="espMicTranscriptText" class="text-emerald-400 font-mono text-[11px] block truncate">-</span>
-            </div>
+        <!-- Physical Mic Card -->
+        <div class="p-4 bg-kotl-bg rounded-xl border border-kotl-border space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-white font-bold">🎙️ ESP32 Physical Mic</span>
+            <span id="espMicBadge" class="text-[10px] px-2 py-0.5 rounded bg-kotl-card text-zinc-300">Ready</span>
           </div>
-
-          <!-- HTML5 Audio Player for Recorded Mic Sound -->
-          <div class="pt-2 border-t border-gpt-border space-y-1">
-            <span class="text-[11px] text-zinc-300 block font-semibold">🔊 Listen to ESP32 Mic Audio:</span>
-            <audio id="espMicAudioPlayer" controls class="w-full h-8 rounded mt-1 bg-black text-white" preload="none"></audio>
-            <span id="espMicPlayerHint" class="text-[10px] text-zinc-500 block">Hit play to verify physical mic audio quality.</span>
+          <p class="text-[11px] text-kotl-muted">
+            ESP32 ના Pin 34 પરથી 4 સેકન્ડ રેકોર્ડ કરી એકોસ્ટિક્સ ચકાસો.
+          </p>
+          <button id="triggerEspMicBtn" type="button" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2 rounded-xl transition-all shadow flex items-center justify-center space-x-1.5">
+            <span>🎙️</span>
+            <span>Record 4s from ESP32</span>
+          </button>
+          <div id="espMicStatusText" class="text-[11px] text-kotl-muted min-h-[24px]">
+            Ready.
           </div>
         </div>
 
-        <!-- Card 2: ESP32 Speaker Output Test -->
-        <div class="p-4 bg-gpt-main rounded-xl border border-gpt-border space-y-3 flex flex-col justify-between">
-          <div class="space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-white font-bold flex items-center space-x-1.5">
-                  <span>🔊</span>
-                  <span>ESP32 Speaker (MAX98357A)</span>
-                </p>
-                <p class="text-[11px] text-gpt-muted">Test I2S amplifier and voice playback</p>
-              </div>
-              <span id="speakerTestBadge" class="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">Idle</span>
-            </div>
-
-            <!-- Test Option 1: Built-in ROM sample (100% offline) -->
-            <div class="p-2.5 bg-black/40 rounded-xl border border-gpt-border/80 space-y-2">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-white text-[11px]">Test 1: Built-in "Hello" Sample</span>
-                <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.2 rounded font-mono">100% Offline</span>
-              </div>
-              <p class="text-[10px] text-zinc-400">
-                Plays internal ROM audio via I2S. 100% immune to network/TTS. Verifies physical speaker & MAX98357A wiring.
-              </p>
-              <button id="testSpeakerLocalBtn" type="button" class="w-full bg-white hover:bg-neutral-200 text-black font-bold py-2 rounded-lg transition-all text-xs flex items-center justify-center space-x-1.5">
-                <span>🔊</span>
-                <span>Play Built-in Voice (Local)</span>
-              </button>
-            </div>
-
-            <!-- Test Option 2: Cloud TTS sample -->
-            <div class="p-2.5 bg-black/40 rounded-xl border border-gpt-border/80 space-y-2">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-white text-[11px]">Test 2: Cloud TTS Sample</span>
-                <span class="text-[9px] bg-blue-950 text-blue-400 border border-blue-800 px-1.5 py-0.2 rounded font-mono">Edge TTS</span>
-              </div>
-              <textarea
-                id="speakerTestText"
-                class="w-full h-14 bg-black border border-gpt-border rounded-lg px-2.5 py-1.5 text-white focus:outline-none focus:border-white text-[11px] resize-none"
-              >KOTL speaker test. If you can hear this voice, your ESP32 audio output is working.</textarea>
-              <button id="testSpeakerBtn" type="button" class="w-full bg-gpt-card hover:bg-gpt-subtle border border-gpt-border text-white font-semibold py-2 rounded-lg transition-all text-xs flex items-center justify-center space-x-1.5">
-                <span>🗣️</span>
-                <span>Generate & Stream Cloud Voice</span>
-              </button>
-            </div>
+        <!-- Speaker Output Card -->
+        <div class="p-4 bg-kotl-bg rounded-xl border border-kotl-border space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-white font-bold">🔊 ESP32 Speaker (I2S)</span>
+            <span id="speakerTestBadge" class="text-[10px] px-2 py-0.5 rounded bg-kotl-card text-zinc-300">Ready</span>
           </div>
-
-          <div id="speakerTestStatusText" class="text-[11px] text-gpt-muted min-h-[36px] pt-1">
-            ESP32 checks for queued commands on its heartbeat (~5s).
+          <p class="text-[11px] text-kotl-muted">
+            MAX98357A I2S સ્પીકર પર ટેસ્ટ વોઇસ પ્લે કરો.
+          </p>
+          <button id="testSpeakerBtn" type="button" class="w-full bg-sky-500 hover:bg-sky-400 text-black font-bold py-2 rounded-xl transition-all shadow flex items-center justify-center space-x-1.5">
+            <span>🗣️</span>
+            <span>Test "Kotil" Spoken Voice</span>
+          </button>
+          <div id="speakerTestStatusText" class="text-[11px] text-kotl-muted min-h-[24px]">
+            Ready.
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Free Quota Limits Modal -->
+  <!-- ========================================== -->
+  <!-- MODAL 5: FREE QUOTA LIMITS MODAL           -->
+  <!-- ========================================== -->
   <div id="quotaModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-gpt-sidebar border border-gpt-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-gpt-border pb-3">
+    <div class="bg-kotl-card border border-kotl-border rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-kotl-border pb-3">
         <h3 class="font-bold text-sm text-white">🎁 100% Free Tier Quota Limits</h3>
-        <button id="closeQuotaModalBtn" class="text-gpt-muted hover:text-white text-sm">✕</button>
+        <button id="closeQuotaModalBtn" class="text-kotl-muted hover:text-white text-sm">✕</button>
       </div>
 
       <div class="space-y-3 text-xs font-mono">
-        <div class="p-3 bg-gpt-main rounded-xl border border-gpt-border space-y-1">
-          <div class="flex justify-between text-gpt-light">
+        <div class="p-3 bg-kotl-bg rounded-xl border border-kotl-border space-y-1">
+          <div class="flex justify-between text-slate-300">
             <span>Groq LLM Quota:</span>
-            <span class="text-white font-bold">14,400 RPD (30 RPM)</span>
+            <span class="text-white font-bold">14,400 RPD</span>
           </div>
-          <span class="text-[11px] text-gpt-muted block">Remaining: <span id="groqRemReq" class="text-white">14,380+</span></span>
+          <span class="text-[11px] text-kotl-muted block">Active & Free</span>
         </div>
 
-        <div class="p-3 bg-gpt-main rounded-xl border border-gpt-border flex justify-between items-center">
-          <div>
-            <span class="text-white block">Google Gemini 3.6 Flash:</span>
-            <span class="text-[11px] text-gpt-muted">Primary Brain (Gujarati & English)</span>
-          </div>
-          <span class="text-[11px] px-2 py-0.5 rounded bg-gpt-card text-white font-bold">1,500 RPD</span>
-        </div>
-
-        <div class="p-3 bg-gpt-main rounded-xl border border-gpt-border flex justify-between items-center">
+        <div class="p-3 bg-kotl-bg rounded-xl border border-kotl-border flex justify-between items-center">
           <div>
             <span class="text-white block">Microsoft Edge-TTS:</span>
-            <span class="text-[11px] text-gpt-muted">Neural Voice (Niranjan & Christopher)</span>
+            <span class="text-[11px] text-kotl-muted">Dhwani (Gujarati) & Madhur (Hindi)</span>
           </div>
-          <span class="text-[11px] px-2 py-0.5 rounded bg-gpt-card text-white font-bold">Unlimited Free</span>
+          <span class="text-[11px] px-2 py-0.5 rounded bg-kotl-card text-emerald-400 font-bold">Unlimited Free</span>
         </div>
 
-        <div class="p-3 bg-gpt-main rounded-xl border border-gpt-border flex justify-between items-center">
+        <div class="p-3 bg-kotl-bg rounded-xl border border-kotl-border flex justify-between items-center">
           <div>
             <span class="text-white block">Groq Whisper STT:</span>
-            <span class="text-[11px] text-gpt-muted">Speech Recognition</span>
+            <span class="text-[11px] text-kotl-muted">Real-time Multilingual Speech</span>
           </div>
-          <span class="text-[11px] px-2 py-0.5 rounded bg-gpt-card text-white font-bold">7,200s/day</span>
+          <span class="text-[11px] px-2 py-0.5 rounded bg-kotl-card text-white font-bold">7,200s/day</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Client Script Logic -->
+  <!-- ========================================== -->
+  <!-- CLIENT JAVASCRIPT LOGIC                    -->
+  <!-- ========================================== -->
   <script>
+    // Tab Switching
+    let currentTab = 'report';
+    function switchTab(tab) {
+      currentTab = tab;
+      const views = {
+        report: document.getElementById('viewReport'),
+        missions: document.getElementById('viewMissions'),
+        chat: document.getElementById('viewChat')
+      };
+      const buttons = {
+        report: document.getElementById('tabBtnReport'),
+        missions: document.getElementById('tabBtnMissions'),
+        chat: document.getElementById('tabBtnChat')
+      };
+      const mobButtons = {
+        report: document.getElementById('mobTabReport'),
+        missions: document.getElementById('mobTabMissions'),
+        chat: document.getElementById('mobTabChat')
+      };
+
+      Object.keys(views).forEach(key => {
+        if (key === tab) {
+          views[key].classList.remove('hidden');
+          if (buttons[key]) {
+            buttons[key].className = 'px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 tab-active';
+          }
+          if (mobButtons[key]) {
+            mobButtons[key].className = 'flex flex-col items-center space-y-1 text-sky-400';
+          }
+        } else {
+          views[key].classList.add('hidden');
+          if (buttons[key]) {
+            buttons[key].className = 'px-3.5 py-1.5 rounded-lg transition-all flex items-center space-x-2 text-kotl-muted hover:text-white';
+          }
+          if (mobButtons[key]) {
+            mobButtons[key].className = 'flex flex-col items-center space-y-1 text-kotl-muted';
+          }
+        }
+      });
+
+      if (tab === 'chat') {
+        scrollToBottom();
+      }
+    }
+
+    // Modal Handlers
+    const wifiModal = document.getElementById('wifiModal');
+    const openWifiModalBtn = document.getElementById('openWifiModalBtn');
+    const closeWifiModalBtn = document.getElementById('closeWifiModalBtn');
+    openWifiModalBtn.onclick = () => { wifiModal.classList.remove('hidden'); loadDeviceConfig(); };
+    closeWifiModalBtn.onclick = () => wifiModal.classList.add('hidden');
+
+    const hardwareModal = document.getElementById('hardwareModal');
+    const openHardwareModalBtn = document.getElementById('openHardwareModalBtn');
+    const closeHardwareModalBtn = document.getElementById('closeHardwareModalBtn');
+    openHardwareModalBtn.onclick = () => hardwareModal.classList.remove('hidden');
+    closeHardwareModalBtn.onclick = () => hardwareModal.classList.add('hidden');
+
+    const quotaModal = document.getElementById('quotaModal');
+    const openQuotaModalBtn = document.getElementById('openQuotaModalBtn');
+    const closeQuotaModalBtn = document.getElementById('closeQuotaModalBtn');
+    openQuotaModalBtn.onclick = () => quotaModal.classList.remove('hidden');
+    closeQuotaModalBtn.onclick = () => quotaModal.classList.add('hidden');
+
+    const editProfileModal = document.getElementById('editProfileModal');
+    function openEditProfileModal() { editProfileModal.classList.remove('hidden'); }
+    function closeEditProfileModal() { editProfileModal.classList.add('hidden'); }
+
+    const addImprovementModal = document.getElementById('addImprovementModal');
+    function openAddImprovementModal() { addImprovementModal.classList.remove('hidden'); }
+    function closeAddImprovementModal() { addImprovementModal.classList.add('hidden'); }
+
+    // Child Profile State & Render
+    let currentChildProfile = null;
+
+    async function loadChildProfile() {
+      try {
+        const res = await fetch('/api/child/profile');
+        if (res.ok) {
+          const data = await res.json();
+          currentChildProfile = data.profile;
+          renderChildProfile(currentChildProfile);
+        }
+      } catch (e) {
+        console.warn('Error loading child profile:', e);
+      }
+    }
+
+    function renderChildProfile(p) {
+      if (!p) return;
+      document.getElementById('childNameText').textContent = p.name || 'આરવ (Aarav)';
+      document.getElementById('childAgeBadge').textContent = p.age || '6 વર્ષ';
+      document.getElementById('childAvatar').textContent = p.avatar || '🧒';
+      document.getElementById('totalDialoguesText').textContent = p.conversation_count || 14;
+
+      document.getElementById('editChildName').value = p.name || '';
+      document.getElementById('editChildAge').value = p.age || '';
+      document.getElementById('editChildAvatar').value = p.avatar || '🧒';
+
+      // Skills
+      const vocab = p.skills?.vocabulary || 84;
+      const cur = p.skills?.curiosity || 92;
+      document.getElementById('vocabScoreText').textContent = vocab + '%';
+      document.getElementById('vocabProgressBar').style.width = vocab + '%';
+      document.getElementById('curiosityScoreText').textContent = cur + '%';
+      document.getElementById('curiosityProgressBar').style.width = cur + '%';
+      document.getElementById('emotionalToneText').textContent = p.skills?.emotional_tone || 'ઉત્સાહી, પ્રેમાળ અને આનંદી (Cheerful & Caring)';
+
+      // Likes
+      const likesCont = document.getElementById('likesContainer');
+      likesCont.innerHTML = '';
+      (p.likes || []).forEach(item => {
+        const tag = document.createElement('span');
+        tag.className = 'px-3 py-1 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-medium flex items-center space-x-1.5 shadow-sm';
+        tag.innerHTML = `<span>${escapeHtml(item)}</span><button onclick="removeInterest('likes', '${escapeHtml(item)}')" class="hover:text-white text-emerald-400 font-bold ml-1">✕</button>`;
+        likesCont.appendChild(tag);
+      });
+
+      // Dislikes
+      const dislikesCont = document.getElementById('dislikesContainer');
+      dislikesCont.innerHTML = '';
+      (p.dislikes || []).forEach(item => {
+        const tag = document.createElement('span');
+        tag.className = 'px-3 py-1 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-medium flex items-center space-x-1.5 shadow-sm';
+        tag.innerHTML = `<span>${escapeHtml(item)}</span><button onclick="removeInterest('dislikes', '${escapeHtml(item)}')" class="hover:text-white text-rose-400 font-bold ml-1">✕</button>`;
+        dislikesCont.appendChild(tag);
+      });
+
+      // Improvement Areas
+      const impCont = document.getElementById('improvementAreasContainer');
+      impCont.innerHTML = '';
+      (p.improvement_areas || []).forEach(area => {
+        const card = document.createElement('div');
+        card.className = 'bg-kotl-bg/80 border border-kotl-border/80 rounded-xl p-4 space-y-2 flex flex-col justify-between';
+        
+        let statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">ચાલુ છે</span>';
+        if (area.status === 'planning') {
+          statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">આયોજનમાં છે</span>';
+        } else if (area.status === 'completed') {
+          statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">પૂર્ણ થયું</span>';
+        }
+
+        card.innerHTML = `
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-xs text-white">${escapeHtml(area.title)}</h4>
+              ${statusBadge}
+            </div>
+            <p class="text-[11px] text-kotl-muted leading-relaxed">
+              <strong class="text-slate-300">KOTL સહાય:</strong> ${escapeHtml(area.action_plan)}
+            </p>
+          </div>
+        `;
+        impCont.appendChild(card);
+      });
+    }
+
+    async function addInterest(type) {
+      const input = document.getElementById(type === 'likes' ? 'newLikeInput' : 'newDislikeInput');
+      const val = input.value.trim();
+      if (!val || !currentChildProfile) return;
+
+      if (!currentChildProfile[type]) currentChildProfile[type] = [];
+      if (!currentChildProfile[type].includes(val)) {
+        currentChildProfile[type].push(val);
+        input.value = '';
+        await saveProfileToServer(currentChildProfile);
+      }
+    }
+
+    async function removeInterest(type, val) {
+      if (!currentChildProfile || !currentChildProfile[type]) return;
+      currentChildProfile[type] = currentChildProfile[type].filter(item => item !== val);
+      await saveProfileToServer(currentChildProfile);
+    }
+
+    async function saveProfileChanges(e) {
+      e.preventDefault();
+      if (!currentChildProfile) return;
+      currentChildProfile.name = document.getElementById('editChildName').value.trim();
+      currentChildProfile.age = document.getElementById('editChildAge').value.trim();
+      currentChildProfile.avatar = document.getElementById('editChildAvatar').value.trim() || '🧒';
+      await saveProfileToServer(currentChildProfile);
+      closeEditProfileModal();
+    }
+
+    async function handleSaveImprovement(e) {
+      e.preventDefault();
+      if (!currentChildProfile) return;
+      if (!currentChildProfile.improvement_areas) currentChildProfile.improvement_areas = [];
+      const newGoal = {
+        id: 'imp-' + Date.now(),
+        title: document.getElementById('newGoalTitle').value.trim(),
+        status: document.getElementById('newGoalStatus').value,
+        action_plan: document.getElementById('newGoalPlan').value.trim()
+      };
+      currentChildProfile.improvement_areas.push(newGoal);
+      await saveProfileToServer(currentChildProfile);
+      document.getElementById('addImprovementForm').reset();
+      closeAddImprovementModal();
+    }
+
+    async function saveProfileToServer(profile) {
+      try {
+        const res = await fetch('/api/child/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(profile)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentChildProfile = data.profile;
+          renderChildProfile(currentChildProfile);
+        }
+      } catch (err) {
+        console.error('Error saving profile:', err);
+      }
+    }
+
+    // Parent Missions State & Handlers
+    let parentMissions = [];
+
+    async function loadParentMissions() {
+      try {
+        const res = await fetch('/api/parent/missions');
+        if (res.ok) {
+          const data = await res.json();
+          parentMissions = data.missions || [];
+          renderParentMissions(parentMissions);
+        }
+      } catch (e) {
+        console.warn('Error loading missions:', e);
+      }
+    }
+
+    function renderParentMissions(missions) {
+      const cont = document.getElementById('missionsListContainer');
+      cont.innerHTML = '';
+      const activeCount = missions.filter(m => m.active).length;
+      document.getElementById('activeMissionsCountBadge').textContent = activeCount;
+
+      if (missions.length === 0) {
+        cont.innerHTML = `
+          <div class="p-6 bg-kotl-card/50 rounded-2xl border border-kotl-border text-center text-xs text-kotl-muted">
+            કોઈ સક્રિય મિશન નથી. ઉપરથી નવું મિશન સોંપો.
+          </div>
+        `;
+        return;
+      }
+
+      missions.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'bg-kotl-card border ' + (m.active ? 'border-amber-500/40 bg-amber-500/[0.02]' : 'border-kotl-border') + ' rounded-2xl p-4.5 space-y-2.5 transition-all shadow-sm';
+        
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2">
+                <span class="text-base">${m.active ? '🎯' : '⏸️'}</span>
+                <h4 class="font-bold text-sm text-white">${escapeHtml(m.title)}</h4>
+                ${m.active ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono">KOTL સક્રિય</span>' : '<span class="text-[9px] px-1.5 py-0.2 rounded bg-kotl-bg text-zinc-400">બંધ</span>'}
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed pl-6">
+                <strong class="text-kotl-muted">સૂચના:</strong> ${escapeHtml(m.directive)}
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-2 shrink-0">
+              <button onclick="toggleMission('${m.id}', ${!m.active})" class="px-2.5 py-1 rounded-lg text-xs font-semibold ${m.active ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40' : 'bg-kotl-bg text-zinc-400 hover:text-white border border-kotl-border'}">
+                ${m.active ? 'ચાલુ' : 'બંધ'}
+              </button>
+              <button onclick="deleteMission('${m.id}')" class="p-1 rounded-lg text-kotl-muted hover:text-rose-400 transition-colors" title="Delete">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `;
+        cont.appendChild(card);
+      });
+    }
+
+    async function handleCreateMission(e) {
+      e.preventDefault();
+      const title = document.getElementById('missionTitleInput').value.trim();
+      const directive = document.getElementById('missionDirectiveInput').value.trim();
+      if (!title) return;
+
+      try {
+        const res = await fetch('/api/parent/missions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, directive })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          parentMissions = data.missions || [];
+          renderParentMissions(parentMissions);
+          document.getElementById('newMissionForm').reset();
+        }
+      } catch (err) {
+        alert('Error creating mission: ' + err.message);
+      }
+    }
+
+    async function toggleMission(id, activeState) {
+      try {
+        const res = await fetch('/api/parent/missions/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, active: activeState })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          parentMissions = data.missions || [];
+          renderParentMissions(parentMissions);
+        }
+      } catch (err) {
+        console.error('Error toggling mission:', err);
+      }
+    }
+
+    async function deleteMission(id) {
+      if (!confirm('આ મિશન ડિલીટ કરવું છે?')) return;
+      try {
+        const res = await fetch('/api/parent/missions/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          const data = await res.json();
+          parentMissions = data.missions || [];
+          renderParentMissions(parentMissions);
+        }
+      } catch (err) {
+        console.error('Error deleting mission:', err);
+      }
+    }
+
+    // Chat Conversation & History
     const chatContainer = document.getElementById('chatContainer');
     const chatScrollArea = document.getElementById('chatScrollArea');
     const chatInput = document.getElementById('chatInput');
@@ -510,107 +1037,13 @@
     const recordingSpinner = document.getElementById('recordingSpinner');
     const recordingWaveformContainer = document.getElementById('recordingWaveformContainer');
     const cancelRecordBtn = document.getElementById('cancelRecordBtn');
-    const clearChatBtn = document.getElementById('clearChatBtn');
-    const newChatBtn = document.getElementById('newChatBtn');
     const ttsAudioPlayer = document.getElementById('ttsAudioPlayer');
-    const backendIpText = document.getElementById('backendIpText');
     const visualizerCanvas = document.getElementById('visualizerCanvas');
     const canvasCtx = visualizerCanvas.getContext('2d');
 
-    // Mobile Sidebar Drawer Controls
-    const sidebar = document.getElementById('sidebar');
-    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-    const mobileSidebarToggleBtn = document.getElementById('mobileSidebarToggleBtn');
-    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
-
-    function openMobileSidebar() {
-      sidebar.classList.remove('-translate-x-full');
-      sidebarBackdrop.classList.remove('hidden');
-    }
-
-    function closeMobileSidebar() {
-      sidebar.classList.add('-translate-x-full');
-      sidebarBackdrop.classList.add('hidden');
-    }
-
-    if (mobileSidebarToggleBtn) {
-      mobileSidebarToggleBtn.onclick = () => {
-        if (sidebar.classList.contains('-translate-x-full')) {
-          openMobileSidebar();
-        } else {
-          closeMobileSidebar();
-        }
-      };
-    }
-
-    if (sidebarBackdrop) {
-      sidebarBackdrop.onclick = closeMobileSidebar;
-    }
-
-    if (sidebarToggleBtn) {
-      sidebarToggleBtn.onclick = () => {
-        if (window.innerWidth < 768) {
-          closeMobileSidebar();
-        }
-      };
-    }
-
-    // Modals
-    const wifiModal = document.getElementById('wifiModal');
-    const openWifiModalBtn = document.getElementById('openWifiModalBtn');
-    const closeWifiModalBtn = document.getElementById('closeWifiModalBtn');
-    const quotaModal = document.getElementById('quotaModal');
-    const openQuotaModalBtn = document.getElementById('openQuotaModalBtn');
-    const closeQuotaModalBtn = document.getElementById('closeQuotaModalBtn');
-    const hardwareTestModal = document.getElementById('hardwareTestModal');
-    const openHardwareTestModalBtn = document.getElementById('openHardwareTestModalBtn');
-    const closeHardwareTestModalBtn = document.getElementById('closeHardwareTestModalBtn');
-
-    openWifiModalBtn.onclick = () => {
-      if (window.innerWidth < 768) closeMobileSidebar();
-      wifiModal.classList.remove('hidden');
-    };
-    closeWifiModalBtn.onclick = () => wifiModal.classList.add('hidden');
-    openQuotaModalBtn.onclick = () => {
-      if (window.innerWidth < 768) closeMobileSidebar();
-      quotaModal.classList.remove('hidden');
-    };
-    closeQuotaModalBtn.onclick = () => quotaModal.classList.add('hidden');
-    openHardwareTestModalBtn.onclick = () => {
-      if (window.innerWidth < 768) closeMobileSidebar();
-      hardwareTestModal.classList.remove('hidden');
-      loadHardwareStatus();
-    };
-    closeHardwareTestModalBtn.onclick = () => hardwareTestModal.classList.add('hidden');
-
-    const STORAGE_CHAT_KEY = 'kotl_chat_history_v2';
     const sessionId = 'default-session';
+    const renderedMsgMap = new Map();
 
-    function getStoredMessages() {
-      try {
-        const raw = localStorage.getItem(STORAGE_CHAT_KEY);
-        return raw ? JSON.parse(raw) : [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveStoredMessages(messages) {
-      try {
-        localStorage.setItem(STORAGE_CHAT_KEY, JSON.stringify(messages));
-      } catch (e) {}
-    }
-
-    let storedMessages = getStoredMessages();
-
-    function formatTime(ts) {
-      if (!ts) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const d = new Date(ts);
-      if (isNaN(d.getTime())) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-
-    // Enable/Disable Send button dynamically
     chatInput.addEventListener('input', () => {
       sendBtn.disabled = !chatInput.value.trim();
     });
@@ -626,49 +1059,61 @@
       if (chatInput.value.trim()) handleSubmitText();
     });
 
-    // Render Message Element (ChatGPT styling)
-    const renderedMsgMap = new Map();
+    function formatTime(ts) {
+      if (!ts) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const d = new Date(ts);
+      return isNaN(d.getTime()) ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
 
     function renderMessageElement(msg) {
       const msgDiv = document.createElement('div');
       msgDiv.className = 'w-full flex ' + (msg.role === 'user' ? 'justify-end' : 'justify-start');
-      msgDiv.dataset.msgId = msg.id || (msg.role + '-' + (msg.text || msg.content));
+      const uniqueKey = msg.id || (msg.role + '-' + (msg.text || msg.content));
+      msgDiv.dataset.msgId = uniqueKey;
 
       const timeStr = formatTime(msg.timestamp);
-      const sourceBadge = msg.source === 'esp32' 
-        ? `<span class="px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 text-[9px] font-mono">🎙️ ESP32 Voice</span>`
-        : `<span class="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[9px] font-mono">💻 Web</span>`;
+      const isEsp = msg.source === 'esp32' || msg.source === 'device';
+      const sourceBadge = isEsp 
+        ? `<span class="px-1.5 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 text-[9px] font-mono">🎙️ ESP32 સ્પીકર</span>`
+        : `<span class="px-1.5 py-0.5 rounded bg-kotl-bg text-zinc-400 text-[9px] font-mono">💻 Web</span>`;
 
       if (msg.role === 'user') {
         msgDiv.innerHTML = `
-          <div class="max-w-[88%] sm:max-w-[80%] bg-gpt-card text-white rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-sm leading-relaxed shadow-sm border border-gpt-border/40 space-y-1 break-words">
-            <div class="flex items-center justify-end space-x-1.5 text-[10px] text-gpt-muted">
+          <div class="max-w-[88%] sm:max-w-[80%] bg-sky-950/40 text-white rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-sm leading-relaxed shadow-sm border border-sky-500/30 space-y-1 break-words">
+            <div class="flex items-center justify-end space-x-1.5 text-[10px] text-kotl-muted font-mono">
+              <span class="text-sky-300 font-semibold">🧒 બાળક</span>
+              <span>•</span>
               ${sourceBadge}
               <span>${timeStr}</span>
             </div>
-            <div class="break-words">${escapeHtml(msg.text || msg.content || '')}</div>
+            <div class="break-words font-sans">${escapeHtml(msg.text || msg.content || '')}</div>
           </div>
         `;
       } else {
         const audioBtn = msg.tts_url ? `
-          <button onclick="playAudioClip('${msg.tts_url}')" class="mt-1.5 inline-flex items-center space-x-1.5 text-xs font-mono text-gpt-muted hover:text-white px-2.5 py-1 rounded-lg bg-gpt-card/80 hover:bg-gpt-card border border-gpt-border transition-all shadow-sm">
+          <button onclick="playAudioClip('${msg.tts_url}')" class="mt-1.5 inline-flex items-center space-x-1.5 text-xs font-mono text-kotl-muted hover:text-white px-2.5 py-1 rounded-lg bg-kotl-bg hover:bg-kotl-border border border-kotl-border transition-all shadow-sm">
             <span class="text-emerald-400">🔊</span>
-            <span>Replay Voice</span>
+            <span>અવાજ સાંભળો (Play Audio)</span>
           </button>
         ` : '';
 
+        const eyeBadge = msg.eye_expression 
+          ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">👀 ${msg.eye_expression}</span>` 
+          : '';
+
         msgDiv.innerHTML = `
           <div class="flex items-start space-x-2.5 sm:space-x-3 max-w-[95%] sm:max-w-[85%]">
-            <div class="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center font-bold text-xs shrink-0 mt-0.5 font-mono shadow-sm">
-              K
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 shadow-md">
+              🤖
             </div>
             <div class="space-y-1 min-w-0 flex-1">
-              <div class="flex items-center space-x-1.5 text-[10px] text-gpt-muted font-mono">
-                <span class="text-white font-semibold">KOTL AI</span>
+              <div class="flex items-center space-x-2 text-[10px] text-kotl-muted font-mono">
+                <span class="text-white font-semibold">KOTL (કોટિલ)</span>
+                ${eyeBadge}
                 <span>•</span>
                 <span>${timeStr}</span>
               </div>
-              <div class="text-sm text-gpt-white leading-relaxed font-sans break-words overflow-hidden">
+              <div class="text-sm text-slate-100 leading-relaxed font-sans break-words bg-kotl-card/80 p-3 rounded-2xl border border-kotl-border/80">
                 ${escapeHtml(msg.text || msg.content || '')}
               </div>
               ${audioBtn}
@@ -680,108 +1125,54 @@
       chatContainer.appendChild(msgDiv);
     }
 
-    function appendAndStoreMessage(role, text, tts_url = null, source = 'web') {
-      const msg = {
-        id: 'msg-' + Date.now(),
-        role,
-        text,
-        content: text,
-        source,
-        tts_url,
-        timestamp: new Date().toISOString()
-      };
-
-      storedMessages.push(msg);
-      saveStoredMessages(storedMessages);
-      renderedMsgMap.set(msg.id, msg);
-      renderMessageElement(msg);
-      scrollToBottom();
-    }
-
-    function renderDefaultHero() {
-      chatContainer.innerHTML = `
-        <div class="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
-          <div class="w-12 h-12 rounded-2xl bg-white text-black flex items-center justify-center text-xl font-bold font-mono shadow-2xl">
-            K
-          </div>
-          <h2 class="text-2xl font-bold text-white tracking-tight">Ready when you are.</h2>
-          <p class="text-xs text-gpt-muted max-w-sm">
-            Speak in natural Gujarati or English, or type your message below.
-          </p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-md w-full pt-4 text-xs font-mono">
-            <button onclick="quickPrompt('નમસ્તે KOTL, કેમ છો?')" class="p-3 bg-gpt-card hover:bg-gpt-subtle border border-gpt-border rounded-xl text-left text-gpt-light hover:text-white transition-all">
-              "નમસ્તે KOTL, કેમ છો?"
-            </button>
-            <button onclick="quickPrompt('KOTL, explain your system architecture')" class="p-3 bg-gpt-card hover:bg-gpt-subtle border border-gpt-border rounded-xl text-left text-gpt-light hover:text-white transition-all">
-              "Explain your architecture"
-            </button>
-          </div>
-        </div>
-      `;
-    }
-
-    window.quickPrompt = function(txt) {
-      chatInput.value = txt;
-      sendBtn.disabled = false;
-      handleSubmitText();
-    };
-
-    function initChatHistory() {
-      chatContainer.innerHTML = '';
-      if (storedMessages.length === 0) {
-        renderDefaultHero();
-      } else {
-        storedMessages.forEach(msg => {
-          renderedMsgMap.set(msg.id || (msg.role + '-' + msg.text), msg);
-          renderMessageElement(msg);
-        });
-        scrollToBottom();
-      }
-    }
-
-    initChatHistory();
-
-    // Live Server History Sync (Polling ESP32 & Web history in Real-time)
     async function syncLiveServerHistory() {
       try {
-        const res = await fetch('/api/history?sessionId=default-session');
+        const res = await fetch('/api/history?sessionId=' + sessionId);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.history) && data.history.length > 0) {
+          if (Array.isArray(data.history)) {
             let hasNew = false;
-            
-            // If hero is showing and server has messages, clear hero
-            if (chatContainer.querySelector('h2')) {
-              chatContainer.innerHTML = '';
+            if (data.history.length === 0 && chatContainer.children.length === 0) {
+              chatContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center min-h-[40vh] text-center space-y-3">
+                  <div class="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-2xl font-bold font-mono">
+                    🤖
+                  </div>
+                  <h3 class="text-lg font-bold text-white">કોઈ સંવાદ હિસ્ટ્રી નથી</h3>
+                  <p class="text-xs text-kotl-muted max-w-sm">
+                    ESP32 સ્પીકરથી વાત કરો અથવા નીચે પ્રશ્ન પૂછો. KOTL કુદરતી ગુજરાતી/અંગ્રેજીમાં જવાબ આપશે.
+                  </p>
+                </div>
+              `;
             }
 
             data.history.forEach(item => {
               const uniqueKey = item.id || (item.role + '-' + item.content);
               if (!renderedMsgMap.has(uniqueKey)) {
+                if (chatContainer.querySelector('h3')) chatContainer.innerHTML = '';
                 renderedMsgMap.set(uniqueKey, item);
                 renderMessageElement(item);
                 hasNew = true;
               } else {
-                // If TTS url became available later, update audio button
                 const existing = renderedMsgMap.get(uniqueKey);
                 if (!existing.tts_url && item.tts_url) {
                   existing.tts_url = item.tts_url;
                   const el = chatContainer.querySelector(`[data-msg-id="${uniqueKey}"]`);
                   if (el && !el.querySelector('button')) {
-                    const btnContainer = el.querySelector('.space-y-1');
-                    if (btnContainer) {
+                    const btnCont = el.querySelector('.space-y-1');
+                    if (btnCont) {
                       const btn = document.createElement('button');
                       btn.onclick = () => playAudioClip(item.tts_url);
-                      btn.className = 'mt-1.5 inline-flex items-center space-x-1.5 text-xs font-mono text-gpt-muted hover:text-white px-2.5 py-1 rounded-lg bg-gpt-card/80 hover:bg-gpt-card border border-gpt-border transition-all shadow-sm';
-                      btn.innerHTML = '<span class="text-emerald-400">🔊</span><span>Replay Voice</span>';
-                      btnContainer.appendChild(btn);
+                      btn.className = 'mt-1.5 inline-flex items-center space-x-1.5 text-xs font-mono text-kotl-muted hover:text-white px-2.5 py-1 rounded-lg bg-kotl-bg hover:bg-kotl-border border border-kotl-border transition-all shadow-sm';
+                      btn.innerHTML = '<span class="text-emerald-400">🔊</span><span>અવાજ સાંભળો (Play Audio)</span>';
+                      btnCont.appendChild(btn);
                     }
                   }
                 }
               }
             });
 
-            if (hasNew) {
+            if (hasNew && currentTab === 'chat') {
               scrollToBottom();
             }
           }
@@ -789,36 +1180,26 @@
       } catch (e) {}
     }
 
-    syncLiveServerHistory();
-    setInterval(syncLiveServerHistory, 2000);
-
-    function scrollToBottom() {
-      chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+    async function clearSessionChat() {
+      if (!confirm('શું તમે વાતચીત હિસ્ટ્રી રીસેટ કરવા માંગો છો?')) return;
+      try {
+        await fetch('/api/reset-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        });
+        renderedMsgMap.clear();
+        chatContainer.innerHTML = '';
+        syncLiveServerHistory();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    window.playAudioClip = function(url) {
-      if (!url) return;
-      ttsAudioPlayer.src = url;
-      ttsAudioPlayer.play().catch(e => console.log('Audio autoplay error:', e));
-    };
-
-    // Text Submission
     async function handleSubmitText() {
       const text = chatInput.value.trim();
       if (!text) return;
 
-      // Clear hero screen if first message
-      if (storedMessages.length === 0) {
-        chatContainer.innerHTML = '';
-      }
-
-      appendAndStoreMessage('user', text);
       chatInput.value = '';
       sendBtn.disabled = true;
 
@@ -828,10 +1209,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text, sessionId })
         });
-
         const data = await res.json();
         if (data.reply) {
-          let ttsUrl = null;
           try {
             const ttsRes = await fetch('/api/speak', {
               method: 'POST',
@@ -840,34 +1219,44 @@
             });
             if (ttsRes.ok) {
               const ttsData = await ttsRes.json();
-              if (ttsData.url) {
-                ttsUrl = ttsData.url;
-                playAudioClip(ttsUrl);
-              }
+              if (ttsData.url) playAudioClip(ttsData.url);
             }
           } catch (e) {}
-
-          appendAndStoreMessage('assistant', data.reply, ttsUrl);
+          await syncLiveServerHistory();
+          await loadChildProfile();
         }
       } catch (err) {
-        appendAndStoreMessage('assistant', 'Error connecting to brain: ' + err.message);
+        console.error('Chat error:', err);
       }
     }
 
-    // Microphone Recording Logic
+    window.playAudioClip = function(url) {
+      if (!url) return;
+      ttsAudioPlayer.src = url;
+      ttsAudioPlayer.play().catch(e => console.log('Audio autoplay:', e));
+    };
+
+    function scrollToBottom() {
+      chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    // Audio Visualizer & Recording
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
     let audioContext = null;
     let analyser = null;
-    let animationFrameId = null;
+    let animId = null;
 
     recordBtn.addEventListener('click', () => {
-      if (isRecording) {
-        stopRecording();
-      } else {
-        startRecording();
-      }
+      if (isRecording) stopRecording();
+      else startRecording();
     });
 
     cancelRecordBtn.addEventListener('click', () => {
@@ -894,15 +1283,10 @@
 
         mediaRecorder.start();
         isRecording = true;
-
         recordingWaveformContainer.classList.remove('hidden');
         recordBtn.className = 'w-8 h-8 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all animate-pulse';
 
-        // Max 5 seconds
-        setTimeout(() => {
-          if (isRecording) stopRecording();
-        }, 5000);
-
+        setTimeout(() => { if (isRecording) stopRecording(); }, 6000);
       } catch (err) {
         alert('Microphone permission required: ' + err.message);
       }
@@ -911,11 +1295,9 @@
     function stopRecording() {
       if (!isRecording) return;
       isRecording = false;
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-      }
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
       recordingWaveformContainer.classList.add('hidden');
-      recordBtn.className = 'w-8 h-8 rounded-full bg-gpt-card hover:bg-gpt-subtle text-white flex items-center justify-center transition-all border border-gpt-border';
+      recordBtn.className = 'w-8 h-8 rounded-full bg-kotl-surface hover:bg-kotl-border text-white flex items-center justify-center transition-all border border-kotl-border';
       micIcon.classList.add('hidden');
       recordingSpinner.classList.remove('hidden');
     }
@@ -924,20 +1306,15 @@
       try {
         const res = await fetch('/api/test-mic', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'audio/webm',
-            'x-session-id': sessionId
-          },
+          headers: { 'Content-Type': 'audio/webm', 'x-session-id': sessionId },
           body: audioBlob
         });
-
         const data = await res.json();
-        if (storedMessages.length === 0) chatContainer.innerHTML = '';
-        if (data.transcript) appendAndStoreMessage('user', data.transcript);
-        if (data.reply) appendAndStoreMessage('assistant', data.reply, data.tts_url || null);
         if (data.tts_url) playAudioClip(data.tts_url);
+        await syncLiveServerHistory();
+        await loadChildProfile();
       } catch (err) {
-        appendAndStoreMessage('assistant', 'Voice processing failed: ' + err.message);
+        console.error('Voice turn failed:', err);
       } finally {
         micIcon.classList.remove('hidden');
         recordingSpinner.classList.add('hidden');
@@ -955,18 +1332,16 @@
       const dataArray = new Uint8Array(bufferLength);
 
       function draw() {
-        animationFrameId = requestAnimationFrame(draw);
+        animId = requestAnimationFrame(draw);
         analyser.getByteFrequencyData(dataArray);
-
         canvasCtx.fillStyle = '#000000';
         canvasCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
 
-        const barWidth = (visualizerCanvas.width / bufferLength) * 2.2;
+        const barWidth = (visualizerCanvas.width / bufferLength) * 2;
         let x = 0;
-
         for (let i = 0; i < bufferLength; i++) {
           const barHeight = (dataArray[i] / 255) * visualizerCanvas.height;
-          canvasCtx.fillStyle = '#ffffff';
+          canvasCtx.fillStyle = '#38bdf8';
           canvasCtx.fillRect(x, visualizerCanvas.height - barHeight, barWidth - 1, barHeight);
           x += barWidth;
         }
@@ -975,299 +1350,113 @@
     }
 
     function stopVisualizer() {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      if (audioContext) audioContext.close();
+      if (animId) cancelAnimationFrame(animId);
+      if (audioContext && audioContext.state !== 'closed') audioContext.close();
     }
 
-    const triggerEspMicBtn = document.getElementById('triggerEspMicBtn');
-    const espMicBadge = document.getElementById('espMicBadge');
-    const espMicStatusText = document.getElementById('espMicStatusText');
-    const espMicP2pText = document.getElementById('espMicP2pText');
-    const espMicAvgAmpText = document.getElementById('espMicAvgAmpText');
-    const espMicTranscriptText = document.getElementById('espMicTranscriptText');
-    const espMicAudioPlayer = document.getElementById('espMicAudioPlayer');
-    const espMicPlayerHint = document.getElementById('espMicPlayerHint');
-
-    const testSpeakerLocalBtn = document.getElementById('testSpeakerLocalBtn');
-    const testSpeakerBtn = document.getElementById('testSpeakerBtn');
-    const speakerTestText = document.getElementById('speakerTestText');
-    const speakerTestBadge = document.getElementById('speakerTestBadge');
-    const speakerTestStatusText = document.getElementById('speakerTestStatusText');
-    const refreshHardwareStatusBtn = document.getElementById('refreshHardwareStatusBtn');
-    const hardwareDeviceStatusText = document.getElementById('hardwareDeviceStatusText');
-
-    let espMicPollInterval = null;
-    let initialMicReceivedAt = null;
-
-    function setBadge(el, text, colorClass) {
-      if (!el) return;
-      el.textContent = text;
-      el.className = `text-[10px] px-2 py-0.5 rounded ${colorClass}`;
-    }
-
-    async function loadHardwareStatus() {
+    // Hardware Diagnostics & Status
+    async function checkDeviceStatus() {
       try {
-        const res = await fetch('/api/hardware-test/status');
-        const data = await res.json();
-        if (!data.success) throw new Error(data.error || 'status failed');
+        const res = await fetch('/api/device/config');
+        if (res.ok) {
+          const data = await res.json();
+          const dot = document.getElementById('deviceStatusDot');
+          const txt = document.getElementById('deviceStatusText');
+          const isOnline = data.device_status?.online;
 
-        const device = data.device_status || {};
-        if (device.online) {
-          hardwareDeviceStatusText.textContent = `Online • ${device.ip || 'heartbeat OK'}${device.rssi ? ' • RSSI ' + device.rssi + ' dBm' : ''}`;
-          hardwareDeviceStatusText.className = 'text-emerald-400 font-bold';
-        } else {
-          hardwareDeviceStatusText.textContent = 'Offline or no recent heartbeat';
-          hardwareDeviceStatusText.className = 'text-red-400 font-bold';
-        }
-
-        const mic = data.latest_mic_upload;
-        if (mic && !mic.error) {
-          if (!initialMicReceivedAt) initialMicReceivedAt = mic.received_at;
-          espMicP2pText.textContent = mic.peak_to_peak != null ? `${mic.peak_to_peak} (${mic.pcm_min ?? 0} to ${mic.pcm_max ?? 0})` : '-';
-          espMicAvgAmpText.textContent = mic.avg_abs_amplitude != null ? `${mic.avg_abs_amplitude}` : '-';
-          espMicTranscriptText.textContent = mic.transcript || (mic.stt_error ? `[STT] ${mic.stt_error}` : (mic.turn_status || '-'));
-          espMicTranscriptText.title = espMicTranscriptText.textContent;
-
-          if (data.has_mic_audio && data.mic_audio_url && (!espMicAudioPlayer.src || espMicAudioPlayer.dataset.lastTime !== mic.received_at)) {
-            espMicAudioPlayer.src = data.mic_audio_url;
-            espMicAudioPlayer.dataset.lastTime = mic.received_at;
-            espMicPlayerHint.textContent = `Recording received at ${new Date(mic.received_at).toLocaleTimeString()}. Click play to listen.`;
-            espMicPlayerHint.className = 'text-[10px] text-emerald-400 font-mono block';
+          if (isOnline) {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50';
+            txt.textContent = `ESP32 Online (${data.device_status.rssi || -60}dBm)`;
+            txt.className = 'text-[11px] font-mono text-emerald-400 font-semibold';
+          } else {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse';
+            txt.textContent = 'ESP32 Offline';
+            txt.className = 'text-[11px] font-mono text-zinc-400';
           }
         }
-        return data;
-      } catch (err) {
-        hardwareDeviceStatusText.textContent = err.message;
-        hardwareDeviceStatusText.className = 'text-red-400 font-bold';
-        return null;
-      }
+      } catch (e) {}
     }
-
-    async function triggerEspHardwareMic() {
-      triggerEspMicBtn.disabled = true;
-      setBadge(espMicBadge, 'Queuing', 'bg-blue-950 text-blue-300 border border-blue-800');
-      espMicStatusText.textContent = 'Queuing 4s mic capture for ESP32...';
-
-      try {
-        const res = await fetch('/api/hardware-test/trigger-mic', { method: 'POST' });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || 'Trigger failed');
-
-        setBadge(espMicBadge, 'Waiting ESP32', 'bg-yellow-950 text-yellow-300 border border-yellow-800');
-        espMicStatusText.textContent = 'Command sent. Waiting for ESP32 to record 4s and upload (~5-8s)...';
-
-        // Remember current mic timestamp before capture
-        const beforeData = await loadHardwareStatus();
-        const startRecordTime = beforeData?.latest_mic_upload?.received_at || 0;
-
-        let pollAttempts = 0;
-        if (espMicPollInterval) clearInterval(espMicPollInterval);
-        espMicPollInterval = setInterval(async () => {
-          pollAttempts++;
-          const currentData = await loadHardwareStatus();
-          const currentReceived = currentData?.latest_mic_upload?.received_at || 0;
-
-          if (currentReceived && currentReceived !== startRecordTime) {
-            clearInterval(espMicPollInterval);
-            espMicPollInterval = null;
-            triggerEspMicBtn.disabled = false;
-
-            const mic = currentData.latest_mic_upload;
-            if (mic.peak_to_peak != null && mic.peak_to_peak > 500) {
-              setBadge(espMicBadge, 'Verified OK', 'bg-emerald-950 text-emerald-300 border border-emerald-800');
-              espMicStatusText.textContent = `✅ Audio received! P2P: ${mic.peak_to_peak}, Avg: ${mic.avg_abs_amplitude}. Play below.`;
-            } else {
-              setBadge(espMicBadge, 'Low Signal', 'bg-yellow-950 text-yellow-300 border border-yellow-800');
-              espMicStatusText.textContent = `⚠️ Audio received, but amplitude is quiet (P2P ${mic.peak_to_peak ?? 0}). Check mic wiring.`;
-            }
-
-            if (currentData.mic_audio_url) {
-              espMicAudioPlayer.src = currentData.mic_audio_url;
-              espMicAudioPlayer.play().catch(() => {});
-            }
-          } else if (pollAttempts >= 15) {
-            clearInterval(espMicPollInterval);
-            espMicPollInterval = null;
-            triggerEspMicBtn.disabled = false;
-            setBadge(espMicBadge, 'Timeout', 'bg-red-950 text-red-300 border border-red-800');
-            espMicStatusText.textContent = 'No upload received within 25s. Check if ESP32 is online and Wi-Fi connected.';
-          }
-        }, 1500);
-
-      } catch (err) {
-        setBadge(espMicBadge, 'Error', 'bg-red-950 text-red-300 border border-red-800');
-        espMicStatusText.textContent = err.message;
-        triggerEspMicBtn.disabled = false;
-      }
-    }
-
-    async function runLocalSpeakerHardwareTest() {
-      testSpeakerLocalBtn.disabled = true;
-      setBadge(speakerTestBadge, 'Queuing', 'bg-blue-950 text-blue-300 border border-blue-800');
-      speakerTestStatusText.textContent = 'Sending built-in "Hello" voice command to ESP32...';
-
-      try {
-        const res = await fetch('/api/hardware-test/speaker-local', { method: 'POST' });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || 'Failed to queue command');
-
-        setBadge(speakerTestBadge, 'Queued', 'bg-emerald-950 text-emerald-300 border border-emerald-800');
-        speakerTestStatusText.textContent = '✅ Built-in voice queued. ESP32 will play "Hello" via MAX98357A on next heartbeat (~5s).';
-        await loadHardwareStatus();
-      } catch (err) {
-        setBadge(speakerTestBadge, 'Error', 'bg-red-950 text-red-300 border border-red-800');
-        speakerTestStatusText.textContent = err.message;
-      } finally {
-        setTimeout(() => { testSpeakerLocalBtn.disabled = false; }, 3000);
-      }
-    }
-
-    async function runTtsSpeakerHardwareTest() {
-      testSpeakerBtn.disabled = true;
-      setBadge(speakerTestBadge, 'Generating', 'bg-blue-950 text-blue-300 border border-blue-800');
-      speakerTestStatusText.textContent = 'Generating sample speech with Edge TTS...';
-
-      try {
-        const res = await fetch('/api/hardware-test/speaker', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sessionId: 'hardware-test-speaker',
-            text: speakerTestText.value.trim()
-          })
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.error || 'speaker test failed');
-
-        setBadge(speakerTestBadge, 'Queued', 'bg-emerald-950 text-emerald-300 border border-emerald-800');
-        speakerTestStatusText.textContent = `✅ Cloud voice generated. ESP32 will download and stream it to speaker. (ID: ${data.pending_audio_id})`;
-        await loadHardwareStatus();
-      } catch (err) {
-        setBadge(speakerTestBadge, 'Error', 'bg-red-950 text-red-300 border border-red-800');
-        speakerTestStatusText.textContent = err.message;
-      } finally {
-        setTimeout(() => { testSpeakerBtn.disabled = false; }, 3000);
-      }
-    }
-
-    triggerEspMicBtn.onclick = triggerEspHardwareMic;
-    testSpeakerLocalBtn.onclick = runLocalSpeakerHardwareTest;
-    testSpeakerBtn.onclick = runTtsSpeakerHardwareTest;
-    refreshHardwareStatusBtn.onclick = loadHardwareStatus;
-
-    // Reset Chat
-    function handleResetChat() {
-      if (confirm('Start a new chat and clear conversation history?')) {
-        storedMessages = [];
-        saveStoredMessages([]);
-        renderedMsgMap.clear();
-        fetch('/api/reset-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId: 'default-session' })
-        });
-        initChatHistory();
-      }
-    }
-
-    clearChatBtn.onclick = handleResetChat;
-    newChatBtn.onclick = handleResetChat;
-
-    // Device Wi-Fi Management
-    const cfgWifiSsid = document.getElementById('cfgWifiSsid');
-    const cfgWifiPass = document.getElementById('cfgWifiPass');
-    const cfgBackendUrl = document.getElementById('cfgBackendUrl');
-    const togglePassBtn = document.getElementById('togglePassBtn');
-    const wifiConfigForm = document.getElementById('wifiConfigForm');
-    const saveConfigBtn = document.getElementById('saveConfigBtn');
-    const configStatusMsg = document.getElementById('configStatusMsg');
-    const cfgVersionText = document.getElementById('cfgVersionText');
-    const deviceOnlineBadge = document.getElementById('deviceOnlineBadge');
-
-    togglePassBtn.onclick = () => {
-      const isPass = cfgWifiPass.type === 'password';
-      cfgWifiPass.type = isPass ? 'text' : 'password';
-    };
-
-    const sidebarStatusDot = document.getElementById('sidebarStatusDot');
-    const sidebarStatusText = document.getElementById('sidebarStatusText');
 
     async function loadDeviceConfig() {
       try {
         const res = await fetch('/api/device/config');
         if (res.ok) {
           const data = await res.json();
-          if (data.wifi_ssid && !cfgWifiSsid.value) cfgWifiSsid.value = data.wifi_ssid;
-          
-          let resolvedBackend = data.backend_url || window.location.origin;
-          if (window.location.protocol === 'https:' && (resolvedBackend.startsWith('http://10.') || resolvedBackend.startsWith('http://172.') || resolvedBackend.startsWith('http://192.168.'))) {
-            resolvedBackend = window.location.origin;
-          }
-          if (!cfgBackendUrl.value) cfgBackendUrl.value = resolvedBackend;
-
-          if (data.version) cfgVersionText.textContent = `v${data.version}`;
-          
-          const isOnline = !!data.device_status?.online;
-          if (isOnline) {
-            if (sidebarStatusDot) sidebarStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.9)] transition-all duration-300';
-            if (sidebarStatusText) {
-              sidebarStatusText.textContent = `ESP32 (${data.device_status.ip || 'Online'})`;
-              sidebarStatusText.className = 'truncate text-[11px] text-emerald-300 font-mono';
-            }
-            if (deviceOnlineBadge) {
-              deviceOnlineBadge.textContent = `Online • ${data.device_status.ip || 'Connected'}`;
-              deviceOnlineBadge.className = 'text-emerald-400 font-bold';
-            }
-          } else {
-            if (sidebarStatusDot) sidebarStatusDot.className = 'w-2 h-2 rounded-full bg-red-500 shrink-0 transition-all duration-300';
-            if (sidebarStatusText) {
-              sidebarStatusText.textContent = 'ESP32 Offline';
-              sidebarStatusText.className = 'truncate text-[11px] text-zinc-400 font-mono';
-            }
-            if (deviceOnlineBadge) {
-              deviceOnlineBadge.textContent = 'Offline (No Heartbeat)';
-              deviceOnlineBadge.className = 'text-red-400 font-bold';
-            }
-          }
+          document.getElementById('cfgWifiSsid').value = data.wifi_ssid || '';
+          document.getElementById('cfgWifiPass').value = data.wifi_pass || '';
+          document.getElementById('cfgBackendUrl').value = data.backend_url || window.location.origin;
+          document.getElementById('cfgVersionText').textContent = 'v' + (data.version || 1);
         }
-      } catch (e) {
-        if (sidebarStatusDot) sidebarStatusDot.className = 'w-2 h-2 rounded-full bg-red-500 shrink-0';
-        if (sidebarStatusText) sidebarStatusText.textContent = 'ESP32 Offline';
-      }
+      } catch (e) {}
     }
-    loadDeviceConfig();
-    // Realtime live status polling every 3 seconds
-    setInterval(loadDeviceConfig, 3000);
 
-    wifiConfigForm.onsubmit = async (e) => {
+    document.getElementById('wifiConfigForm').onsubmit = async (e) => {
       e.preventDefault();
-      saveConfigBtn.disabled = true;
-      saveConfigBtn.textContent = 'Saving...';
+      const wifi_ssid = document.getElementById('cfgWifiSsid').value.trim();
+      const wifi_pass = document.getElementById('cfgWifiPass').value;
+      const backend_url = document.getElementById('cfgBackendUrl').value.trim();
+      const msg = document.getElementById('configStatusMsg');
+
       try {
         const res = await fetch('/api/device/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            wifi_ssid: cfgWifiSsid.value.trim(),
-            wifi_pass: cfgWifiPass.value,
-            backend_url: cfgBackendUrl.value.trim()
-          })
+          body: JSON.stringify({ wifi_ssid, wifi_pass, backend_url })
         });
-        const data = await res.json();
-        if (data.success) {
-          configStatusMsg.textContent = '✅ Saved! ESP32 will sync automatically.';
-          configStatusMsg.className = 'text-[11px] text-emerald-400 text-center pt-1 font-mono';
-          configStatusMsg.classList.remove('hidden');
-          if (data.config?.version) cfgVersionText.textContent = `v${data.config.version}`;
+        if (res.ok) {
+          msg.textContent = '✅ સેવ થયું! ESP32 10 સેકન્ડમાં સિંક કરશે.';
+          msg.className = 'text-[11px] text-center pt-1 text-emerald-400 font-mono block';
+          setTimeout(() => msg.classList.add('hidden'), 4000);
         }
       } catch (err) {
-        configStatusMsg.textContent = '❌ ' + err.message;
-        configStatusMsg.classList.remove('hidden');
-      } finally {
-        saveConfigBtn.disabled = false;
-        saveConfigBtn.textContent = 'Save & Push to ESP32';
+        msg.textContent = 'Error: ' + err.message;
+        msg.className = 'text-[11px] text-center pt-1 text-rose-400 font-mono block';
       }
     };
+
+    document.getElementById('togglePassBtn').onclick = () => {
+      const inp = document.getElementById('cfgWifiPass');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    };
+
+    document.getElementById('testSpeakerBtn').onclick = async () => {
+      const st = document.getElementById('speakerTestStatusText');
+      st.textContent = '🔊 Generating spoken "Kotil" voice on speaker...';
+      try {
+        const res = await fetch('/api/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: "નમસ્તે દોસ્ત, મારું નામ કોટિલ છે! હું તમારો રોબોટ મિત્ર છું." })
+        });
+        const d = await res.json();
+        if (d.url) {
+          st.textContent = '✅ Voice generated and broadcast to ESP32 speaker!';
+          playAudioClip(d.url);
+        }
+      } catch (e) {
+        st.textContent = 'Failed: ' + e.message;
+      }
+    };
+
+    document.getElementById('triggerEspMicBtn').onclick = async () => {
+      const st = document.getElementById('espMicStatusText');
+      st.textContent = '🎙️ ESP32 ને 4 સેકન્ડ રેકોર્ડિંગ કરવા આદેશ મોકલ્યો...';
+      try {
+        await fetch('/api/device/trigger-mic', { method: 'POST' });
+        st.textContent = 'ESP32 રેકોર્ડિંગ શરૂ કરી રહ્યું છે. માઇક પાસે બોલો...';
+      } catch (e) {
+        st.textContent = 'Error: ' + e.message;
+      }
+    };
+
+    // Initial Startup
+    loadChildProfile();
+    loadParentMissions();
+    syncLiveServerHistory();
+    checkDeviceStatus();
+
+    setInterval(syncLiveServerHistory, 3000);
+    setInterval(checkDeviceStatus, 10000);
   </script>
 </body>
 </html>

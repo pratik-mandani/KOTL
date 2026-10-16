@@ -11,6 +11,7 @@ const os = require("os");
 const path = require("path");
 const { promisify } = require("util");
 const { EdgeTTS } = require("node-edge-tts");
+const { toPhoneticSpokenText } = require("../utils/phonetic");
 
 const execFileAsync = promisify(execFile);
 
@@ -155,8 +156,9 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
       timeout: 10000,
     });
 
-    console.log(`[TTS Edge] Synthesizing speech with voice "${selectedVoice}"...`);
-    await tts.ttsPromise(text.trim(), tempMp3Path);
+    const spokenText = toPhoneticSpokenText(text.trim(), selectedLang);
+    console.log(`[TTS Edge] Synthesizing speech with voice "${selectedVoice}" ("${spokenText}")...`);
+    await tts.ttsPromise(spokenText, tempMp3Path);
 
     if (!fs.existsSync(tempMp3Path)) {
       throw new Error("Edge-TTS failed to produce audio output");

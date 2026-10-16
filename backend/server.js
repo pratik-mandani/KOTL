@@ -18,6 +18,16 @@ const { getLocalIPv4Address } = require("./utils/network");
 const http = require("http");
 const { initWebSocketServer } = require("./services/websocket");
 const { detectEyeExpression } = require("./services/eye-animation");
+const {
+  getChildProfile,
+  updateChildProfile,
+  getParentMissions,
+  saveParentMissions,
+  toggleParentMission,
+  addParentMission,
+  deleteParentMission,
+  extractMemoryFromDialogue,
+} = require("./services/child-memory");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -233,6 +243,52 @@ app.post("/api/reset-session", (req, res) => {
     : "default-session";
   resetSessionHistory(sessionId);
   res.json({ success: true, message: `Session ${sessionId} reset successfully` });
+});
+
+// --- Child Profile & Intelligence Analytics ---
+app.get("/api/child/profile", (_req, res) => {
+  res.json({ success: true, profile: getChildProfile() });
+});
+
+app.post("/api/child/profile", (req, res) => {
+  try {
+    const updated = updateChildProfile(req.body || {});
+    res.json({ success: true, profile: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- Parent Missions & Directives ---
+app.get("/api/parent/missions", (_req, res) => {
+  res.json({ success: true, missions: getParentMissions() });
+});
+
+app.post("/api/parent/missions", (req, res) => {
+  const { title, directive } = req.body || {};
+  if (!title) {
+    return res.status(400).json({ success: false, error: "Title is required" });
+  }
+  const newMission = addParentMission({ title, directive });
+  res.json({ success: true, mission: newMission, missions: getParentMissions() });
+});
+
+app.post("/api/parent/missions/toggle", (req, res) => {
+  const { id, active } = req.body || {};
+  if (!id) {
+    return res.status(400).json({ success: false, error: "Mission ID is required" });
+  }
+  const updated = toggleParentMission(id, active);
+  if (!updated) {
+    return res.status(404).json({ success: false, error: "Mission not found" });
+  }
+  res.json({ success: true, mission: updated, missions: getParentMissions() });
+});
+
+app.delete("/api/parent/missions/:id", (req, res) => {
+  const id = req.params.id;
+  const updatedList = deleteParentMission(id);
+  res.json({ success: true, missions: updatedList });
 });
 
 // Device Configuration Store (uploads/device_config.json)
