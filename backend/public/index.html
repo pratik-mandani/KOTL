@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KOTL v2.2 - Child AI Companion & Parent Portal</title>
+  <title>KOTL v2.2 - Child AI Companion & Developmental Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,6 +66,23 @@
     .glass-card:hover {
       border-color: rgba(255, 255, 255, 0.12);
     }
+    @media print {
+      header, nav, #recordingWaveformContainer, .no-print {
+        display: none !important;
+      }
+      body, main, section {
+        background: white !important;
+        color: black !important;
+        overflow: visible !important;
+        height: auto !important;
+      }
+      .glass-card {
+        background: white !important;
+        border: 1px solid #e2e8f0 !important;
+        color: black !important;
+        box-shadow: none !important;
+      }
+    }
   </style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex flex-col font-sans bg-dark-bg text-slate-100 antialiased selection:bg-sky-500 selection:text-white">
@@ -89,18 +106,18 @@
           <span class="text-[11px] text-dark-muted hidden lg:inline">• AI Child Companion</span>
         </div>
         <p class="text-[10px] sm:text-[11px] text-dark-muted truncate hidden sm:block">
-          Intelligence Analytics & Parent Directives
+          Pediatric Developmental Report & Parent Hub
         </p>
       </div>
     </div>
 
     <!-- Center Segmented Tab Navigation -->
     <nav class="hidden md:flex items-center bg-dark-bg/80 p-1 rounded-xl border border-dark-border space-x-1 text-xs font-medium">
-      <button id="tabBtnAnalytics" onclick="switchTab('analytics')" class="px-3.5 py-1.5 rounded-lg border border-transparent transition-all flex items-center space-x-2 tab-active">
+      <button id="tabBtnReport" onclick="switchTab('report')" class="px-3.5 py-1.5 rounded-lg border border-transparent transition-all flex items-center space-x-2 tab-active">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
-        <span>Child Analytics</span>
+        <span>Child Report & Skills</span>
       </button>
 
       <button id="tabBtnMissions" onclick="switchTab('missions')" class="px-3.5 py-1.5 rounded-lg border border-transparent transition-all flex items-center space-x-2 text-dark-light hover:text-white hover:bg-dark-card/50">
@@ -119,7 +136,7 @@
       </button>
     </nav>
 
-    <!-- Right Controls: Status & System Modals -->
+    <!-- Right Controls: Status & Modals -->
     <div class="flex items-center space-x-2 sm:space-x-2.5 text-xs">
       <!-- Live Device Status Pill -->
       <div class="flex items-center space-x-2 px-2.5 py-1.5 rounded-xl bg-dark-card border border-dark-border text-dark-light">
@@ -152,11 +169,11 @@
 
   <!-- Mobile Bottom Tab Bar -->
   <nav class="md:hidden flex items-center justify-around bg-dark-surface border-b border-dark-border py-2 text-xs font-medium shrink-0">
-    <button onclick="switchTab('analytics')" id="mobTabAnalytics" class="flex flex-col items-center space-y-1 text-sky-400">
+    <button onclick="switchTab('report')" id="mobTabReport" class="flex flex-col items-center space-y-1 text-sky-400">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
       </svg>
-      <span class="text-[10px]">Analytics</span>
+      <span class="text-[10px]">Report & Skills</span>
     </button>
     <button onclick="switchTab('missions')" id="mobTabMissions" class="flex flex-col items-center space-y-1 text-dark-muted">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,153 +190,126 @@
   </nav>
 
   <!-- ======================================================== -->
-  <!-- MAIN CONTENT AREA                                        -->
+  <!-- MAIN CONTENT CONTAINER                                   -->
   <!-- ======================================================== -->
   <main class="flex-1 overflow-hidden relative">
 
     <!-- ======================================================== -->
-    <!-- TAB 1: CHILD INTELLIGENCE & ANALYTICS                    -->
+    <!-- TAB 1: OFFICIAL KOTL CHILD DEVELOPMENTAL REPORT          -->
     <!-- ======================================================== -->
-    <section id="viewAnalytics" class="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 custom-scrollbar max-w-6xl mx-auto">
+    <section id="viewReport" class="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 custom-scrollbar max-w-6xl mx-auto">
       
-      <!-- Profile Summary Card -->
-      <div class="glass-card rounded-2xl p-6 shadow-xl relative overflow-hidden">
-        <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <!-- Report Header Card -->
+      <div class="glass-card rounded-2xl p-6 sm:p-7 shadow-2xl relative overflow-hidden border border-sky-500/20">
+        <div class="absolute -right-12 -top-12 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-          <div class="flex items-center space-x-4">
-            <div id="childAvatar" class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-indigo-500/20 border border-sky-500/30 flex items-center justify-center text-2xl shadow-inner shrink-0">
-              🧒
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
+          <div class="space-y-2">
+            <div class="flex items-center space-x-2.5">
+              <span class="px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30 text-[10px] font-mono uppercase tracking-wider font-bold">
+                Official KOTL Assessment
+              </span>
+              <span id="reportDateBadge" class="text-xs text-dark-muted font-mono">October 16, 2026</span>
             </div>
-            <div>
-              <div class="flex items-center space-x-2.5">
-                <h2 id="childNameText" class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Aarav</h2>
-                <span id="childAgeBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">6 Years Old</span>
+            
+            <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              Child Intelligence & Developmental Report
+            </h1>
+            
+            <p class="text-xs sm:text-sm text-dark-light max-w-2xl leading-relaxed">
+              Prepared by KOTL AI Companion based on real-time acoustic speech analysis, vocabulary progression, and dialogue engagement with <strong class="text-white font-semibold" id="reportChildName">Aarav</strong>.
+            </p>
+          </div>
+
+          <!-- Overall Developmental Score & Action Buttons -->
+          <div class="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end gap-3 self-stretch lg:self-auto shrink-0">
+            <div class="flex items-center space-x-3 bg-dark-bg/80 border border-dark-border px-4 py-2 rounded-xl">
+              <div class="text-right">
+                <span class="block text-[10px] uppercase font-mono tracking-wider text-dark-muted">Overall Index</span>
+                <span id="reportOverallScore" class="text-xl font-mono font-extrabold text-emerald-400">88 / 100</span>
               </div>
-              <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-dark-muted mt-1.5">
-                <span class="flex items-center space-x-1">
-                  <span class="text-dark-light">Languages:</span>
-                  <strong class="text-slate-200 font-medium">English, Gujarati, Hindi</strong>
-                </span>
-                <span>•</span>
-                <span class="flex items-center space-x-1">
-                  <span class="text-dark-light">Dialogues:</span>
-                  <strong id="totalDialoguesText" class="text-sky-400 font-mono font-bold">14</strong>
-                </span>
-                <span>•</span>
-                <span class="flex items-center space-x-1">
-                  <span class="text-dark-light">Voice Accent:</span>
-                  <strong class="text-slate-200 font-medium">Natural Kotil</strong>
-                </span>
+              <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm">
+                A+
               </div>
             </div>
-          </div>
 
-          <button onclick="openEditProfileModal()" class="px-3.5 py-2 rounded-xl bg-dark-card hover:bg-dark-cardHover border border-dark-border text-slate-200 hover:text-white text-xs font-medium transition-all flex items-center space-x-1.5 shadow-sm self-end sm:self-center">
-            <svg class="w-3.5 h-3.5 text-dark-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
-            </svg>
-            <span>Edit Profile</span>
-          </button>
-        </div>
-      </div>
+            <div class="flex items-center space-x-2">
+              <button id="regenerateReportBtn" onclick="regenerateReport()" class="px-3 py-1.5 rounded-xl bg-dark-card hover:bg-dark-cardHover border border-dark-border text-xs text-slate-200 hover:text-white transition-all flex items-center space-x-1.5 shadow-sm">
+                <svg id="refreshIcon" class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <span>Refresh AI Analysis</span>
+              </button>
 
-      <!-- Cognitive Matrix: 4 Metrics Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Metric 1: Vocabulary Growth -->
-        <div class="glass-card rounded-2xl p-5 space-y-3 flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-dark-light uppercase tracking-wider">Vocabulary</span>
-            <span id="vocabScoreText" class="text-sm font-mono font-bold text-sky-400">84%</span>
-          </div>
-          <div>
-            <div class="w-full bg-dark-bg rounded-full h-2 overflow-hidden mb-2">
-              <div id="vocabProgressBar" class="bg-gradient-to-r from-sky-500 to-indigo-500 h-full rounded-full transition-all duration-500" style="width: 84%"></div>
+              <button onclick="window.print()" class="px-3 py-1.5 rounded-xl bg-dark-card hover:bg-dark-cardHover border border-dark-border text-xs text-slate-200 hover:text-white transition-all flex items-center space-x-1.5 shadow-sm">
+                <svg class="w-3.5 h-3.5 text-dark-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                <span>Print / PDF</span>
+              </button>
             </div>
-            <p class="text-[11px] text-dark-muted leading-relaxed">
-              Lexical range and sentence comprehension.
-            </p>
-          </div>
-        </div>
-
-        <!-- Metric 2: Curiosity Index -->
-        <div class="glass-card rounded-2xl p-5 space-y-3 flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-dark-light uppercase tracking-wider">Curiosity</span>
-            <span id="curiosityScoreText" class="text-sm font-mono font-bold text-emerald-400">92%</span>
-          </div>
-          <div>
-            <div class="w-full bg-dark-bg rounded-full h-2 overflow-hidden mb-2">
-              <div id="curiosityProgressBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-500" style="width: 92%"></div>
-            </div>
-            <p class="text-[11px] text-dark-muted leading-relaxed">
-              Frequency of exploratory questions and wonders.
-            </p>
-          </div>
-        </div>
-
-        <!-- Metric 3: Sentiment & Mood -->
-        <div class="glass-card rounded-2xl p-5 space-y-3 flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-dark-light uppercase tracking-wider">Sentiment</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 font-mono font-bold border border-rose-500/20">Positive</span>
-          </div>
-          <div>
-            <div class="text-xs font-medium text-slate-200 mb-1" id="emotionalToneText">
-              Cheerful, Loving & Playful
-            </div>
-            <p class="text-[11px] text-dark-muted leading-relaxed">
-              Emotional tone observed during voice turns.
-            </p>
-          </div>
-        </div>
-
-        <!-- Metric 4: Speech Clarity -->
-        <div class="glass-card rounded-2xl p-5 space-y-3 flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-dark-light uppercase tracking-wider">Acoustic Clarity</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 font-mono font-bold border border-indigo-500/20">Optimal</span>
-          </div>
-          <div>
-            <div class="text-xs font-medium text-slate-200 mb-1">
-              16kHz PCM • Room Calibrated
-            </div>
-            <p class="text-[11px] text-dark-muted leading-relaxed">
-              Real-time ESP32 I2S & AGC speech capture.
-            </p>
           </div>
         </div>
       </div>
 
-      <!-- Interests vs Sensitivities (2 Columns) -->
+      <!-- KOTL Executive Assessment Card -->
+      <div class="glass-card rounded-2xl p-6 space-y-3 border-l-4 border-l-sky-500">
+        <div class="flex items-center space-x-2">
+          <span class="text-sm">🤖</span>
+          <h2 class="text-xs font-mono uppercase tracking-wider font-bold text-sky-400">
+            Executive Pediatric Observation (By KOTL Brain)
+          </h2>
+        </div>
+        <p id="reportExecutiveSummary" class="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
+          Loading AI observation report...
+        </p>
+      </div>
+
+      <!-- Core Skills Detailed Assessment (What Skills Aarav Has) -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+          <h2 class="text-xs font-mono uppercase tracking-wider font-bold text-dark-light">
+            Core Skills & Cognitive Matrix
+          </h2>
+          <span class="text-[11px] text-dark-muted">Evaluated against age-appropriate benchmarks</span>
+        </div>
+
+        <div id="skillsAssessmentGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Dynamically populated skills -->
+        </div>
+      </div>
+
+      <!-- Two-Column Breakdown: What Aarav Loves (Likes) vs Sensitivities (Dislikes) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Passions & Interests Card -->
-        <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between pb-1">
+        <!-- Passions Analysis (Likes) -->
+        <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-3.5 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between pb-1 border-b border-dark-border/60">
               <h3 class="font-bold text-sm text-white flex items-center space-x-2">
                 <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                 </svg>
-                <span>Passions & Interests</span>
+                <span>What Aarav Loves (Passions & High Interest)</span>
               </h3>
-              <span class="text-[10px] text-dark-muted font-mono uppercase tracking-wider">AI Memory</span>
+              <span class="text-[10px] text-emerald-400 font-mono">Top Affinities</span>
             </div>
-            <p class="text-xs text-dark-muted leading-relaxed mb-3">
-              Topics Aarav loves that KOTL naturally incorporates into playful stories and games.
+            
+            <p class="text-xs text-dark-muted leading-relaxed">
+              Topics that capture Aarav's highest engagement, prompting longer dialogue turns and vivid questions.
             </p>
 
-            <div id="likesContainer" class="flex flex-wrap gap-2">
-              <!-- Dynamically populated chips -->
+            <div id="passionsContainer" class="space-y-2.5">
+              <!-- Dynamically populated -->
             </div>
           </div>
 
+          <!-- Quick Add Interest Input -->
           <div class="pt-3 border-t border-dark-border/80 flex items-center space-x-2">
             <input
               id="newLikeInput"
               type="text"
-              placeholder="Add interest (e.g. Space, Painting)..."
-              class="flex-1 bg-dark-bg border border-dark-border rounded-xl px-3 py-1.5 text-xs text-white placeholder-dark-muted focus:outline-none focus:border-sky-500 font-sans"
+              placeholder="Add interest (e.g. Painting, Astronomy)..."
+              class="flex-1 bg-dark-bg border border-dark-border rounded-xl px-3 py-1.5 text-xs text-white placeholder-dark-muted focus:outline-none focus:border-sky-500"
             />
             <button onclick="addInterest('likes')" class="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition-all">
               + Add
@@ -327,33 +317,35 @@
           </div>
         </div>
 
-        <!-- Sensitivities & Dislikes Card -->
-        <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between pb-1">
+        <!-- Sensitivities & Dislikes with KOTL Interventions -->
+        <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-3.5 flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between pb-1 border-b border-dark-border/60">
               <h3 class="font-bold text-sm text-white flex items-center space-x-2">
                 <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                 </svg>
-                <span>Sensitivities & Dislikes</span>
+                <span>What Aarav Dislikes / Fears & KOTL's Coping</span>
               </h3>
-              <span class="text-[10px] text-dark-muted font-mono uppercase tracking-wider">Mindful AI</span>
+              <span class="text-[10px] text-rose-400 font-mono">Mindful Care</span>
             </div>
-            <p class="text-xs text-dark-muted leading-relaxed mb-3">
-              Sensitivities and fears KOTL treats with gentleness and thoughtful care.
+
+            <p class="text-xs text-dark-muted leading-relaxed">
+              Sensitivities identified in conversation, paired with KOTL's gentle, autonomous reassurance strategies.
             </p>
 
-            <div id="dislikesContainer" class="flex flex-wrap gap-2">
-              <!-- Dynamically populated chips -->
+            <div id="sensitivitiesContainer" class="space-y-2.5">
+              <!-- Dynamically populated -->
             </div>
           </div>
 
+          <!-- Quick Add Dislike Input -->
           <div class="pt-3 border-t border-dark-border/80 flex items-center space-x-2">
             <input
               id="newDislikeInput"
               type="text"
-              placeholder="Add sensitivity (e.g. Loud Sounds)..."
-              class="flex-1 bg-dark-bg border border-dark-border rounded-xl px-3 py-1.5 text-xs text-white placeholder-dark-muted focus:outline-none focus:border-sky-500 font-sans"
+              placeholder="Add sensitivity (e.g. Thunder, Injections)..."
+              class="flex-1 bg-dark-bg border border-dark-border rounded-xl px-3 py-1.5 text-xs text-white placeholder-dark-muted focus:outline-none focus:border-sky-500"
             />
             <button onclick="addInterest('dislikes')" class="px-3.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold transition-all">
               + Add
@@ -362,28 +354,37 @@
         </div>
       </div>
 
-      <!-- Growth Roadmap & KOTL Action Plan -->
+      <!-- Actionable Parent Recommendations Card -->
       <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-dark-border/80 pb-3">
+        <div class="flex items-center space-x-2 border-b border-dark-border/80 pb-3">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg>
           <div>
-            <h3 class="font-bold text-sm sm:text-base text-white flex items-center space-x-2">
-              <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-              </svg>
-              <span>Development Goals & KOTL Strategy</span>
-            </h3>
-            <p class="text-xs text-dark-muted mt-0.5">
-              Targeted developmental milestones and how KOTL autonomously coaches Aarav.
-            </p>
+            <h3 class="font-bold text-sm text-white">Actionable Parent Recommendations</h3>
+            <p class="text-[11px] text-dark-muted">Fun, simple developmental activities tailored to Aarav's recent conversations.</p>
           </div>
-
-          <button onclick="openAddImprovementModal()" class="px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black text-xs font-semibold transition-all flex items-center space-x-1.5 shadow-sm shrink-0">
-            <span>+ Add Growth Goal</span>
-          </button>
         </div>
 
-        <div id="improvementAreasContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-          <!-- Dynamically populated -->
+        <div id="parentRecommendationsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <!-- Dynamically populated recommendations -->
+        </div>
+      </div>
+
+      <!-- Developmental Milestones Card -->
+      <div class="glass-card rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="flex items-center space-x-2 border-b border-dark-border/80 pb-3">
+          <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+          </svg>
+          <div>
+            <h3 class="font-bold text-sm text-white">Developmental Milestones Tracker</h3>
+            <p class="text-[11px] text-dark-muted">Key accomplishments observed and goals currently in coaching.</p>
+          </div>
+        </div>
+
+        <div id="milestonesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <!-- Dynamically populated milestones -->
         </div>
       </div>
 
@@ -574,80 +575,10 @@
 
   </main>
 
-  <!-- Hidden Audio Player for Speech Playback -->
+  <!-- Audio Player for Speech Playback -->
   <audio id="ttsAudioPlayer" class="hidden" autoplay></audio>
 
-  <!-- ======================================================== -->
-  <!-- MODAL 1: EDIT PROFILE                                    -->
-  <!-- ======================================================== -->
-  <div id="editProfileModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-dark-border">
-      <div class="flex items-center justify-between border-b border-dark-border pb-3">
-        <h3 class="font-bold text-sm text-white">Edit Child Profile</h3>
-        <button onclick="closeEditProfileModal()" class="text-dark-muted hover:text-white text-sm">✕</button>
-      </div>
-
-      <form id="editProfileForm" onsubmit="saveProfileChanges(event)" class="space-y-3.5 text-xs">
-        <div>
-          <label class="block text-dark-muted mb-1 font-medium">Child's Name</label>
-          <input id="editChildName" type="text" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" required />
-        </div>
-        <div>
-          <label class="block text-dark-muted mb-1 font-medium">Age Description</label>
-          <input id="editChildAge" type="text" placeholder="e.g. 6 Years" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" required />
-        </div>
-        <div>
-          <label class="block text-dark-muted mb-1 font-medium">Avatar Emoji</label>
-          <input id="editChildAvatar" type="text" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" />
-        </div>
-
-        <div class="flex justify-end space-x-2 pt-2">
-          <button type="button" onclick="closeEditProfileModal()" class="px-3.5 py-1.5 rounded-xl bg-dark-card text-dark-light hover:text-white border border-dark-border">Cancel</button>
-          <button type="submit" class="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- MODAL 2: ADD GROWTH GOAL                                 -->
-  <!-- ======================================================== -->
-  <div id="addImprovementModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-dark-border">
-      <div class="flex items-center justify-between border-b border-dark-border pb-3">
-        <h3 class="font-bold text-sm text-white">Add Development Goal</h3>
-        <button onclick="closeAddImprovementModal()" class="text-dark-muted hover:text-white text-sm">✕</button>
-      </div>
-
-      <form id="addImprovementForm" onsubmit="handleSaveImprovement(event)" class="space-y-3.5 text-xs">
-        <div>
-          <label class="block text-dark-muted mb-1 font-medium">Goal Title</label>
-          <input id="newGoalTitle" type="text" placeholder="e.g. Bedtime Dental Hygiene" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" required />
-        </div>
-        <div>
-          <label class="block text-dark-muted mb-1 font-medium">Status</label>
-          <select id="newGoalStatus" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500">
-            <option value="in_progress">In Progress</option>
-            <option value="planning">Planning</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-dark-muted mb-1 font-medium">KOTL Coaching Action Plan</label>
-          <textarea id="newGoalPlan" rows="3" placeholder="e.g. KOTL reminds how clean teeth shine bright after daily storytelling." class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500" required></textarea>
-        </div>
-
-        <div class="flex justify-end space-x-2 pt-2">
-          <button type="button" onclick="closeAddImprovementModal()" class="px-3.5 py-1.5 rounded-xl bg-dark-card text-dark-light hover:text-white border border-dark-border">Cancel</button>
-          <button type="submit" class="px-4 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-bold">Add Goal</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ======================================================== -->
-  <!-- MODAL 3: ESP32 WI-FI CONFIG                              -->
-  <!-- ======================================================== -->
+  <!-- Modals: Wi-Fi, Hardware, Quotas -->
   <div id="wifiModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-dark-border">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
@@ -655,19 +586,15 @@
         <button id="closeWifiModalBtn" class="text-dark-muted hover:text-white text-sm">✕</button>
       </div>
 
-      <p class="text-xs text-dark-muted leading-relaxed">
-        Update Wi-Fi credentials and backend cloud URL. ESP32 syncs automatically without re-flashing code.
-      </p>
-
       <form id="wifiConfigForm" class="space-y-3 text-xs font-mono">
         <div>
-          <label class="block text-dark-light mb-1 text-[11px]">Wi-Fi SSID (Network Name)</label>
+          <label class="block text-dark-light mb-1 text-[11px]">Wi-Fi SSID</label>
           <input id="cfgWifiSsid" type="text" placeholder="e.g. Altius" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500 text-xs" required />
         </div>
         <div>
           <label class="block text-dark-light mb-1 text-[11px]">Wi-Fi Password</label>
           <div class="relative">
-            <input id="cfgWifiPass" type="password" placeholder="Enter Wi-Fi password" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500 text-xs pr-10" />
+            <input id="cfgWifiPass" type="password" placeholder="Password" class="w-full bg-dark-bg border border-dark-border rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500 text-xs pr-10" />
             <button type="button" id="togglePassBtn" class="absolute right-3 top-2.5 text-dark-muted hover:text-white">👁️</button>
           </div>
         </div>
@@ -681,23 +608,9 @@
         </button>
         <p id="configStatusMsg" class="text-[11px] text-center pt-1 hidden font-mono"></p>
       </form>
-
-      <div class="p-3 bg-dark-bg rounded-xl border border-dark-border text-[11px] font-mono text-dark-muted space-y-1">
-        <div class="flex justify-between">
-          <span>Config Version:</span>
-          <span id="cfgVersionText" class="text-white font-mono">v1</span>
-        </div>
-        <div class="flex justify-between">
-          <span>Device Sync:</span>
-          <span id="deviceOnlineBadge" class="text-emerald-400">Online & Synced</span>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- ======================================================== -->
-  <!-- MODAL 4: HARDWARE DIAGNOSTICS & TEST                     -->
-  <!-- ======================================================== -->
   <div id="hardwareModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="glass-card rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar border border-dark-border">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
@@ -706,46 +619,31 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-        <!-- Physical Mic Card -->
         <div class="p-4 bg-dark-bg rounded-xl border border-dark-border space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-white font-bold">🎙️ ESP32 Mic (Pin 34)</span>
             <span id="espMicBadge" class="text-[10px] px-2 py-0.5 rounded bg-dark-card text-dark-light">Ready</span>
           </div>
-          <p class="text-[11px] text-dark-muted">
-            Direct ADC recording for 4s with room calibration.
-          </p>
-          <button id="triggerEspMicBtn" type="button" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2 rounded-xl transition-all shadow flex items-center justify-center space-x-1.5">
-            <span>Record 4s from ESP32</span>
+          <button id="triggerEspMicBtn" type="button" class="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-2 rounded-xl transition-all shadow">
+            Record 4s from ESP32
           </button>
-          <div id="espMicStatusText" class="text-[11px] text-dark-muted min-h-[24px]">
-            Ready.
-          </div>
+          <div id="espMicStatusText" class="text-[11px] text-dark-muted min-h-[24px]">Ready.</div>
         </div>
 
-        <!-- Speaker Output Card -->
         <div class="p-4 bg-dark-bg rounded-xl border border-dark-border space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-white font-bold">🔊 MAX98357A I2S Speaker</span>
             <span id="speakerTestBadge" class="text-[10px] px-2 py-0.5 rounded bg-dark-card text-dark-light">Ready</span>
           </div>
-          <p class="text-[11px] text-dark-muted">
-            Plays spoken "Kotil" voice sample over I2S.
-          </p>
-          <button id="testSpeakerBtn" type="button" class="w-full bg-sky-500 hover:bg-sky-400 text-black font-bold py-2 rounded-xl transition-all shadow flex items-center justify-center space-x-1.5">
-            <span>Play Test Voice</span>
+          <button id="testSpeakerBtn" type="button" class="w-full bg-sky-500 hover:bg-sky-400 text-black font-bold py-2 rounded-xl transition-all shadow">
+            Play Test Voice
           </button>
-          <div id="speakerTestStatusText" class="text-[11px] text-dark-muted min-h-[24px]">
-            Ready.
-          </div>
+          <div id="speakerTestStatusText" class="text-[11px] text-dark-muted min-h-[24px]">Ready.</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ======================================================== -->
-  <!-- MODAL 5: FREE QUOTA LIMITS TRACKER                       -->
-  <!-- ======================================================== -->
   <div id="quotaModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="glass-card rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-dark-border">
       <div class="flex items-center justify-between border-b border-dark-border pb-3">
@@ -754,53 +652,42 @@
       </div>
 
       <div class="space-y-3 text-xs font-mono">
-        <div class="p-3 bg-dark-bg rounded-xl border border-dark-border space-y-1">
-          <div class="flex justify-between text-slate-300">
-            <span>Groq LLM Quota:</span>
-            <span class="text-white font-bold">14,400 RPD</span>
-          </div>
-          <span class="text-[11px] text-dark-muted block">Tier: 100% Free Tier</span>
+        <div class="p-3 bg-dark-bg rounded-xl border border-dark-border flex justify-between">
+          <span class="text-slate-300">Groq LLM Quota:</span>
+          <span class="text-white font-bold">14,400 RPD</span>
         </div>
-
-        <div class="p-3 bg-dark-bg rounded-xl border border-dark-border flex justify-between items-center">
-          <div>
-            <span class="text-white block">Microsoft Edge-TTS:</span>
-            <span class="text-[11px] text-dark-muted">Natural Voice Synthesis</span>
-          </div>
-          <span class="text-[11px] px-2 py-0.5 rounded bg-dark-card text-emerald-400 font-bold">Unlimited Free</span>
+        <div class="p-3 bg-dark-bg rounded-xl border border-dark-border flex justify-between">
+          <span class="text-slate-300">Microsoft Edge-TTS:</span>
+          <span class="text-emerald-400 font-bold">Unlimited Free</span>
         </div>
-
-        <div class="p-3 bg-dark-bg rounded-xl border border-dark-border flex justify-between items-center">
-          <div>
-            <span class="text-white block">Groq Whisper STT:</span>
-            <span class="text-[11px] text-dark-muted">Multilingual Speech Recognition</span>
-          </div>
-          <span class="text-[11px] px-2 py-0.5 rounded bg-dark-card text-white font-bold">7,200s/day</span>
+        <div class="p-3 bg-dark-bg rounded-xl border border-dark-border flex justify-between">
+          <span class="text-slate-300">Groq Whisper STT:</span>
+          <span class="text-white font-bold">7,200s / day</span>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ======================================================== -->
-  <!-- CLIENT LOGIC & DATA SYNCHRONIZATION                      -->
+  <!-- CLIENT JAVASCRIPT LOGIC                                  -->
   <!-- ======================================================== -->
   <script>
-    // Tab Navigation
-    let currentTab = 'analytics';
+    // Tab Switching
+    let currentTab = 'report';
     function switchTab(tab) {
       currentTab = tab;
       const views = {
-        analytics: document.getElementById('viewAnalytics'),
+        report: document.getElementById('viewReport'),
         missions: document.getElementById('viewMissions'),
         chat: document.getElementById('viewChat')
       };
       const buttons = {
-        analytics: document.getElementById('tabBtnAnalytics'),
+        report: document.getElementById('tabBtnReport'),
         missions: document.getElementById('tabBtnMissions'),
         chat: document.getElementById('tabBtnChat')
       };
       const mobButtons = {
-        analytics: document.getElementById('mobTabAnalytics'),
+        report: document.getElementById('mobTabReport'),
         missions: document.getElementById('mobTabMissions'),
         chat: document.getElementById('mobTabChat')
       };
@@ -830,7 +717,7 @@
       }
     }
 
-    // Modal Triggers
+    // Modal Handlers
     const wifiModal = document.getElementById('wifiModal');
     const openWifiModalBtn = document.getElementById('openWifiModalBtn');
     const closeWifiModalBtn = document.getElementById('closeWifiModalBtn');
@@ -849,158 +736,187 @@
     openQuotaModalBtn.onclick = () => quotaModal.classList.remove('hidden');
     closeQuotaModalBtn.onclick = () => quotaModal.classList.add('hidden');
 
-    const editProfileModal = document.getElementById('editProfileModal');
-    function openEditProfileModal() { editProfileModal.classList.remove('hidden'); }
-    function closeEditProfileModal() { editProfileModal.classList.add('hidden'); }
+    // Report State & Rendering
+    let currentReport = null;
 
-    const addImprovementModal = document.getElementById('addImprovementModal');
-    function openAddImprovementModal() { addImprovementModal.classList.remove('hidden'); }
-    function closeAddImprovementModal() { addImprovementModal.classList.add('hidden'); }
-
-    // Child Profile State & Operations
-    let currentChildProfile = null;
-
-    async function loadChildProfile() {
+    async function loadChildReport() {
       try {
-        const res = await fetch('/api/child/profile');
+        const res = await fetch('/api/child/report');
         if (res.ok) {
           const data = await res.json();
-          currentChildProfile = data.profile;
-          renderChildProfile(currentChildProfile);
+          currentReport = data.report;
+          renderChildReport(currentReport);
         }
-      } catch (e) {
-        console.warn('Error loading child profile:', e);
+      } catch (err) {
+        console.warn('Error loading report:', err);
       }
     }
 
-    function renderChildProfile(p) {
-      if (!p) return;
-      document.getElementById('childNameText').textContent = p.name || 'Aarav';
-      document.getElementById('childAgeBadge').textContent = p.age || '6 Years Old';
-      document.getElementById('childAvatar').textContent = p.avatar || '🧒';
-      document.getElementById('totalDialoguesText').textContent = p.conversation_count || 14;
+    function renderChildReport(rep) {
+      if (!rep) return;
+      document.getElementById('reportChildName').textContent = rep.child_name || 'Aarav';
+      document.getElementById('reportDateBadge').textContent = rep.assessment_date || 'Recent';
+      document.getElementById('reportOverallScore').textContent = (rep.overall_development_score || 88) + ' / 100';
+      document.getElementById('reportExecutiveSummary').textContent = rep.executive_summary || '';
 
-      document.getElementById('editChildName').value = p.name || '';
-      document.getElementById('editChildAge').value = p.age || '';
-      document.getElementById('editChildAvatar').value = p.avatar || '🧒';
+      // Skills Assessment Grid
+      const skillsGrid = document.getElementById('skillsAssessmentGrid');
+      skillsGrid.innerHTML = '';
+      if (rep.skills_assessment) {
+        const skillDefs = [
+          { key: 'vocabulary', title: 'Language & Lexical Mastery', icon: '🗣️' },
+          { key: 'curiosity', title: 'Scientific Curiosity & Inquiry', icon: '🔍' },
+          { key: 'emotional_intelligence', title: 'Emotional Intelligence & Empathy', icon: '💖' },
+          { key: 'listening_and_habits', title: 'Habits & Listening Discipline', icon: '🤝' },
+        ];
 
-      // Cognitive Metrics
-      const vocab = p.skills?.vocabulary || 84;
-      const cur = p.skills?.curiosity || 92;
-      document.getElementById('vocabScoreText').textContent = vocab + '%';
-      document.getElementById('vocabProgressBar').style.width = vocab + '%';
-      document.getElementById('curiosityScoreText').textContent = cur + '%';
-      document.getElementById('curiosityProgressBar').style.width = cur + '%';
-      document.getElementById('emotionalToneText').textContent = p.skills?.emotional_tone || 'Cheerful, Loving & Playful';
-
-      // Passions / Likes Chips
-      const likesCont = document.getElementById('likesContainer');
-      likesCont.innerHTML = '';
-      (p.likes || []).forEach(item => {
-        const tag = document.createElement('span');
-        tag.className = 'px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-medium flex items-center space-x-1.5 shadow-sm';
-        tag.innerHTML = `<span>${escapeHtml(item)}</span><button onclick="removeInterest('likes', '${escapeHtml(item)}')" class="hover:text-white text-emerald-400 font-bold ml-1 text-xs">✕</button>`;
-        likesCont.appendChild(tag);
-      });
-
-      // Sensitivities / Dislikes Chips
-      const dislikesCont = document.getElementById('dislikesContainer');
-      dislikesCont.innerHTML = '';
-      (p.dislikes || []).forEach(item => {
-        const tag = document.createElement('span');
-        tag.className = 'px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium flex items-center space-x-1.5 shadow-sm';
-        tag.innerHTML = `<span>${escapeHtml(item)}</span><button onclick="removeInterest('dislikes', '${escapeHtml(item)}')" class="hover:text-white text-rose-400 font-bold ml-1 text-xs">✕</button>`;
-        dislikesCont.appendChild(tag);
-      });
-
-      // Development Goals & Roadmap
-      const impCont = document.getElementById('improvementAreasContainer');
-      impCont.innerHTML = '';
-      (p.improvement_areas || []).forEach(area => {
-        const card = document.createElement('div');
-        card.className = 'bg-dark-bg/80 border border-dark-border rounded-xl p-4 space-y-2 flex flex-col justify-between';
-        
-        let statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 font-mono">In Progress</span>';
-        if (area.status === 'planning') {
-          statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">Planning</span>';
-        } else if (area.status === 'completed') {
-          statusBadge = '<span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Completed</span>';
-        }
-
-        card.innerHTML = `
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between">
-              <h4 class="font-bold text-xs text-white">${escapeHtml(area.title)}</h4>
-              ${statusBadge}
+        skillDefs.forEach(def => {
+          const item = rep.skills_assessment[def.key];
+          if (!item) return;
+          const card = document.createElement('div');
+          card.className = 'glass-card rounded-2xl p-5 space-y-3 flex flex-col justify-between';
+          
+          card.innerHTML = `
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <span class="text-base">${def.icon}</span>
+                  <h4 class="font-bold text-sm text-white">${escapeHtml(def.title)}</h4>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-mono font-bold text-sky-400">${item.score}/100</span>
+                  <span class="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">${escapeHtml(item.status)}</span>
+                </div>
+              </div>
+              <p class="text-xs text-dark-light leading-relaxed">
+                ${escapeHtml(item.evaluation)}
+              </p>
             </div>
-            <p class="text-[11px] text-dark-muted leading-relaxed">
-              <strong class="text-slate-300">KOTL Strategy:</strong> ${escapeHtml(area.action_plan)}
-            </p>
+            <div class="pt-2.5 border-t border-dark-border/60 text-[11px] text-dark-muted">
+              <strong class="text-slate-300 font-medium">Observed Strength:</strong> ${escapeHtml(item.key_strength)}
+            </div>
+          `;
+          skillsGrid.appendChild(card);
+        });
+      }
+
+      // Passions / Likes Breakdown
+      const passionsCont = document.getElementById('passionsContainer');
+      passionsCont.innerHTML = '';
+      (rep.passions_analysis || []).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-dark-bg/80 border border-dark-border/80 rounded-xl space-y-1.5';
+        div.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-white">${escapeHtml(item.topic)}</span>
+            <span class="text-xs font-mono font-bold text-emerald-400">${escapeHtml(item.affinity)}</span>
           </div>
+          <p class="text-[11px] text-dark-muted leading-relaxed">
+            ${escapeHtml(item.observation)}
+          </p>
         `;
-        impCont.appendChild(card);
+        passionsCont.appendChild(div);
+      });
+
+      // Sensitivities & Dislikes Breakdown
+      const sensCont = document.getElementById('sensitivitiesContainer');
+      sensCont.innerHTML = '';
+      (rep.sensitivities_and_triggers || []).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-dark-bg/80 border border-dark-border/80 rounded-xl space-y-1.5';
+        div.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-white">${escapeHtml(item.trigger)}</span>
+            <span class="text-[9px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono">${escapeHtml(item.category)}</span>
+          </div>
+          <p class="text-[11px] text-dark-muted leading-relaxed">
+            <strong class="text-slate-300 font-medium">KOTL Strategy:</strong> ${escapeHtml(item.kotl_intervention)}
+          </p>
+        `;
+        sensCont.appendChild(div);
+      });
+
+      // Parent Recommendations
+      const recoCont = document.getElementById('parentRecommendationsContainer');
+      recoCont.innerHTML = '';
+      (rep.parent_recommendations || []).forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'p-4 bg-dark-bg/80 border border-dark-border/80 rounded-xl space-y-2';
+        card.innerHTML = `
+          <h4 class="font-bold text-xs text-amber-300 flex items-center space-x-1.5">
+            <span>💡</span>
+            <span>${escapeHtml(item.title)}</span>
+          </h4>
+          <p class="text-[11px] text-dark-light leading-relaxed">
+            ${escapeHtml(item.action)}
+          </p>
+        `;
+        recoCont.appendChild(card);
+      });
+
+      // Milestones
+      const mileCont = document.getElementById('milestonesContainer');
+      mileCont.innerHTML = '';
+      (rep.milestones || []).forEach(item => {
+        const card = document.createElement('div');
+        const isAchieved = item.status === 'Achieved';
+        card.className = 'p-3 bg-dark-bg/80 border ' + (isAchieved ? 'border-emerald-500/30' : 'border-sky-500/30') + ' rounded-xl space-y-1.5 flex flex-col justify-between';
+        card.innerHTML = `
+          <div class="space-y-1">
+            <span class="text-[9px] px-2 py-0.5 rounded-full font-mono font-medium ${isAchieved ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-sky-500/10 text-sky-400 border border-sky-500/20'}">
+              ${escapeHtml(item.badge)}
+            </span>
+            <h5 class="font-bold text-xs text-white leading-snug pt-1">${escapeHtml(item.title)}</h5>
+          </div>
+          <span class="text-[10px] text-dark-muted font-mono">${escapeHtml(item.status)}</span>
+        `;
+        mileCont.appendChild(card);
       });
     }
 
+    async function regenerateReport() {
+      const btn = document.getElementById('regenerateReportBtn');
+      const icon = document.getElementById('refreshIcon');
+      btn.disabled = true;
+      icon.classList.add('animate-spin');
+      try {
+        const res = await fetch('/api/child/report/generate', { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          currentReport = data.report;
+          renderChildReport(currentReport);
+        }
+      } catch (err) {
+        alert('Report generation failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        icon.classList.remove('animate-spin');
+      }
+    }
+
+    // Child Profile Quick Interests Operations
     async function addInterest(type) {
       const input = document.getElementById(type === 'likes' ? 'newLikeInput' : 'newDislikeInput');
       const val = input.value.trim();
-      if (!val || !currentChildProfile) return;
+      if (!val) return;
 
-      if (!currentChildProfile[type]) currentChildProfile[type] = [];
-      if (!currentChildProfile[type].includes(val)) {
-        currentChildProfile[type].push(val);
-        input.value = '';
-        await saveProfileToServer(currentChildProfile);
-      }
-    }
-
-    async function removeInterest(type, val) {
-      if (!currentChildProfile || !currentChildProfile[type]) return;
-      currentChildProfile[type] = currentChildProfile[type].filter(item => item !== val);
-      await saveProfileToServer(currentChildProfile);
-    }
-
-    async function saveProfileChanges(e) {
-      e.preventDefault();
-      if (!currentChildProfile) return;
-      currentChildProfile.name = document.getElementById('editChildName').value.trim();
-      currentChildProfile.age = document.getElementById('editChildAge').value.trim();
-      currentChildProfile.avatar = document.getElementById('editChildAvatar').value.trim() || '🧒';
-      await saveProfileToServer(currentChildProfile);
-      closeEditProfileModal();
-    }
-
-    async function handleSaveImprovement(e) {
-      e.preventDefault();
-      if (!currentChildProfile) return;
-      if (!currentChildProfile.improvement_areas) currentChildProfile.improvement_areas = [];
-      const newGoal = {
-        id: 'imp-' + Date.now(),
-        title: document.getElementById('newGoalTitle').value.trim(),
-        status: document.getElementById('newGoalStatus').value,
-        action_plan: document.getElementById('newGoalPlan').value.trim()
-      };
-      currentChildProfile.improvement_areas.push(newGoal);
-      await saveProfileToServer(currentChildProfile);
-      document.getElementById('addImprovementForm').reset();
-      closeAddImprovementModal();
-    }
-
-    async function saveProfileToServer(profile) {
       try {
-        const res = await fetch('/api/child/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(profile)
-        });
-        if (res.ok) {
-          const data = await res.json();
-          currentChildProfile = data.profile;
-          renderChildProfile(currentChildProfile);
+        const profRes = await fetch('/api/child/profile');
+        const profData = await profRes.json();
+        const prof = profData.profile || {};
+        if (!prof[type]) prof[type] = [];
+        if (!prof[type].includes(val)) {
+          prof[type].push(val);
+          await fetch('/api/child/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(prof)
+          });
+          input.value = '';
+          await regenerateReport();
         }
-      } catch (err) {
-        console.error('Error saving profile:', err);
+      } catch (e) {
+        console.error('Error adding interest:', e);
       }
     }
 
@@ -1125,7 +1041,7 @@
       }
     }
 
-    // Chat Conversation & Real-Time Sync
+    // Chat Conversation & Audio
     const chatContainer = document.getElementById('chatContainer');
     const chatScrollArea = document.getElementById('chatScrollArea');
     const chatInput = document.getElementById('chatInput');
@@ -1321,7 +1237,7 @@
             }
           } catch (e) {}
           await syncLiveServerHistory();
-          await loadChildProfile();
+          await loadChildReport();
         }
       } catch (err) {
         console.error('Chat submission error:', err);
@@ -1410,7 +1326,7 @@
         const data = await res.json();
         if (data.tts_url) playAudioClip(data.tts_url);
         await syncLiveServerHistory();
-        await loadChildProfile();
+        await loadChildReport();
       } catch (err) {
         console.error('Voice turn failed:', err);
       } finally {
@@ -1483,7 +1399,6 @@
           document.getElementById('cfgWifiSsid').value = data.wifi_ssid || '';
           document.getElementById('cfgWifiPass').value = data.wifi_pass || '';
           document.getElementById('cfgBackendUrl').value = data.backend_url || window.location.origin;
-          document.getElementById('cfgVersionText').textContent = 'v' + (data.version || 1);
         }
       } catch (e) {}
     }
@@ -1548,7 +1463,7 @@
     };
 
     // Initialization
-    loadChildProfile();
+    loadChildReport();
     loadParentMissions();
     syncLiveServerHistory();
     checkDeviceStatus();

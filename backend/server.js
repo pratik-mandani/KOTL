@@ -27,6 +27,8 @@ const {
   addParentMission,
   deleteParentMission,
   extractMemoryFromDialogue,
+  getChildDevelopmentReport,
+  generateChildDevelopmentReport,
 } = require("./services/child-memory");
 
 const app = express();
@@ -254,6 +256,25 @@ app.post("/api/child/profile", (req, res) => {
   try {
     const updated = updateChildProfile(req.body || {});
     res.json({ success: true, profile: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- Child AI Developmental Assessment Report ---
+app.get("/api/child/report", (_req, res) => {
+  try {
+    const report = getChildDevelopmentReport();
+    res.json({ success: true, report });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/child/report/generate", (_req, res) => {
+  try {
+    const report = generateChildDevelopmentReport({ refresh: true });
+    res.json({ success: true, report });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
