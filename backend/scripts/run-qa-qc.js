@@ -54,17 +54,20 @@ const hasNtpSync = inoContent.includes('configTime(19800, 0, "pool.ntp.org"') &&
 assertTest('SNTP Clock Sync for India Standard Time (UTC+5:30)', hasNtpSync, 'Synchronizes with pool.ntp.org on WiFi connect');
 
 // Verify OLED Clock Rendering and Non-blocking Touch Service
-const hasClockScreen = inoContent.includes('void drawClockDateScreen()');
+const hasClockScreen = inoContent.includes('void drawClockDateScreen(');
 const hasServiceTouch = inoContent.includes('void serviceTouchSensor()');
-const hasNonBlockingClock = inoContent.includes('if (millis() < s_showClockUntilMs)');
-assertTest('OLED Date & Time Screen & Touch Service implemented', hasClockScreen && hasServiceTouch && hasNonBlockingClock, 'Single-tap shows clock for 4.5s; double-tap laughs; long-press sleeps');
+const hasNonBlockingClock = inoContent.includes('s_showClockUntilMs');
+const hasDisplayLatch = inoContent.includes('s_wasClockActive') && inoContent.includes('display.clearDisplay()');
+assertTest('OLED Date & Time Screen & Touch Service with Display Latch', hasClockScreen && hasServiceTouch && hasNonBlockingClock && hasDisplayLatch, 'Single-tap shows clock for 4.5s; display latch prevents eye animation conflict');
 
-// Verify Capacitive Touch Adaptive Calibration & Dual Sensing
+// Verify Capacitive Touch Anti-Flicker Debounce Filtering
 const hasAdaptiveBaseline = inoContent.includes('s_touchBaseline') && inoContent.includes('s_touchThreshold');
-const hasDualSensing = inoContent.includes('digitalRead(TOUCH_PIN_HEAD)') && inoContent.includes('touchRead(TOUCH_PIN_HEAD)');
-assertTest('Capacitive Touch Dynamic Calibration on GPIO 4 (Wire contact & Digital support)',
-  hasAdaptiveBaseline && hasDualSensing,
-  'Calibrates wire ambient baseline at boot; tracks drift; supports bare wire capacitance and digital sensors');
+const hasTouchRead = inoContent.includes('touchRead(TOUCH_PIN_HEAD)');
+const hasHysteresisFilter = inoContent.includes('s_touchFilter') && inoContent.includes('s_debouncedPressed');
+const hasNoiseRejection = inoContent.includes('duration >= 60');
+assertTest('Capacitive Touch 3-Stage Debounce & 50Hz Noise Rejection on GPIO 4',
+  hasAdaptiveBaseline && hasTouchRead && hasHysteresisFilter && hasNoiseRejection,
+  'Calibrates wire baseline; 3-sample hysteresis filter and 60ms min tap reject 50Hz AC noise and eliminate display flicker');
 
 // Verify Startup Sound: 'toot-toot' double beep replaces voice hello
 const hasDoubleBeepFn = inoContent.includes('void playStartupDoubleBeep()') && inoContent.includes('void playTone(');
@@ -151,6 +154,33 @@ const hasHindiException = assistantContent.includes('ONLY if the user explicitly
 assertTest('Language Policy: English is default/priority language, Hindi strictly on request',
   hasEnglishPriority && hasHindiException,
   'Enforces English communication by default; Hindi used strictly upon user Hindi prompt');
+
+// Verify Real-time Clock Grounding & English Time/Date Query Policy
+const hasTimeDatePrompt = assistantContent.includes('REAL-TIME CLOCK & TIME/DATE QUERIES') &&
+  assistantContent.includes('ALWAYS answer accurately and concisely in clean ENGLISH by default');
+assertTest('Time & Date Policy: Injects real-time IST clock and enforces English response by default',
+  hasTimeDatePrompt,
+  'Live Indian Standard Time provided to LLM; time/date queries default to English');
+
+// Verify Default TTS Voice Configuration
+const ttsPath = path.join(__dirname, '..', 'services', 'tts.js');
+const ttsContent = fs.readFileSync(ttsPath, 'utf8');
+const wsPath = path.join(__dirname, '..', 'services', 'websocket.js');
+const wsContent = fs.readFileSync(wsPath, 'utf8');
+const ttsDefaultEnglish = ttsContent.includes('en-IN-PrabhatNeural') && wsContent.includes('en-IN-PrabhatNeural');
+assertTest('Default TTS Voice: en-IN-PrabhatNeural configured in TTS & WebSocket pipelines',
+  ttsDefaultEnglish,
+  'Clean, natural Indian-English voice used for default speech');
+
+// Verify Session History Isolation
+const sessionsPath = path.join(__dirname, '..', 'uploads', 'sessions.json');
+const sessionsContent = fs.readFileSync(sessionsPath, 'utf8');
+const sessionsObj = JSON.parse(sessionsContent);
+const defaultSessionClean = !sessionsObj['default-session'] || sessionsObj['default-session'].length === 0 ||
+  !JSON.stringify(sessionsObj['default-session']).includes('नमस्ते');
+assertTest('Session History Isolation: Stale Hindi sessions cleared',
+  defaultSessionClean,
+  'Default session history reset to prevent Hindi bias in conversation turns');
 
 // Report generation test with dynamic pronouns
 const report = generateChildDevelopmentReport({ refresh: true });

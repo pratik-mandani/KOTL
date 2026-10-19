@@ -34,8 +34,8 @@ async function synthesizeSentencePcm(text) {
 
   const isGujarati = /[\u0A80-\u0AFF]/.test(text);
   const isHindi = /[\u0900-\u097F]/.test(text);
-  let voice = process.env.EDGE_TTS_VOICE || "hi-IN-MadhurNeural";
-  let lang = "hi-IN";
+  let voice = process.env.EDGE_TTS_VOICE || "en-IN-PrabhatNeural";
+  let lang = process.env.EDGE_TTS_LANG || "en-IN";
   if (isGujarati) {
     voice = "gu-IN-DhwaniNeural";
     lang = "gu-IN";

@@ -319,7 +319,7 @@ void serviceAudioCapture();
 void serviceMicrophoneInput();
 void serviceBootButton();
 void serviceTouchSensor();
-void drawClockDateScreen();
+void drawClockDateScreen(bool forceRedraw = false);
 void serviceEyeReaction();
 
 // Touch & Clock Display State
@@ -828,12 +828,22 @@ void loop()
   serviceEyeState();
 
   // If Date & Time Clock Screen is active due to touch, render it; otherwise update RoboEyes!
-  if (millis() < s_showClockUntilMs)
+  static bool s_wasClockActive = false;
+  const bool clockActive = (millis() < s_showClockUntilMs);
+  if (clockActive)
   {
+    s_wasClockActive = true;
     drawClockDateScreen();
   }
   else
   {
+    if (s_wasClockActive)
+    {
+      s_wasClockActive = false;
+      display.clearDisplay();
+      roboEyes.setMood(DEFAULT);
+      roboEyes.setPosition(DEFAULT);
+    }
     // Butter-smooth 50 FPS OLED animations on Core 1 - immune to network delays!
     roboEyes.update();
   }
@@ -2590,7 +2600,6 @@ static uint16_t s_touchThreshold = 45;
 
 void initTouchSensor()
 {
-  pinMode(TOUCH_PIN_HEAD, INPUT_PULLDOWN);
   delay(30);
 
   // Take 25 samples to calculate exact ambient capacitance of the attached wire
@@ -2601,10 +2610,10 @@ void initTouchSensor()
     delay(4);
   }
   s_touchBaseline = (uint16_t)(baselineSum / 25);
-  if (s_touchBaseline < 8) s_touchBaseline = 35; // safety floor
+  if (s_touchBaseline < 25) s_touchBaseline = 65; // safety floor if wire was touched during boot
 
-  // Adaptive threshold: Touch drops raw capacitance counter by ~25-30%
-  s_touchThreshold = (s_touchBaseline * 70) / 100;
+  // Adaptive threshold: Touch drops raw capacitance counter by ~30-35%
+  s_touchThreshold = (s_touchBaseline * 65) / 100;
   if (s_touchBaseline - s_touchThreshold < 10)
   {
     s_touchThreshold = (s_touchBaseline > 12) ? (s_touchBaseline - 10) : (s_touchBaseline / 2);
@@ -2614,12 +2623,14 @@ void initTouchSensor()
                 s_touchBaseline, s_touchThreshold);
 }
 
-void drawClockDateScreen()
+void drawClockDateScreen(bool forceRedraw)
 {
   static uint32_t s_lastClockRefreshMs = 0;
-  // Refresh display at ~4-5 FPS (every 200ms) to ensure smooth seconds/dots without I2C starvation
-  if (millis() - s_lastClockRefreshMs < 200) return;
-  s_lastClockRefreshMs = millis();
+  const uint32_t nowMs = millis();
+
+  // Refresh display at ~2 FPS (every 500ms) for rock-solid stability and blinking colon, or immediately on forceRedraw
+  if (!forceRedraw && (nowMs - s_lastClockRefreshMs < 500)) return;
+  s_lastClockRefreshMs = nowMs;
 
   struct tm timeinfo;
   bool timeValid = getLocalTime(&timeinfo, 20);
@@ -2654,8 +2665,10 @@ void drawClockDateScreen()
     if (hour12 == 0) hour12 = 12;
     const char *amPm = (timeinfo.tm_hour >= 12) ? "PM" : "AM";
 
+    // Smooth blinking colon indicator (on 500ms, off 500ms)
+    char colonChar = ((nowMs / 500) % 2 == 0) ? ':' : ' ';
     char timeBuf[12];
-    snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", hour12, timeinfo.tm_min);
+    snprintf(timeBuf, sizeof(timeBuf), "%02d%c%02d", hour12, colonChar, timeinfo.tm_min);
 
     // Large Center Clock Time (Font Size 2)
     display.setTextSize(2);
@@ -2709,17 +2722,28 @@ void serviceTouchSensor()
 
   // Read capacitive touch value from ESP32 pin (GPIO 4 / T0)
   uint16_t touchVal = touchRead(TOUCH_PIN_HEAD);
-  // Also check digitalRead in case a digital touch sensor (TTP223 module) or button is connected
-  bool digitalHigh = (digitalRead(TOUCH_PIN_HEAD) == HIGH);
 
-  // Pressed if capacitive value drops below adaptive threshold OR digital signal goes HIGH
-  bool isPressed = (touchVal < s_touchThreshold) || digitalHigh;
+  // 3-sample digital hysteresis filter (~75ms window):
+  // Human contact lasts >100ms. 50Hz/60Hz AC noise blips (10-20ms) are completely rejected.
+  static uint8_t s_touchFilter = 0;
+  static bool s_debouncedPressed = false;
 
-  // Slow ambient drift compensation when untouched
-  if (!s_touchIsActive && !isPressed && touchVal > s_touchThreshold && abs((int)touchVal - (int)s_touchBaseline) < 20)
+  if (touchVal < s_touchThreshold)
+  {
+    if (s_touchFilter < 3) s_touchFilter++;
+    if (s_touchFilter >= 3) s_debouncedPressed = true;
+  }
+  else
+  {
+    if (s_touchFilter > 0) s_touchFilter--;
+    if (s_touchFilter == 0) s_debouncedPressed = false;
+  }
+
+  // Slow ambient drift compensation only when untouched
+  if (!s_touchIsActive && !s_debouncedPressed && touchVal > s_touchThreshold && abs((int)touchVal - (int)s_touchBaseline) < 20)
   {
     s_touchBaseline = (uint16_t)(((uint32_t)s_touchBaseline * 63 + touchVal) / 64);
-    s_touchThreshold = (s_touchBaseline * 70) / 100;
+    s_touchThreshold = (s_touchBaseline * 65) / 100;
     if (s_touchBaseline - s_touchThreshold < 10)
     {
       s_touchThreshold = (s_touchBaseline > 12) ? (s_touchBaseline - 10) : (s_touchBaseline / 2);
@@ -2735,37 +2759,36 @@ void serviceTouchSensor()
                   touchVal, s_touchBaseline, s_touchThreshold, s_touchIsActive ? 1 : 0);
   }
 
-  if (isPressed && !s_touchIsActive)
+  if (s_debouncedPressed && !s_touchIsActive)
   {
-    // Touch initiated
+    // Debounced touch confirmed
     s_touchIsActive = true;
     s_touchPressStartMs = nowMs;
-    Serial.printf("[Touch] Contact detected on GPIO 4! (Val=%u, Thresh=%u, Dig=%d)\n",
-                  touchVal, s_touchThreshold, digitalHigh ? 1 : 0);
+    Serial.printf("[Touch] Contact confirmed on GPIO 4! (Val=%u, Thresh=%u)\n",
+                  touchVal, s_touchThreshold);
   }
-  else if (!isPressed && s_touchIsActive)
+  else if (!s_debouncedPressed && s_touchIsActive)
   {
-    // Touch released
+    // Debounced release confirmed
     s_touchIsActive = false;
     uint32_t duration = nowMs - s_touchPressStartMs;
     Serial.printf("[Touch] Released after %u ms\n", duration);
 
-    if (duration >= 2200)
+    if (duration >= 2000)
     {
-      // Long press (Hold > 2.2s) -> Sleep / Bedtime Mood
+      // Long press (Hold >= 2.0s) -> Sleep / Bedtime Mood
       Serial.printf("[Touch] Long press (%u ms) -> Bedtime mode\n", duration);
       s_showClockUntilMs = 0;
       applyVoiceEyeAnimation("tired");
     }
-    else if (duration >= 15) // responsive to quick taps
+    else if (duration >= 60) // valid tap must be >= 60ms (rejects 50Hz AC noise pulses)
     {
-      // Valid tap
       s_tapCounter++;
       s_lastTapReleaseMs = nowMs;
     }
   }
 
-  // Multi-tap detection window (320ms)
+  // Multi-tap detection window (320ms after release)
   if (s_tapCounter > 0 && !s_touchIsActive && (nowMs - s_lastTapReleaseMs > 320))
   {
     if (s_tapCounter == 1)
@@ -2773,6 +2796,7 @@ void serviceTouchSensor()
       // Single tap -> Display Date & Time on OLED for 4.5 seconds!
       Serial.printf("[Touch Action] Single tap -> Show Date & Time on OLED (4.5s)\n");
       s_showClockUntilMs = nowMs + 4500;
+      drawClockDateScreen(true); // Immediate clean draw without waiting for next 500ms cycle
       applyVoiceEyeAnimation("happy");
     }
     else if (s_tapCounter >= 2)

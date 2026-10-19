@@ -44,8 +44,8 @@ const PIPER_MODEL_PATH = process.env.PIPER_MODEL_PATH || "";
 const PIPER_CONFIG_PATH = process.env.PIPER_CONFIG_PATH || "";
 const PIPER_VOICE = "local";
 
-const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "hi-IN-MadhurNeural";
-const EDGE_LANG = process.env.EDGE_TTS_LANG || "hi-IN";
+const EDGE_VOICE = process.env.EDGE_TTS_VOICE || "en-IN-PrabhatNeural";
+const EDGE_LANG = process.env.EDGE_TTS_LANG || "en-IN";
 const EDGE_VOLUME = process.env.EDGE_TTS_VOLUME || "default";
 
 function buildTtsFilename() {
@@ -136,6 +136,14 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
       selectedLang = "hi-IN";
     } else {
       selectedVoice = "en-IN-PrabhatNeural";
+      selectedLang = "en-IN";
+    }
+  } else {
+    if (selectedVoice.startsWith("hi-")) {
+      selectedLang = "hi-IN";
+    } else if (selectedVoice.startsWith("gu-")) {
+      selectedLang = "gu-IN";
+    } else {
       selectedLang = "en-IN";
     }
   }
