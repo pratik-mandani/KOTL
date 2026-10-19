@@ -308,6 +308,8 @@ void initTouchSensor();
 void initNetworking();
 void initFileStorage();
 void runStartupSelfTest();
+void drawBootLogoScreen();
+void drawStartupErrorScreen(const char *title, const char *detail);
 void drawStartupSelfTestScreen(const char *line1, const char *line2, uint8_t progressStep = 0);
 void playStartupBeep();
 void playStartupDoubleBeep();
@@ -787,6 +789,7 @@ void setup()
 
   initDisplay();
   initEyes();
+  drawBootLogoScreen();
   initAudioOutput();
   initMicrophoneInput();
   initBootButton();
@@ -903,9 +906,8 @@ void initDisplay()
 
   if (displayInitialized)
   {
-    display.clearDisplay();
-    display.display();
-    Serial.println("[OLED] SSD1306 OLED initialized successfully!");
+    drawBootLogoScreen();
+    Serial.println("[OLED] SSD1306 OLED initialized - displaying 'KOTL' boot logo!");
   }
   else
   {
@@ -1361,8 +1363,6 @@ void calibrateRoomAcoustics()
   Serial.println("  Profiling room ambient noise for 1500ms...");
   Serial.println("=================================================");
 
-  drawStartupSelfTestScreen("CALIBRATING", "Room Noise...", 3);
-
   i2s_zero_dma_buffer(I2S_MIC_PORT);
   delay(100);
 
@@ -1397,10 +1397,6 @@ void calibrateRoomAcoustics()
       }
     }
 
-    uint8_t progress = (uint8_t)(((millis() - calStartMs) * 5) / kCalDurationMs) + 1;
-    char subText[32];
-    snprintf(subText, sizeof(subText), "Loudness: %d", maxNoiseAmp);
-    drawStartupSelfTestScreen("ROOM PROFILING", subText, progress);
     taskYIELD();
   }
 
@@ -1417,26 +1413,31 @@ void calibrateRoomAcoustics()
                 sampleCount, (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
   Serial.printf("[Room Calibration] Trigger Threshold: %u | VAD Threshold: %u | Gate: %u\n",
                 s_calibratedSpikeThreshold, s_calibratedVadThreshold, s_calibratedValidationGate);
-
-  char line2[32];
-  snprintf(line2, sizeof(line2), "Floor:%u Peak:%u", (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
-  drawStartupSelfTestScreen("ROOM READY", line2, 5);
-  delay(800);
 }
 
 void runStartupSelfTest()
 {
   Serial.println("===== STARTUP SELF TEST =====");
-  drawStartupSelfTestScreen("KOTL", "Hardware Test", 0);
-  delay(250);
 
+  // Always display clean, full-screen centered bold 'KOTL' logo during startup
+  drawBootLogoScreen();
+
+  // Test 1: Audio Speaker Test
+  // Plays pleasant double beep chime ("toot-toot") while KOTL logo is presented
   Serial.println("speaker test: playing 'toot-toot' startup chime");
-  drawStartupSelfTestScreen("KOTL", "Speaker Test", 1);
-  playStartupDoubleBeep();
-  delay(100);
+  if (!audioOutputInitialized)
+  {
+    Serial.println("[Self-Test ERROR] Speaker / I2S DAC not initialized!");
+    drawStartupErrorScreen("SPEAKER ERROR", "MAX98357A I2S Fail\nCheck GPIO 25/26/27");
+    delay(3000);
+  }
+  else
+  {
+    playStartupDoubleBeep();
+  }
 
-  drawStartupSelfTestScreen("KOTL", "INMP441 Mic Test", 2);
-
+  // Test 2: INMP441 Microphone Hardware Test (runs silently in background)
+  Serial.println("mic test: checking INMP441 I2S DMA...");
   i2s_zero_dma_buffer(I2S_MIC_PORT);
   delay(50);
 
@@ -1463,9 +1464,9 @@ void runStartupSelfTest()
 
   if (startupSelfTestPassed)
   {
-    drawStartupSelfTestScreen("INMP441 OK", "Profiling Room...", 4);
-    delay(300);
+    // Normal / Success: Room acoustics profile silently in background
     calibrateRoomAcoustics();
+    delay(600); // Hold KOTL logo presentation cleanly before opening eyes
     roboEyes.open();
   }
   else
@@ -1479,8 +1480,10 @@ void runStartupSelfTest()
     Serial.println("  INMP441 VDD -> 3.3V (NOT 5V)");
     Serial.println("  INMP441 GND -> GND");
     Serial.println("===============================================================");
-    drawStartupSelfTestScreen("CHECK MIC", "Wiring / L/R GND", 2);
-    delay(1000);
+
+    // SHOW ERROR UI ONLY WHEN HARDWARE FAILS!
+    drawStartupErrorScreen("MIC NOT FOUND", "Check INMP441 Pin 32/33/35\n& GND on L/R pin");
+    delay(3500);
     roboEyes.open();
     startupSelfTestPassed = true; // Allow serial mode to continue working
     captureState.isRecording = false;
@@ -1490,6 +1493,67 @@ void runStartupSelfTest()
   }
 
   Serial.println("=============================");
+}
+
+void drawBootLogoScreen()
+{
+  if (!displayInitialized) return;
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+
+  // Bold "KOTL" full-screen centered logo
+  display.setTextSize(4);
+  const int16_t x = 18;
+  const int16_t y = 16;
+
+  // 2x2 multi-strike for solid, bold typography
+  display.setCursor(x, y);
+  display.print("KOTL");
+  display.setCursor(x + 1, y);
+  display.print("KOTL");
+  display.setCursor(x, y + 1);
+  display.print("KOTL");
+  display.setCursor(x + 1, y + 1);
+  display.print("KOTL");
+
+  // Elegant logo framing lines and accents
+  display.drawFastHLine(20, 8, 88, SSD1306_WHITE);
+  display.drawFastHLine(20, 54, 88, SSD1306_WHITE);
+  display.fillCircle(16, 8, 1, SSD1306_WHITE);
+  display.fillCircle(111, 8, 1, SSD1306_WHITE);
+  display.fillCircle(16, 54, 1, SSD1306_WHITE);
+  display.fillCircle(111, 54, 1, SSD1306_WHITE);
+
+  display.display();
+}
+
+void drawStartupErrorScreen(const char *title, const char *detail)
+{
+  if (!displayInitialized) return;
+  display.clearDisplay();
+
+  // Inverted header banner
+  display.fillRect(0, 0, SCREEN_WIDTH, 14, SSD1306_WHITE);
+  display.setTextColor(SSD1306_BLACK);
+  display.setTextSize(1);
+  display.setCursor(8, 3);
+  display.print("! HARDWARE ERROR !");
+
+  // Error content
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 18);
+  display.print("ERR: ");
+  display.println(title);
+
+  display.setCursor(0, 32);
+  display.println(detail);
+
+  // Troubleshooting footer
+  display.drawFastHLine(0, 50, SCREEN_WIDTH, SSD1306_WHITE);
+  display.setCursor(2, 54);
+  display.print("See Serial Monitor");
+
+  display.display();
 }
 
 void drawStartupSelfTestScreen(const char *line1, const char *line2, uint8_t progressStep)

@@ -67,6 +67,21 @@ const callsDoubleBeep = selfTestSection.includes('playStartupDoubleBeep();');
 const noHelloInSelfTest = !selfTestSection.includes('playStartupHello();');
 assertTest('Startup Sound: Electronic "toot-toot" double beep replaces voice hello', hasDoubleBeepFn && callsDoubleBeep && noHelloInSelfTest, 'Self-test plays ascending chime (880Hz -> 1175Hz) without voice audio sample');
 
+// Verify Boot Screen: Bold centered 'KOTL' logo on boot; test UI only shown on error
+const hasBootLogoFn = inoContent.includes('void drawBootLogoScreen()') && inoContent.includes('setTextSize(4)') && inoContent.includes('"KOTL"');
+const hasErrorScreenFn = inoContent.includes('void drawStartupErrorScreen(');
+const callsBootLogoOnStartup = selfTestSection.includes('drawBootLogoScreen();');
+const noTestUiInNormalBoot = !selfTestSection.includes('drawStartupSelfTestScreen(');
+const hasErrorBranch = selfTestSection.includes('drawStartupErrorScreen(');
+
+const calibMatch = inoContent.match(/void\s+calibrateRoomAcoustics\s*\(\)\s*\{([\s\S]*?)\n\}/);
+const calibSection = calibMatch ? calibMatch[1] : '';
+const calibSilent = !calibSection.includes('drawStartupSelfTestScreen(');
+
+assertTest('Boot Logo UI: Bold centered "KOTL" logo presented; self-test UI only displays on hardware error',
+  hasBootLogoFn && hasErrorScreenFn && callsBootLogoOnStartup && noTestUiInNormalBoot && hasErrorBranch && calibSilent,
+  'Screen shows full-screen centered bold KOTL logo; room profiling runs silently; errors trigger dedicated alert screen');
+
 // ----------------------------------------------------
 // TEST GROUP 2: Backend Node.js Syntax & Compilation QA
 // ----------------------------------------------------
