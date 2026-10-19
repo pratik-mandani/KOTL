@@ -59,6 +59,14 @@ const hasServiceTouch = inoContent.includes('void serviceTouchSensor()');
 const hasNonBlockingClock = inoContent.includes('if (millis() < s_showClockUntilMs)');
 assertTest('OLED Date & Time Screen & Touch Service implemented', hasClockScreen && hasServiceTouch && hasNonBlockingClock, 'Single-tap shows clock for 4.5s; double-tap laughs; long-press sleeps');
 
+// Verify Startup Sound: 'toot-toot' double beep replaces voice hello
+const hasDoubleBeepFn = inoContent.includes('void playStartupDoubleBeep()') && inoContent.includes('void playTone(');
+const selfTestMatch = inoContent.match(/void\s+runStartupSelfTest\s*\(\)\s*\{([\s\S]*?)\n\}/);
+const selfTestSection = selfTestMatch ? selfTestMatch[1] : '';
+const callsDoubleBeep = selfTestSection.includes('playStartupDoubleBeep();');
+const noHelloInSelfTest = !selfTestSection.includes('playStartupHello();');
+assertTest('Startup Sound: Electronic "toot-toot" double beep replaces voice hello', hasDoubleBeepFn && callsDoubleBeep && noHelloInSelfTest, 'Self-test plays ascending chime (880Hz -> 1175Hz) without voice audio sample');
+
 // ----------------------------------------------------
 // TEST GROUP 2: Backend Node.js Syntax & Compilation QA
 // ----------------------------------------------------

@@ -310,6 +310,7 @@ void initFileStorage();
 void runStartupSelfTest();
 void drawStartupSelfTestScreen(const char *line1, const char *line2, uint8_t progressStep = 0);
 void playStartupBeep();
+void playStartupDoubleBeep();
 void playStartupHello();
 void serviceAudioOutput();
 void serviceAudioCapture();
@@ -1429,14 +1430,10 @@ void runStartupSelfTest()
   drawStartupSelfTestScreen("KOTL", "Hardware Test", 0);
   delay(250);
 
-  Serial.println("speaker test started: beep");
-  drawStartupSelfTestScreen("KOTL", "Speaker Beep", 1);
-  playStartupBeep();
-  delay(150);
-
-  Serial.println("speaker test: voice sample");
-  drawStartupSelfTestScreen("KOTL", "Speaker Voice", 2);
-  playStartupHello();
+  Serial.println("speaker test: playing 'toot-toot' startup chime");
+  drawStartupSelfTestScreen("KOTL", "Speaker Test", 1);
+  playStartupDoubleBeep();
+  delay(100);
 
   drawStartupSelfTestScreen("KOTL", "INMP441 Mic Test", 2);
 
@@ -1590,6 +1587,52 @@ void playStartupBeep()
   {
     Serial.println("speaker test warning: i2s_write short write");
   }
+}
+
+void playTone(uint32_t frequencyHz, uint32_t durationMs)
+{
+  if (!audioOutputInitialized) return;
+  configureAudioSampleRate(kI2SSampleRate);
+
+  const uint32_t totalFrames = (kI2SSampleRate * durationMs) / 1000UL;
+  const uint32_t periodFrames = (frequencyHz > 0) ? (kI2SSampleRate / frequencyHz) : 1;
+  const uint32_t halfPeriodFrames = periodFrames / 2;
+  uint32_t frameNumber = 0;
+
+  while (frameNumber < totalFrames)
+  {
+    const size_t framesThisChunk = min((size_t)kI2SChunkFrames, (size_t)(totalFrames - frameNumber));
+    for (size_t frameIndex = 0; frameIndex < framesThisChunk; ++frameIndex)
+    {
+      int16_t sample = 0;
+      if (frequencyHz > 0)
+      {
+        const bool highPhase = ((frameNumber + frameIndex) % periodFrames) < halfPeriodFrames;
+        sample = highPhase ? 12000 : -12000;
+      }
+      audioState.dmaBuffer[frameIndex * 2] = sample;
+      audioState.dmaBuffer[(frameIndex * 2) + 1] = sample;
+    }
+
+    size_t bytesWritten = 0;
+    const size_t bytesToWrite = framesThisChunk * 2U * sizeof(int16_t);
+    i2s_write(I2S_PORT, audioState.dmaBuffer, bytesToWrite, &bytesWritten, portMAX_DELAY);
+    frameNumber += framesThisChunk;
+    taskYIELD();
+  }
+}
+
+void playStartupDoubleBeep()
+{
+  Serial.println("[Speaker Test] Playing friendly 'toot-toot' startup chime...");
+  // 1st Beep: 'Toot' (880 Hz / A5 note, 120ms)
+  playTone(880, 120);
+  // Short pause (60ms)
+  playTone(0, 60);
+  // 2nd Beep: 'Toot' (1175 Hz / D6 note, 140ms)
+  playTone(1175, 140);
+
+  i2s_zero_dma_buffer(I2S_PORT);
 }
 
 void playStartupHello()
