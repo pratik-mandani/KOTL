@@ -140,30 +140,29 @@
     </nav>
 
     <!-- Right Controls: Status & Modals -->
-    <div class="flex items-center space-x-1.5 sm:space-x-2.5 text-xs">
+    <div class="flex items-center space-x-1.5 sm:space-x-2 text-xs">
       <!-- Live Device Status Pill -->
-      <div class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-2xs">
-        <span id="deviceStatusDot" class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
-        <span id="deviceStatusText" class="text-xs font-mono text-slate-600 font-semibold hidden sm:inline">ESP32 Offline</span>
-        <span class="sm:hidden text-[11px] font-mono text-slate-600 font-semibold">ESP32</span>
+      <div id="deviceStatusPill" class="flex items-center space-x-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 shadow-2xs shrink-0 select-none transition-colors">
+        <span id="deviceStatusDot" class="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
+        <span id="deviceStatusText" class="text-[11px] sm:text-xs font-mono font-medium text-slate-600 whitespace-nowrap"><span class="hidden sm:inline">ESP32 </span>Offline</span>
       </div>
 
       <!-- Wi-Fi Setup Button -->
-      <button id="openWifiModalBtn" class="p-2 sm:p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all shadow-2xs" title="ESP32 Wi-Fi & Device Config">
+      <button id="openWifiModalBtn" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all shadow-2xs flex items-center justify-center shrink-0" title="ESP32 Wi-Fi & Device Config">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
         </svg>
       </button>
 
       <!-- Hardware Audio Test Button -->
-      <button id="openHardwareModalBtn" class="p-2 sm:p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all shadow-2xs" title="Hardware Audio Diagnostics">
+      <button id="openHardwareModalBtn" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all shadow-2xs flex items-center justify-center shrink-0" title="Hardware Audio Diagnostics">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.5v2.5m-4 0h8M7 5.5A5 5 0 0112 1a5 5 0 015 4.5m-10 0V10a5 5 0 0010 0V5.5M4 10a8 8 0 0016 0"></path>
         </svg>
       </button>
 
       <!-- Quota Tracker Button -->
-      <button id="openQuotaModalBtn" class="p-2 sm:p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all shadow-2xs" title="Free API Limits">
+      <button id="openQuotaModalBtn" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-slate-900 transition-all shadow-2xs flex items-center justify-center shrink-0" title="Free API Limits">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
@@ -253,7 +252,7 @@
         <!-- KPI 2: Vocabulary & Language -->
         <div class="app-card p-3.5 sm:p-5 bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between space-y-2.5 sm:space-y-3">
           <div class="flex items-center justify-between gap-1">
-            <span class="text-[10px] sm:text-xs uppercase font-mono tracking-wider text-slate-500 font-bold truncate">Vocabulary</span>
+            <span class="text-[10px] sm:text-xs uppercase font-mono tracking-wider text-slate-500 font-bold shrink-0"><span class="sm:hidden">Vocab</span><span class="hidden sm:inline">Vocabulary</span></span>
             <span id="reportVocabStatusBadge" class="px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] sm:text-xs font-bold font-mono shrink-0">Advanced</span>
           </div>
           <div>
@@ -270,7 +269,7 @@
         <!-- KPI 3: Scientific Curiosity -->
         <div class="app-card p-3.5 sm:p-5 bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between space-y-2.5 sm:space-y-3">
           <div class="flex items-center justify-between gap-1">
-            <span class="text-[10px] sm:text-xs uppercase font-mono tracking-wider text-slate-500 font-bold truncate">Curiosity</span>
+            <span class="text-[10px] sm:text-xs uppercase font-mono tracking-wider text-slate-500 font-bold shrink-0">Curiosity</span>
             <span id="reportCuriosityStatusBadge" class="px-1.5 sm:px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] sm:text-xs font-bold font-mono shrink-0">High</span>
           </div>
           <div>
@@ -287,12 +286,12 @@
         <!-- KPI 4: Parent Directives -->
         <div class="app-card p-3.5 sm:p-5 bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between space-y-2.5 sm:space-y-3">
           <div class="flex items-center justify-between gap-1">
-            <span class="text-[10px] sm:text-xs uppercase font-mono tracking-wider text-slate-500 font-bold truncate">Directives</span>
+            <span class="text-[10px] sm:text-xs uppercase font-mono tracking-wider text-slate-500 font-bold shrink-0">Directives</span>
             <span class="px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] sm:text-xs font-bold font-mono shrink-0">Live</span>
           </div>
           <div>
             <div class="flex items-baseline space-x-1">
-              <span id="reportMissionsKpi" class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-emerald-600 font-mono tracking-tight">2 Active</span>
+              <span id="reportMissionsKpi" class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-emerald-600 font-mono tracking-tight flex items-baseline gap-1.5"><span>2</span> <span class="text-xs sm:text-sm font-sans font-bold text-emerald-700">Active</span></span>
             </div>
             <div class="w-full bg-slate-100 rounded-full h-1.5 sm:h-2 overflow-hidden mt-2 sm:mt-3">
               <div class="bg-gradient-to-r from-emerald-400 to-teal-500 h-1.5 sm:h-2 rounded-full w-full"></div>
@@ -924,7 +923,9 @@
       if (vocabScoreElem) vocabScoreElem.textContent = (vocab.score || 84) + '%';
 
       const vocabStatusBadge = document.getElementById('reportVocabStatusBadge');
-      if (vocabStatusBadge) vocabStatusBadge.textContent = vocab.status || 'Advanced';
+      if (vocabStatusBadge) {
+        vocabStatusBadge.textContent = (vocab.status || 'Advanced').replace(/\s+for\s+age/i, '');
+      }
 
       const vocabBar = document.getElementById('reportVocabBar');
       if (vocabBar) vocabBar.style.width = (vocab.score || 84) + '%';
@@ -941,7 +942,7 @@
       const kpiMissions = document.getElementById('reportMissionsKpi');
       if (kpiMissions) {
         const activeCount = parentMissions.filter(m => m.active).length;
-        kpiMissions.textContent = (activeCount || 2) + ' Active';
+        kpiMissions.innerHTML = `<span>${activeCount || 2}</span> <span class="text-xs sm:text-sm font-sans font-bold text-emerald-700">Active</span>`;
       }
 
       // Conversation Evidence & Dialogue Grounding Breakdown
@@ -1233,7 +1234,7 @@
       }
       const kpiElem = document.getElementById('reportMissionsKpi');
       if (kpiElem) {
-        kpiElem.textContent = activeCount + ' Active';
+        kpiElem.innerHTML = `<span>${activeCount}</span> <span class="text-xs sm:text-sm font-sans font-bold text-emerald-700">Active</span>`;
       }
 
       if (missions.length === 0) {
@@ -1665,16 +1666,23 @@
           const data = await res.json();
           const dot = document.getElementById('deviceStatusDot');
           const txt = document.getElementById('deviceStatusText');
+          const pill = document.getElementById('deviceStatusPill');
           const isOnline = data.device_status?.online;
 
           if (isOnline) {
-            dot.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-xs';
-            txt.textContent = `ESP32 Online (${data.device_status.rssi || -60}dBm)`;
-            txt.className = 'text-[11px] font-mono text-emerald-700 font-semibold';
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-xs shrink-0';
+            if (pill) pill.className = 'flex items-center space-x-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 shadow-2xs shrink-0 select-none transition-colors';
+            if (txt) {
+              txt.className = 'text-[11px] sm:text-xs font-mono font-semibold text-emerald-700 whitespace-nowrap';
+              txt.innerHTML = `<span class="hidden sm:inline">ESP32 </span>Online <span class="hidden md:inline text-[10px] text-emerald-600/80">(${data.device_status.rssi || -60}dBm)</span>`;
+            }
           } else {
-            dot.className = 'w-2 h-2 rounded-full bg-rose-500 animate-pulse';
-            txt.textContent = 'ESP32 Offline';
-            txt.className = 'text-[11px] font-mono text-slate-500';
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0';
+            if (pill) pill.className = 'flex items-center space-x-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-slate-50 border border-slate-200 text-slate-600 shadow-2xs shrink-0 select-none transition-colors';
+            if (txt) {
+              txt.className = 'text-[11px] sm:text-xs font-mono font-medium text-slate-600 whitespace-nowrap';
+              txt.innerHTML = `<span class="hidden sm:inline">ESP32 </span>Offline`;
+            }
           }
         }
       } catch (e) {}
