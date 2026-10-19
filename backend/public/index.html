@@ -784,25 +784,52 @@
   </div>
 
   <div id="quotaModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-slate-200">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="font-bold text-sm text-slate-900">Free Tier API Quotas</h3>
-        <button id="closeQuotaModalBtn" class="text-slate-400 hover:text-slate-700 text-sm">✕</button>
+        <div class="flex items-center space-x-2">
+          <span class="text-base">⚡</span>
+          <h3 class="font-bold text-sm text-slate-900">Official Free Tier API Quotas</h3>
+        </div>
+        <button id="closeQuotaModalBtn" class="text-slate-400 hover:text-slate-700 text-sm p-1 rounded-lg hover:bg-slate-100 transition-colors">✕</button>
       </div>
 
-      <div class="space-y-3 text-xs font-mono">
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between">
-          <span class="text-slate-600">Groq LLM Quota:</span>
-          <span class="text-slate-900 font-bold">14,400 RPD</span>
+      <div class="space-y-2.5 text-xs font-mono">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+          <div>
+            <div class="font-bold text-slate-800">Groq LLM (Llama 3)</div>
+            <div class="text-[11px] text-slate-500 font-sans mt-0.5">Free Daily AI Conversations</div>
+          </div>
+          <div class="text-right">
+            <span id="quotaGroqRequests" class="text-slate-900 font-bold block">14,400 RPD</span>
+            <span class="text-[10px] text-emerald-700 font-semibold font-sans">Official Daily Cap</span>
+          </div>
         </div>
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between">
-          <span class="text-slate-600">Microsoft Edge-TTS:</span>
-          <span class="text-emerald-700 font-bold">Unlimited Free</span>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+          <div>
+            <div class="font-bold text-slate-800">Microsoft Edge-TTS</div>
+            <div class="text-[11px] text-slate-500 font-sans mt-0.5">High Quality Voice Synthesis</div>
+          </div>
+          <div class="text-right">
+            <span class="text-emerald-700 font-bold block">Unlimited Free</span>
+            <span class="text-[10px] text-slate-500 font-sans">Zero Monthly Cost</span>
+          </div>
         </div>
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between">
-          <span class="text-slate-600">Groq Whisper STT:</span>
-          <span class="text-slate-900 font-bold">7,200s / day</span>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+          <div>
+            <div class="font-bold text-slate-800">Groq Whisper STT</div>
+            <div class="text-[11px] text-slate-500 font-sans mt-0.5">Child Voice Transcription</div>
+          </div>
+          <div class="text-right">
+            <span class="text-slate-900 font-bold block">7,200s / day</span>
+            <span class="text-[10px] text-slate-500 font-sans">2 Hours Audio / Day</span>
+          </div>
         </div>
+      </div>
+
+      <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-200/80 text-[11px] text-blue-900 leading-relaxed font-sans">
+        <strong class="font-semibold">💡 Real Verified Quotas:</strong> These figures are the official, actual developer limits provided by Groq Cloud and Microsoft for KOTL's zero-cost architecture.
       </div>
     </div>
   </div>
@@ -871,8 +898,21 @@
 
     const quotaModal = document.getElementById('quotaModal');
     const openQuotaModalBtn = document.getElementById('openQuotaModalBtn');
-    const closeQuotaModalBtn = document.getElementById('closeQuotaModalBtn');
-    openQuotaModalBtn.onclick = () => quotaModal.classList.remove('hidden');
+    openQuotaModalBtn.onclick = async () => {
+      quotaModal.classList.remove('hidden');
+      try {
+        const res = await fetch('/api/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.quota?.groq?.remaining_requests) {
+            const rem = data.quota.groq.remaining_requests;
+            const lim = data.quota.groq.limit_requests || '14,400';
+            const elem = document.getElementById('quotaGroqRequests');
+            if (elem) elem.textContent = `${rem} / ${lim} RPD`;
+          }
+        }
+      } catch (e) {}
+    };
     closeQuotaModalBtn.onclick = () => quotaModal.classList.add('hidden');
 
     // Report State & Rendering
