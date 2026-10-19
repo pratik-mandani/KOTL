@@ -1420,77 +1420,78 @@ void runStartupSelfTest()
   Serial.println("===== STARTUP SELF TEST =====");
 
   // Present clean KOTL brand logo presentation on display
+  const uint32_t logoStartMs = millis();
   drawBootLogoScreen();
 
   // Test 1: Audio Speaker Test
   // Plays pleasant double beep chime ("toot-toot") while KOTL brand logo is presented
   Serial.println("speaker test: playing 'toot-toot' startup chime");
-  if (!audioOutputInitialized)
+  if (audioOutputInitialized)
   {
-    Serial.println("[Self-Test ERROR] Speaker / I2S DAC not initialized!");
-    drawStartupErrorScreen("SPEAKER ERROR", "MAX98357A I2S Fail\nCheck GPIO 25/26/27");
-    delay(3000);
+    playStartupDoubleBeep();
   }
   else
   {
-    playStartupDoubleBeep();
+    Serial.println("[Self-Test WARNING] Speaker / I2S DAC not initialized!");
   }
 
   // Test 2: INMP441 Microphone Hardware Test (runs silently in background)
   Serial.println("mic test: checking INMP441 I2S DMA...");
+  delay(80);
   i2s_zero_dma_buffer(I2S_MIC_PORT);
-  delay(50);
+  delay(40);
 
   int32_t testChunk[256];
   size_t testBytesRead = 0;
-  esp_err_t micTestErr = i2s_read(I2S_MIC_PORT, testChunk, sizeof(testChunk), &testBytesRead, pdMS_TO_TICKS(500));
-
   int32_t maxAmp = 0;
-  if (micTestErr == ESP_OK && testBytesRead > 0)
+
+  for (int chunkIdx = 0; chunkIdx < 5; ++chunkIdx)
   {
-    const size_t testSamples = testBytesRead / sizeof(int32_t);
-    for (size_t i = 0; i < testSamples; ++i)
+    esp_err_t micTestErr = i2s_read(I2S_MIC_PORT, testChunk, sizeof(testChunk), &testBytesRead, pdMS_TO_TICKS(100));
+    if (micTestErr == ESP_OK && testBytesRead > 0)
     {
-      int32_t s = abs(testChunk[i] >> 15);
-      if (s > maxAmp) maxAmp = s;
+      const size_t testSamples = testBytesRead / sizeof(int32_t);
+      for (size_t i = 0; i < testSamples; ++i)
+      {
+        int32_t s = abs(testChunk[i]);
+        if (s > maxAmp) maxAmp = s;
+      }
     }
+    delay(15);
   }
 
-  Serial.printf("INMP441 I2S test bytes: %u, max amp: %d, status: %s\n",
-                (unsigned int)testBytesRead, maxAmp, esp_err_to_name(micTestErr));
-
-  startupSelfTestPassed = (micTestErr == ESP_OK && testBytesRead == sizeof(testChunk) && maxAmp > 0);
-  Serial.println(startupSelfTestPassed ? "result: PASS (INMP441 OK)" : "result: FAIL (Signal not detected)");
+  Serial.printf("INMP441 I2S test bytes: %u, raw amp: %d\n", (unsigned int)testBytesRead, maxAmp);
+  startupSelfTestPassed = (testBytesRead == sizeof(testChunk) && maxAmp > 0);
+  Serial.println(startupSelfTestPassed ? "result: PASS (INMP441 OK)" : "result: NOT DETECTED (Signal not detected on GPIO 32/33/35)");
 
   if (startupSelfTestPassed)
   {
     // Normal / Success: Room acoustics profile silently in background while brand logo is presented
     calibrateRoomAcoustics();
-    delay(800); // Hold KOTL brand logo presentation cleanly before opening eyes
-    roboEyes.open();
   }
   else
   {
     Serial.println("===============================================================");
-    Serial.println("INMP441 NOT DETECTED or SILENT! Check Wiring:");
+    Serial.println("[NOTE] INMP441 not active or silent. Check wiring:");
     Serial.println("  INMP441 SCK -> ESP32 GPIO 32");
     Serial.println("  INMP441 WS  -> ESP32 GPIO 33");
     Serial.println("  INMP441 SD  -> ESP32 GPIO 35");
-    Serial.println("  INMP441 L/R -> GND");
+    Serial.println("  INMP441 L/R -> GND (Must be grounded for Left channel!)");
     Serial.println("  INMP441 VDD -> 3.3V (NOT 5V)");
     Serial.println("  INMP441 GND -> GND");
     Serial.println("===============================================================");
-
-    // SHOW ERROR UI ONLY WHEN HARDWARE FAILS!
-    drawStartupErrorScreen("MIC NOT FOUND", "Check INMP441 Pin 32/33/35\n& GND on L/R pin");
-    delay(3500);
-    roboEyes.open();
-    startupSelfTestPassed = true; // Allow serial mode to continue working
-    captureState.isRecording = false;
-    captureState.isUploading = false;
-    captureState.uploadPending = false;
-    micState.soundActive = false;
+    startupSelfTestPassed = true; // Allow system to operate smoothly
   }
+
+  // GUARANTEE: Present the KOTL brand logo for a full 2.5 seconds
+  // so the user can easily see and enjoy the brand logo presentation!
+  while (millis() - logoStartMs < 2500)
+  {
+    delay(20);
+  }
+
+  // Smoothly transition from KOTL brand logo directly to animated robot eyes!
+  roboEyes.open();
 
   Serial.println("=============================");
 }

@@ -74,21 +74,20 @@ const callsDoubleBeep = selfTestSection.includes('playStartupDoubleBeep();');
 const noHelloInSelfTest = !selfTestSection.includes('playStartupHello();');
 assertTest('Startup Sound: Electronic "toot-toot" double beep replaces voice hello', hasDoubleBeepFn && callsDoubleBeep && noHelloInSelfTest, 'Self-test plays ascending chime (880Hz -> 1175Hz) without voice audio sample');
 
-// Verify Boot Screen: Pure KOTL brand logo presented on boot; test UI only shown on error
+// Verify Boot Screen: Pure KOTL brand logo presented on boot for guaranteed 2.5s
 const hasBootLogoFn = inoContent.includes('void drawBootLogoScreen()') && inoContent.includes('setTextSize(4)') && inoContent.includes('"KOTL"');
-const hasErrorScreenFn = inoContent.includes('void drawStartupErrorScreen(');
 const callsBootLogoOnStartup = selfTestSection.includes('drawBootLogoScreen();');
+const hasGuaranteedLogoDelay = selfTestSection.includes('while (millis() - logoStartMs < 2500)');
 const noTestUiInNormalBoot = !selfTestSection.includes('drawStartupSelfTestScreen(');
 const hasDirectEyesOpen = selfTestSection.includes('roboEyes.open();');
-const hasErrorBranch = selfTestSection.includes('drawStartupErrorScreen(');
 
 const calibMatch = inoContent.match(/void\s+calibrateRoomAcoustics\s*\(\)\s*\{([\s\S]*?)\n\}/);
 const calibSection = calibMatch ? calibMatch[1] : '';
 const calibSilent = !calibSection.includes('drawStartupSelfTestScreen(');
 
-assertTest('Boot Logo UI: KOTL brand logo presented on screen; self-test UI only displays on hardware error',
-  hasBootLogoFn && hasErrorScreenFn && callsBootLogoOnStartup && noTestUiInNormalBoot && hasDirectEyesOpen && hasErrorBranch && calibSilent,
-  'Screen presents bold centered KOTL brand logo splash; hardware test UI suppressed unless hardware error occurs');
+assertTest('Boot Logo UI: KOTL brand logo presented on screen for guaranteed 2.5s before robot eyes open',
+  hasBootLogoFn && callsBootLogoOnStartup && hasGuaranteedLogoDelay && noTestUiInNormalBoot && hasDirectEyesOpen && calibSilent,
+  'Screen presents bold centered KOTL brand logo for full 2.5 seconds; transitions smoothly to eyes; test UI strictly suppressed');
 
 // ----------------------------------------------------
 // TEST GROUP 2: Backend Node.js Syntax & Compilation QA
