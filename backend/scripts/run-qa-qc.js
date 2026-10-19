@@ -74,9 +74,10 @@ const callsDoubleBeep = selfTestSection.includes('playStartupDoubleBeep();');
 const noHelloInSelfTest = !selfTestSection.includes('playStartupHello();');
 assertTest('Startup Sound: Electronic "toot-toot" double beep replaces voice hello', hasDoubleBeepFn && callsDoubleBeep && noHelloInSelfTest, 'Self-test plays ascending chime (880Hz -> 1175Hz) without voice audio sample');
 
-// Verify Clean Direct Boot: No Name or Test UI on startup; robot eyes wake up directly; error UI only on fault
+// Verify Boot Screen: Pure KOTL brand logo presented on boot; test UI only shown on error
+const hasBootLogoFn = inoContent.includes('void drawBootLogoScreen()') && inoContent.includes('setTextSize(4)') && inoContent.includes('"KOTL"');
 const hasErrorScreenFn = inoContent.includes('void drawStartupErrorScreen(');
-const noNameOnStartup = !selfTestSection.includes('drawBootLogoScreen();');
+const callsBootLogoOnStartup = selfTestSection.includes('drawBootLogoScreen();');
 const noTestUiInNormalBoot = !selfTestSection.includes('drawStartupSelfTestScreen(');
 const hasDirectEyesOpen = selfTestSection.includes('roboEyes.open();');
 const hasErrorBranch = selfTestSection.includes('drawStartupErrorScreen(');
@@ -85,9 +86,9 @@ const calibMatch = inoContent.match(/void\s+calibrateRoomAcoustics\s*\(\)\s*\{([
 const calibSection = calibMatch ? calibMatch[1] : '';
 const calibSilent = !calibSection.includes('drawStartupSelfTestScreen(');
 
-assertTest('Clean Direct Boot: No Name or Test UI on normal power-on; eyes open directly; error UI only on fault',
-  hasErrorScreenFn && noNameOnStartup && noTestUiInNormalBoot && hasDirectEyesOpen && hasErrorBranch && calibSilent,
-  'Screen remains clean on boot; robot eyes wake up directly with chime; test UI strictly suppressed unless hardware error');
+assertTest('Boot Logo UI: KOTL brand logo presented on screen; self-test UI only displays on hardware error',
+  hasBootLogoFn && hasErrorScreenFn && callsBootLogoOnStartup && noTestUiInNormalBoot && hasDirectEyesOpen && hasErrorBranch && calibSilent,
+  'Screen presents bold centered KOTL brand logo splash; hardware test UI suppressed unless hardware error occurs');
 
 // ----------------------------------------------------
 // TEST GROUP 2: Backend Node.js Syntax & Compilation QA

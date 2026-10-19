@@ -789,6 +789,7 @@ void setup()
 
   initDisplay();
   initEyes();
+  drawBootLogoScreen();
   initAudioOutput();
   initMicrophoneInput();
   initBootButton();
@@ -905,9 +906,8 @@ void initDisplay()
 
   if (displayInitialized)
   {
-    display.clearDisplay();
-    display.display();
-    Serial.println("[OLED] SSD1306 OLED initialized cleanly (screen clean for startup)");
+    drawBootLogoScreen();
+    Serial.println("[OLED] SSD1306 OLED initialized - presenting 'KOTL' brand logo!");
   }
   else
   {
@@ -1419,8 +1419,11 @@ void runStartupSelfTest()
 {
   Serial.println("===== STARTUP SELF TEST =====");
 
+  // Present clean KOTL brand logo presentation on display
+  drawBootLogoScreen();
+
   // Test 1: Audio Speaker Test
-  // Plays pleasant double beep chime ("toot-toot")
+  // Plays pleasant double beep chime ("toot-toot") while KOTL brand logo is presented
   Serial.println("speaker test: playing 'toot-toot' startup chime");
   if (!audioOutputInitialized)
   {
@@ -1461,8 +1464,9 @@ void runStartupSelfTest()
 
   if (startupSelfTestPassed)
   {
-    // Normal / Success: Room acoustics profile silently in background, directly wake up robot eyes!
+    // Normal / Success: Room acoustics profile silently in background while brand logo is presented
     calibrateRoomAcoustics();
+    delay(800); // Hold KOTL brand logo presentation cleanly before opening eyes
     roboEyes.open();
   }
   else
