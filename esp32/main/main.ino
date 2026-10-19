@@ -3,6 +3,7 @@
 #include <Adafruit_SSD1306.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
+#include <time.h>
 #include <LittleFS.h>
 #include <FluxGarage_RoboEyes.h>
 #include <driver/adc.h>
@@ -32,6 +33,11 @@
 #define I2S_MIC_WS_PIN 33
 #define I2S_MIC_SD_PIN 35
 #define BUTTON_BOOT_PIN 0
+
+// Capacitive Touch Sensor Pins (Built-in ESP32 Touch ADC)
+#define TOUCH_PIN_HEAD 4    // T0 (GPIO 4) - Head touch pad for Date/Time & interaction
+#define TOUCH_PIN_EAR 13    // T4 (GPIO 13) - Ear / Cheek touch pad
+#define TOUCH_THRESHOLD 40  // Baseline untouched ~70-90; touch drops below 40
 
 enum PlaybackSource
 {
@@ -298,6 +304,7 @@ void initEyes();
 void initAudioOutput();
 void initMicrophoneInput();
 void initBootButton();
+void initTouchSensor();
 void initNetworking();
 void initFileStorage();
 void runStartupSelfTest();
@@ -308,7 +315,16 @@ void serviceAudioOutput();
 void serviceAudioCapture();
 void serviceMicrophoneInput();
 void serviceBootButton();
+void serviceTouchSensor();
+void drawClockDateScreen();
 void serviceEyeReaction();
+
+// Touch & Clock Display State
+static uint32_t s_showClockUntilMs = 0;
+static bool s_touchIsActive = false;
+static uint32_t s_touchPressStartMs = 0;
+static uint8_t s_tapCounter = 0;
+static uint32_t s_lastTapReleaseMs = 0;
 void serviceNetworking();
 void setVoiceTurnState(VoiceTurnState newState, const String &errorText = "");
 void resetVoiceTurnToIdle();
@@ -773,6 +789,7 @@ void setup()
   initAudioOutput();
   initMicrophoneInput();
   initBootButton();
+  initTouchSensor();
   initFileStorage();
   initNetworking();
   runStartupSelfTest();
@@ -806,8 +823,16 @@ void loop()
   // Process any thread-safe eye expression or mood requests from other cores
   serviceEyeState();
 
-  // Butter-smooth 50 FPS OLED animations on Core 1 - immune to network delays!
-  roboEyes.update();
+  // If Date & Time Clock Screen is active due to touch, render it; otherwise update RoboEyes!
+  if (millis() < s_showClockUntilMs)
+  {
+    drawClockDateScreen();
+  }
+  else
+  {
+    // Butter-smooth 50 FPS OLED animations on Core 1 - immune to network delays!
+    roboEyes.update();
+  }
 
   if (s_triggerMicCapturePending)
   {
@@ -824,6 +849,7 @@ void loop()
   }
 
   serviceBootButton();
+  serviceTouchSensor();
   serviceSerialInput();
   serviceMicrophoneInput();
   serviceEyeReaction();
@@ -2451,6 +2477,156 @@ void serviceBootButton()
   s_lastBootPressed = isPressed;
 }
 
+void initTouchSensor()
+{
+  Serial.printf("[Touch] Capacitive Touch Sensor initialized on Pin %d (Threshold: %d)\n", TOUCH_PIN_HEAD, TOUCH_THRESHOLD);
+}
+
+void drawClockDateScreen()
+{
+  static uint32_t s_lastClockRefreshMs = 0;
+  // Refresh display at ~4-5 FPS (every 200ms) to ensure smooth seconds/dots without I2C starvation
+  if (millis() - s_lastClockRefreshMs < 200) return;
+  s_lastClockRefreshMs = millis();
+
+  struct tm timeinfo;
+  bool timeValid = getLocalTime(&timeinfo, 20);
+
+  display.clearDisplay();
+
+  // 1. Top header banner
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.print("KOTL TIME");
+
+  // Wi-Fi Status badge
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    display.setCursor(88, 0);
+    display.print("[WiFi]");
+  }
+  else
+  {
+    display.setCursor(82, 0);
+    display.print("[No-Net]");
+  }
+
+  // Header separator line
+  display.drawLine(0, 10, 127, 10, SSD1306_WHITE);
+
+  if (timeValid)
+  {
+    // Convert 24h to 12h format
+    int hour12 = timeinfo.tm_hour % 12;
+    if (hour12 == 0) hour12 = 12;
+    const char *amPm = (timeinfo.tm_hour >= 12) ? "PM" : "AM";
+
+    char timeBuf[12];
+    snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", hour12, timeinfo.tm_min);
+
+    // Large Center Clock Time (Font Size 2)
+    display.setTextSize(2);
+    display.setCursor(18, 16);
+    display.print(timeBuf);
+
+    display.setTextSize(1);
+    display.setCursor(84, 22);
+    display.print(amPm);
+
+    // Bottom Date String (e.g. "Mon, 19 Oct 2026")
+    const char *dayNames[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    const char *monthNames[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+    char dateBuf[26];
+    snprintf(dateBuf, sizeof(dateBuf), "%s, %02d %s %04d",
+             dayNames[timeinfo.tm_wday],
+             timeinfo.tm_mday,
+             monthNames[timeinfo.tm_mon],
+             timeinfo.tm_year + 1900);
+
+    display.setCursor(6, 40);
+    display.print(dateBuf);
+  }
+  else
+  {
+    display.setTextSize(1);
+    display.setCursor(16, 20);
+    display.print("Syncing Time...");
+    display.setCursor(10, 38);
+    display.print("Connect to WiFi");
+  }
+
+  // Footer separator
+  display.drawLine(0, 52, 127, 52, SSD1306_WHITE);
+
+  // Playful footer reminder
+  display.setTextSize(1);
+  display.setCursor(12, 55);
+  display.print("* Tap Head to Chat *");
+
+  display.display();
+}
+
+void serviceTouchSensor()
+{
+  const uint32_t nowMs = millis();
+  static uint32_t s_lastTouchSampleMs = 0;
+  if (nowMs - s_lastTouchSampleMs < 30) return; // Sample touch every 30ms
+  s_lastTouchSampleMs = nowMs;
+
+  // Read capacitive touch value from ESP32 pin (GPIO 4 / T0)
+  uint16_t touchVal = touchRead(TOUCH_PIN_HEAD);
+  bool isPressed = (touchVal < TOUCH_THRESHOLD);
+
+  if (isPressed && !s_touchIsActive)
+  {
+    // Touch initiated
+    s_touchIsActive = true;
+    s_touchPressStartMs = nowMs;
+  }
+  else if (!isPressed && s_touchIsActive)
+  {
+    // Touch released
+    s_touchIsActive = false;
+    uint32_t duration = nowMs - s_touchPressStartMs;
+
+    if (duration >= 2500)
+    {
+      // Long press (Hold > 2.5s) -> Sleep / Bedtime Mood
+      Serial.printf("[Touch] Long press (%u ms) -> Bedtime mode\n", duration);
+      s_showClockUntilMs = 0;
+      applyVoiceEyeAnimation("tired");
+    }
+    else if (duration >= 40)
+    {
+      // Valid tap
+      s_tapCounter++;
+      s_lastTapReleaseMs = nowMs;
+    }
+  }
+
+  // Multi-tap detection window (350ms)
+  if (s_tapCounter > 0 && !s_touchIsActive && (nowMs - s_lastTapReleaseMs > 350))
+  {
+    if (s_tapCounter == 1)
+    {
+      // Single tap -> Display Date & Time on OLED for 4.5 seconds!
+      Serial.printf("[Touch] Single tap (TouchVal=%u) -> Show Date & Time\n", touchVal);
+      s_showClockUntilMs = nowMs + 4500;
+      applyVoiceEyeAnimation("happy");
+    }
+    else if (s_tapCounter >= 2)
+    {
+      // Double tap -> Playful Laugh / Tickle Reaction!
+      Serial.printf("[Touch] Double tap! (Count=%u) -> Tickle / Laugh animation\n", s_tapCounter);
+      s_showClockUntilMs = 0;
+      applyVoiceEyeAnimation("laugh");
+    }
+    s_tapCounter = 0;
+  }
+}
+
 void serviceMicrophoneInput()
 {
   const uint32_t nowMs = millis();
@@ -2652,6 +2828,15 @@ void serviceNetworking()
     networkState.wifiConnectInProgress = false;
     s_playbackCooldownUntilMs = millis() + 1500; // 1.5s cooldown ignores RF transient spike on connect
     Serial.println("Listening for sound/voice...");
+
+    // Initialize SNTP network time sync for India Standard Time (UTC+5:30 -> 19800 sec)
+    static bool s_ntpSyncStarted = false;
+    if (!s_ntpSyncStarted)
+    {
+      configTime(19800, 0, "pool.ntp.org", "time.google.com");
+      s_ntpSyncStarted = true;
+      Serial.println("[NTP] Time synchronization initialized via SNTP (India Standard Time UTC+5:30)");
+    }
   }
 
   if (!kEnableBootChatDebug)
