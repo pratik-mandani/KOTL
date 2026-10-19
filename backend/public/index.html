@@ -185,17 +185,21 @@
         <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-5">
           <!-- Child Profile Summary -->
           <div class="flex items-center space-x-3 sm:space-x-3.5">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-lg sm:text-xl shadow-xs font-extrabold shrink-0">
+            <div id="reportChildAvatar" class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-lg sm:text-xl shadow-xs font-extrabold shrink-0">
               🧒
             </div>
             <div>
               <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <h1 id="reportChildName" class="text-lg sm:text-2xl font-extrabold text-slate-900 tracking-tight">Aarav</h1>
                 <span id="reportChildAgeBadge" class="text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-mono font-semibold">6 Years Old</span>
+                <span id="reportChildGenderBadge" class="text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 font-mono font-semibold">👦 Boy</span>
                 <span class="text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold flex items-center gap-1.5">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Live Synced
                 </span>
+                <button onclick="openProfileModal()" class="text-xs px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-semibold flex items-center gap-1.5 transition-all shadow-2xs hover:text-slate-900" title="Edit Child Profile, Age, Gender & Safety Guardrails">
+                  <span>⚙️ Profile & Rules</span>
+                </button>
               </div>
               <p class="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1 font-medium">
                 Pediatric Developmental Assessment & Behavioral Intelligence Dashboard
@@ -834,6 +838,116 @@
     </div>
   </div>
 
+  <!-- Child Profile & Parental Guardrails Modal -->
+  <div id="childProfileModal" class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scrollbar border border-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2.5">
+          <span class="text-xl">🧒</span>
+          <div>
+            <h3 class="font-bold text-sm sm:text-base text-slate-900">Child Profile & Parent Guardrails</h3>
+            <p class="text-[11px] text-slate-500">Configure child age, tone, and adult permission rules</p>
+          </div>
+        </div>
+        <button id="closeProfileModalBtn" onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-700 text-sm p-1 rounded-lg hover:bg-slate-100 transition-colors">✕</button>
+      </div>
+
+      <form id="childProfileForm" class="space-y-4" onsubmit="handleSaveChildProfile(event)">
+        <!-- Basic Info Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Child's Name</label>
+            <input id="profNameInput" type="text" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500" required />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Age / Cognitive Stage</label>
+            <select id="profAgeInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 font-medium">
+              <option value="3 Years">3 Years (Toddler - Words & Rhymes)</option>
+              <option value="4 Years">4 Years (Preschooler - Basic Concepts)</option>
+              <option value="5 Years">5 Years (Kindergarten - Short Stories)</option>
+              <option value="6 Years">6 Years (Early Primary - Curiosity & Habits)</option>
+              <option value="7 Years">7 Years (Primary - Vocabulary & Science)</option>
+              <option value="8 Years">8 Years (Curious Thinker - Nature & Logic)</option>
+              <option value="9 Years">9 Years (School Age - General Knowledge)</option>
+              <option value="10 Years">10 Years (Pre-Teen - In-Depth Questions)</option>
+              <option value="11 Years">11 Years (Pre-Teen - Critical Thinking)</option>
+              <option value="12 Years">12 Years (Middle School - Creative Ideas)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Gender (Tone & Pronouns)</label>
+            <select id="profGenderInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 font-medium">
+              <option value="Boy">Boy (દીકરો / બેટા / Champ)</option>
+              <option value="Girl">Girl (દીકરી / બેટા / Princess)</option>
+              <option value="Neutral">Neutral (બેટા / Buddy / Friend)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Bedtime Routine (Wind-Down)</label>
+            <input id="profBedtimeInput" type="time" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500 font-medium" value="21:00" />
+          </div>
+        </div>
+
+        <!-- Mandatory Adult Permission Guardrails -->
+        <div class="pt-2 border-t border-slate-100 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold font-mono uppercase tracking-wider text-slate-700">Adult Permission Guardrails</span>
+            <span class="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">Strict Safety</span>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-snug">
+            When the child asks about these topics, KOTL will politely insist on checking with mom or dad first.
+          </p>
+
+          <div class="space-y-2 text-xs">
+            <label class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100/70 cursor-pointer transition-colors">
+              <input id="permMedicines" type="checkbox" class="mt-0.5 rounded text-blue-600 focus:ring-blue-500" checked />
+              <div class="min-w-0">
+                <span class="font-bold text-slate-800">💊 Health & Medicines Advice</span>
+                <p class="text-[11px] text-slate-500">Never give medical or pill dosage advice; redirect to parents immediately.</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100/70 cursor-pointer transition-colors">
+              <input id="permSharpTools" type="checkbox" class="mt-0.5 rounded text-blue-600 focus:ring-blue-500" checked />
+              <div class="min-w-0">
+                <span class="font-bold text-slate-800">✂️ Hazardous Objects, Knives & Electricity</span>
+                <p class="text-[11px] text-slate-500">Advise asking an adult before touching knives, scissors, sockets, or gas stoves.</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100/70 cursor-pointer transition-colors">
+              <input id="permOutsidePlay" type="checkbox" class="mt-0.5 rounded text-blue-600 focus:ring-blue-500" checked />
+              <div class="min-w-0">
+                <span class="font-bold text-slate-800">🚪 Outside Play, Door & Strangers</span>
+                <p class="text-[11px] text-slate-500">Remind child to always hold a parent's hand and never open doors to strangers.</p>
+              </div>
+            </label>
+
+            <label class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100/70 cursor-pointer transition-colors">
+              <input id="permPurchases" type="checkbox" class="mt-0.5 rounded text-blue-600 focus:ring-blue-500" checked />
+              <div class="min-w-0">
+                <span class="font-bold text-slate-800">💳 In-App Purchases & Spending</span>
+                <p class="text-[11px] text-slate-500">Enforce strict zero-purchase policy; tell child all buying needs parent approval.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors">
+            Cancel
+          </button>
+          <button type="submit" id="saveProfileBtn" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5">
+            <span>Save Profile & Guardrails</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ======================================================== -->
   <!-- CLIENT JAVASCRIPT LOGIC                                  -->
   <!-- ======================================================== -->
@@ -915,6 +1029,90 @@
     };
     closeQuotaModalBtn.onclick = () => quotaModal.classList.add('hidden');
 
+    // Child Profile & Guardrails Modal Handlers
+    const childProfileModal = document.getElementById('childProfileModal');
+    async function openProfileModal() {
+      try {
+        const res = await fetch('/api/child/profile');
+        if (res.ok) {
+          const data = await res.json();
+          const prof = data.profile || {};
+          document.getElementById('profNameInput').value = prof.name || 'Aarav';
+          
+          const ageSelect = document.getElementById('profAgeInput');
+          if (prof.age) {
+            for (let opt of ageSelect.options) {
+              if (opt.value.toLowerCase() === prof.age.toLowerCase() || opt.value.startsWith(prof.age.split(' ')[0])) {
+                opt.selected = true;
+                break;
+              }
+            }
+          }
+          
+          const genderSelect = document.getElementById('profGenderInput');
+          if (prof.gender) {
+            genderSelect.value = prof.gender;
+          }
+          
+          document.getElementById('profBedtimeInput').value = prof.bedtime || '21:00';
+          
+          const perms = prof.parent_permissions || {};
+          document.getElementById('permMedicines').checked = perms.medicines !== false;
+          document.getElementById('permSharpTools').checked = perms.sharp_tools !== false;
+          document.getElementById('permOutsidePlay').checked = perms.outside_play !== false;
+          document.getElementById('permPurchases').checked = perms.purchases !== false;
+        }
+      } catch (err) {
+        console.error('Error fetching child profile:', err);
+      }
+      childProfileModal.classList.remove('hidden');
+    }
+
+    function closeProfileModal() {
+      childProfileModal.classList.add('hidden');
+    }
+
+    async function handleSaveChildProfile(e) {
+      e.preventDefault();
+      const saveBtn = document.getElementById('saveProfileBtn');
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<span>Saving...</span>';
+
+      const updatedData = {
+        name: document.getElementById('profNameInput').value.trim(),
+        age: document.getElementById('profAgeInput').value,
+        gender: document.getElementById('profGenderInput').value,
+        bedtime: document.getElementById('profBedtimeInput').value,
+        avatar: document.getElementById('profGenderInput').value === 'Girl' ? '👧' : '👦',
+        parent_permissions: {
+          medicines: document.getElementById('permMedicines').checked,
+          sharp_tools: document.getElementById('permSharpTools').checked,
+          outside_play: document.getElementById('permOutsidePlay').checked,
+          purchases: document.getElementById('permPurchases').checked
+        }
+      };
+
+      try {
+        const res = await fetch('/api/child/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedData)
+        });
+
+        if (res.ok) {
+          closeProfileModal();
+          await regenerateReport();
+        } else {
+          alert('Failed to save profile changes');
+        }
+      } catch (err) {
+        alert('Error saving profile: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<span>Save Profile & Guardrails</span>';
+      }
+    }
+
     // Report State & Rendering
     let currentReport = null;
 
@@ -940,6 +1138,18 @@
 
       const ageBadge = document.getElementById('reportChildAgeBadge');
       if (ageBadge) ageBadge.textContent = rep.age || '6 Years Old';
+
+      const genderBadge = document.getElementById('reportChildGenderBadge');
+      if (genderBadge) {
+        const isGirl = (rep.gender || '').toLowerCase() === 'girl';
+        genderBadge.textContent = isGirl ? '👧 Girl' : '👦 Boy';
+      }
+
+      const avatarElem = document.getElementById('reportChildAvatar');
+      if (avatarElem) {
+        const isGirl = (rep.gender || '').toLowerCase() === 'girl';
+        avatarElem.textContent = isGirl ? '👧' : '👦';
+      }
 
       const dateBadge = document.getElementById('reportDateBadge');
       if (dateBadge) dateBadge.textContent = rep.assessment_date || 'Recent';

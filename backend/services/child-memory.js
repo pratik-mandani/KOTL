@@ -23,6 +23,13 @@ const DEFAULT_PROFILE = {
   age: "6 Years",
   avatar: "🧒",
   gender: "Boy",
+  bedtime: "21:00",
+  parent_permissions: {
+    medicines: true,
+    outside_play: true,
+    sharp_tools: true,
+    purchases: true
+  },
   likes: [
     "Bedtime Stories",
     "Dinosaurs & Fossils",
@@ -120,6 +127,15 @@ function updateChildProfile(updates) {
   const merged = {
     ...current,
     ...updates,
+    parent_permissions: {
+      ...(current.parent_permissions || {
+        medicines: true,
+        outside_play: true,
+        sharp_tools: true,
+        purchases: true
+      }),
+      ...(updates.parent_permissions || {})
+    },
     skills: {
       ...current.skills,
       ...(updates.skills || {})
@@ -307,12 +323,39 @@ function buildChildContextPrompt() {
   const profile = getChildProfile();
   const missions = getParentMissions().filter(m => m.active);
 
+  const gender = profile.gender || "Boy";
+  const age = profile.age || "6 Years Old";
+  const bedtime = profile.bedtime || "21:00";
+  const perms = profile.parent_permissions || {
+    medicines: true,
+    outside_play: true,
+    sharp_tools: true,
+    purchases: true
+  };
+
   let prompt = `\n\nChild's Profile & Memory:
 - Child's Name: ${profile.name || "Aarav"}
-- Age: ${profile.age || "6 years"}
+- Age: ${age} (Tailor your sentence simplicity, vocabulary, and concepts strictly for this developmental age)
+- Gender: ${gender} (${gender.toLowerCase() === "girl" ? "Address lovingly as દીકરી / બેટા / little princess / champ" : (gender.toLowerCase() === "boy" ? "Address lovingly as દીકરો / બેટા / champ / brother" : "Address lovingly as બેટા / buddy / champ")})
+- Bedtime Routine: ${bedtime} (If conversation happens at night around or after ${bedtime}, warmly soothe the child, narrate a calming bedtime wind-down thought, and gently encourage going to sleep)
 - Things the child loves/likes: ${(profile.likes || []).join(", ") || "Stories, Drawing, Stars"}
 - Things the child dislikes/fears: ${(profile.dislikes || []).join(", ") || "Loud noise, Darkness"}
 - Personality: ${profile.skills?.emotional_tone || "Cheerful & loving"}`;
+
+  prompt += `\n\nChild Safety & Mandatory Parental Permission Rules (CRITICAL GUARDRAILS):`;
+  if (perms.medicines !== false) {
+    prompt += `\n- Health & Medicines: If the child asks about medicine, pills, sickness, or remedies, NEVER give medical advice. Warmly reply: "Let's ask mummy or papa first before taking or touching any medicine, okay buddy?"`;
+  }
+  if (perms.sharp_tools !== false) {
+    prompt += `\n- Hazardous Objects & Fire/Electricity: If the child mentions scissors, knives, gas stove, fire, or electrical wall sockets, strictly say: "That is sharp or hot! Let's ask mummy or papa to help us first!"`;
+  }
+  if (perms.outside_play !== false) {
+    prompt += `\n- Going Outside & Strangers: If the child mentions leaving home alone, opening the front door, or talking to strangers, say: "Always hold mummy or papa's hand and ask them before going outside!"`;
+  }
+  if (perms.purchases !== false) {
+    prompt += `\n- In-App & Money Purchases: You cannot buy anything. If asked, say: "We need mom and dad's permission for that!"`;
+  }
+  prompt += `\n- Wholesome & G-Rated: Keep all words, topics, and ideas 100% wholesome, friendly, and safe for young children. Strictly avoid scary, violent, or adult topics.`;
 
   if (missions.length > 0) {
     prompt += `\n\nParent's Active Missions & Guidance for You:`;
@@ -342,14 +385,25 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
   const dateFormatted = now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
   const overallScore = Math.round(((profile.skills?.vocabulary || 84) + (profile.skills?.curiosity || 92) + 90 + 82) / 4);
 
+  const pronoun = (profile.gender || "").toLowerCase() === "girl" ? "She" : ((profile.gender || "").toLowerCase() === "boy" ? "He" : "They");
+  const pronounPossessive = (profile.gender || "").toLowerCase() === "girl" ? "Her" : ((profile.gender || "").toLowerCase() === "boy" ? "His" : "Their");
+
   const report = {
     child_name: profile.name || "Aarav",
     age: profile.age || "6 Years Old",
+    gender: profile.gender || "Boy",
+    bedtime: profile.bedtime || "21:00",
+    parent_permissions: profile.parent_permissions || {
+      medicines: true,
+      outside_play: true,
+      sharp_tools: true,
+      purchases: true
+    },
     assessment_date: dateFormatted,
     total_conversations_analyzed: profile.conversation_count || 14,
     overall_development_score: overallScore,
     pediatric_status: "Advanced Curiosity & Strong Linguistic Growth",
-    executive_summary: `${profile.name || "Aarav"} demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful, imaginative spirit during conversations with KOTL. He shows strong memory retention when engaged in storytelling about ${(profile.likes || []).slice(0, 2).join(' and ') || 'prehistoric sciences and space'}. While his vocabulary and cognitive curiosity exceed standard developmental benchmarks for 6-year-olds, KOTL is actively providing supportive storytelling to help build enthusiastic habits around healthy nutrition and bedtime wind-down routines.`,
+    executive_summary: `${profile.name || "Aarav"} demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful, imaginative spirit during conversations with KOTL. ${pronoun} shows strong memory retention when engaged in storytelling about ${(profile.likes || []).slice(0, 2).join(' and ') || 'prehistoric sciences and space'}. While ${pronounPossessive.toLowerCase()} vocabulary and cognitive curiosity exceed standard developmental benchmarks for ${profile.age || '6-year-olds'}, KOTL is actively providing supportive storytelling to help build enthusiastic habits around healthy nutrition and bedtime wind-down routines.`,
     
     // Core Skills Assessment
     skills_assessment: {
