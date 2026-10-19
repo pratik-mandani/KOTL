@@ -59,6 +59,13 @@ const hasServiceTouch = inoContent.includes('void serviceTouchSensor()');
 const hasNonBlockingClock = inoContent.includes('if (millis() < s_showClockUntilMs)');
 assertTest('OLED Date & Time Screen & Touch Service implemented', hasClockScreen && hasServiceTouch && hasNonBlockingClock, 'Single-tap shows clock for 4.5s; double-tap laughs; long-press sleeps');
 
+// Verify Capacitive Touch Adaptive Calibration & Dual Sensing
+const hasAdaptiveBaseline = inoContent.includes('s_touchBaseline') && inoContent.includes('s_touchThreshold');
+const hasDualSensing = inoContent.includes('digitalRead(TOUCH_PIN_HEAD)') && inoContent.includes('touchRead(TOUCH_PIN_HEAD)');
+assertTest('Capacitive Touch Dynamic Calibration on GPIO 4 (Wire contact & Digital support)',
+  hasAdaptiveBaseline && hasDualSensing,
+  'Calibrates wire ambient baseline at boot; tracks drift; supports bare wire capacitance and digital sensors');
+
 // Verify Startup Sound: 'toot-toot' double beep replaces voice hello
 const hasDoubleBeepFn = inoContent.includes('void playStartupDoubleBeep()') && inoContent.includes('void playTone(');
 const selfTestMatch = inoContent.match(/void\s+runStartupSelfTest\s*\(\)\s*\{([\s\S]*?)\n\}/);
@@ -67,20 +74,20 @@ const callsDoubleBeep = selfTestSection.includes('playStartupDoubleBeep();');
 const noHelloInSelfTest = !selfTestSection.includes('playStartupHello();');
 assertTest('Startup Sound: Electronic "toot-toot" double beep replaces voice hello', hasDoubleBeepFn && callsDoubleBeep && noHelloInSelfTest, 'Self-test plays ascending chime (880Hz -> 1175Hz) without voice audio sample');
 
-// Verify Boot Screen: Bold centered 'KOTL' logo on boot; test UI only shown on error
-const hasBootLogoFn = inoContent.includes('void drawBootLogoScreen()') && inoContent.includes('setTextSize(4)') && inoContent.includes('"KOTL"');
+// Verify Clean Direct Boot: No Name or Test UI on startup; robot eyes wake up directly; error UI only on fault
 const hasErrorScreenFn = inoContent.includes('void drawStartupErrorScreen(');
-const callsBootLogoOnStartup = selfTestSection.includes('drawBootLogoScreen();');
+const noNameOnStartup = !selfTestSection.includes('drawBootLogoScreen();');
 const noTestUiInNormalBoot = !selfTestSection.includes('drawStartupSelfTestScreen(');
+const hasDirectEyesOpen = selfTestSection.includes('roboEyes.open();');
 const hasErrorBranch = selfTestSection.includes('drawStartupErrorScreen(');
 
 const calibMatch = inoContent.match(/void\s+calibrateRoomAcoustics\s*\(\)\s*\{([\s\S]*?)\n\}/);
 const calibSection = calibMatch ? calibMatch[1] : '';
 const calibSilent = !calibSection.includes('drawStartupSelfTestScreen(');
 
-assertTest('Boot Logo UI: Bold centered "KOTL" logo presented; self-test UI only displays on hardware error',
-  hasBootLogoFn && hasErrorScreenFn && callsBootLogoOnStartup && noTestUiInNormalBoot && hasErrorBranch && calibSilent,
-  'Screen shows full-screen centered bold KOTL logo; room profiling runs silently; errors trigger dedicated alert screen');
+assertTest('Clean Direct Boot: No Name or Test UI on normal power-on; eyes open directly; error UI only on fault',
+  hasErrorScreenFn && noNameOnStartup && noTestUiInNormalBoot && hasDirectEyesOpen && hasErrorBranch && calibSilent,
+  'Screen remains clean on boot; robot eyes wake up directly with chime; test UI strictly suppressed unless hardware error');
 
 // ----------------------------------------------------
 // TEST GROUP 2: Backend Node.js Syntax & Compilation QA
@@ -135,6 +142,15 @@ assertTest('System prompt injects Gender-specific affectionate addressing', hasG
 assertTest('System prompt injects Age-appropriate cognitive guidelines', hasAgeInstruction, 'Vocabulary and complexity tailored to child age');
 assertTest('System prompt enforces Bedtime wind-down routine', hasBedtimeInstruction, 'Bedtime 21:00 triggers soothing bedtime mode');
 assertTest('System prompt enforces 4 Mandatory Adult Permission Rules', hasSafetyGuardrails, 'Medicines, Sharp tools/Fire, Strangers/Door, Purchases strictly gated');
+
+// Verify Language Policy in Assistant
+const assistantPath = path.join(__dirname, '..', 'services', 'assistant.js');
+const assistantContent = fs.readFileSync(assistantPath, 'utf8');
+const hasEnglishPriority = assistantContent.includes('DEFAULT & PRIORITY LANGUAGE: ENGLISH');
+const hasHindiException = assistantContent.includes('ONLY if the user explicitly speaks or asks in Hindi');
+assertTest('Language Policy: English is default/priority language, Hindi strictly on request',
+  hasEnglishPriority && hasHindiException,
+  'Enforces English communication by default; Hindi used strictly upon user Hindi prompt');
 
 // Report generation test with dynamic pronouns
 const report = generateChildDevelopmentReport({ refresh: true });

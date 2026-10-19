@@ -336,7 +336,7 @@ function buildChildContextPrompt() {
   let prompt = `\n\nChild's Profile & Memory:
 - Child's Name: ${profile.name || "Aarav"}
 - Age: ${age} (Tailor your sentence simplicity, vocabulary, and concepts strictly for this developmental age)
-- Gender: ${gender} (${gender.toLowerCase() === "girl" ? "Address lovingly as દીકરી / બેટા / little princess / champ" : (gender.toLowerCase() === "boy" ? "Address lovingly as દીકરો / બેટા / champ / brother" : "Address lovingly as બેટા / buddy / champ")})
+- Gender: ${gender} (${gender.toLowerCase() === "girl" ? "Address lovingly as little princess / champ / buddy (or beti / દીકરી)" : (gender.toLowerCase() === "boy" ? "Address lovingly as champ / brother / buddy / champ (or beta / દીકરો)" : "Address lovingly as buddy / champ")})
 - Bedtime Routine: ${bedtime} (If conversation happens at night around or after ${bedtime}, warmly soothe the child, narrate a calming bedtime wind-down thought, and gently encourage going to sleep)
 - Things the child loves/likes: ${(profile.likes || []).join(", ") || "Stories, Drawing, Stars"}
 - Things the child dislikes/fears: ${(profile.dislikes || []).join(", ") || "Loud noise, Darkness"}

@@ -789,7 +789,6 @@ void setup()
 
   initDisplay();
   initEyes();
-  drawBootLogoScreen();
   initAudioOutput();
   initMicrophoneInput();
   initBootButton();
@@ -906,8 +905,9 @@ void initDisplay()
 
   if (displayInitialized)
   {
-    drawBootLogoScreen();
-    Serial.println("[OLED] SSD1306 OLED initialized - displaying 'KOTL' boot logo!");
+    display.clearDisplay();
+    display.display();
+    Serial.println("[OLED] SSD1306 OLED initialized cleanly (screen clean for startup)");
   }
   else
   {
@@ -1419,11 +1419,8 @@ void runStartupSelfTest()
 {
   Serial.println("===== STARTUP SELF TEST =====");
 
-  // Always display clean, full-screen centered bold 'KOTL' logo during startup
-  drawBootLogoScreen();
-
   // Test 1: Audio Speaker Test
-  // Plays pleasant double beep chime ("toot-toot") while KOTL logo is presented
+  // Plays pleasant double beep chime ("toot-toot")
   Serial.println("speaker test: playing 'toot-toot' startup chime");
   if (!audioOutputInitialized)
   {
@@ -1464,9 +1461,8 @@ void runStartupSelfTest()
 
   if (startupSelfTestPassed)
   {
-    // Normal / Success: Room acoustics profile silently in background
+    // Normal / Success: Room acoustics profile silently in background, directly wake up robot eyes!
     calibrateRoomAcoustics();
-    delay(600); // Hold KOTL logo presentation cleanly before opening eyes
     roboEyes.open();
   }
   else
@@ -2584,9 +2580,33 @@ void serviceBootButton()
   s_lastBootPressed = isPressed;
 }
 
+static uint16_t s_touchBaseline = 70;
+static uint16_t s_touchThreshold = 45;
+
 void initTouchSensor()
 {
-  Serial.printf("[Touch] Capacitive Touch Sensor initialized on Pin %d (Threshold: %d)\n", TOUCH_PIN_HEAD, TOUCH_THRESHOLD);
+  pinMode(TOUCH_PIN_HEAD, INPUT_PULLDOWN);
+  delay(30);
+
+  // Take 25 samples to calculate exact ambient capacitance of the attached wire
+  uint32_t baselineSum = 0;
+  for (int i = 0; i < 25; ++i)
+  {
+    baselineSum += touchRead(TOUCH_PIN_HEAD);
+    delay(4);
+  }
+  s_touchBaseline = (uint16_t)(baselineSum / 25);
+  if (s_touchBaseline < 8) s_touchBaseline = 35; // safety floor
+
+  // Adaptive threshold: Touch drops raw capacitance counter by ~25-30%
+  s_touchThreshold = (s_touchBaseline * 70) / 100;
+  if (s_touchBaseline - s_touchThreshold < 10)
+  {
+    s_touchThreshold = (s_touchBaseline > 12) ? (s_touchBaseline - 10) : (s_touchBaseline / 2);
+  }
+
+  Serial.printf("[Touch] GPIO 4 initialized. Measured Wire Baseline: %u | Adaptive Threshold: %u\n",
+                s_touchBaseline, s_touchThreshold);
 }
 
 void drawClockDateScreen()
@@ -2679,33 +2699,60 @@ void serviceTouchSensor()
 {
   const uint32_t nowMs = millis();
   static uint32_t s_lastTouchSampleMs = 0;
-  if (nowMs - s_lastTouchSampleMs < 30) return; // Sample touch every 30ms
+  if (nowMs - s_lastTouchSampleMs < 25) return; // Sample touch every 25ms
   s_lastTouchSampleMs = nowMs;
 
   // Read capacitive touch value from ESP32 pin (GPIO 4 / T0)
   uint16_t touchVal = touchRead(TOUCH_PIN_HEAD);
-  bool isPressed = (touchVal < TOUCH_THRESHOLD);
+  // Also check digitalRead in case a digital touch sensor (TTP223 module) or button is connected
+  bool digitalHigh = (digitalRead(TOUCH_PIN_HEAD) == HIGH);
+
+  // Pressed if capacitive value drops below adaptive threshold OR digital signal goes HIGH
+  bool isPressed = (touchVal < s_touchThreshold) || digitalHigh;
+
+  // Slow ambient drift compensation when untouched
+  if (!s_touchIsActive && !isPressed && touchVal > s_touchThreshold && abs((int)touchVal - (int)s_touchBaseline) < 20)
+  {
+    s_touchBaseline = (uint16_t)(((uint32_t)s_touchBaseline * 63 + touchVal) / 64);
+    s_touchThreshold = (s_touchBaseline * 70) / 100;
+    if (s_touchBaseline - s_touchThreshold < 10)
+    {
+      s_touchThreshold = (s_touchBaseline > 12) ? (s_touchBaseline - 10) : (s_touchBaseline / 2);
+    }
+  }
+
+  // Periodic debug telemetry every 4 seconds so developer sees exact pin values in Serial Monitor
+  static uint32_t s_lastDiagMs = 0;
+  if (nowMs - s_lastDiagMs > 4000)
+  {
+    s_lastDiagMs = nowMs;
+    Serial.printf("[Touch Telemetry] GPIO 4 TouchVal: %u | Baseline: %u | Thresh: %u | Active: %d\n",
+                  touchVal, s_touchBaseline, s_touchThreshold, s_touchIsActive ? 1 : 0);
+  }
 
   if (isPressed && !s_touchIsActive)
   {
     // Touch initiated
     s_touchIsActive = true;
     s_touchPressStartMs = nowMs;
+    Serial.printf("[Touch] Contact detected on GPIO 4! (Val=%u, Thresh=%u, Dig=%d)\n",
+                  touchVal, s_touchThreshold, digitalHigh ? 1 : 0);
   }
   else if (!isPressed && s_touchIsActive)
   {
     // Touch released
     s_touchIsActive = false;
     uint32_t duration = nowMs - s_touchPressStartMs;
+    Serial.printf("[Touch] Released after %u ms\n", duration);
 
-    if (duration >= 2500)
+    if (duration >= 2200)
     {
-      // Long press (Hold > 2.5s) -> Sleep / Bedtime Mood
+      // Long press (Hold > 2.2s) -> Sleep / Bedtime Mood
       Serial.printf("[Touch] Long press (%u ms) -> Bedtime mode\n", duration);
       s_showClockUntilMs = 0;
       applyVoiceEyeAnimation("tired");
     }
-    else if (duration >= 40)
+    else if (duration >= 15) // responsive to quick taps
     {
       // Valid tap
       s_tapCounter++;
@@ -2713,20 +2760,20 @@ void serviceTouchSensor()
     }
   }
 
-  // Multi-tap detection window (350ms)
-  if (s_tapCounter > 0 && !s_touchIsActive && (nowMs - s_lastTapReleaseMs > 350))
+  // Multi-tap detection window (320ms)
+  if (s_tapCounter > 0 && !s_touchIsActive && (nowMs - s_lastTapReleaseMs > 320))
   {
     if (s_tapCounter == 1)
     {
       // Single tap -> Display Date & Time on OLED for 4.5 seconds!
-      Serial.printf("[Touch] Single tap (TouchVal=%u) -> Show Date & Time\n", touchVal);
+      Serial.printf("[Touch Action] Single tap -> Show Date & Time on OLED (4.5s)\n");
       s_showClockUntilMs = nowMs + 4500;
       applyVoiceEyeAnimation("happy");
     }
     else if (s_tapCounter >= 2)
     {
       // Double tap -> Playful Laugh / Tickle Reaction!
-      Serial.printf("[Touch] Double tap! (Count=%u) -> Tickle / Laugh animation\n", s_tapCounter);
+      Serial.printf("[Touch Action] Double tap! (Count=%u) -> Tickle / Laugh animation\n", s_tapCounter);
       s_showClockUntilMs = 0;
       applyVoiceEyeAnimation("laugh");
     }
