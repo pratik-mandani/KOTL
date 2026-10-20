@@ -2880,6 +2880,10 @@ void serviceMicrophoneInput()
   micState.rawValue = (uint16_t)min(peakAmp, (int32_t)32767);
   micState.amplitude = micState.rawValue;
 
+  // Dynamic Trigger Threshold: Calibrated to room acoustics + slow ambient drift
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 1800);
+  const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
+
   // Adaptive Ambient Noise Floor Tracking (DSP rolling average initialized from room calibration)
   static uint32_t s_lastNoiseFloorUpdateMs = 0;
   if (nowMs - s_lastNoiseFloorUpdateMs >= 100)
@@ -2891,10 +2895,6 @@ void serviceMicrophoneInput()
       s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
     }
   }
-
-  // Dynamic Trigger Threshold: Calibrated to room acoustics + slow ambient drift
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 1800);
-  const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   static uint32_t s_lastMicTelemetryMs = 0;
   if (nowMs - s_lastMicTelemetryMs >= 2000)
