@@ -209,7 +209,7 @@ async function transcribeWithOpenAi(filePath) {
     fileName,
     model,
     "en",
-    "KOTL AI Companion. English conversational speech: hello, what time is it, how are you, tell me a story."
+    "Hello KOTL."
   );
 
   console.log(`[STT openai] Sending request to OpenAI STT API. Model: ${model}, Language: ${language}, Prompt hint: "${prompt}"`);
@@ -286,7 +286,7 @@ async function transcribeWithGroq(filePath) {
     fileName,
     model,
     "en",
-    "KOTL AI Companion. English conversational speech: hello, what time is it, how are you, tell me a story."
+    "Hello KOTL."
   );
 
   console.log(`[STT groq] Sending request to Groq STT API. Model: ${model}, Language: ${language}, Prompt: "${prompt}"`);

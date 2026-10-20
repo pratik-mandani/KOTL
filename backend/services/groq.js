@@ -62,7 +62,7 @@ async function generateGroqAssistantReply({ messages, sessionId = null }) {
       body: JSON.stringify({
         model: DEFAULT_MODEL,
         messages: cleanMessages,
-        max_tokens: 60,
+        max_tokens: 300,
         temperature: 0.3,
         stream: false,
       }),

@@ -1140,6 +1140,8 @@ void resetVoiceTurnToIdle()
   micState.silenceStartMs = 0;
 
   setVoiceTurnState(VOICE_IDLE);
+  // Protect against rapid trigger loops by enforcing a minimum 1.5s post-turn cooldown
+  s_playbackCooldownUntilMs = millis() + 1500;
   Serial.println("TURN IDLE");
 }
 
@@ -1421,13 +1423,13 @@ void calibrateRoomAcoustics()
   }
 
   const uint32_t measuredAvg = (sampleCount > 0) ? (uint32_t)(sumAmp / sampleCount) : 40;
-  s_ambientNoiseFloor = min(max(measuredAvg, (uint32_t)20), (uint32_t)200);
-  s_ambientPeakNoise = min(max((uint32_t)maxNoiseAmp, (uint32_t)40), (uint32_t)350);
+  s_ambientNoiseFloor = min(max(measuredAvg, (uint32_t)20), (uint32_t)3000);
+  s_ambientPeakNoise = min(max((uint32_t)maxNoiseAmp, (uint32_t)40), (uint32_t)5000);
 
   // Dynamically calibrate trigger thresholds for this specific room environment (tuned for natural conversational voice)
-  s_calibratedSpikeThreshold = (uint16_t)min(max((uint32_t)320, s_ambientNoiseFloor + 160), (uint32_t)550);
-  s_calibratedVadThreshold   = (uint16_t)min(max((uint32_t)450, s_ambientNoiseFloor + 260), (uint32_t)650);
-  s_calibratedValidationGate = (uint16_t)min(max((uint32_t)400, s_ambientNoiseFloor + 220), (uint32_t)600);
+  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)3500, s_ambientNoiseFloor + 1800);
+  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)2800, s_ambientNoiseFloor + 1000);
+  s_calibratedValidationGate = (uint16_t)max((uint32_t)3200, s_ambientNoiseFloor + 1400);
 
   Serial.printf("[Room Calibration] Samples: %u | Avg Floor: %u | Peak Noise: %u\n",
                 sampleCount, (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
@@ -2883,12 +2885,15 @@ void serviceMicrophoneInput()
   if (nowMs - s_lastNoiseFloorUpdateMs >= 100)
   {
     s_lastNoiseFloorUpdateMs = nowMs;
-    // Slow exponential moving average (alpha ~ 1/32)
-    s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
+    // Only adapt noise floor when quiet (below trigger threshold) so speech doesn't pollute the baseline
+    if (micState.amplitude < dynamicSpikeThreshold)
+    {
+      s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
+    }
   }
 
   // Dynamic Trigger Threshold: Calibrated to room acoustics + slow ambient drift
-  const uint16_t dynamicSpikeThreshold = (uint16_t)min(max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 120), (uint32_t)550);
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 1800);
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   static uint32_t s_lastMicTelemetryMs = 0;
