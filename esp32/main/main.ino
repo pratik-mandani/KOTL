@@ -106,7 +106,7 @@ static const uint32_t kStartupBeepFrequencyHz = 880;
 #endif
 
 #ifndef KOTL_BACKEND_BASE_URL
-#define KOTL_BACKEND_BASE_URL "http://192.168.1.13:3000"
+#define KOTL_BACKEND_BASE_URL "http://192.168.1.15:3000"
 #endif
 
 static const char *kWiFiSsid = KOTL_WIFI_SSID;
@@ -119,7 +119,7 @@ static const bool kEnableBootChatDebug = false;
 static const uint32_t kWiFiRetryIntervalMs = 5000;
 static const uint32_t kHttpRetryIntervalMs = 15000;
 static const uint32_t kHttpTimeoutMs = 120000;
-static const uint32_t kAudioCaptureSampleRate = 8000;
+static const uint32_t kAudioCaptureSampleRate = 16000;
 static const uint32_t kAudioCaptureDurationMs = 3000;
 static const size_t kAudioCaptureSampleCount = (kAudioCaptureSampleRate * kAudioCaptureDurationMs) / 1000;
 static const uint32_t kAudioCaptureSampleIntervalUs = 1000000UL / kAudioCaptureSampleRate;
@@ -903,7 +903,7 @@ void initDisplay()
 {
   Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
   Wire.setTimeOut(25);   // Protect against I2C hardware deadlocks
-  Wire.setClock(200000); // 200kHz Fast & Noise-Immune I2C clock (prevents breadboard/wire noise corruptions)
+  Wire.setClock(400000); // 400kHz Fast Mode I2C (eliminates queue congestion, bus delays & display flickering)
 
   displayInitialized = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS);
   if (!displayInitialized)
@@ -912,6 +912,10 @@ void initDisplay()
     Wire.setClock(100000);
     delay(50);
     displayInitialized = display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDRESS);
+    if (displayInitialized)
+    {
+      Wire.setClock(400000);
+    }
   }
 
   if (displayInitialized)
@@ -1006,7 +1010,7 @@ void serviceEyeState()
 
 void initEyes()
 {
-  roboEyes.begin(SCREEN_WIDTH, SCREEN_HEIGHT, 100);
+  roboEyes.begin(SCREEN_WIDTH, SCREEN_HEIGHT, 40); // 40 FPS matches 400kHz I2C bus bandwidth (eliminates queue tearing & flickering)
   roboEyes.close();
   roboEyes.setPosition(DEFAULT);
   roboEyes.setMood(DEFAULT);
@@ -2391,13 +2395,7 @@ void performSynchronousAudioCapture()
     }
 
     const uint32_t nowMs = millis();
-    static uint32_t s_lastCaptureEyeMs = 0;
-    if (nowMs - s_lastCaptureEyeMs >= 30)
-    {
-      s_lastCaptureEyeMs = nowMs;
-      serviceEyeState();
-      roboEyes.update();
-    }
+    // Keep I2C bus completely free during audio capture so I2S DMA buffer never overflows or drops audio chunks!
 
     if (chunkPeak > peakSpeechAmp)
     {
@@ -2533,7 +2531,9 @@ void beginAudioCapture()
   if (s_wsConnected)
   {
     s_useWebSocketForCurrentTurn = true;
-    wsSendTxtSafe("{\"type\":\"start_listen\",\"sample_rate\":8000}");
+    char startMsg[64];
+    snprintf(startMsg, sizeof(startMsg), "{\"type\":\"start_listen\",\"sample_rate\":%u}", (unsigned int)kAudioCaptureSampleRate);
+    wsSendTxtSafe(startMsg);
     Serial.println("⚡ [WebSocket] Live audio streaming turn started!");
   }
   else
@@ -2723,11 +2723,9 @@ void serviceTouchSensor()
 
   // Read capacitive touch value from ESP32 pin (GPIO 4 / T0)
   uint16_t touchVal = touchRead(TOUCH_PIN_HEAD);
-  // Also check digitalRead in case a digital touch module (TTP223) or button is connected
-  bool digitalHigh = (digitalRead(TOUCH_PIN_HEAD) == HIGH);
 
-  // Raw contact detected if capacitive reading drops below threshold OR digital pin goes HIGH
-  bool isRawActive = (touchVal < s_touchThreshold) || digitalHigh;
+  // Capacitive contact detected if touch reading drops below adaptive threshold
+  bool isRawActive = (touchVal < s_touchThreshold);
 
   // 3-sample digital hysteresis filter (~75ms window):
   // Human contact lasts >100ms. 50Hz/60Hz AC noise blips (10-20ms) are completely rejected.
@@ -2761,8 +2759,8 @@ void serviceTouchSensor()
   if (nowMs - s_lastDiagMs > 3000)
   {
     s_lastDiagMs = nowMs;
-    Serial.printf("[Touch Telemetry] GPIO 4 TouchVal: %u | Baseline: %u | Thresh: %u | Dig: %d | Active: %d\n",
-                  touchVal, s_touchBaseline, s_touchThreshold, digitalHigh ? 1 : 0, s_touchIsActive ? 1 : 0);
+    Serial.printf("[Touch Telemetry] GPIO 4 TouchVal: %u | Baseline: %u | Thresh: %u | Active: %d\n",
+                  touchVal, s_touchBaseline, s_touchThreshold, s_touchIsActive ? 1 : 0);
   }
 
   if (s_debouncedPressed && !s_touchIsActive)
@@ -2770,8 +2768,8 @@ void serviceTouchSensor()
     // Debounced touch confirmed INSTANTLY on contact!
     s_touchIsActive = true;
     s_touchPressStartMs = nowMs;
-    Serial.printf("[Touch] Contact confirmed on GPIO 4! (Val=%u, Thresh=%u, Dig=%d)\n",
-                  touchVal, s_touchThreshold, digitalHigh ? 1 : 0);
+    Serial.printf("[Touch] Contact confirmed on GPIO 4! (Val=%u, Thresh=%u)\n",
+                  touchVal, s_touchThreshold);
 
     // INSTANT CLOCK DISPLAY: Show Date & Time on OLED for 4.5 seconds immediately on contact!
     s_showClockUntilMs = nowMs + 4500;
@@ -3435,7 +3433,7 @@ void serviceSerialInput()
         val.trim();
         if (val.equalsIgnoreCase("LOCAL"))
         {
-          val = "http://192.168.1.13:3000";
+          val = "http://192.168.1.15:3000";
         }
         else if (val.equalsIgnoreCase("RENDER"))
         {

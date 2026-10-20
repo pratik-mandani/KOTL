@@ -65,7 +65,7 @@ static const char CAPTIVE_HTML[] PROGMEM = R"rawliteral(
       <input type="password" name="pass" placeholder="••••••••">
       
       <label>Hostinger / Render / Cloud Backend URL</label>
-      <input type="text" name="backend" placeholder="https://kotl.onrender.com or http://192.168.1.13:3000" value="https://kotl.onrender.com" required>
+      <input type="text" name="backend" placeholder="https://kotl.onrender.com or http://192.168.1.15:3000" value="https://kotl.onrender.com" required>
       
       <button type="submit">Save & Connect</button>
     </form>

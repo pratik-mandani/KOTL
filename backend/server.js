@@ -954,7 +954,7 @@ app.post(
       const wavResult = writePcm16MonoWav({
         rawPath: audioPath,
         wavPath,
-        sampleRate: metadata.sample_rate || 8000,
+        sampleRate: metadata.sample_rate || 16000,
         audioDataBytes: req.body,
       });
       metadata.wav_bytes = wavResult.bytesWritten;

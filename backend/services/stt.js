@@ -167,8 +167,8 @@ async function transcribeWithOpenAi(filePath) {
     audioBuffer,
     fileName,
     model,
-    "hi",
-    "KOTL AI Companion. Hindi and English conversational speech: नमस्ते, आप कैसे हो, क्या हाल है, KOTL, hello, how are you, tell me a story."
+    "en",
+    "KOTL AI Companion. English conversational speech: hello, what time is it, how are you, tell me a story."
   );
 
   console.log(`[STT openai] Sending request to OpenAI STT API. Model: ${model}, Language: ${language}, Prompt hint: "${prompt}"`);
@@ -244,8 +244,8 @@ async function transcribeWithGroq(filePath) {
     audioBuffer,
     fileName,
     model,
-    "hi",
-    "KOTL AI Companion. Hindi and English conversational speech: नमस्ते, आप कैसे हो, क्या हाल है, KOTL, hello, how are you, tell me a story."
+    "en",
+    "KOTL AI Companion. English conversational speech: hello, what time is it, how are you, tell me a story."
   );
 
   console.log(`[STT groq] Sending request to Groq STT API. Model: ${model}, Language: ${language}, Prompt: "${prompt}"`);

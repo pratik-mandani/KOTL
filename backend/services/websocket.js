@@ -188,7 +188,7 @@ function initWebSocketServer(httpServer) {
             break;
 
           case "start_listen":
-            ws.sampleRate = (msg.sample_rate && Number(msg.sample_rate)) || 8000;
+            ws.sampleRate = (msg.sample_rate && Number(msg.sample_rate)) || 16000;
             console.log(`[WebSocket ${ws.deviceId}] Listening started (sample rate: ${ws.sampleRate} Hz)...`);
             ws.audioChunks = [];
             ws.totalAudioBytes = 0;
@@ -196,7 +196,7 @@ function initWebSocketServer(httpServer) {
             break;
 
           case "stop_listen":
-            const audioRate = ws.sampleRate || 8000;
+            const audioRate = ws.sampleRate || 16000;
             console.log(
               `[WebSocket ${ws.deviceId}] Listening stopped. Received ${ws.totalAudioBytes} bytes (${(
                 ws.totalAudioBytes / (audioRate * 2)
@@ -294,7 +294,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     // 1. Write PCM buffer to temporary 16kHz WAV file for STT
     writePcm16MonoWav({
       wavPath: tempWavPath,
-      sampleRate: ws.sampleRate || 8000,
+      sampleRate: ws.sampleRate || 16000,
       audioDataBytes: rawPcmBuffer,
     });
 

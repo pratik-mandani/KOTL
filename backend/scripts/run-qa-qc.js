@@ -69,6 +69,44 @@ assertTest('Capacitive Touch 3-Stage Debounce & Instant Clock Display on GPIO 4'
   hasAdaptiveBaseline && hasTouchRead && hasHysteresisFilter && hasInstantActivation,
   'Calibrates wire baseline; 3-sample hysteresis filter rejects 50Hz noise and triggers instant clock on contact');
 
+// Verify Bare Wire Capacitive Touch Stability (no floating digitalRead on GPIO 4 wire)
+const touchMatch = inoContent.match(/void\s+serviceTouchSensor\s*\(\)\s*\{([\s\S]*?)\n\}/);
+const touchSection = touchMatch ? touchMatch[1] : '';
+const noFloatingDigitalRead = !touchSection.includes('digitalRead(TOUCH_PIN_HEAD)');
+assertTest('Bare Wire Capacitive Touch: Pure capacitive sensing without floating digital reads',
+  noFloatingDigitalRead,
+  'Rejects AC hum on bare GPIO 4 wire; prevents false touch triggers and screen flickering');
+
+// Verify Audio Capture Sample Rate (16kHz native rate for INMP441 & Whisper)
+const has16kSampleRate = inoContent.includes('kAudioCaptureSampleRate = 16000') && inoContent.includes('i2sMicConfig.sample_rate = (int)kAudioCaptureSampleRate');
+assertTest('Audio Capture Sample Rate: 16kHz native rate for INMP441 & Whisper STT',
+  has16kSampleRate,
+  'Operates at 16,000Hz (1.024MHz SCK) for pristine fidelity and zero clock jitter');
+
+// Verify OLED Display Bus: 400kHz Fast Mode I2C & 40 FPS RoboEyes
+const has400kI2c = inoContent.includes('Wire.setClock(400000)');
+const has40FpsEyes = inoContent.includes('roboEyes.begin(SCREEN_WIDTH, SCREEN_HEIGHT, 40)');
+assertTest('OLED Display Bus: 400kHz Fast Mode I2C & 40 FPS RoboEyes',
+  has400kI2c && has40FpsEyes,
+  'Prevents I2C bus backlog, frame tearing, and screen flicker');
+
+// Verify Audio DMA Integrity: No I2C display updates during microphone capture
+const captureMatch = inoContent.match(/void\s+performSynchronousAudioCapture\s*\(\)\s*\{([\s\S]*?)\n\}/);
+const captureSection = captureMatch ? captureMatch[1] : '';
+const noEyesInCapture = !captureSection.includes('roboEyes.update()');
+assertTest('Audio DMA Integrity: No I2C display updates during microphone capture',
+  noEyesInCapture,
+  'Free of I2C blocking delays; prevents I2S DMA overflow and packet drops during voice recording');
+
+// Verify Backend IP Address Target
+const hasLocalIp15 = inoContent.includes('http://192.168.1.15:3000');
+const kotlConfigPath = path.join(__dirname, '..', '..', 'esp32', 'main', 'kotl_config.h');
+const kotlConfigContent = fs.existsSync(kotlConfigPath) ? fs.readFileSync(kotlConfigPath, 'utf8') : '';
+const kotlConfigIp15 = kotlConfigContent.includes('http://192.168.1.15:3000');
+assertTest('Network Target URL: Base URL points to 192.168.1.15:3000',
+  hasLocalIp15 && kotlConfigIp15,
+  'ESP32 firmware targets actual development machine IP address');
+
 // Verify Startup Sound: 'toot-toot' double beep replaces voice hello
 const hasDoubleBeepFn = inoContent.includes('void playStartupDoubleBeep()') && inoContent.includes('void playTone(');
 const selfTestMatch = inoContent.match(/void\s+runStartupSelfTest\s*\(\)\s*\{([\s\S]*?)\n\}/);
@@ -154,6 +192,14 @@ const hasHindiException = assistantContent.includes('ONLY if the user explicitly
 assertTest('Language Policy: English is default/priority language, Hindi strictly on request',
   hasEnglishPriority && hasHindiException,
   'Enforces English communication by default; Hindi used strictly upon user Hindi prompt');
+
+// Verify STT Whisper Default Language and Prompts
+const sttPath = path.join(__dirname, '..', 'services', 'stt.js');
+const sttContent = fs.readFileSync(sttPath, 'utf8');
+const sttDefaultEnglish = sttContent.includes('"en",') && !sttContent.includes('"hi",');
+assertTest('STT Whisper Defaults: English language default and clean English prompt hints',
+  sttDefaultEnglish,
+  'Guarantees Groq Whisper defaults to English and avoids Hindi hallucination on ambient noise');
 
 // Verify Real-time Clock Grounding & English Time/Date Query Policy
 const hasTimeDatePrompt = assistantContent.includes('REAL-TIME CLOCK & TIME/DATE QUERIES') &&
