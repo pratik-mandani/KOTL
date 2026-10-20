@@ -60,7 +60,7 @@ async function synthesizeSentencePcm(text) {
   const isEdgeCoolingDown = Date.now() < s_edgeTtsCooldownUntilMs;
   if (!isEdgeCoolingDown) {
     try {
-      const speechRate = process.env.EDGE_TTS_RATE || "-10%";
+      const speechRate = process.env.EDGE_TTS_RATE || "-20%";
       const tts = new EdgeTTS({
         voice,
         lang,
@@ -457,7 +457,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
 
       // Natural conversational pause between sentences (250ms breathing space)
       if (i + 1 < sentences.length && ws.readyState === WebSocket.OPEN) {
-        const silenceBytes = 8000;
+        const silenceBytes = 11200;
         let sentSilence = 0;
         while (sentSilence < silenceBytes && ws.readyState === WebSocket.OPEN) {
           const chunkLen = Math.min(AUDIO_CHUNK_STREAM_SIZE, silenceBytes - sentSilence);
