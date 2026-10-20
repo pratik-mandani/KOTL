@@ -98,6 +98,28 @@ static const char SUCCESS_HTML[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
+inline const char *getDisconnectReasonName(uint8_t reason) {
+  switch (reason) {
+    case 1:   return "UNSPECIFIED";
+    case 2:   return "AUTH_EXPIRE";
+    case 3:   return "AUTH_LEAVE";
+    case 4:   return "ASSOC_EXPIRE";
+    case 5:   return "ASSOC_TOOMANY";
+    case 6:   return "NOT_AUTHED";
+    case 7:   return "NOT_ASSOCED";
+    case 8:   return "ASSOC_LEAVE";
+    case 9:   return "ASSOC_NOT_AUTHED";
+    case 15:  return "4WAY_HANDSHAKE_TIMEOUT (Wrong Wi-Fi password or poor signal)";
+    case 200: return "BEACON_TIMEOUT (Signal lost)";
+    case 201: return "NO_AP_FOUND (SSID 'Altius' not found in 2.4GHz air)";
+    case 202: return "AUTH_FAIL (Wrong Wi-Fi Password!)";
+    case 203: return "ASSOC_FAIL";
+    case 204: return "HANDSHAKE_TIMEOUT (Wrong Wi-Fi Password!)";
+    case 205: return "CONNECTION_FAIL";
+    default:  return "UNKNOWN";
+  }
+}
+
 inline void initPersistentConfig() {
   prefs.begin("kotl_cfg", false);
   g_wifi_ssid = prefs.getString("ssid", "");
@@ -116,10 +138,12 @@ inline void initPersistentConfig() {
     Serial.printf("[Config] Migrated backend URL in NVS to: %s\n", g_backend_url.c_str());
   }
 
-  // Fallback to kotl_config.h defaults if NVS is empty
+  // Ensure default SSID and Password are always applied if NVS is empty or matches default
 #if defined(KOTL_WIFI_SSID)
-  if (g_wifi_ssid.length() == 0 && strlen(KOTL_WIFI_SSID) > 0) {
+  if (g_wifi_ssid.length() == 0) {
     g_wifi_ssid = String(KOTL_WIFI_SSID);
+  }
+  if (g_wifi_pass.length() == 0 || g_wifi_ssid == KOTL_WIFI_SSID) {
     g_wifi_pass = String(KOTL_WIFI_PASSWORD);
   }
 #endif
@@ -132,6 +156,9 @@ inline void initPersistentConfig() {
   if (g_backend_url.length() == 0) {
     g_backend_url = "http://192.168.1.15:3000";
   }
+
+  Serial.printf("[Config] Wi-Fi SSID: '%s' | Password length: %u | Target Backend: '%s'\n",
+                g_wifi_ssid.c_str(), (unsigned int)g_wifi_pass.length(), g_backend_url.c_str());
 }
 
 inline void savePersistentConfig(const String &ssid, const String &pass, const String &backend, int version = 1) {

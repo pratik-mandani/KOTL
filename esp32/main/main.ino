@@ -1364,6 +1364,28 @@ void initNetworking()
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(false);
+
+  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+    switch (event) {
+      case ARDUINO_EVENT_WIFI_STA_START:
+        Serial.println("[WiFi Event] Station mode started.");
+        break;
+      case ARDUINO_EVENT_WIFI_STA_CONNECTED:
+        Serial.println("[WiFi Event] Successfully associated with Wi-Fi AP!");
+        break;
+      case ARDUINO_EVENT_WIFI_STA_GOT_IP:
+        Serial.print("[WiFi Event] IP address acquired: ");
+        Serial.println(IPAddress(info.got_ip.ip_info.ip.addr));
+        break;
+      case ARDUINO_EVENT_WIFI_STA_DISCONNECTED: {
+        const uint8_t reason = info.wifi_sta_disconnected.reason;
+        Serial.printf("[WiFi Event] Disconnected (Reason %u: %s)\n", reason, getDisconnectReasonName(reason));
+        break;
+      }
+      default:
+        break;
+    }
+  });
 }
 
 void initFileStorage()
@@ -3117,11 +3139,10 @@ void beginWiFiConnection(uint32_t nowMs)
     return;
   }
 
-  Serial.printf("[WiFi] Last status: %s. Connecting to: '%s' (attempt %u/4, interval 15s)...\n",
-                getWiFiStatusString(WiFi.status()), targetSsid, s_wifiFailCount + 1);
+  Serial.printf("[WiFi] Last status: %s. Connecting to: '%s' (password length: %u, attempt %u/4, interval 15s)...\n",
+                getWiFiStatusString(WiFi.status()), targetSsid, (unsigned int)strlen(targetPass), s_wifiFailCount + 1);
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);
-  WiFi.disconnect(false, false);
   WiFi.begin(targetSsid, targetPass);
   networkState.wifiConnectInProgress = true;
   networkState.lastWiFiAttemptMs = nowMs;
