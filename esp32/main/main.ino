@@ -3017,6 +3017,23 @@ void serviceEyeReaction()
   eyeReactionState.soundReactionActive = false;
 }
 
+static uint8_t s_wifiFailCount = 0;
+
+static const char *getWiFiStatusString(wl_status_t status)
+{
+  switch (status)
+  {
+    case WL_IDLE_STATUS:     return "IDLE";
+    case WL_NO_SSID_AVAIL:   return "SSID NOT FOUND (Check 2.4GHz network name)";
+    case WL_SCAN_COMPLETED:  return "SCAN COMPLETED";
+    case WL_CONNECTED:       return "CONNECTED";
+    case WL_CONNECT_FAILED:  return "AUTH FAILED (Check password)";
+    case WL_CONNECTION_LOST: return "CONNECTION LOST";
+    case WL_DISCONNECTED:    return "DISCONNECTED";
+    default:                 return "UNKNOWN";
+  }
+}
+
 void serviceNetworking()
 {
   if (g_in_ap_mode)
@@ -3072,23 +3089,6 @@ void serviceNetworking()
       (networkState.lastHttpAttemptMs == 0 || (nowMs - networkState.lastHttpAttemptMs >= kHttpRetryIntervalMs)))
   {
     performBackendPostRequest(nowMs);
-  }
-}
-
-static uint8_t s_wifiFailCount = 0;
-
-static const char *getWiFiStatusString(wl_status_t status)
-{
-  switch (status)
-  {
-    case WL_IDLE_STATUS:     return "IDLE";
-    case WL_NO_SSID_AVAIL:   return "SSID NOT FOUND (Check 2.4GHz network name)";
-    case WL_SCAN_COMPLETED:  return "SCAN COMPLETED";
-    case WL_CONNECTED:       return "CONNECTED";
-    case WL_CONNECT_FAILED:  return "AUTH FAILED (Check password)";
-    case WL_CONNECTION_LOST: return "CONNECTION LOST";
-    case WL_DISCONNECTED:    return "DISCONNECTED";
-    default:                 return "UNKNOWN";
   }
 }
 
