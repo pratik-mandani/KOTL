@@ -120,7 +120,7 @@ static const uint32_t kWiFiRetryIntervalMs = 5000;
 static const uint32_t kHttpRetryIntervalMs = 15000;
 static const uint32_t kHttpTimeoutMs = 120000;
 static const uint32_t kAudioCaptureSampleRate = 16000;
-static const uint32_t kAudioCaptureDurationMs = 3000;
+static const uint32_t kAudioCaptureDurationMs = 2500;
 static const size_t kAudioCaptureSampleCount = (kAudioCaptureSampleRate * kAudioCaptureDurationMs) / 1000;
 static const uint32_t kAudioCaptureSampleIntervalUs = 1000000UL / kAudioCaptureSampleRate;
 static const uint16_t kAudioCaptureBaselineSamples = 128;
@@ -844,8 +844,14 @@ void loop()
       roboEyes.setMood(DEFAULT);
       roboEyes.setPosition(DEFAULT);
     }
-    // Butter-smooth 50 FPS OLED animations on Core 1 - immune to network delays!
-    roboEyes.update();
+    // Butter-smooth ~33 FPS OLED animations on Core 1 - rate-limited to eliminate any screen flickering!
+    static uint32_t s_lastOledUpdateMs = 0;
+    const uint32_t nowOledMs = millis();
+    if (nowOledMs - s_lastOledUpdateMs >= 30)
+    {
+      s_lastOledUpdateMs = nowOledMs;
+      roboEyes.update();
+    }
   }
 
   if (s_triggerMicCapturePending)
@@ -1420,8 +1426,8 @@ void calibrateRoomAcoustics()
 
   // Dynamically calibrate trigger thresholds for this specific room environment (tuned for natural conversational voice)
   s_calibratedSpikeThreshold = (uint16_t)min(max((uint32_t)320, s_ambientNoiseFloor + 160), (uint32_t)550);
-  s_calibratedVadThreshold   = (uint16_t)min(max((uint32_t)260, s_ambientNoiseFloor + 120), (uint32_t)450);
-  s_calibratedValidationGate = (uint16_t)min(max((uint32_t)350, s_ambientNoiseFloor + 180), (uint32_t)600);
+  s_calibratedVadThreshold   = (uint16_t)min(max((uint32_t)450, s_ambientNoiseFloor + 260), (uint32_t)650);
+  s_calibratedValidationGate = (uint16_t)min(max((uint32_t)400, s_ambientNoiseFloor + 220), (uint32_t)600);
 
   Serial.printf("[Room Calibration] Samples: %u | Avg Floor: %u | Peak Noise: %u\n",
                 sampleCount, (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
@@ -2339,9 +2345,9 @@ void performSynchronousAudioCapture()
 
   // Voice Activity Detection (VAD) parameters set dynamically from room calibration
   const int16_t kVadVoiceThreshold = s_calibratedVadThreshold;
-  static const uint32_t kVadInitialSilenceMs = 1800;  // Max initial silence before aborting false trigger
-  static const uint32_t kVadTrailingSilenceMs = 650;  // Fast end of speech detection (650ms silence)
-  static const uint32_t kVadMinSpeechMs = 400;        // Minimum speech duration before considering silence
+  static const uint32_t kVadInitialSilenceMs = 1500;  // Max initial silence before aborting false trigger
+  static const uint32_t kVadTrailingSilenceMs = 380;  // Ultra-fast end of speech detection (380ms silence)
+  static const uint32_t kVadMinSpeechMs = 350;        // Minimum 350ms speech before considering silence
 
   bool voiceDetected = false;
   uint32_t voiceStartMs = 0;

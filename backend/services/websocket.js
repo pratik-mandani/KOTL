@@ -29,6 +29,8 @@ function splitIntoSentences(text) {
   return parts.map((s) => s.trim()).filter((s) => s.length > 0);
 }
 
+let s_edgeTtsCooldownUntilMs = 0;
+
 async function synthesizeSentencePcm(text) {
   if (!text || !text.trim()) return Buffer.alloc(0);
 
@@ -52,45 +54,58 @@ async function synthesizeSentencePcm(text) {
   );
 
   const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
+  const spokenText = toPhoneticSpokenText(text.trim(), lang);
 
-  try {
-    const speechRate = process.env.EDGE_TTS_RATE || "-25%";
-    const tts = new EdgeTTS({
-      voice,
-      lang,
-      rate: speechRate,
-      outputFormat: "audio-24khz-48kbitrate-mono-mp3",
-      timeout: 10000,
-    });
-
-    const spokenText = toPhoneticSpokenText(text.trim(), lang);
-    await tts.ttsPromise(spokenText, tempMp3);
-    const mp3Bytes = fs.readFileSync(tempMp3);
-    const wavBytes = await mp3BufferToWavBuffer(mp3Bytes, 16000);
-    return wavBytes.subarray(44);
-  } catch (edgeErr) {
-    console.warn(`[WebSocket TTS] Edge TTS failed (${edgeErr.message}). Seamlessly falling back to Google Cloud TTS...`);
+  // If Edge TTS was recently rate-limited (HTTP 429), use ultra-fast Google Cloud TTS immediately (150ms)
+  const isEdgeCoolingDown = Date.now() < s_edgeTtsCooldownUntilMs;
+  if (!isEdgeCoolingDown) {
     try {
-      const spokenText = toPhoneticSpokenText(text.trim(), lang);
-      const langCode = isHindi ? "hi" : (isGujarati ? "gu" : "en");
-      const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(spokenText.slice(0, 200))}&tl=${langCode}&client=tw-ob`;
-      const response = await fetch(googleUrl, {
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+      const speechRate = process.env.EDGE_TTS_RATE || "-25%";
+      const tts = new EdgeTTS({
+        voice,
+        lang,
+        rate: speechRate,
+        outputFormat: "audio-24khz-48kbitrate-mono-mp3",
+        timeout: 2000,
       });
-      if (response.ok) {
-        const mp3Buffer = Buffer.from(await response.arrayBuffer());
-        const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, 16000);
+
+      await tts.ttsPromise(spokenText, tempMp3);
+      if (fs.existsSync(tempMp3)) {
+        const mp3Bytes = fs.readFileSync(tempMp3);
+        const wavBytes = await mp3BufferToWavBuffer(mp3Bytes, 16000);
         return wavBytes.subarray(44);
       }
-    } catch (googleErr) {
-      console.error(`[WebSocket TTS] Google fallback failed: ${googleErr.message}`);
+    } catch (edgeErr) {
+      if (edgeErr.message && edgeErr.message.includes("429")) {
+        console.warn(`[WebSocket TTS] Edge TTS rate-limited (429). Activating 5-min fast Google TTS circuit breaker.`);
+        s_edgeTtsCooldownUntilMs = Date.now() + 5 * 60 * 1000;
+      } else {
+        console.warn(`[WebSocket TTS] Edge TTS failed (${edgeErr.message}). Seamlessly falling back to Google Cloud TTS...`);
+      }
+    } finally {
+      try {
+        if (fs.existsSync(tempMp3)) fs.unlinkSync(tempMp3);
+      } catch (_) {}
     }
-    throw edgeErr;
-  } finally {
-    try {
-      if (fs.existsSync(tempMp3)) fs.unlinkSync(tempMp3);
-    } catch (_) {}
   }
+
+  // Fast Google Cloud TTS fallback (~150-250ms latency)
+  try {
+    const langCode = isHindi ? "hi" : (isGujarati ? "gu" : "en");
+    const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(spokenText.slice(0, 200))}&tl=${langCode}&client=tw-ob`;
+    const response = await fetch(googleUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+    });
+    if (response.ok) {
+      const mp3Buffer = Buffer.from(await response.arrayBuffer());
+      const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, 16000);
+      return wavBytes.subarray(44);
+    }
+  } catch (googleErr) {
+    console.error(`[WebSocket TTS] Google TTS failed: ${googleErr.message}`);
+  }
+
+  return Buffer.alloc(0);
 }
 
 function initWebSocketServer(httpServer) {
