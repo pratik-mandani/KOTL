@@ -1,5 +1,21 @@
 #pragma once
 
+#if __has_include("kotl_config.h")
+#include "kotl_config.h"
+#endif
+
+#ifndef KOTL_WIFI_SSID
+#define KOTL_WIFI_SSID "Altius"
+#endif
+
+#ifndef KOTL_WIFI_PASSWORD
+#define KOTL_WIFI_PASSWORD "123456789k"
+#endif
+
+#ifndef KOTL_BACKEND_BASE_URL
+#define KOTL_BACKEND_BASE_URL "https://kotl.onrender.com"
+#endif
+
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <WebServer.h>

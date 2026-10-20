@@ -12,6 +12,9 @@
 #define WEBSOCKETS_TCP_TIMEOUT 15000
 #include <WebSocketsClient.h>
 #include <freertos/stream_buffer.h>
+#if __has_include("kotl_config.h")
+#include "kotl_config.h"
+#endif
 #include "../hello_sample.h"
 #include "kotl_provisioning.h"
 
@@ -1745,6 +1748,14 @@ void playStartupDoubleBeep()
   i2s_zero_dma_buffer(I2S_PORT);
 }
 
+static inline int16_t applySpeakerVolume(int16_t sample)
+{
+  int32_t amplified = ((int32_t)sample * (int32_t)s_speakerVolumePercent) / 100;
+  if (amplified > 32767) amplified = 32767;
+  else if (amplified < -32768) amplified = -32768;
+  return (int16_t)amplified;
+}
+
 void playStartupHello()
 {
   Serial.print("speaker test (voice) I2S initialized: ");
@@ -1814,14 +1825,6 @@ void serviceAudioOutput()
   {
     audioState.pendingOffsetBytes = 0;
   }
-}
-
-static inline int16_t applySpeakerVolume(int16_t sample)
-{
-  int32_t amplified = ((int32_t)sample * (int32_t)s_speakerVolumePercent) / 100;
-  if (amplified > 32767) amplified = 32767;
-  else if (amplified < -32768) amplified = -32768;
-  return (int16_t)amplified;
 }
 
 void fillAudioChunk()
