@@ -284,8 +284,8 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       sumAbs += s;
     }
     const avgAmp = numSamples > 0 ? Math.floor(sumAbs / numSamples) : 0;
-    if (peakSample < 2000 || avgAmp < 250) {
-      console.log(`[WebSocket ${ws.deviceId}] Sub-threshold silence/noise (Peak: ${peakSample} < 2000, Avg: ${avgAmp}), dismissing silently.`);
+    if (peakSample < 500 || avgAmp < 40) {
+      console.log(`[WebSocket ${ws.deviceId}] Sub-threshold silence/noise (Peak: ${peakSample} < 500, Avg: ${avgAmp}), dismissing silently.`);
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;

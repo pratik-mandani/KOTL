@@ -80,9 +80,9 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 750;
-static const uint16_t kMicReleaseThreshold = 450;
-static const uint8_t kMicHighDebounceCount = 8;
+static const uint16_t kMicSpikeThreshold = 650;
+static const uint16_t kMicReleaseThreshold = 400;
+static const uint8_t kMicHighDebounceCount = 2;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 50;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -282,11 +282,11 @@ static uint32_t s_playbackCooldownUntilMs = 0;
 static const uint32_t kPlaybackCooldownMs = 2500;
 
 // Dynamic Room Acoustic Calibration
-static uint32_t s_ambientNoiseFloor = 400;       // Adaptive rolling baseline noise floor
-static uint32_t s_ambientPeakNoise = 800;         // Measured peak room noise
-static uint16_t s_calibratedSpikeThreshold = 2800; // Trigger threshold set by room acoustic calibration
-static uint16_t s_calibratedVadThreshold = 3400;   // VAD voice active threshold
-static uint16_t s_calibratedValidationGate = 3800; // Post-capture speech validation peak gate
+static uint32_t s_ambientNoiseFloor = 200;       // Adaptive rolling baseline noise floor
+static uint32_t s_ambientPeakNoise = 400;         // Measured peak room noise
+static uint16_t s_calibratedSpikeThreshold = 650; // Trigger threshold set by room acoustic calibration
+static uint16_t s_calibratedVadThreshold = 700;   // VAD voice active threshold
+static uint16_t s_calibratedValidationGate = 850; // Post-capture speech validation peak gate
 
 // Thread-Safe Cross-Core Eye Animation & Mood Management
 static char s_pendingEyeExpr[32] = {0};
@@ -1410,14 +1410,14 @@ void calibrateRoomAcoustics()
     taskYIELD();
   }
 
-  const uint32_t measuredAvg = (sampleCount > 0) ? (uint32_t)(sumAmp / sampleCount) : 400;
-  s_ambientNoiseFloor = max(measuredAvg, (uint32_t)250);
-  s_ambientPeakNoise = max((uint32_t)maxNoiseAmp, (uint32_t)600);
+  const uint32_t measuredAvg = (sampleCount > 0) ? (uint32_t)(sumAmp / sampleCount) : 150;
+  s_ambientNoiseFloor = min(max(measuredAvg, (uint32_t)100), (uint32_t)450);
+  s_ambientPeakNoise = min(max((uint32_t)maxNoiseAmp, (uint32_t)200), (uint32_t)700);
 
-  // Dynamically calibrate trigger thresholds for this specific room environment
-  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)2800, s_ambientPeakNoise + 1600);
-  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)3400, s_ambientPeakNoise + 2000);
-  s_calibratedValidationGate = (uint16_t)max((uint32_t)3800, s_ambientPeakNoise + 2200);
+  // Dynamically calibrate trigger thresholds for this specific room environment (tuned for natural conversational voice)
+  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)650, s_ambientPeakNoise + 350);
+  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)700, s_ambientPeakNoise + 400);
+  s_calibratedValidationGate = (uint16_t)max((uint32_t)850, s_ambientPeakNoise + 500);
 
   Serial.printf("[Room Calibration] Samples: %u | Avg Floor: %u | Peak Noise: %u\n",
                 sampleCount, (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
@@ -2600,6 +2600,7 @@ static uint16_t s_touchThreshold = 45;
 
 void initTouchSensor()
 {
+  pinMode(TOUCH_PIN_HEAD, INPUT);
   delay(30);
 
   // Take 25 samples to calculate exact ambient capacitance of the attached wire
@@ -2610,13 +2611,13 @@ void initTouchSensor()
     delay(4);
   }
   s_touchBaseline = (uint16_t)(baselineSum / 25);
-  if (s_touchBaseline < 25) s_touchBaseline = 65; // safety floor if wire was touched during boot
+  if (s_touchBaseline < 20) s_touchBaseline = 60; // safety floor if wire was touched during boot
 
-  // Adaptive threshold: Touch drops raw capacitance counter by ~30-35%
-  s_touchThreshold = (s_touchBaseline * 65) / 100;
-  if (s_touchBaseline - s_touchThreshold < 10)
+  // Adaptive threshold: Touch drops raw capacitance counter by ~20%
+  s_touchThreshold = (s_touchBaseline * 80) / 100;
+  if (s_touchBaseline - s_touchThreshold < 8)
   {
-    s_touchThreshold = (s_touchBaseline > 12) ? (s_touchBaseline - 10) : (s_touchBaseline / 2);
+    s_touchThreshold = (s_touchBaseline > 10) ? (s_touchBaseline - 8) : (s_touchBaseline / 2);
   }
 
   Serial.printf("[Touch] GPIO 4 initialized. Measured Wire Baseline: %u | Adaptive Threshold: %u\n",
@@ -2722,13 +2723,18 @@ void serviceTouchSensor()
 
   // Read capacitive touch value from ESP32 pin (GPIO 4 / T0)
   uint16_t touchVal = touchRead(TOUCH_PIN_HEAD);
+  // Also check digitalRead in case a digital touch module (TTP223) or button is connected
+  bool digitalHigh = (digitalRead(TOUCH_PIN_HEAD) == HIGH);
+
+  // Raw contact detected if capacitive reading drops below threshold OR digital pin goes HIGH
+  bool isRawActive = (touchVal < s_touchThreshold) || digitalHigh;
 
   // 3-sample digital hysteresis filter (~75ms window):
   // Human contact lasts >100ms. 50Hz/60Hz AC noise blips (10-20ms) are completely rejected.
   static uint8_t s_touchFilter = 0;
   static bool s_debouncedPressed = false;
 
-  if (touchVal < s_touchThreshold)
+  if (isRawActive)
   {
     if (s_touchFilter < 3) s_touchFilter++;
     if (s_touchFilter >= 3) s_debouncedPressed = true;
@@ -2743,29 +2749,52 @@ void serviceTouchSensor()
   if (!s_touchIsActive && !s_debouncedPressed && touchVal > s_touchThreshold && abs((int)touchVal - (int)s_touchBaseline) < 20)
   {
     s_touchBaseline = (uint16_t)(((uint32_t)s_touchBaseline * 63 + touchVal) / 64);
-    s_touchThreshold = (s_touchBaseline * 65) / 100;
-    if (s_touchBaseline - s_touchThreshold < 10)
+    s_touchThreshold = (s_touchBaseline * 80) / 100;
+    if (s_touchBaseline - s_touchThreshold < 8)
     {
-      s_touchThreshold = (s_touchBaseline > 12) ? (s_touchBaseline - 10) : (s_touchBaseline / 2);
+      s_touchThreshold = (s_touchBaseline > 10) ? (s_touchBaseline - 8) : (s_touchBaseline / 2);
     }
   }
 
-  // Periodic debug telemetry every 4 seconds so developer sees exact pin values in Serial Monitor
+  // Periodic debug telemetry every 3 seconds so developer sees exact pin values in Serial Monitor
   static uint32_t s_lastDiagMs = 0;
-  if (nowMs - s_lastDiagMs > 4000)
+  if (nowMs - s_lastDiagMs > 3000)
   {
     s_lastDiagMs = nowMs;
-    Serial.printf("[Touch Telemetry] GPIO 4 TouchVal: %u | Baseline: %u | Thresh: %u | Active: %d\n",
-                  touchVal, s_touchBaseline, s_touchThreshold, s_touchIsActive ? 1 : 0);
+    Serial.printf("[Touch Telemetry] GPIO 4 TouchVal: %u | Baseline: %u | Thresh: %u | Dig: %d | Active: %d\n",
+                  touchVal, s_touchBaseline, s_touchThreshold, digitalHigh ? 1 : 0, s_touchIsActive ? 1 : 0);
   }
 
   if (s_debouncedPressed && !s_touchIsActive)
   {
-    // Debounced touch confirmed
+    // Debounced touch confirmed INSTANTLY on contact!
     s_touchIsActive = true;
     s_touchPressStartMs = nowMs;
-    Serial.printf("[Touch] Contact confirmed on GPIO 4! (Val=%u, Thresh=%u)\n",
-                  touchVal, s_touchThreshold);
+    Serial.printf("[Touch] Contact confirmed on GPIO 4! (Val=%u, Thresh=%u, Dig=%d)\n",
+                  touchVal, s_touchThreshold, digitalHigh ? 1 : 0);
+
+    // INSTANT CLOCK DISPLAY: Show Date & Time on OLED for 4.5 seconds immediately on contact!
+    s_showClockUntilMs = nowMs + 4500;
+    drawClockDateScreen(true); // Immediate clean draw without lag or waiting
+    applyVoiceEyeAnimation("happy");
+  }
+  else if (s_debouncedPressed && s_touchIsActive)
+  {
+    // Touch is being held
+    uint32_t holdDuration = nowMs - s_touchPressStartMs;
+    static bool s_bedtimeTriggered = false;
+    if (holdDuration >= 2000 && !s_bedtimeTriggered)
+    {
+      // Long press (Hold >= 2.0s) -> Sleep / Bedtime Mood
+      s_bedtimeTriggered = true;
+      Serial.printf("[Touch] Long press (%u ms) -> Bedtime mode\n", holdDuration);
+      s_showClockUntilMs = 0;
+      applyVoiceEyeAnimation("tired");
+    }
+    if (!s_debouncedPressed)
+    {
+      s_bedtimeTriggered = false;
+    }
   }
   else if (!s_debouncedPressed && s_touchIsActive)
   {
@@ -2773,40 +2802,6 @@ void serviceTouchSensor()
     s_touchIsActive = false;
     uint32_t duration = nowMs - s_touchPressStartMs;
     Serial.printf("[Touch] Released after %u ms\n", duration);
-
-    if (duration >= 2000)
-    {
-      // Long press (Hold >= 2.0s) -> Sleep / Bedtime Mood
-      Serial.printf("[Touch] Long press (%u ms) -> Bedtime mode\n", duration);
-      s_showClockUntilMs = 0;
-      applyVoiceEyeAnimation("tired");
-    }
-    else if (duration >= 60) // valid tap must be >= 60ms (rejects 50Hz AC noise pulses)
-    {
-      s_tapCounter++;
-      s_lastTapReleaseMs = nowMs;
-    }
-  }
-
-  // Multi-tap detection window (320ms after release)
-  if (s_tapCounter > 0 && !s_touchIsActive && (nowMs - s_lastTapReleaseMs > 320))
-  {
-    if (s_tapCounter == 1)
-    {
-      // Single tap -> Display Date & Time on OLED for 4.5 seconds!
-      Serial.printf("[Touch Action] Single tap -> Show Date & Time on OLED (4.5s)\n");
-      s_showClockUntilMs = nowMs + 4500;
-      drawClockDateScreen(true); // Immediate clean draw without waiting for next 500ms cycle
-      applyVoiceEyeAnimation("happy");
-    }
-    else if (s_tapCounter >= 2)
-    {
-      // Double tap -> Playful Laugh / Tickle Reaction!
-      Serial.printf("[Touch Action] Double tap! (Count=%u) -> Tickle / Laugh animation\n", s_tapCounter);
-      s_showClockUntilMs = 0;
-      applyVoiceEyeAnimation("laugh");
-    }
-    s_tapCounter = 0;
   }
 }
 
@@ -2869,7 +2864,7 @@ void serviceMicrophoneInput()
   }
 
   // Dynamic Trigger Threshold: Calibrated to room acoustics + slow ambient drift
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 1800);
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 400);
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   static uint32_t s_lastMicTelemetryMs = 0;
@@ -2880,7 +2875,7 @@ void serviceMicrophoneInput()
                   micState.amplitude, (unsigned int)s_ambientNoiseFloor, (unsigned int)dynamicSpikeThreshold);
   }
 
-  if (micState.amplitude > 1200 && nowMs - micState.lastPrintMs >= 200)
+  if (micState.amplitude > 550 && nowMs - micState.lastPrintMs >= 200)
   {
     Serial.printf("[Voice Sensing] Amp: %d (Trigger: %u)\n", micState.amplitude, (unsigned int)dynamicSpikeThreshold);
     micState.lastPrintMs = nowMs;

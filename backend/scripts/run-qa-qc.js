@@ -60,14 +60,14 @@ const hasNonBlockingClock = inoContent.includes('s_showClockUntilMs');
 const hasDisplayLatch = inoContent.includes('s_wasClockActive') && inoContent.includes('display.clearDisplay()');
 assertTest('OLED Date & Time Screen & Touch Service with Display Latch', hasClockScreen && hasServiceTouch && hasNonBlockingClock && hasDisplayLatch, 'Single-tap shows clock for 4.5s; display latch prevents eye animation conflict');
 
-// Verify Capacitive Touch Anti-Flicker Debounce Filtering
+// Verify Capacitive Touch Anti-Flicker Debounce Filtering & Instant Clock Display
 const hasAdaptiveBaseline = inoContent.includes('s_touchBaseline') && inoContent.includes('s_touchThreshold');
 const hasTouchRead = inoContent.includes('touchRead(TOUCH_PIN_HEAD)');
 const hasHysteresisFilter = inoContent.includes('s_touchFilter') && inoContent.includes('s_debouncedPressed');
-const hasNoiseRejection = inoContent.includes('duration >= 60');
-assertTest('Capacitive Touch 3-Stage Debounce & 50Hz Noise Rejection on GPIO 4',
-  hasAdaptiveBaseline && hasTouchRead && hasHysteresisFilter && hasNoiseRejection,
-  'Calibrates wire baseline; 3-sample hysteresis filter and 60ms min tap reject 50Hz AC noise and eliminate display flicker');
+const hasInstantActivation = inoContent.includes('s_showClockUntilMs = nowMs + 4500') && inoContent.includes('drawClockDateScreen(true)');
+assertTest('Capacitive Touch 3-Stage Debounce & Instant Clock Display on GPIO 4',
+  hasAdaptiveBaseline && hasTouchRead && hasHysteresisFilter && hasInstantActivation,
+  'Calibrates wire baseline; 3-sample hysteresis filter rejects 50Hz noise and triggers instant clock on contact');
 
 // Verify Startup Sound: 'toot-toot' double beep replaces voice hello
 const hasDoubleBeepFn = inoContent.includes('void playStartupDoubleBeep()') && inoContent.includes('void playTone(');
