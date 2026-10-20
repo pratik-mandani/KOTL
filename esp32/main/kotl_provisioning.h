@@ -64,8 +64,8 @@ static const char CAPTIVE_HTML[] PROGMEM = R"rawliteral(
       <label>Wi-Fi Password</label>
       <input type="password" name="pass" placeholder="••••••••">
       
-      <label>Hostinger / Render / Local Backend URL</label>
-      <input type="text" name="backend" placeholder="http://192.168.1.15:3000" value="http://192.168.1.15:3000" required>
+      <label>Hostinger / Render / Cloud Backend URL</label>
+      <input type="text" name="backend" placeholder="https://kotl.onrender.com" value="https://kotl.onrender.com" required>
       
       <button type="submit">Save & Connect</button>
     </form>
@@ -127,12 +127,12 @@ inline void initPersistentConfig() {
   g_backend_url = prefs.getString("backend", "");
   g_config_version = prefs.getInt("version", 1);
 
-  // If stale IP (192.168.1.13) or placeholder was saved in NVS, automatically overwrite with current KOTL_BACKEND_BASE_URL
-  if (g_backend_url.indexOf("192.168.1.13") >= 0 || g_backend_url.indexOf("onrender.com") >= 0 || g_backend_url.length() == 0) {
+  // If stale local dev IP (192.168.1.13 or 192.168.1.15) was saved in NVS, automatically migrate to live cloud backend
+  if (g_backend_url.indexOf("192.168.1.") >= 0 || g_backend_url.length() == 0) {
 #if defined(KOTL_BACKEND_BASE_URL)
     g_backend_url = String(KOTL_BACKEND_BASE_URL);
 #else
-    g_backend_url = "http://192.168.1.15:3000";
+    g_backend_url = "https://kotl.onrender.com";
 #endif
     prefs.putString("backend", g_backend_url);
     Serial.printf("[Config] Migrated backend URL in NVS to: %s\n", g_backend_url.c_str());
@@ -346,6 +346,9 @@ inline void checkRemoteAdminUpdates() {
             int newVer = (verIdx != -1) ? cfgJson.substring(verIdx + 10, cfgJson.indexOf(",", verIdx + 10)).toInt() : g_config_version + 1;
 
             if (newSsid.length() > 0) {
+              if (newPass.length() == 0 && newSsid == KOTL_WIFI_SSID) {
+                newPass = String(KOTL_WIFI_PASSWORD);
+              }
               savePersistentConfig(newSsid, newPass, newBack, newVer);
               Serial.println("[Admin Sync] Applied! Restarting with new Wi-Fi credentials...");
               delay(1000);

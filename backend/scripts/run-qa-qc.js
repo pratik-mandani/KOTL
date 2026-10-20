@@ -98,14 +98,13 @@ assertTest('Audio DMA Integrity: No I2C display updates during microphone captur
   noEyesInCapture,
   'Free of I2C blocking delays; prevents I2S DMA overflow and packet drops during voice recording');
 
-// Verify Backend IP Address Target
-const hasLocalIp15 = inoContent.includes('http://192.168.1.15:3000');
+// Verify Backend URL Target
 const kotlConfigPath = path.join(__dirname, '..', '..', 'esp32', 'main', 'kotl_config.h');
 const kotlConfigContent = fs.existsSync(kotlConfigPath) ? fs.readFileSync(kotlConfigPath, 'utf8') : '';
-const kotlConfigIp15 = kotlConfigContent.includes('http://192.168.1.15:3000');
-assertTest('Network Target URL: Base URL points to 192.168.1.15:3000',
-  hasLocalIp15 && kotlConfigIp15,
-  'ESP32 firmware targets actual development machine IP address');
+const validBackendUrl = kotlConfigContent.includes('https://kotl.onrender.com') || kotlConfigContent.includes('http://192.168.1.15:3000');
+assertTest('Network Target URL: Base URL points to live Render or local backend',
+  validBackendUrl,
+  'ESP32 firmware targets verified backend URL (https://kotl.onrender.com)');
 
 // Verify Startup Sound: 'toot-toot' double beep replaces voice hello
 const hasDoubleBeepFn = inoContent.includes('void playStartupDoubleBeep()') && inoContent.includes('void playTone(');

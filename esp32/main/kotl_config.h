@@ -3,6 +3,6 @@
 
 #define KOTL_WIFI_SSID "Altius"
 #define KOTL_WIFI_PASSWORD "123456789k"
-#define KOTL_BACKEND_BASE_URL "http://192.168.1.15:3000"
+#define KOTL_BACKEND_BASE_URL "https://kotl.onrender.com"
 
 #endif
