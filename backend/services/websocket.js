@@ -29,9 +29,7 @@ function splitIntoSentences(text) {
   return parts.map((s) => s.trim()).filter((s) => s.length > 0);
 }
 
-let s_edgeTtsCooldownUntilMs = 0;
-
-async function synthesizeSentencePcm(text) {
+async function synthesizeSpeechPcm(text) {
   if (!text || !text.trim()) return Buffer.alloc(0);
 
   const isGujarati = /[\u0A80-\u0AFF]/.test(text);
@@ -50,23 +48,21 @@ async function synthesizeSentencePcm(text) {
   }
   const tempMp3 = path.join(
     os.tmpdir(),
-    `sentence-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.mp3`
+    `speech-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.mp3`
   );
 
   const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
   const spokenText = toPhoneticSpokenText(text.trim(), lang);
+  const speechRate = process.env.EDGE_TTS_RATE || "-20%";
 
-  // If Edge TTS was recently rate-limited (HTTP 429), use ultra-fast Google Cloud TTS immediately (150ms)
-  const isEdgeCoolingDown = Date.now() < s_edgeTtsCooldownUntilMs;
-  if (!isEdgeCoolingDown) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const speechRate = process.env.EDGE_TTS_RATE || "-20%";
       const tts = new EdgeTTS({
         voice,
         lang,
         rate: speechRate,
         outputFormat: "audio-24khz-48kbitrate-mono-mp3",
-        timeout: 8000,
+        timeout: 10000,
       });
 
       await tts.ttsPromise(spokenText, tempMp3);
@@ -76,11 +72,9 @@ async function synthesizeSentencePcm(text) {
         return wavBytes.subarray(44);
       }
     } catch (edgeErr) {
-      if (edgeErr.message && edgeErr.message.includes("429")) {
-        console.warn(`[WebSocket TTS] Edge TTS rate-limited (429). Activating 5-min fast Google TTS circuit breaker.`);
-        s_edgeTtsCooldownUntilMs = Date.now() + 5 * 60 * 1000;
-      } else {
-        console.warn(`[WebSocket TTS] Edge TTS failed (${edgeErr.message}). Seamlessly falling back to Google Cloud TTS...`);
+      console.warn(`[WebSocket TTS] Edge TTS attempt ${attempt + 1} failed (${edgeErr.message}). Retrying...`);
+      if (attempt === 0) {
+        await new Promise((r) => setTimeout(r, 600));
       }
     } finally {
       try {
@@ -102,11 +96,14 @@ async function synthesizeSentencePcm(text) {
       return wavBytes.subarray(44);
     }
   } catch (googleErr) {
-    console.error(`[WebSocket TTS] Google TTS failed: ${googleErr.message}`);
+    console.error(`[WebSocket TTS] Google TTS fallback failed: ${googleErr.message}`);
   }
 
   return Buffer.alloc(0);
 }
+
+// Backward compatibility alias
+const synthesizeSentencePcm = synthesizeSpeechPcm;
 
 function initWebSocketServer(httpServer) {
   const wss = new WebSocket.Server({ noServer: true });
@@ -400,73 +397,36 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       console.warn(`[WebSocket Memory] Error extracting profile memory:`, memErr.message);
     }
 
-    // 4. Synthesize and Stream Speech in sentence chunks
-    const sentences = splitIntoSentences(replyText);
-    console.log(`[WebSocket ${ws.deviceId}] Synthesizing speech across ${sentences.length} sentence(s)...`);
+    // 4. Synthesize and Stream Speech (robust single-connection per turn)
+    console.log(`[WebSocket ${ws.deviceId}] Synthesizing speech for reply: "${replyText}"...`);
+    const pcmAudio = await synthesizeSpeechPcm(replyText);
 
-    if (sentences.length === 0) {
+    if (!pcmAudio || pcmAudio.length === 0) {
+      console.warn(`[WebSocket ${ws.deviceId}] TTS produced empty audio, returning to idle.`);
+      sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;
     }
 
-    let isFirstSentence = true;
-    let totalStreamedBytes = 0;
+    setState("SPEAKING");
+    sendJson({
+      type: "tts_start",
+      sample_rate: NORMALIZED_SAMPLE_RATE,
+    });
+    console.log(
+      `⚡ [WebSocket ${ws.deviceId}] Speech ready in ${Date.now() - turnStartTime}ms! Streaming ${pcmAudio.length} bytes audio...`
+    );
 
-    // Pipeline synthesis: sentence 0 synthesizes immediately
-    let nextSentencePromise = synthesizeSentencePcm(sentences[0]);
+    let offset = 0;
+    while (offset < pcmAudio.length && ws.readyState === WebSocket.OPEN) {
+      const nextOffset = Math.min(offset + AUDIO_CHUNK_STREAM_SIZE, pcmAudio.length);
+      const chunk = pcmAudio.subarray(offset, nextOffset);
+      sendBinary(chunk);
+      offset = nextOffset;
+      totalStreamedBytes += chunk.length;
 
-    for (let i = 0; i < sentences.length; i++) {
-      if (ws.readyState !== WebSocket.OPEN) break;
-
-      console.log(`[WebSocket ${ws.deviceId}] Awaiting sentence ${i + 1}/${sentences.length}: "${sentences[i]}"...`);
-      const currentSentencePcm = await nextSentencePromise;
-
-      // Start pre-synthesizing the next sentence immediately in background
-      if (i + 1 < sentences.length) {
-        nextSentencePromise = synthesizeSentencePcm(sentences[i + 1]);
-      } else {
-        nextSentencePromise = null;
-      }
-
-      if (!currentSentencePcm || currentSentencePcm.length === 0) continue;
-
-      if (isFirstSentence) {
-        isFirstSentence = false;
-        setState("SPEAKING");
-        sendJson({
-          type: "tts_start",
-          sample_rate: NORMALIZED_SAMPLE_RATE,
-        });
-        console.log(
-          `⚡ [WebSocket ${ws.deviceId}] First sentence ready in ${Date.now() - turnStartTime}ms! Streaming audio...`
-        );
-      }
-
-      // Stream current sentence PCM chunks with pacing
-      let offset = 0;
-      while (offset < currentSentencePcm.length && ws.readyState === WebSocket.OPEN) {
-        const nextOffset = Math.min(offset + AUDIO_CHUNK_STREAM_SIZE, currentSentencePcm.length);
-        const chunk = currentSentencePcm.subarray(offset, nextOffset);
-        sendBinary(chunk);
-        offset = nextOffset;
-        totalStreamedBytes += chunk.length;
-
-        // Small delay between chunks for network pacing (16ms per 1KB = 2x real-time burst)
-        await new Promise((resolve) => setTimeout(resolve, 16));
-      }
-
-      // Natural conversational pause between sentences (250ms breathing space)
-      if (i + 1 < sentences.length && ws.readyState === WebSocket.OPEN) {
-        const silenceBytes = 11200;
-        let sentSilence = 0;
-        while (sentSilence < silenceBytes && ws.readyState === WebSocket.OPEN) {
-          const chunkLen = Math.min(AUDIO_CHUNK_STREAM_SIZE, silenceBytes - sentSilence);
-          sendBinary(Buffer.alloc(chunkLen));
-          sentSilence += chunkLen;
-          totalStreamedBytes += chunkLen;
-          await new Promise((resolve) => setTimeout(resolve, 16));
-        }
-      }
+      // Small delay between chunks for network pacing (16ms per 1KB = 2x real-time burst)
+      await new Promise((resolve) => setTimeout(resolve, 16));
     }
 
     // Finish streaming

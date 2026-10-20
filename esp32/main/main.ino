@@ -283,7 +283,7 @@ static const uint32_t kVoiceThinkingTimeoutMs = 60000;
 static const uint32_t kVoiceDownloadingTtsTimeoutMs = 60000;
 static const uint32_t kVoiceSpeakingTimeoutMs = 45000;
 static uint32_t s_playbackCooldownUntilMs = 0;
-static const uint32_t kPlaybackCooldownMs = 2500;
+static const uint32_t kPlaybackCooldownMs = 750;
 
 // Dynamic Room Acoustic Calibration
 static uint32_t s_ambientNoiseFloor = 40;       // Adaptive rolling baseline noise floor
@@ -1261,7 +1261,7 @@ void handleVoiceTurnTimeouts()
     audioState.isPlaying = false;
     audioState.ttsBytesRemaining = 0;
     audioState.localSampleIndex = 0;
-    configureAudioSampleRate(kI2SSampleRate);
+    configureAudioSampleRate(16000);
     break;
   case VOICE_IDLE:
   case VOICE_ERROR:
@@ -2230,7 +2230,7 @@ void finishPlayback()
   {
     s_wsStreamTtsActive = false;
     Serial.println("PLAYBACK DONE");
-    configureAudioSampleRate(kI2SSampleRate);
+    configureAudioSampleRate(16000);
   }
 
   // Flush microphone I2S DMA buffer and reset mic state to eliminate acoustic feedback loop
@@ -2911,7 +2911,7 @@ void serviceMicrophoneInput()
   micState.amplitude = micState.rawValue;
 
   // Dynamic Trigger Threshold: Calibrated to room acoustics + slow ambient drift
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 3500);
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, (uint32_t)(s_ambientNoiseFloor + 800));
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   // Adaptive Ambient Noise Floor Tracking (DSP rolling average initialized from room calibration)
@@ -2984,6 +2984,7 @@ void serviceMicrophoneInput()
   if (risingEdge && !canStartVoiceTurn())
   {
     Serial.println("Voice turn trigger ignored; turn active");
+    micState.soundHigh = false;
   }
   else if (risingEdge && !micState.soundActive && !audioState.isPlaying && !audioState.isDownloading)
   {
