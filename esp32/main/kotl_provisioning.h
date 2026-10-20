@@ -64,8 +64,8 @@ static const char CAPTIVE_HTML[] PROGMEM = R"rawliteral(
       <label>Wi-Fi Password</label>
       <input type="password" name="pass" placeholder="••••••••">
       
-      <label>Hostinger / Render / Cloud Backend URL</label>
-      <input type="text" name="backend" placeholder="https://kotl.onrender.com or http://192.168.1.15:3000" value="https://kotl.onrender.com" required>
+      <label>Hostinger / Render / Local Backend URL</label>
+      <input type="text" name="backend" placeholder="http://192.168.1.15:3000" value="http://192.168.1.15:3000" required>
       
       <button type="submit">Save & Connect</button>
     </form>
@@ -105,8 +105,8 @@ inline void initPersistentConfig() {
   g_backend_url = prefs.getString("backend", "");
   g_config_version = prefs.getInt("version", 1);
 
-  // If stale IP (192.168.1.13) was saved in NVS, automatically overwrite with current KOTL_BACKEND_BASE_URL
-  if (g_backend_url.indexOf("192.168.1.13") >= 0 || g_backend_url.length() == 0) {
+  // If stale IP (192.168.1.13) or placeholder was saved in NVS, automatically overwrite with current KOTL_BACKEND_BASE_URL
+  if (g_backend_url.indexOf("192.168.1.13") >= 0 || g_backend_url.indexOf("onrender.com") >= 0 || g_backend_url.length() == 0) {
 #if defined(KOTL_BACKEND_BASE_URL)
     g_backend_url = String(KOTL_BACKEND_BASE_URL);
 #else

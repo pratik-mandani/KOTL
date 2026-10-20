@@ -116,7 +116,7 @@ static const char *kBackendChatUrl = KOTL_BACKEND_BASE_URL "/chat";
 static const char *kBackendChatPayload = "{\"text\":\"hello\"}";
 static const char *kBackendAudioUrl = KOTL_BACKEND_BASE_URL "/audio";
 static const bool kEnableBootChatDebug = false;
-static const uint32_t kWiFiRetryIntervalMs = 5000;
+static const uint32_t kWiFiRetryIntervalMs = 15000;
 static const uint32_t kHttpRetryIntervalMs = 15000;
 static const uint32_t kHttpTimeoutMs = 120000;
 static const uint32_t kAudioCaptureSampleRate = 16000;
@@ -3019,6 +3019,11 @@ void serviceEyeReaction()
 
 void serviceNetworking()
 {
+  if (g_in_ap_mode)
+  {
+    return;
+  }
+
   const uint32_t nowMs = millis();
   const wl_status_t wifiStatus = WiFi.status();
 
@@ -3039,6 +3044,7 @@ void serviceNetworking()
     Serial.print("WiFi connected, IP: ");
     Serial.println(WiFi.localIP());
     networkState.wifiConnectInProgress = false;
+    s_wifiFailCount = 0;
     s_playbackCooldownUntilMs = millis() + 1500; // 1.5s cooldown ignores RF transient spike on connect
     Serial.println("Listening for sound/voice...");
 
@@ -3069,34 +3075,57 @@ void serviceNetworking()
   }
 }
 
+static uint8_t s_wifiFailCount = 0;
+
+static const char *getWiFiStatusString(wl_status_t status)
+{
+  switch (status)
+  {
+    case WL_IDLE_STATUS:     return "IDLE";
+    case WL_NO_SSID_AVAIL:   return "SSID NOT FOUND (Check 2.4GHz network name)";
+    case WL_SCAN_COMPLETED:  return "SCAN COMPLETED";
+    case WL_CONNECTED:       return "CONNECTED";
+    case WL_CONNECT_FAILED:  return "AUTH FAILED (Check password)";
+    case WL_CONNECTION_LOST: return "CONNECTION LOST";
+    case WL_DISCONNECTED:    return "DISCONNECTED";
+    default:                 return "UNKNOWN";
+  }
+}
+
 void beginWiFiConnection(uint32_t nowMs)
 {
-  static uint8_t wifiFailCount = 0;
+  if (g_in_ap_mode)
+  {
+    return;
+  }
+
   const char *targetSsid = (g_wifi_ssid.length() > 0) ? g_wifi_ssid.c_str() : kWiFiSsid;
   const char *targetPass = (g_wifi_pass.length() > 0) ? g_wifi_pass.c_str() : kWiFiPassword;
 
   if (strlen(targetSsid) == 0)
   {
-    Serial.println("No Wi-Fi credentials found! Starting 'KOTL-SETUP' Hotspot...");
+    Serial.println("No Wi-Fi credentials configured! Starting 'KOTL-SETUP' Hotspot...");
     startCaptivePortal();
     return;
   }
 
-  if (wifiFailCount >= 3)
+  if (s_wifiFailCount >= 4)
   {
-    Serial.println("Wi-Fi connection failed 3 times. Launching 'KOTL-SETUP' Captive Portal...");
-    wifiFailCount = 0;
+    Serial.println("Wi-Fi connection failed 4 times. Launching 'KOTL-SETUP' Captive Portal...");
+    s_wifiFailCount = 0;
     startCaptivePortal();
     return;
   }
 
-  Serial.print("WiFi connecting to: ");
-  Serial.println(targetSsid);
-  WiFi.disconnect(false, true);
+  Serial.printf("[WiFi] Last status: %s. Connecting to: '%s' (attempt %u/4, interval 15s)...\n",
+                getWiFiStatusString(WiFi.status()), targetSsid, s_wifiFailCount + 1);
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);
+  WiFi.disconnect(false, false);
   WiFi.begin(targetSsid, targetPass);
   networkState.wifiConnectInProgress = true;
   networkState.lastWiFiAttemptMs = nowMs;
-  ++wifiFailCount;
+  ++s_wifiFailCount;
 }
 
 void performBackendPostRequest(uint32_t nowMs)
