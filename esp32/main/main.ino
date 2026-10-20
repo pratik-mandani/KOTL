@@ -148,6 +148,7 @@ volatile bool s_wsConnected = false;
 static volatile bool s_wsStreamTtsActive = false;
 static volatile bool s_wsStreamTtsFinished = false;
 static volatile bool s_useWebSocketForCurrentTurn = false;
+static const char *s_currentTurnSource = "voice";
 static volatile bool s_streamPrebuffering = true;
 
 struct AudioPlaybackState
@@ -2542,10 +2543,12 @@ void beginAudioCapture()
   if (s_wsConnected)
   {
     s_useWebSocketForCurrentTurn = true;
-    char startMsg[64];
-    snprintf(startMsg, sizeof(startMsg), "{\"type\":\"start_listen\",\"sample_rate\":%u}", (unsigned int)kAudioCaptureSampleRate);
+    char startMsg[96];
+    snprintf(startMsg, sizeof(startMsg), "{\"type\":\"start_listen\",\"source\":\"%s\",\"sample_rate\":%u}",
+             s_currentTurnSource ? s_currentTurnSource : "voice", (unsigned int)kAudioCaptureSampleRate);
     wsSendTxtSafe(startMsg);
-    Serial.println("⚡ [WebSocket] Live audio streaming turn started!");
+    Serial.printf("⚡ [WebSocket] Live audio streaming turn started! (Source: %s)\n", s_currentTurnSource ? s_currentTurnSource : "voice");
+    s_currentTurnSource = "voice";
   }
   else
   {
@@ -2593,6 +2596,7 @@ void serviceBootButton()
     if (canStartVoiceTurn())
     {
       Serial.println("Starting voice capture via BOOT button");
+      s_currentTurnSource = "button";
       micState.soundActive = true;
       beginAudioCapture();
       triggerSoundReaction(millis());
@@ -2791,6 +2795,7 @@ void serviceTouchSensor()
     if (canStartVoiceTurn())
     {
       Serial.println("[Touch] Starting voice capture via Head Touch!");
+      s_currentTurnSource = "touch";
       micState.soundActive = true;
       beginAudioCapture();
     }
@@ -2958,6 +2963,7 @@ void serviceMicrophoneInput()
   else if (risingEdge && !micState.soundActive && !audioState.isPlaying && !audioState.isDownloading)
   {
     micState.soundActive = true;
+    s_currentTurnSource = "voice";
     Serial.print("Sound detected! Peak amp: ");
     Serial.println(peakAmp);
     beginAudioCapture();

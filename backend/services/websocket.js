@@ -204,6 +204,7 @@ function initWebSocketServer(httpServer) {
 
           case "start_listen":
             ws.sampleRate = (msg.sample_rate && Number(msg.sample_rate)) || 16000;
+            ws.turnSource = (msg.source && String(msg.source)) || "voice";
             console.log(`[WebSocket ${ws.deviceId}] Listening started (sample rate: ${ws.sampleRate} Hz)...`);
             ws.audioChunks = [];
             ws.totalAudioBytes = 0;
@@ -326,6 +327,26 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       return;
     }
 
+        // 2b. Intelligent Wake-Word & Background Music Filter:
+    // If turn was triggered purely by room mic without touch, and session is not active:
+    // Require a wake word (e.g. "KOTL", "hello", "hey", "hi", etc.) so background music/songs are strictly ignored.
+    const WAKE_WORDS = [
+      "kotl", "kotil", "cotte", "cuttle", "bottle", "cattle", "cotel", "coatl", "hotel", "turtle",
+      "hello", "hey", "hi", "namaste", "kem cho", "suno", "sun", "aarav", "arav"
+    ];
+    const isTouchOrButton = ws.turnSource === "touch" || ws.turnSource === "button";
+    const isSessionActive = ws.lastTurnCompletedAt && (Date.now() - ws.lastTurnCompletedAt < 15000);
+    const transcriptLower = transcript.toLowerCase();
+    const hasWakeWord = WAKE_WORDS.some((w) => transcriptLower.includes(w));
+
+    if (!isTouchOrButton && !isSessionActive && !hasWakeWord) {
+      console.log(`[WebSocket ${ws.deviceId}] Background noise/music rejected without wake word: "${transcript}". Staying silent.`);
+      sendJson({ type: "transcript", text: "" });
+      sendJson({ type: "state", value: "IDLE" });
+      setState("IDLE");
+      return;
+    }
+
     sendJson({
       type: "transcript",
       text: transcript,
@@ -432,6 +453,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       total_bytes: totalStreamedBytes,
       total_turn_time_ms: Date.now() - turnStartTime,
     });
+    ws.lastTurnCompletedAt = Date.now();
     console.log(
       `[WebSocket ${ws.deviceId}] Turn complete (${totalStreamedBytes} bytes) in ${((Date.now() - turnStartTime) / 1000).toFixed(2)}s!`
     );
