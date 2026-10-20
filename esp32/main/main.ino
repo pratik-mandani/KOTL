@@ -80,9 +80,9 @@ RoboEyes<Adafruit_SSD1306> roboEyes(display);
 
 static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
-static const uint16_t kMicSpikeThreshold = 650;
-static const uint16_t kMicReleaseThreshold = 400;
-static const uint8_t kMicHighDebounceCount = 2;
+static const uint16_t kMicSpikeThreshold = 180;
+static const uint16_t kMicReleaseThreshold = 120;
+static const uint8_t kMicHighDebounceCount = 1;
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 50;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -282,11 +282,11 @@ static uint32_t s_playbackCooldownUntilMs = 0;
 static const uint32_t kPlaybackCooldownMs = 2500;
 
 // Dynamic Room Acoustic Calibration
-static uint32_t s_ambientNoiseFloor = 200;       // Adaptive rolling baseline noise floor
-static uint32_t s_ambientPeakNoise = 400;         // Measured peak room noise
-static uint16_t s_calibratedSpikeThreshold = 650; // Trigger threshold set by room acoustic calibration
-static uint16_t s_calibratedVadThreshold = 700;   // VAD voice active threshold
-static uint16_t s_calibratedValidationGate = 850; // Post-capture speech validation peak gate
+static uint32_t s_ambientNoiseFloor = 40;       // Adaptive rolling baseline noise floor
+static uint32_t s_ambientPeakNoise = 80;         // Measured peak room noise
+static uint16_t s_calibratedSpikeThreshold = 180; // Trigger threshold set by room acoustic calibration
+static uint16_t s_calibratedVadThreshold = 140;   // VAD voice active threshold
+static uint16_t s_calibratedValidationGate = 180; // Post-capture speech validation peak gate
 
 // Thread-Safe Cross-Core Eye Animation & Mood Management
 static char s_pendingEyeExpr[32] = {0};
@@ -1399,7 +1399,7 @@ void calibrateRoomAcoustics()
       const size_t n = bytesRead / sizeof(int32_t);
       for (size_t i = 0; i < n; ++i)
       {
-        int32_t raw = calChunk[i] >> 15;
+        int32_t raw = calChunk[i] >> 14;
         int16_t pcm = filterDcBlock(raw, calHpX1, calHpY1);
         int32_t amp = abs((int32_t)pcm);
         sumAmp += amp;
@@ -1414,14 +1414,14 @@ void calibrateRoomAcoustics()
     taskYIELD();
   }
 
-  const uint32_t measuredAvg = (sampleCount > 0) ? (uint32_t)(sumAmp / sampleCount) : 150;
-  s_ambientNoiseFloor = min(max(measuredAvg, (uint32_t)100), (uint32_t)450);
-  s_ambientPeakNoise = min(max((uint32_t)maxNoiseAmp, (uint32_t)200), (uint32_t)700);
+  const uint32_t measuredAvg = (sampleCount > 0) ? (uint32_t)(sumAmp / sampleCount) : 40;
+  s_ambientNoiseFloor = min(max(measuredAvg, (uint32_t)20), (uint32_t)200);
+  s_ambientPeakNoise = min(max((uint32_t)maxNoiseAmp, (uint32_t)40), (uint32_t)350);
 
   // Dynamically calibrate trigger thresholds for this specific room environment (tuned for natural conversational voice)
-  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)650, s_ambientPeakNoise + 350);
-  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)700, s_ambientPeakNoise + 400);
-  s_calibratedValidationGate = (uint16_t)max((uint32_t)850, s_ambientPeakNoise + 500);
+  s_calibratedSpikeThreshold = (uint16_t)min(max((uint32_t)160, s_ambientNoiseFloor + 70), (uint32_t)320);
+  s_calibratedVadThreshold   = (uint16_t)min(max((uint32_t)140, s_ambientNoiseFloor + 50), (uint32_t)280);
+  s_calibratedValidationGate = (uint16_t)min(max((uint32_t)180, s_ambientNoiseFloor + 80), (uint32_t)350);
 
   Serial.printf("[Room Calibration] Samples: %u | Avg Floor: %u | Peak Noise: %u\n",
                 sampleCount, (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
@@ -2369,8 +2369,8 @@ void performSynchronousAudioCapture()
     for (size_t i = 0; i < samplesGot && capturedSamples < kAudioCaptureSampleCount; ++i)
     {
       // INMP441 sends 24-bit audio MSB-aligned in 32-bit slot.
-      // Filter out DC offset bias so silence stays centered at 0
-      int32_t rawSample = dmaChunk[i] >> 15;
+      // Filter out DC offset bias with 2x gain (shift 14) so silence stays centered at 0
+      int32_t rawSample = dmaChunk[i] >> 14;
       int16_t pcmSample = filterDcBlock(rawSample, recHpX1, recHpY1);
 
       if (audioCaptureBuffer != NULL && capturedSamples < audioCaptureBufferCapacity)
@@ -2434,7 +2434,7 @@ void performSynchronousAudioCapture()
   captureState.isRecording = false;
 
   // False trigger check: require genuine foreground speech relative to room calibration
-  if (!voiceDetected || peakSpeechAmp < s_calibratedValidationGate || capturedSamples < (kAudioCaptureSampleRate / 3))
+  if (!voiceDetected || peakSpeechAmp < s_calibratedValidationGate || capturedSamples < (kAudioCaptureSampleRate / 4))
   {
     Serial.printf("[VAD] Ambient noise/music rejected (voice=%d, peak=%d < %u, samples=%u). Turn cancelled.\n",
                   voiceDetected, peakSpeechAmp, (unsigned int)s_calibratedValidationGate, (unsigned int)capturedSamples);
@@ -2775,6 +2775,14 @@ void serviceTouchSensor()
     s_showClockUntilMs = nowMs + 4500;
     drawClockDateScreen(true); // Immediate clean draw without lag or waiting
     applyVoiceEyeAnimation("happy");
+
+    // Dual Action: Tapping the head wire ALSO starts listening to chat!
+    if (canStartVoiceTurn())
+    {
+      Serial.println("[Touch] Starting voice capture via Head Touch!");
+      micState.soundActive = true;
+      beginAudioCapture();
+    }
   }
   else if (s_debouncedPressed && s_touchIsActive)
   {
@@ -2840,7 +2848,7 @@ void serviceMicrophoneInput()
   int32_t peakAmp = 0;
   for (size_t i = 0; i < sampleCount; ++i)
   {
-    int32_t raw = sampleChunk[i] >> 15;
+    int32_t raw = sampleChunk[i] >> 14;
     int16_t cleanPcm = filterDcBlock(raw, s_idleHpX1, s_idleHpY1);
     int32_t amp = abs((int32_t)cleanPcm);
     if (amp > peakAmp)
@@ -2862,7 +2870,7 @@ void serviceMicrophoneInput()
   }
 
   // Dynamic Trigger Threshold: Calibrated to room acoustics + slow ambient drift
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 400);
+  const uint16_t dynamicSpikeThreshold = (uint16_t)min(max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 60), (uint32_t)340);
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   static uint32_t s_lastMicTelemetryMs = 0;
@@ -2873,7 +2881,7 @@ void serviceMicrophoneInput()
                   micState.amplitude, (unsigned int)s_ambientNoiseFloor, (unsigned int)dynamicSpikeThreshold);
   }
 
-  if (micState.amplitude > 550 && nowMs - micState.lastPrintMs >= 200)
+  if (micState.amplitude > 140 && nowMs - micState.lastPrintMs >= 200)
   {
     Serial.printf("[Voice Sensing] Amp: %d (Trigger: %u)\n", micState.amplitude, (unsigned int)dynamicSpikeThreshold);
     micState.lastPrintMs = nowMs;

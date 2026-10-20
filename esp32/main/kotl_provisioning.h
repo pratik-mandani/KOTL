@@ -105,6 +105,17 @@ inline void initPersistentConfig() {
   g_backend_url = prefs.getString("backend", "");
   g_config_version = prefs.getInt("version", 1);
 
+  // If stale IP (192.168.1.13) was saved in NVS, automatically overwrite with current KOTL_BACKEND_BASE_URL
+  if (g_backend_url.indexOf("192.168.1.13") >= 0 || g_backend_url.length() == 0) {
+#if defined(KOTL_BACKEND_BASE_URL)
+    g_backend_url = String(KOTL_BACKEND_BASE_URL);
+#else
+    g_backend_url = "http://192.168.1.15:3000";
+#endif
+    prefs.putString("backend", g_backend_url);
+    Serial.printf("[Config] Migrated backend URL in NVS to: %s\n", g_backend_url.c_str());
+  }
+
   // Fallback to kotl_config.h defaults if NVS is empty
 #if defined(KOTL_WIFI_SSID)
   if (g_wifi_ssid.length() == 0 && strlen(KOTL_WIFI_SSID) > 0) {
@@ -119,7 +130,7 @@ inline void initPersistentConfig() {
 #endif
 
   if (g_backend_url.length() == 0) {
-    g_backend_url = "https://kotl.onrender.com";
+    g_backend_url = "http://192.168.1.15:3000";
   }
 }
 

@@ -967,7 +967,7 @@ app.post(
         duration_ms: metadata.duration_ms,
       });
 
-      if ((metadata.avg_abs_amplitude || 0) < 30 || (metadata.peak_to_peak || 0) < 150) {
+      if ((metadata.avg_abs_amplitude || 0) < 10 || (metadata.peak_to_peak || 0) < 50) {
         logAudioTurn(turnId, "audio is pure silence or sub-threshold, skipping STT", {
           avg_abs_amplitude: metadata.avg_abs_amplitude,
           peak_to_peak: metadata.peak_to_peak,
