@@ -172,6 +172,12 @@ assertTest('Default TTS Voice: en-IN-PrabhatNeural configured in TTS & WebSocket
   ttsDefaultEnglish,
   'Clean, natural Indian-English voice used for default speech');
 
+// Verify Calm Speech Rate Configuration (-25% for high clarity and comfortable pace)
+const ttsPacingConfigured = ttsContent.includes('EDGE_TTS_RATE || "-25%"') && wsContent.includes('EDGE_TTS_RATE || "-25%"');
+assertTest('Calm Speech Rate: -25% rate configured for clear, intelligible audio playback',
+  ttsPacingConfigured,
+  'Reduces Edge TTS speech rate by 25% for crystal-clear clarity over speaker');
+
 // Verify Session History Isolation
 const sessionsPath = path.join(__dirname, '..', 'uploads', 'sessions.json');
 const sessionsContent = fs.readFileSync(sessionsPath, 'utf8');

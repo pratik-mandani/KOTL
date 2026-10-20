@@ -54,7 +54,7 @@ async function synthesizeSentencePcm(text) {
   const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
 
   try {
-    const speechRate = process.env.EDGE_TTS_RATE || "-15%";
+    const speechRate = process.env.EDGE_TTS_RATE || "-25%";
     const tts = new EdgeTTS({
       voice,
       lang,
