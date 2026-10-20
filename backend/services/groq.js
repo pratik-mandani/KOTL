@@ -29,7 +29,7 @@ async function generateGroqAssistantReply({ messages, sessionId = null }) {
       success: false,
       reply: null,
       provider: "groq",
-      model: DEFAULT_MODEL,
+      model: "qwen/qwen3.8-27b",
       error: "GROQ_API_KEY not configured",
     };
   }
@@ -39,98 +39,101 @@ async function generateGroqAssistantReply({ messages, sessionId = null }) {
       success: false,
       reply: null,
       provider: "groq",
-      model: DEFAULT_MODEL,
+      model: "qwen/qwen3.8-27b",
       error: "invalid or empty messages history",
     };
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  const primaryModel = process.env.GROQ_CHAT_MODEL || "qwen/qwen3.8-27b";
+  const candidateModels = [primaryModel, "openai/gpt-oss-20b", "openai/gpt-oss-120b"].filter(
+    (m, i, arr) => arr.indexOf(m) === i
+  );
 
-  try {
-    const cleanMessages = messages.map((m) => ({
-      role: m.role,
-      content: typeof m.content === "string" ? m.content : "",
-    }));
+  let lastError = null;
 
-    const response = await fetch(DEFAULT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        messages: cleanMessages,
-        max_tokens: 300,
-        temperature: 0.3,
-        stream: false,
-      }),
-      signal: controller.signal,
-    });
+  for (const modelToUse of candidateModels) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
-    // Capture dynamic rate limit telemetry from Groq headers
-    if (response.headers) {
-      const remReq = response.headers.get("x-ratelimit-remaining-requests");
-      const limReq = response.headers.get("x-ratelimit-limit-requests");
-      const remTok = response.headers.get("x-ratelimit-remaining-tokens");
-      const limTok = response.headers.get("x-ratelimit-limit-tokens");
+    try {
+      const cleanMessages = messages.map((m) => ({
+        role: m.role,
+        content: typeof m.content === "string" ? m.content : "",
+      }));
 
-      if (remReq) lastGroqQuota.remainingRequests = remReq;
-      if (limReq) lastGroqQuota.limitRequests = limReq;
-      if (remTok) lastGroqQuota.remainingTokens = remTok;
-      if (limTok) lastGroqQuota.limitTokens = limTok;
-      lastGroqQuota.requestsCountToday += 1;
-      lastGroqQuota.lastUpdated = new Date().toISOString();
-    }
+      const response = await fetch(DEFAULT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: modelToUse,
+          messages: cleanMessages,
+          max_tokens: 300,
+          temperature: 0.3,
+          stream: false,
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
+      // Capture dynamic rate limit telemetry from Groq headers
+      if (response.headers) {
+        const remReq = response.headers.get("x-ratelimit-remaining-requests");
+        const limReq = response.headers.get("x-ratelimit-limit-requests");
+        const remTok = response.headers.get("x-ratelimit-remaining-tokens");
+        const limTok = response.headers.get("x-ratelimit-limit-tokens");
+
+        if (remReq) lastGroqQuota.remainingRequests = remReq;
+        if (limReq) lastGroqQuota.limitRequests = limReq;
+        if (remTok) lastGroqQuota.remainingTokens = remTok;
+        if (limTok) lastGroqQuota.limitTokens = limTok;
+        lastGroqQuota.requestsCountToday += 1;
+        lastGroqQuota.lastUpdated = new Date().toISOString();
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.warn(`[Groq LLM] Model ${modelToUse} returned ${response.status}: ${errorText.slice(0, 150)}. Trying next candidate model...`);
+        lastError = `Groq assistant failed (${modelToUse}): ${response.status} ${errorText}`;
+        continue;
+      }
+
+      const data = await response.json();
+      const reply = typeof data.choices?.[0]?.message?.content === "string" 
+        ? data.choices[0].message.content.trim() 
+        : "";
+
+      if (!reply) {
+        console.warn(`[Groq LLM] Model ${modelToUse} returned empty reply. Trying next candidate model...`);
+        lastError = `Groq model ${modelToUse} returned empty reply`;
+        continue;
+      }
+
+      console.log(`[Groq LLM Output (${modelToUse})]: ${reply}`);
+
       return {
-        success: false,
-        reply: null,
+        success: true,
+        reply,
         provider: "groq",
-        model: DEFAULT_MODEL,
-        error: `Groq assistant failed: ${response.status} ${errorText}`,
+        model: modelToUse,
+        error: null,
       };
+    } catch (err) {
+      lastError = err.message;
+      console.warn(`[Groq LLM] Fetch exception on ${modelToUse}: ${err.message}. Trying next candidate model...`);
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data = await response.json();
-    const reply = typeof data.choices?.[0]?.message?.content === "string" 
-      ? data.choices[0].message.content.trim() 
-      : "";
-
-    if (!reply) {
-      return {
-        success: false,
-        reply: null,
-        provider: "groq",
-        model: DEFAULT_MODEL,
-        error: "assistant reply empty",
-      };
-    }
-
-    console.log(`[Groq LLM Output]: ${reply}`);
-
-    return {
-      success: true,
-      reply,
-      provider: "groq",
-      model: DEFAULT_MODEL,
-      error: null,
-    };
-  } catch (error) {
-    const isTimeout = error && (error.name === "AbortError" || error.code === "ABORT_ERR");
-    return {
-      success: false,
-      reply: null,
-      provider: "groq",
-      model: DEFAULT_MODEL,
-      error: isTimeout ? `assistant timeout after ${DEFAULT_TIMEOUT_MS}ms` : error.message,
-    };
-  } finally {
-    clearTimeout(timeout);
   }
+
+  return {
+    success: false,
+    reply: null,
+    provider: "groq",
+    model: primaryModel,
+    error: lastError || "All candidate Groq models failed",
+  };
 }
 
 module.exports = {
