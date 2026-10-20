@@ -60,7 +60,7 @@ async function synthesizeSentencePcm(text) {
   const isEdgeCoolingDown = Date.now() < s_edgeTtsCooldownUntilMs;
   if (!isEdgeCoolingDown) {
     try {
-      const speechRate = process.env.EDGE_TTS_RATE || "-25%";
+      const speechRate = process.env.EDGE_TTS_RATE || "+0%";
       const tts = new EdgeTTS({
         voice,
         lang,
@@ -335,11 +335,20 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       "hello", "hey", "hi", "namaste", "kem cho", "suno", "sun", "aarav", "arav"
     ];
     const isTouchOrButton = ws.turnSource === "touch" || ws.turnSource === "button";
-    const isSessionActive = ws.lastTurnCompletedAt && (Date.now() - ws.lastTurnCompletedAt < 15000);
+    const isSessionActive = ws.lastTurnCompletedAt && (Date.now() - ws.lastTurnCompletedAt < 30000);
     const transcriptLower = transcript.toLowerCase();
     const hasWakeWord = WAKE_WORDS.some((w) => transcriptLower.includes(w));
 
-    if (!isTouchOrButton && !isSessionActive && !hasWakeWord) {
+    const QUESTION_TRIGGERS = [
+      "what", "who", "where", "when", "why", "how", "tell", "can you", "could you", "please",
+      "sing", "say", "joke", "story", "time", "weather", "today", "tomorrow", "name",
+      "કેમ", "શું", "કોણ", "ક્યાં", "ક્યારે", "કેવી", "મને", "બોલો", "કહો", "વાર્તા", "જોક", "ગીત", "સમય", "તમે",
+      "क्या", "कौन", "कहाँ", "कब", "कैसे", "बताओ", "बोलो", "कहानी", "सुनाओ", "समय", "गाना", "तुम", "आप"
+    ];
+    const hasQuestionIntent = QUESTION_TRIGGERS.some((q) => transcriptLower.includes(q)) || transcript.includes("?") || transcript.split(/\s+/).length >= 2;
+    const isMusicSymbol = transcript.includes("♪") || transcript.includes("🎵") || /\[music\]|\(music\)/i.test(transcript);
+
+    if (isMusicSymbol || (!isTouchOrButton && !isSessionActive && !hasWakeWord && !hasQuestionIntent)) {
       console.log(`[WebSocket ${ws.deviceId}] Background noise/music rejected without wake word: "${transcript}". Staying silent.`);
       sendJson({ type: "transcript", text: "" });
       sendJson({ type: "state", value: "IDLE" });

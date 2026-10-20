@@ -154,7 +154,7 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
   ensureTtsUploadsDir();
 
   try {
-    const speechRate = process.env.EDGE_TTS_RATE || "-25%";
+    const speechRate = process.env.EDGE_TTS_RATE || "+0%";
     const tts = new EdgeTTS({
       voice: selectedVoice,
       lang: selectedLang,

@@ -1453,9 +1453,9 @@ void calibrateRoomAcoustics()
   s_ambientPeakNoise = min(max((uint32_t)maxNoiseAmp, (uint32_t)40), (uint32_t)6000);
 
   // Dynamically calibrate trigger thresholds for this specific room environment (tuned for natural conversational voice)
-  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)5500, s_ambientPeakNoise + 1200);
-  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)4200, s_ambientPeakNoise + 500);
-  s_calibratedValidationGate = (uint16_t)max((uint32_t)4800, s_ambientPeakNoise + 800);
+  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)3200, s_ambientPeakNoise + 600);
+  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)2500, s_ambientPeakNoise + 350);
+  s_calibratedValidationGate = (uint16_t)max((uint32_t)2800, s_ambientPeakNoise + 450);
 
   Serial.printf("[Room Calibration] Samples: %u | Avg Floor: %u | Peak Noise: %u\n",
                 sampleCount, (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
