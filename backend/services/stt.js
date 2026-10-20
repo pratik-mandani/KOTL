@@ -54,6 +54,17 @@ const NOISE_FILTER_BLACKLIST = [
   "subscribe",
   "watching",
   "the end",
+  "end of session",
+  "end of transcript",
+  "end of the song",
+  "end of song",
+  "end of story",
+  "end of audio",
+  "end of video",
+  "end of recording",
+  "end session",
+  "session end",
+  "transcript end",
   "gajarati",
   "gujarati",
   "amara",
@@ -75,17 +86,47 @@ function isBlacklistedNoiseTranscript(text) {
   if (trimmed.startsWith("*") && trimmed.endsWith("*")) return true;
   if (trimmed.startsWith("(") && trimmed.endsWith(")")) return true;
   if (trimmed.startsWith("[") && trimmed.endsWith("]")) return true;
+
   const clean = text.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
-  if (clean.length === 0 || clean.length <= 2) return true;
+  if (clean.length === 0 || clean.length <= 1) return true;
+
   const words = clean.split(/\s+/).filter(Boolean);
   if (words.length === 0) return true;
 
+  // 1. Whitelist genuine conversational greetings FIRST so "hello hello" is NEVER blocked!
+  const GREETING_TOKENS = ["hello", "hi", "hey", "namaste", "kem cho", "kemcho", "halo", "morning", "evening"];
+  const isGreeting = GREETING_TOKENS.some((g) => clean === g || clean.startsWith(g + " ") || clean.includes(g));
+  if (isGreeting) {
+    return false; // Genuine human greeting, 100% valid!
+  }
+
+  // 2. Reject Whisper hallucinations on silence / endings ("end", "end of session", etc.)
+  if (
+    clean === "end" ||
+    clean === "the end" ||
+    clean.startsWith("end of ") ||
+    clean.startsWith("end ") ||
+    clean.includes("end of session") ||
+    clean.includes("end of transcript") ||
+    clean.includes("end of the song") ||
+    clean.includes("end of video") ||
+    clean.includes("end of audio") ||
+    clean.includes("end of story") ||
+    clean.includes("end of recording") ||
+    clean === "end session" ||
+    clean === "transcript end" ||
+    clean === "audio end"
+  ) {
+    return true; // Whisper artifact on silence!
+  }
+
+  // Single word noise tokens
   if (words.length === 1 && ["you", "yeah", "video", "subtitles", "bye", "okay", "so", "oh", "yes", "no"].includes(words[0])) {
     return true;
   }
 
-  // Detect Whisper looping hallucinations on faint noise/silence (e.g. repeated halves or repeated phrases)
-  if (words.length >= 2) {
+  // 3. Detect Whisper looping hallucinations on faint noise/silence (only for 4+ words)
+  if (words.length >= 4) {
     if (words.length % 2 === 0) {
       const half = words.length / 2;
       const firstHalf = words.slice(0, half).join(" ");
@@ -94,7 +135,7 @@ function isBlacklistedNoiseTranscript(text) {
     }
     const allSame = words.every((w) => w === words[0]);
     if (allSame) return true;
-    if (words.length >= 4 && words.length % 2 === 0) {
+    if (words.length % 2 === 0) {
       const p1 = words[0] + " " + words[1];
       let isRepeatingPair = true;
       for (let i = 2; i < words.length; i += 2) {

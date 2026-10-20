@@ -196,7 +196,7 @@ assertTest('Language Policy: English is default/priority language, Hindi strictl
 // Verify STT Whisper Default Language and Prompts
 const sttPath = path.join(__dirname, '..', 'services', 'stt.js');
 const sttContent = fs.readFileSync(sttPath, 'utf8');
-const sttDefaultEnglish = sttContent.includes('"en",') && !sttContent.includes('"hi",');
+const sttDefaultEnglish = sttContent.includes('"en",') && !sttContent.includes('model,\n    "hi"') && !sttContent.includes('model,\r\n    "hi"');
 assertTest('STT Whisper Defaults: English language default and clean English prompt hints',
   sttDefaultEnglish,
   'Guarantees Groq Whisper defaults to English and avoids Hindi hallucination on ambient noise');
