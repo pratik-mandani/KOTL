@@ -1424,12 +1424,12 @@ void calibrateRoomAcoustics()
 
   const uint32_t measuredAvg = (sampleCount > 0) ? (uint32_t)(sumAmp / sampleCount) : 40;
   s_ambientNoiseFloor = min(max(measuredAvg, (uint32_t)20), (uint32_t)3000);
-  s_ambientPeakNoise = min(max((uint32_t)maxNoiseAmp, (uint32_t)40), (uint32_t)5000);
+  s_ambientPeakNoise = min(max((uint32_t)maxNoiseAmp, (uint32_t)40), (uint32_t)6000);
 
   // Dynamically calibrate trigger thresholds for this specific room environment (tuned for natural conversational voice)
-  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)3500, s_ambientNoiseFloor + 1800);
-  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)2800, s_ambientNoiseFloor + 1000);
-  s_calibratedValidationGate = (uint16_t)max((uint32_t)3200, s_ambientNoiseFloor + 1400);
+  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)5500, s_ambientPeakNoise + 1200);
+  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)4200, s_ambientPeakNoise + 500);
+  s_calibratedValidationGate = (uint16_t)max((uint32_t)4800, s_ambientPeakNoise + 800);
 
   Serial.printf("[Room Calibration] Samples: %u | Avg Floor: %u | Peak Noise: %u\n",
                 sampleCount, (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
@@ -2881,7 +2881,7 @@ void serviceMicrophoneInput()
   micState.amplitude = micState.rawValue;
 
   // Dynamic Trigger Threshold: Calibrated to room acoustics + slow ambient drift
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 1800);
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, s_ambientNoiseFloor + 3500);
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   // Adaptive Ambient Noise Floor Tracking (DSP rolling average initialized from room calibration)
