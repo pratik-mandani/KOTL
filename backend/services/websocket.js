@@ -39,7 +39,7 @@ async function synthesizeSentencePcm(text) {
   let voice = process.env.EDGE_TTS_VOICE || "en-IN-PrabhatNeural";
   let lang = process.env.EDGE_TTS_LANG || "en-IN";
   if (isGujarati) {
-    voice = "gu-IN-DhwaniNeural";
+    voice = "gu-IN-NiranjanNeural";
     lang = "gu-IN";
   } else if (isHindi) {
     voice = "hi-IN-MadhurNeural";

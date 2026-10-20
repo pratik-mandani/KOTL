@@ -129,7 +129,7 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
   let selectedLang = EDGE_LANG;
   if (!selectedVoice) {
     if (isGujarati) {
-      selectedVoice = "gu-IN-DhwaniNeural";
+      selectedVoice = "gu-IN-NiranjanNeural";
       selectedLang = "gu-IN";
     } else if (isHindi) {
       selectedVoice = "hi-IN-MadhurNeural";

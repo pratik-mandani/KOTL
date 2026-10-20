@@ -120,7 +120,7 @@ static const uint32_t kWiFiRetryIntervalMs = 5000;
 static const uint32_t kHttpRetryIntervalMs = 15000;
 static const uint32_t kHttpTimeoutMs = 120000;
 static const uint32_t kAudioCaptureSampleRate = 16000;
-static const uint32_t kAudioCaptureDurationMs = 2500;
+static const uint32_t kAudioCaptureDurationMs = 3500;
 static const size_t kAudioCaptureSampleCount = (kAudioCaptureSampleRate * kAudioCaptureDurationMs) / 1000;
 static const uint32_t kAudioCaptureSampleIntervalUs = 1000000UL / kAudioCaptureSampleRate;
 static const uint16_t kAudioCaptureBaselineSamples = 128;
@@ -2348,9 +2348,9 @@ void performSynchronousAudioCapture()
 
   // Voice Activity Detection (VAD) parameters set dynamically from room calibration
   const int16_t kVadVoiceThreshold = s_calibratedVadThreshold;
-  static const uint32_t kVadInitialSilenceMs = 1500;  // Max initial silence before aborting false trigger
-  static const uint32_t kVadTrailingSilenceMs = 380;  // Ultra-fast end of speech detection (380ms silence)
-  static const uint32_t kVadMinSpeechMs = 350;        // Minimum 350ms speech before considering silence
+  static const uint32_t kVadInitialSilenceMs = 1800;  // Generous 1.8s window to start speaking
+  static const uint32_t kVadTrailingSilenceMs = 750;  // Natural 750ms human pause before end of speech
+  static const uint32_t kVadMinSpeechMs = 600;        // Minimum 600ms speech before considering silence
 
   bool voiceDetected = false;
   uint32_t voiceStartMs = 0;
