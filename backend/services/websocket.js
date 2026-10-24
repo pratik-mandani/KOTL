@@ -16,6 +16,7 @@ const ffmpegBin = require("ffmpeg-static");
 const { EdgeTTS } = require("@andresaya/edge-tts");
 const { detectEyeExpression } = require("./eye-animation");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
+const { synthesizeEdgeV2Pcm } = require("./edge-v2-tts");
 const { synthesizeGeminiPcm } = require("./gemini-tts");
 const { synthesizeEdgePython } = require("./edge-python-tts");
 const { extractMemoryFromDialogue } = require("./child-memory");
@@ -49,35 +50,21 @@ async function synthesizeSpeechPcm(text) {
     lang = "en-IN";
   }
 
-  const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
   const spokenText = toPhoneticSpokenText(text.trim(), lang);
   const speechRate = process.env.EDGE_TTS_RATE || "-20%";
 
-  // 1. Try Python edge-tts CLI (Official Sec-MS-GEC v2 algorithm - Works on Render & Local)
+  // 1. Primary: Edge TTS v2 with Sec-MS-GEC v2 (Native Node.js - Fast, Unlimited, Never blocked)
   try {
-    const pyPcm = await synthesizeEdgePython(spokenText, voice, speechRate);
-    if (pyPcm && pyPcm.length > 0) {
-      console.log(`[WebSocket TTS] Edge-TTS (Python v2) successfully generated ${pyPcm.length} bytes audio!`);
-      return pyPcm;
+    const v2Pcm = await synthesizeEdgeV2Pcm(spokenText, voice, speechRate);
+    if (v2Pcm && v2Pcm.length > 0) {
+      console.log(`[WebSocket TTS] Edge TTS v2 successfully generated ${v2Pcm.length} bytes male voice audio!`);
+      return v2Pcm;
     }
-  } catch (pyErr) {
-    console.warn(`[WebSocket TTS] Edge Python attempt failed: ${pyErr.message}`);
+  } catch (v2Err) {
+    console.warn(`[WebSocket TTS] Edge TTS v2 primary failed (${v2Err.message})...`);
   }
 
-  // 2. Try Node Edge-TTS
-  try {
-    const tts = new EdgeTTS();
-    await tts.synthesize(spokenText, voice, { rate: speechRate });
-    const mp3Buffer = await tts.toBuffer();
-    if (mp3Buffer && mp3Buffer.length > 0) {
-      const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, 16000);
-      return wavBytes.subarray(44);
-    }
-  } catch (edgeErr) {
-    console.warn(`[WebSocket TTS] Node Edge-TTS failed (${edgeErr.message})...`);
-  }
-
-  // 3. Fallback to Gemini Neural Male Voice ("Puck")
+  // 2. Secondary: Gemini Neural Male Voice ("Puck")
   try {
     const geminiPcm = await synthesizeGeminiPcm(spokenText);
     if (geminiPcm && geminiPcm.length > 0) {

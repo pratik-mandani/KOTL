@@ -12,6 +12,8 @@ const path = require("path");
 const { promisify } = require("util");
 const { EdgeTTS } = require("@andresaya/edge-tts");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
+const { synthesizeEdgeV2Pcm } = require("./edge-v2-tts");
+const { pcmToWavBuffer } = require("./gemini-tts");
 const { generateGeminiSpeech } = require("./gemini-tts");
 const { synthesizeEdgePython } = require("./edge-python-tts");
 
@@ -156,11 +158,10 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
   const speechRate = process.env.EDGE_TTS_RATE || "-20%";
   const spokenText = toPhoneticSpokenText(text.trim(), selectedLang);
 
-  // 1. Try Python edge-tts CLI (Sec-MS-GEC v2)
+  // 1. Primary: Pure Node.js Edge-TTS v2 (Sec-MS-GEC v2 on speech.platform.bing.com)
   try {
-    const pcm = await synthesizeEdgePython(spokenText, selectedVoice, speechRate);
+    const pcm = await synthesizeEdgeV2Pcm(spokenText, selectedVoice, speechRate);
     if (pcm && pcm.length > 0) {
-      const { pcmToWavBuffer } = require("./gemini-tts");
       const wavBytes = pcmToWavBuffer(pcm, NORMALIZED_SAMPLE_RATE);
       fs.writeFileSync(normalizedPath, wavBytes);
       return {
@@ -173,39 +174,8 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
         error: null,
       };
     }
-  } catch (pyErr) {
-    console.warn(`[TTS Edge Python] Failed: ${pyErr.message}`);
-  }
-
-  // 2. Try Node Edge-TTS
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const tts = new EdgeTTS();
-      await tts.synthesize(spokenText, selectedVoice, { rate: speechRate });
-      const mp3Buffer = await tts.toBuffer();
-      if (!mp3Buffer || mp3Buffer.length === 0) {
-        throw new Error("Edge-TTS produced empty audio output");
-      }
-
-      const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
-      const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, NORMALIZED_SAMPLE_RATE);
-      fs.writeFileSync(normalizedPath, wavBytes);
-
-      return {
-        success: true,
-        filename: normalizedFilename,
-        url: `/tts/${normalizedFilename}`,
-        provider: "edge",
-        voice: selectedVoice,
-        model: "neural",
-        error: null,
-      };
-    } catch (error) {
-      console.warn(`[TTS Edge Node] Attempt ${attempt + 1} failed: ${error.message}`);
-      if (attempt < 1) {
-        await new Promise((r) => setTimeout(r, 600));
-      }
-    }
+  } catch (v2Err) {
+    console.warn(`[TTS Edge v2] Failed: ${v2Err.message}`);
   }
 
   return {
@@ -215,7 +185,7 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
     provider: "edge",
     voice: selectedVoice,
     model: "neural",
-    error: "All Edge-TTS methods failed",
+    error: "Edge-TTS v2 failed",
   };
 }
 

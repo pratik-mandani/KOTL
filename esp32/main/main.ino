@@ -288,9 +288,9 @@ static const uint32_t kPlaybackCooldownMs = 750;
 // Dynamic Room Acoustic Calibration
 static uint32_t s_ambientNoiseFloor = 40;       // Adaptive rolling baseline noise floor
 static uint32_t s_ambientPeakNoise = 80;         // Measured peak room noise
-static uint16_t s_calibratedSpikeThreshold = 350; // Trigger threshold set by room acoustic calibration (voice peak is ~4000-8000)
-static uint16_t s_calibratedVadThreshold = 260;   // VAD voice active threshold
-static uint16_t s_calibratedValidationGate = 350; // Post-capture speech validation peak gate
+static uint16_t s_calibratedSpikeThreshold = 4500; // Trigger threshold set by room acoustic calibration (voice peak is ~12000-28000)
+static uint16_t s_calibratedVadThreshold = 3500;   // VAD voice active threshold
+static uint16_t s_calibratedValidationGate = 4000; // Post-capture speech validation peak gate
 
 // Thread-Safe Cross-Core Eye Animation & Mood Management
 static char s_pendingEyeExpr[32] = {0};
@@ -1461,9 +1461,9 @@ void calibrateRoomAcoustics()
   s_ambientPeakNoise = min(max((uint32_t)maxNoiseAmp, (uint32_t)40), (uint32_t)6000);
 
   // Dynamically calibrate trigger thresholds for this specific room environment (tuned for natural conversational voice)
-  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)3200, s_ambientPeakNoise + 600);
-  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)2500, s_ambientPeakNoise + 350);
-  s_calibratedValidationGate = (uint16_t)max((uint32_t)2800, s_ambientPeakNoise + 450);
+  s_calibratedSpikeThreshold = (uint16_t)max((uint32_t)4500, s_ambientPeakNoise + 1200);
+  s_calibratedVadThreshold   = (uint16_t)max((uint32_t)3500, s_ambientPeakNoise + 600);
+  s_calibratedValidationGate = (uint16_t)max((uint32_t)4000, s_ambientPeakNoise + 800);
 
   Serial.printf("[Room Calibration] Samples: %u | Avg Floor: %u | Peak Noise: %u\n",
                 sampleCount, (unsigned int)s_ambientNoiseFloor, (unsigned int)s_ambientPeakNoise);
@@ -2919,7 +2919,7 @@ void serviceMicrophoneInput()
   micState.amplitude = micState.rawValue;
 
   // Dynamic Trigger Threshold: Calibrated to room acoustics + slow ambient drift
-  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, (uint32_t)(s_ambientNoiseFloor + 800));
+  const uint16_t dynamicSpikeThreshold = (uint16_t)max((uint32_t)s_calibratedSpikeThreshold, (uint32_t)(s_ambientNoiseFloor + 1800));
   const uint16_t dynamicReleaseThreshold = (uint16_t)(dynamicSpikeThreshold * 6 / 10);
 
   // Adaptive Ambient Noise Floor Tracking (DSP rolling average initialized from room calibration)
@@ -2928,10 +2928,10 @@ void serviceMicrophoneInput()
   {
     s_lastNoiseFloorUpdateMs = nowMs;
     // Only adapt noise floor when genuinely quiet (< 150) so speech NEVER pollutes the baseline!
-    if (micState.amplitude < 150)
+    if (micState.amplitude < 3800)
     {
       s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
-      if (s_ambientNoiseFloor > 120) s_ambientNoiseFloor = 120;
+      if (s_ambientNoiseFloor > 3200) s_ambientNoiseFloor = 3200;
     }
   }
 
