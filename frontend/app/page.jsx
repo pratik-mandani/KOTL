@@ -157,22 +157,17 @@ export default function KindergartenDashboard() {
           
           <button onClick={() => setCurrentSection('report')} className={`px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'report' ? 'bg-[#38BDF8] text-white shadow-md shadow-sky-500/25' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
             <span>📜</span>
-            <span>Report & Marks</span>
+            <span>AI School Report Card</span>
           </button>
 
           <button onClick={() => setCurrentSection('habits')} className={`px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'habits' ? 'bg-[#38BDF8] text-white shadow-md shadow-sky-500/25' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
             <span>🎯</span>
-            <span>Habits & Skills</span>
+            <span>Habits & Directives</span>
           </button>
 
           <button onClick={() => setCurrentSection('dialogue')} className={`px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'dialogue' ? 'bg-[#38BDF8] text-white shadow-md shadow-sky-500/25' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
             <span>💬</span>
             <span>Dialogue & Voice</span>
-          </button>
-
-          <button onClick={() => setCurrentSection('care')} className={`px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'care' ? 'bg-[#38BDF8] text-white shadow-md shadow-sky-500/25' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
-            <span>🦁</span>
-            <span>Curiosity & Care</span>
           </button>
 
         </div>
@@ -502,43 +497,7 @@ export default function KindergartenDashboard() {
           </div>
         )}
 
-        {/* VIEW 4: CURIOSITY & CARE */}
-        {currentSection === 'care' && (
-          <div className="flex flex-col gap-6 max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-[#FFEFE8] border-[2.5px] border-[#F97316] rounded-[32px] p-5 relative overflow-hidden flex flex-col justify-between">
-                <div>
-                  <div className="w-14 h-14 rounded-2xl bg-orange-100 border border-orange-300 flex items-center justify-center text-3xl mb-2 shadow-sm">🦁</div>
-                  <h4 className="font-fredoka text-base font-bold text-slate-800 leading-tight">Prehistoric & Animal Science</h4>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">Displays lively fascination for wildlife habitats, lion prides, animal species, and natural wonders with deep observation.</p>
-                </div>
-                <div className="mt-4 flex justify-end text-orange-500 opacity-75 text-2xl">⚛️</div>
-              </div>
-
-              <div className="bg-[#E7F9EE] border-[2.5px] border-[#10B981] rounded-[32px] p-5 relative overflow-hidden flex flex-col justify-between">
-                <div>
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-3xl mb-2 shadow-sm">🚀</div>
-                  <h4 className="font-fredoka text-base font-bold text-slate-800 leading-tight">Space Exploration & Rocketry</h4>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">Fascinated by planetary orbits, astronauts floating in zero gravity, rocket propulsion, and cosmic star constellations.</p>
-                </div>
-                <div className="mt-4 flex justify-end text-emerald-600 opacity-75 text-2xl">🪐</div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-[#DCFCE7] border-[2.5px] border-[#22C55E] rounded-[34px] p-4 relative">
-                <div className="flex items-center gap-2 mb-1.5 text-emerald-800 font-bold text-sm"><span className="text-lg">🥬</span><span>Bitter Vegetables</span></div>
-                <p className="text-xs text-emerald-950 font-medium leading-relaxed">Prefers spinach pureed or mild in cream sauce; sensitive to raw bitter textures.</p>
-              </div>
-
-              <div className="bg-[#E0E7FF] border-[2.5px] border-[#6366F1] rounded-[34px] p-4 relative">
-                <div className="flex items-center gap-2 mb-1.5 text-indigo-900 font-bold text-sm"><span className="text-lg">🌙</span><span>Dark Rooms</span></div>
-                <p className="text-xs text-indigo-950 font-medium leading-relaxed">Prefers soft warm 2700K ambient night light; calmed by gentle bedtime story melodies.</p>
-              </div>
-            </div>
-          </div>
-        )}
-
+        {/* VIEW 2 & VIEW 3 END */}
       </main>
 
       {/* Cloud Wave Footer */}
@@ -551,11 +510,11 @@ export default function KindergartenDashboard() {
         </div>
       </div>
 
-      {/* Fixed Mobile Bottom Nav */}
+      {/* Fixed Mobile Bottom Nav (3 Purpose-Driven Sections) */}
       <nav id="mobileBottomNav" className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t-2 border-amber-200 py-2 px-4 flex justify-around items-center z-50 lg:hidden shadow-lg">
         <button onClick={() => setCurrentSection('report')} className={`flex flex-col items-center font-bold text-[11px] ${currentSection === 'report' ? 'text-sky-600' : 'text-slate-500'}`}>
           <span className="text-lg">📜</span>
-          <span>Report</span>
+          <span>Report Card</span>
         </button>
         <button onClick={() => setCurrentSection('habits')} className={`flex flex-col items-center font-bold text-[11px] ${currentSection === 'habits' ? 'text-sky-600' : 'text-slate-500'}`}>
           <span className="text-lg">🎯</span>
@@ -564,10 +523,6 @@ export default function KindergartenDashboard() {
         <button onClick={() => setCurrentSection('dialogue')} className={`flex flex-col items-center font-bold text-[11px] ${currentSection === 'dialogue' ? 'text-sky-600' : 'text-slate-500'}`}>
           <span className="text-lg">💬</span>
           <span>Dialogue</span>
-        </button>
-        <button onClick={() => setCurrentSection('care')} className={`flex flex-col items-center font-bold text-[11px] ${currentSection === 'care' ? 'text-sky-600' : 'text-slate-500'}`}>
-          <span className="text-lg">🦁</span>
-          <span>Care</span>
         </button>
       </nav>
 
