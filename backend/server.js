@@ -31,6 +31,13 @@ const {
   generateChildDevelopmentReport,
   getVoiceMemos,
   addVoiceMemo,
+  getQuests,
+  addQuest,
+  toggleQuestStatus,
+  logSickness,
+  updateVaccination,
+  addVaccination,
+  updateVitals,
 } = require("./services/child-memory");
 
 const app = express();
@@ -366,6 +373,81 @@ app.post("/api/child/limits", (req, res) => {
 
     const updated = updateChildProfile(updates);
     res.json({ success: true, profile: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- AI Mentor Quests & Learning Challenges ---
+app.get("/api/quests", (_req, res) => {
+  res.json({ success: true, quests: getQuests() });
+});
+
+app.post("/api/quests", (req, res) => {
+  try {
+    const { title, category, goal, mentor_hints, reward_badge } = req.body || {};
+    if (!title) {
+      return res.status(400).json({ success: false, error: "Quest title is required" });
+    }
+    const quest = addQuest({ title, category, goal, mentor_hints, reward_badge });
+    res.json({ success: true, quest, quests: getQuests() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/quests/toggle", (req, res) => {
+  try {
+    const { id } = req.body || {};
+    const quest = toggleQuestStatus(id);
+    if (!quest) {
+      return res.status(404).json({ success: false, error: "Quest not found" });
+    }
+    res.json({ success: true, quest, quests: getQuests() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- Dynamic Medical Logging (Sickness, Vaccines, Vitals) ---
+app.post("/api/medical/sickness", (req, res) => {
+  try {
+    const { date, symptom, doctor, medicines, dosage, status, remedy } = req.body || {};
+    const newLog = logSickness({ date, symptom, doctor, medicines, dosage, status, remedy });
+    const profile = getChildProfile();
+    res.json({ success: true, log: newLog, sickness_logs: profile.medical?.sickness_logs || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/medical/vaccine/update", (req, res) => {
+  try {
+    const { id, status, date } = req.body || {};
+    const updated = updateVaccination(id, { status, date });
+    const profile = getChildProfile();
+    res.json({ success: true, vaccine: updated, vaccinations: profile.medical?.vaccinations || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/medical/vaccine/add", (req, res) => {
+  try {
+    const { name, age_due, status, date, due_date } = req.body || {};
+    const newVac = addVaccination({ name, age_due, status, date, due_date });
+    const profile = getChildProfile();
+    res.json({ success: true, vaccine: newVac, vaccinations: profile.medical?.vaccinations || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/medical/vitals", (req, res) => {
+  try {
+    const { height_cm, weight_kg } = req.body || {};
+    const vitals = updateVitals({ height_cm, weight_kg });
+    res.json({ success: true, vitals });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

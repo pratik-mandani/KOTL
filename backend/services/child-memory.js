@@ -662,6 +662,173 @@ function getChildDevelopmentReport() {
   return generateChildDevelopmentReport({ refresh: false });
 }
 
+const QUESTS_FILE = path.join(UPLOADS_DIR, "quests.json");
+
+const DEFAULT_QUESTS = [
+  {
+    id: "q-1",
+    title: "🌱 My First Plant in a Cup (School Science Project)",
+    category: "School Project",
+    goal: "Plant a gram seed in moist soil and observe daily sprout growth",
+    mentor_hints: [
+      "What do seeds need to wake up? Water, soil, or juice?",
+      "Where should we keep our cup so sunlight can touch it?",
+      "Let us draw a tiny leaf on our chart when it sprouts!"
+    ],
+    status: "in_progress",
+    reward_badge: "⭐ Master Botanist",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "q-2",
+    title: "🧸 Space Station Desk Organizer (Training Mission)",
+    category: "Life Skill",
+    goal: "Sort study desk items by size: big storybooks, pencils, and pack toys",
+    mentor_hints: [
+      "Big books are heavy rocket fuel tanks! Where should they sit?",
+      "Color crayons are launch control buttons! Can they go in the pencil cup?",
+      "Look how clean your space station desk looks now!"
+    ],
+    status: "in_progress",
+    reward_badge: "🚀 Space Commander",
+    created_at: new Date().toISOString()
+  },
+  {
+    id: "q-3",
+    title: "🎨 Golden Thank-You Card for Dadi (Family Quest)",
+    category: "Family & Kindness",
+    goal: "Draw a colorful greeting card with a smiling sun for Dadi",
+    mentor_hints: [
+      "What is Dadi's favorite bright color? Yellow or Sky Blue?",
+      "Can we draw 5 sun rays and say 'Thank you Dadi for yummy food'?"
+    ],
+    status: "completed",
+    reward_badge: "💖 Kindness Champion",
+    created_at: new Date().toISOString()
+  }
+];
+
+function getQuests() {
+  ensureUploadsDir();
+  try {
+    if (fs.existsSync(QUESTS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(QUESTS_FILE, "utf-8"));
+      if (Array.isArray(data)) return data;
+    }
+  } catch (err) {
+    console.warn("[Child Memory] Error reading quests:", err.message);
+  }
+  saveQuests(DEFAULT_QUESTS);
+  return [...DEFAULT_QUESTS];
+}
+
+function saveQuests(quests) {
+  ensureUploadsDir();
+  try {
+    fs.writeFileSync(QUESTS_FILE, JSON.stringify(quests, null, 2), "utf-8");
+    return true;
+  } catch (err) {
+    console.error("[Child Memory] Error saving quests:", err.message);
+    return false;
+  }
+}
+
+function addQuest({ title, category, goal, mentor_hints, reward_badge }) {
+  const quests = getQuests();
+  const newQuest = {
+    id: "q-" + Date.now(),
+    title: (title || "New Learning Quest").trim(),
+    category: category || "School Project",
+    goal: goal || "",
+    mentor_hints: Array.isArray(mentor_hints) ? mentor_hints : (mentor_hints ? [mentor_hints] : ["Think step by step with KOTL!"]),
+    status: "in_progress",
+    reward_badge: reward_badge || "⭐ Star Explorer",
+    created_at: new Date().toISOString()
+  };
+  quests.unshift(newQuest);
+  saveQuests(quests);
+  return newQuest;
+}
+
+function toggleQuestStatus(id) {
+  const quests = getQuests();
+  const q = quests.find(x => x.id === id);
+  if (q) {
+    q.status = q.status === "completed" ? "in_progress" : "completed";
+    saveQuests(quests);
+    return q;
+  }
+  return null;
+}
+
+function logSickness({ date, symptom, doctor, medicines, dosage, status, remedy }) {
+  const profile = getChildProfile();
+  if (!profile.medical) profile.medical = {};
+  if (!profile.medical.sickness_logs) profile.medical.sickness_logs = [];
+
+  const newLog = {
+    id: "sick-" + Date.now(),
+    date: date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    symptom: symptom || "General Malaise",
+    doctor: doctor || "Dr. A. Mehta, MD",
+    medicines: medicines || "Prescribed medication",
+    dosage: dosage || "As directed by pediatrician",
+    status: status || "recovered",
+    remedy: remedy || ""
+  };
+
+  profile.medical.sickness_logs.unshift(newLog);
+  saveChildProfile(profile);
+  return newLog;
+}
+
+function updateVaccination(id, updates) {
+  const profile = getChildProfile();
+  if (!profile.medical || !profile.medical.vaccinations) return null;
+  const vac = profile.medical.vaccinations.find(v => v.id === id);
+  if (vac) {
+    Object.assign(vac, updates);
+    saveChildProfile(profile);
+    return vac;
+  }
+  return null;
+}
+
+function addVaccination({ name, age_due, status, date, due_date }) {
+  const profile = getChildProfile();
+  if (!profile.medical) profile.medical = {};
+  if (!profile.medical.vaccinations) profile.medical.vaccinations = [];
+  const newVac = {
+    id: "vac-" + Date.now(),
+    name: name || "Pediatric Vaccine",
+    age_due: age_due || "6 Years",
+    status: status || "completed",
+    date: date || new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+    due_date: due_date || null
+  };
+  profile.medical.vaccinations.push(newVac);
+  saveChildProfile(profile);
+  return newVac;
+}
+
+function updateVitals({ height_cm, weight_kg }) {
+  const profile = getChildProfile();
+  if (!profile.medical) profile.medical = {};
+  const h = Number(height_cm) || 116;
+  const w = Number(weight_kg) || 21.5;
+  const bmi = Number((w / ((h / 100) * (h / 100))).toFixed(1));
+
+  profile.medical.vitals = {
+    height_cm: h,
+    weight_kg: w,
+    bmi: bmi,
+    percentile: "75th (Healthy)",
+    last_checked: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  };
+  saveChildProfile(profile);
+  return profile.medical.vitals;
+}
+
 module.exports = {
   getChildProfile,
   updateChildProfile,
@@ -677,4 +844,12 @@ module.exports = {
   generateChildDevelopmentReport,
   getVoiceMemos,
   addVoiceMemo,
+  getQuests,
+  saveQuests,
+  addQuest,
+  toggleQuestStatus,
+  logSickness,
+  updateVaccination,
+  addVaccination,
+  updateVitals,
 };
