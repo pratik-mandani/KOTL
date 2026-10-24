@@ -555,7 +555,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
   case WStype_BIN:
     if (s_audioStreamBuffer && length > 0)
     {
-      xStreamBufferSend(s_audioStreamBuffer, payload, length, 0);
+      xStreamBufferSend(s_audioStreamBuffer, payload, length, pdMS_TO_TICKS(50));
     }
     break;
 
@@ -752,7 +752,7 @@ void initFreeRtosTasks()
   s_littleFsMutex = xSemaphoreCreateRecursiveMutex();
   s_wsMutex = xSemaphoreCreateMutex();
   s_eyeMutex = xSemaphoreCreateMutex();
-  s_audioStreamBuffer = xStreamBufferCreate(8192, 512);
+  s_audioStreamBuffer = xStreamBufferCreate(24576, 512);
   s_netQueue = xQueueCreate(4, sizeof(NetEventType));
   s_audioQueue = xQueueCreate(4, sizeof(AudioCmdType));
 

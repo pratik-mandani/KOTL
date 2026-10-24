@@ -51,7 +51,7 @@ async function synthesizeSpeechPcm(text) {
   }
 
   const spokenText = toPhoneticSpokenText(text.trim(), lang);
-  const speechRate = process.env.EDGE_TTS_RATE || "-20%";
+  const speechRate = process.env.EDGE_TTS_RATE || "-22%";
 
   // 1. Primary: Edge TTS v2 with Sec-MS-GEC v2 (Native Node.js - Fast, Unlimited, Never blocked)
   try {
@@ -403,8 +403,11 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       offset = nextOffset;
       totalStreamedBytes += chunk.length;
 
-      // Small delay between chunks for network pacing (16ms per 1KB = 2x real-time burst)
-      await new Promise((resolve) => setTimeout(resolve, 16));
+      // Pacing: 1024 bytes @ 16kHz 16-bit mono = 32ms audio duration.
+      // Fast-burst first 4 chunks (4KB = 128ms) with 4ms delay to pre-fill ESP32 jitter buffer,
+      // then pace subsequent chunks at 28ms to match real-time consumption and prevent buffer overflow.
+      const delayMs = totalStreamedBytes <= 4 * AUDIO_CHUNK_STREAM_SIZE ? 4 : 28;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
     // Finish streaming

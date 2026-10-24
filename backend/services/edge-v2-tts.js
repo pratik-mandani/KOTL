@@ -20,6 +20,12 @@ function escapeXml(text) {
     .replace(/'/g, "&apos;");
 }
 
+function formatNaturalPunctuation(text) {
+  if (!text) return "";
+  // Insert a natural acoustic breath pause between sentences without invalid XML tags
+  return text.replace(/([.!?।])\s+/g, "$1 ... ");
+}
+
 function synthesizeEdgeV2Mp3(text, voice = "en-IN-PrabhatNeural", rate = "-20%", timeoutMs = 12000) {
   return new Promise((resolve, reject) => {
     const token = generateSecMsGecV2();
@@ -71,9 +77,7 @@ function synthesizeEdgeV2Mp3(text, voice = "en-IN-PrabhatNeural", rate = "-20%",
 
       const requestId = crypto.randomUUID().replace(/-/g, "");
       const lang = voice.startsWith("gu-") ? "gu-IN" : voice.startsWith("hi-") ? "hi-IN" : "en-US";
-      const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="${lang}"><voice name="${voice}"><prosody pitch="+0Hz" rate="${rate}" volume="+0%">${escapeXml(
-        text
-      )}</prosody></voice></speak>`;
+      const ssml = `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="${lang}"><voice name="${voice}"><prosody pitch="+0Hz" rate="${rate}" volume="+0%">${escapeXml(formatNaturalPunctuation(text))}</prosody></voice></speak>`;
 
       const ssmlMsg = `X-RequestId:${requestId}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${timestamp}\r\nPath:ssml\r\n\r\n${ssml}`;
       ws.send(ssmlMsg);
