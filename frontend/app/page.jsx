@@ -499,7 +499,7 @@ export default function KindergartenHubPage() {
             <span>🧭</span><span>Mentor Quests</span>
           </button>
           <button onClick={() => setCurrentSection('growth')} className={`px-3.5 sm:px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'growth' ? 'bg-[#0284C7] text-white shadow-md' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
-            <span>🌟</span><span>Learn, Play & Habits</span>
+            <span>🌟</span><span>Good & Bad Habits</span>
           </button>
           <button onClick={() => setCurrentSection('health')} className={`px-3.5 sm:px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'health' ? 'bg-[#0284C7] text-white shadow-md' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
             <span>🏥</span><span>Health Passport</span>
@@ -596,6 +596,28 @@ export default function KindergartenHubPage() {
                   ▶ Play Voice Briefing
                 </button>
               </div>
+            </div>
+
+            {/* 🌟 HABITS SPOTLIGHT CARD (GOOD HABITS VS BAD HABITS) */}
+            <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-amber-50 border-2 border-emerald-300 rounded-[32px] p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start sm:items-center gap-3.5">
+                <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-3xl shadow-xs shrink-0">
+                  🌟
+                </div>
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-fredoka text-base sm:text-lg font-bold text-emerald-950">🌟 Good Habits & Habits Needing Guidance (Bad Habits)</h3>
+                    <span className="bg-emerald-200 text-emerald-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-300">5 Good Habits • 4 In Training</span>
+                  </div>
+                  <div className="text-xs text-slate-700 leading-relaxed space-y-0.5">
+                    <div>✨ <strong>Good Habits Established:</strong> Brushing teeth twice daily, tidying toys & desk, drinking fresh water, polite turn-taking with Dadi, asking science questions.</div>
+                    <div>⚠️ <strong>Habits Needing Improvement (Bad Habits):</strong> Reluctance to eat green veggies (spinach/broccoli), evening mobile screen time, 9 PM bedtime delays, sleeping in dark room.</div>
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => setCurrentSection('growth')} className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-fredoka font-bold text-xs whitespace-nowrap shadow-sm flex items-center gap-1.5 self-start md:self-auto shrink-0 transition-transform active:scale-95">
+                <span>👉</span><span>Open Full Habits Academy</span>
+              </button>
             </div>
 
             {/* BENTO GRID: 4 CORE SKILLS CARDS (LEFT) & PASSIONS / EVIDENCE (RIGHT) */}
@@ -868,7 +890,7 @@ export default function KindergartenHubPage() {
           <div className="space-y-5">
             <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 rounded-[32px] p-6 text-white shadow-md border-3 border-emerald-400 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="font-fredoka text-xl sm:text-2xl font-bold">Learn, Play & Habit Academy</h2>
+                <h2 className="font-fredoka text-xl sm:text-2xl font-bold">Good & Bad Habits Academy (360° Life Growth)</h2>
                 <p className="text-xs text-emerald-100">Good habits established, behavioral guidance plans, phonics & 60m sports play</p>
               </div>
               <div className="flex gap-2">
@@ -1278,7 +1300,7 @@ export default function KindergartenHubPage() {
         </button>
         <button onClick={() => setCurrentSection('growth')} className={`flex flex-col items-center p-1 rounded-xl ${currentSection === 'growth' ? 'text-sky-600 font-bold' : 'text-slate-500'}`}>
           <span className="text-lg">🌟</span>
-          <span className="text-[10px] font-fredoka">Habits</span>
+          <span className="text-[10px] font-fredoka">Good/Bad</span>
         </button>
         <button onClick={() => setCurrentSection('health')} className={`flex flex-col items-center p-1 rounded-xl ${currentSection === 'health' ? 'text-sky-600 font-bold' : 'text-slate-500'}`}>
           <span className="text-lg">🏥</span>
