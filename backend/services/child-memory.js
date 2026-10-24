@@ -336,7 +336,7 @@ function buildChildContextPrompt() {
   };
 
   let prompt = `\n\nChild's Profile & Memory:
-- Child's Name: ${profile.name || "Aarav"}
+- Child's Name: ${profile.name || "Parth"}
 - Age: ${age} (Tailor your sentence simplicity, vocabulary, and concepts strictly for this developmental age)
 - Gender: ${gender} (${gender.toLowerCase() === "girl" ? "Address lovingly as little princess / champ / buddy (or beti / દીકરી)" : (gender.toLowerCase() === "boy" ? "Address lovingly as champ / brother / buddy / champ (or beta / દીકરો)" : "Address lovingly as buddy / champ")})
 - Bedtime Routine: ${bedtime} (If conversation happens at night around or after ${bedtime}, warmly soothe the child, narrate a calming bedtime wind-down thought, and gently encourage going to sleep)
@@ -391,7 +391,7 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
   const pronounPossessive = (profile.gender || "").toLowerCase() === "girl" ? "Her" : ((profile.gender || "").toLowerCase() === "boy" ? "His" : "Their");
 
   const report = {
-    child_name: profile.name || "Aarav",
+    child_name: profile.name || "Parth",
     age: profile.age || "6 Years Old",
     gender: profile.gender || "Boy",
     bedtime: profile.bedtime || "21:00",
@@ -405,7 +405,7 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
     total_conversations_analyzed: profile.conversation_count || 14,
     overall_development_score: overallScore,
     pediatric_status: "Advanced Curiosity & Strong Linguistic Growth",
-    executive_summary: `${profile.name || "Aarav"} demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful, imaginative spirit during conversations with KOTL. ${pronoun} shows strong memory retention when engaged in storytelling about ${(profile.likes || []).slice(0, 2).join(' and ') || 'prehistoric sciences and space'}. While ${pronounPossessive.toLowerCase()} vocabulary and cognitive curiosity exceed standard developmental benchmarks for ${profile.age || '6-year-olds'}, KOTL is actively providing supportive storytelling to help build enthusiastic habits around healthy nutrition and bedtime wind-down routines.`,
+    executive_summary: `${profile.name || "Parth"} demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful, imaginative spirit during conversations with KOTL. ${pronoun} shows strong memory retention when engaged in storytelling about ${(profile.likes || []).slice(0, 2).join(' and ') || 'space exploration, stars and creative art'}. While ${pronounPossessive.toLowerCase()} vocabulary and cognitive curiosity exceed standard developmental benchmarks for ${profile.age || '6-year-olds'}, KOTL is actively providing supportive storytelling to help build enthusiastic habits around healthy nutrition and bedtime wind-down routines.`,
     
     // Core Skills Assessment
     skills_assessment: {
@@ -418,7 +418,7 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       curiosity: {
         score: profile.skills?.curiosity || 92,
         status: "Exceptional",
-        evaluation: "Consistently drives conversations with 'why' and 'how' exploratory questions about astronomy, prehistoric life, and nature.",
+        evaluation: "Consistently drives conversations with 'why' and 'how' exploratory questions about astronomy, creative art, and nature.",
         key_strength: "Shows genuine desire to understand mechanisms rather than just surface facts."
       },
       emotional_intelligence: {
@@ -438,9 +438,9 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
     // Passions Analysis (What the child loves)
     passions_analysis: [
       {
-        topic: "Prehistoric Science & Dinosaurs",
+        topic: "Space Exploration & Stars",
         affinity: "95%",
-        observation: "Displays intense excitement when discussing T-Rex fossils, armor plates of Stegosaurus, and ancient habitats."
+        observation: "Displays intense excitement when talking about stars, the moon, and rocket missions into space."
       },
       {
         topic: "Space Exploration & Rocketry",
@@ -464,7 +464,7 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       {
         trigger: "Bitter & Green Vegetables (Spinach, Broccoli)",
         category: "Nutritional Reluctance",
-        kotl_intervention: "KOTL enthusiastically relates vegetable nutrients to astronaut endurance and dinosaur strength, avoiding lecturing."
+        kotl_intervention: "KOTL enthusiastically relates vegetable nutrients to astronaut endurance and superhero stamina, avoiding lecturing."
       },
       {
         trigger: "Dark Rooms & Night Shadow Uncertainty",
@@ -482,7 +482,7 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
     parent_recommendations: [
       {
         title: "Dinner Table Nutrition Superhero Game",
-        action: "Connect green veggies on the plate to Aarav's favorite dinosaur's stamina. Ask him: 'Which plant gave the Brachiosaurus enough power to grow as tall as a tree?'"
+        action: "Serve colorful fruit and crunchy veggies as superhero power-ups. Praise Parth when he eats his healthy snacks."
       },
       {
         title: "5-Minute Night Sky Window Routine",
@@ -490,7 +490,7 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       },
       {
         title: "Daily Two-Word Discovery Challenge",
-        action: "Ask Aarav to teach you one cool word he learned from KOTL today. Teaching it back reinforces cognitive linguistic retention by over 70%."
+        action: "Ask Parth to teach you one cool word he learned from KOTL today. Teaching it back reinforces cognitive linguistic retention by over 70%."
       }
     ],
 
@@ -498,12 +498,12 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
     conversation_evidence: [
       {
         id: "evidence-1",
-        topic: "Dinosaur Anatomy & Prehistoric Science",
+        topic: "Space & Night Sky Exploration",
         badge: "Scientific Curiosity Milestone",
         timestamp: "Recent Voice Session",
-        child_question: "KOTL, how big was the T-Rex and why did it have such tiny arms?",
-        kotl_answer: "T-Rex was 12 meters long with banana-sized teeth! Its arms were small so its neck and massive jaws could have all the muscle power to hunt!",
-        why_noted_in_report: "Aarav linked physical anatomy to animal survival behavior. This high-level inquiry directly accounts for his 92% Curiosity Index.",
+        child_question: "KOTL, how do stars shine at night, and can we fly a rocket to the moon?",
+        kotl_answer: "Stars are giant glowing suns far away in space, Parth! They twinkle because their light travels across the sky to say hello to you!",
+        why_noted_in_report: "Parth shows natural wonder and scientific curiosity about astronomy and how the universe works.",
         tts_url: null
       },
       {
@@ -522,8 +522,8 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
         badge: "Parent Directive in Action",
         timestamp: "Mealtime Interaction",
         child_question: "I really don't want to eat green spinach on my plate today!",
-        kotl_answer: "Spinach has iron superpower fuel that gives astronauts and T-Rex immense stamina to run and leap! Just one big bite gives superhero energy!",
-        why_noted_in_report: "KOTL executed the active parent directive. Aarav giggled and agreed to take two bites, converting reluctance into playful nutrition.",
+        kotl_answer: "Spinach has iron superpower fuel that gives astronauts and champions immense stamina to run and leap! Just one big bite gives superhero energy!",
+        why_noted_in_report: "KOTL executed the active parent directive. Parth giggled and agreed to take two bites, converting reluctance into playful nutrition.",
         tts_url: null
       },
       {

@@ -3,49 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>KOTL • Kindergarten Growth Hub & Report Card</title>
+  <title>KOTL Kids • Kindergarten Growth & Intelligence Dashboard</title>
+  
+  <!-- Modern Preschool Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Comic+Neue:wght@700&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            kid: ['"Fredoka"', '"Quicksand"', 'cursive', 'sans-serif'],
+            display: ['"Quicksand"', '"Fredoka"', 'sans-serif'],
+            sans: ['"Nunito"', 'system-ui', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
-            kid: ['"Fredoka"', '"Comic Neue"', 'cursive', 'sans-serif'],
           },
           colors: {
             kid: {
-              blue: '#1E88E5',
-              deepblue: '#0D47A1',
-              lightblue: '#E3F2FD',
-              yellow: '#FDD835',
-              gold: '#FFB300',
-              lightyellow: '#FFF9C4',
-              warmwhite: '#FFFDF9',
-              paper: '#FAF7F2',
-              cream: '#FFF8E7',
-              coral: '#FF5252',
-              red: '#E53935',
-              green: '#43A047',
-              lightgreen: '#E8F5E9',
-              border: '#FFE082',
+              yellow: '#FFB703',
+              orange: '#FB8500',
+              blue: '#70B6F6',
+              deepblue: '#1E293B',
+              mint: '#66D29A',
+              pink: '#F48FB1',
+              lavender: '#E2E8F0',
+              canvas: '#F8FAFC',
+              card: '#FFFFFF',
             }
+          },
+          boxShadow: {
+            'soft': '0 8px 24px rgba(0, 0, 0, 0.04)',
+            'float': '0 12px 32px rgba(112, 182, 246, 0.12)',
+            'pill': '0 4px 12px rgba(0, 0, 0, 0.03)',
           }
         }
       }
     }
   </script>
+  
   <style>
     body {
-      background-color: #FFFDF9;
+      background-color: #F8FAFC;
       color: #1E293B;
       overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-family: 'Nunito', sans-serif;
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -55,77 +60,66 @@
       background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #CBD5E1;
+      background: #E2E8F0;
       border-radius: 9999px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #94A3B8;
+      background: #CBD5E1;
     }
     .tab-active {
-      background: #1E88E5 !important;
+      background: #70B6F6 !important;
       color: #FFFFFF !important;
       font-weight: 700 !important;
-      box-shadow: 0 4px 0 #0D47A1 !important;
-      border-color: #0D47A1 !important;
+      box-shadow: 0 4px 14px rgba(112, 182, 246, 0.35) !important;
     }
     .tab-active svg {
       color: #FFFFFF !important;
     }
-    .app-card {
+    .organic-card {
       background: #FFFFFF;
-      border: 2.5px solid #FFE082;
-      border-radius: 1.5rem;
-      box-shadow: 0 6px 0 rgba(255, 179, 0, 0.22);
-      transition: all 0.2s ease;
+      border: 2px solid #F1F5F9;
+      border-radius: 1.75rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .app-card:hover {
-      border-color: #FFB300;
+    .organic-card:hover {
+      border-color: #E2E8F0;
       transform: translateY(-2px);
-      box-shadow: 0 8px 0 rgba(255, 179, 0, 0.28);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
     }
-    .blue-card {
+    .scallop-card {
       background: #FFFFFF;
-      border: 2.5px solid #90CAF9;
+      border: 2px solid #F1F5F9;
+      border-radius: 2rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    }
+    .cloud-hero {
+      background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);
+      border: 2px solid #E0F2FE;
+      border-radius: 2.25rem;
+      box-shadow: 0 12px 36px rgba(112, 182, 246, 0.08);
+    }
+    .stamp-badge {
+      border: 2.5px dashed #FFB703;
       border-radius: 1.5rem;
-      box-shadow: 0 6px 0 rgba(30, 136, 229, 0.2);
-      transition: all 0.2s ease;
+      background: #FFFBEB;
     }
-    .blue-card:hover {
-      border-color: #1E88E5;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 0 rgba(30, 136, 229, 0.25);
+    @keyframes gentle-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
     }
-    .school-seal {
-      border: 3px double #1E88E5;
-      border-radius: 9999px;
-      box-shadow: 0 0 0 4px #E3F2FD;
+    .animate-gentle-bounce {
+      animation: gentle-bounce 3.5s ease-in-out infinite;
     }
-    .kindergarten-table th {
-      background-color: #1E88E5;
-      color: #FFFFFF;
-      font-weight: 700;
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      letter-spacing: 0.05em;
-      padding: 0.85rem 1rem;
-    }
-    .kindergarten-table td {
-      padding: 0.85rem 1rem;
-      border-bottom: 1.5px solid #FFE082;
-      font-size: 0.875rem;
-    }
-    .kindergarten-table tr:nth-child(even) td {
-      background-color: #FFFDF7;
-    }
-    @keyframes float-gentle {
+    @keyframes gentle-float {
       0%, 100% { transform: translateY(0px) rotate(0deg); }
       50% { transform: translateY(-6px) rotate(2deg); }
     }
     .animate-float {
-      animation: float-gentle 4s ease-in-out infinite;
+      animation: gentle-float 5s ease-in-out infinite;
     }
     .animate-float-delayed {
-      animation: float-gentle 5s ease-in-out 2s infinite;
+      animation: gentle-float 6s ease-in-out 2s infinite;
     }
     @media print {
       header, nav, #mobileBottomNav, #recordingWaveformContainer, .no-print, .kindergarten-doodles {
@@ -137,145 +131,123 @@
         overflow: visible !important;
         height: auto !important;
       }
-      .app-card, .blue-card {
-        background: white !important;
-        border: 1px solid #E2E8F0 !important;
-        color: black !important;
+      .organic-card, .cloud-hero {
         box-shadow: none !important;
+        border: 1px solid #CBD5E1 !important;
       }
     }
   </style>
 </head>
-<body class="h-screen flex flex-col antialiased select-none md:select-auto bg-[#FFFDF9] relative">
+<body class="h-screen flex flex-col antialiased select-none md:select-auto bg-[#F8FAFC] relative">
 
-  <!-- Top Kindergarten Colorful Ribbon -->
-  <div class="h-2 w-full bg-gradient-to-r from-kid-blue via-kid-yellow to-kid-coral z-30 shrink-0"></div>
-
-  <!-- Cute Kindergarten Doodles (Smiling Pencil, Glowing Lightbulb, Flying Paper Airplane, Stars) -->
-  <div class="kindergarten-doodles pointer-events-none absolute inset-0 overflow-hidden select-none z-0">
-    <!-- Top-Left: Flying Paper Airplane with dashed loop trail -->
-    <div class="absolute top-4 left-3 sm:left-10 animate-float opacity-80 sm:opacity-95">
-      <svg width="70" height="70" viewBox="0 0 100 100" fill="none" class="w-12 h-12 sm:w-16 sm:h-16">
-        <path d="M10 50 C 30 20, 50 60, 70 30" stroke="#1E88E5" stroke-width="2.5" stroke-dasharray="4 4" fill="none" />
-        <polygon points="65,20 85,30 65,40 70,30" fill="#1E88E5" stroke="#0D47A1" stroke-width="2" />
+  <!-- Micro-Decorations across White Margins (Airplanes, Rainbows, Stars, Dotted curves) -->
+  <div class="kindergarten-doodles pointer-events-none fixed inset-0 overflow-hidden select-none z-0">
+    <!-- Top-Left Floating Paper Airplane -->
+    <div class="absolute top-6 left-8 animate-float opacity-75">
+      <svg width="80" height="60" viewBox="0 0 100 80" fill="none" class="w-16 h-12">
+        <path d="M 5 65 C 25 30 45 70 65 40 C 75 25 85 30 90 25" stroke="#70B6F6" stroke-width="2" stroke-dasharray="4 4" fill="none" />
+        <g transform="translate(65, 10) rotate(-10)">
+          <polygon points="35,18 0,0 10,16" fill="#FFFFFF" stroke="#38BDF8" stroke-width="2" stroke-linejoin="round" />
+          <polygon points="35,18 10,16 8,24" fill="#E0F2FE" stroke="#38BDF8" stroke-width="2" stroke-linejoin="round" />
+          <polygon points="35,18 10,16 0,36" fill="#BAE6FD" stroke="#38BDF8" stroke-width="2" stroke-linejoin="round" />
+        </g>
       </svg>
     </div>
 
-    <!-- Top-Right: Smiling Cartoon Pencil with Eyes & Mouth -->
-    <div class="absolute top-3 right-4 sm:right-12 animate-float-delayed opacity-85 sm:opacity-100">
-      <svg width="65" height="95" viewBox="0 0 70 100" fill="none" class="w-10 h-14 sm:w-14 sm:h-20">
-        <rect x="20" y="20" width="30" height="55" rx="6" fill="#FDD835" stroke="#0D47A1" stroke-width="2.5" />
-        <polygon points="20,75 50,75 35,95" fill="#FFE082" stroke="#0D47A1" stroke-width="2.5" />
-        <polygon points="30,88 40,88 35,95" fill="#212121" />
-        <path d="M20 20 Q 35 8, 50 20 Z" fill="#FF5252" stroke="#0D47A1" stroke-width="2.5" />
-        <circle cx="30" cy="42" r="3" fill="#212121" />
-        <circle cx="40" cy="42" r="3" fill="#212121" />
-        <path d="M30 50 Q 35 56, 40 50" stroke="#212121" stroke-width="2.5" stroke-linecap="round" fill="none" />
-        <line x1="12" y1="25" x2="6" y2="20" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
-        <line x1="14" y1="35" x2="8" y2="38" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
+    <!-- Top-Right Mini Rainbow Doodle -->
+    <div class="absolute top-6 right-10 animate-float-delayed opacity-70">
+      <svg width="70" height="50" viewBox="0 0 80 50" fill="none" class="w-14 h-10">
+        <path d="M 10 45 C 10 20 70 20 70 45" stroke="#F48FB1" stroke-width="3" stroke-linecap="round" fill="none" />
+        <path d="M 18 45 C 18 26 62 26 62 45" stroke="#FFB703" stroke-width="3" stroke-linecap="round" fill="none" />
+        <path d="M 26 45 C 26 32 54 32 54 45" stroke="#70B6F6" stroke-width="3" stroke-linecap="round" fill="none" />
       </svg>
     </div>
 
-    <!-- Top-Mid Right: Glowing Idea Lightbulb -->
-    <div class="absolute top-28 right-3 sm:right-8 animate-float opacity-80 sm:opacity-95">
-      <svg width="55" height="55" viewBox="0 0 60 60" fill="none" class="w-9 h-9 sm:w-12 sm:h-12">
-        <circle cx="30" cy="25" r="16" fill="#FFF59D" stroke="#0D47A1" stroke-width="2.5" />
-        <path d="M25 41 L35 41 L33 48 L27 48 Z" fill="#90CAF9" stroke="#0D47A1" stroke-width="2" />
-        <path d="M26 23 Q 30 18, 34 23 Q 30 28, 30 33" stroke="#F57F17" stroke-width="2" fill="none" />
-        <line x1="30" y1="3" x2="30" y2="7" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
-        <line x1="12" y1="12" x2="16" y2="15" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
-        <line x1="48" y1="12" x2="44" y2="15" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
-      </svg>
+    <!-- Scattered Subtle Pastel Stars -->
+    <div class="absolute top-28 left-1/4 opacity-60">
+      <span class="text-xl text-[#FFB703]">⭐</span>
     </div>
-
-    <!-- Floating Doodle Stars & Hearts -->
-    <div class="absolute top-16 left-1/4 opacity-60">
-      <span class="text-xl sm:text-2xl text-kid-yellow">⭐</span>
+    <div class="absolute top-44 right-1/4 opacity-50">
+      <span class="text-lg text-[#70B6F6]">★</span>
     </div>
-    <div class="absolute top-36 left-8 opacity-70">
-      <span class="text-lg sm:text-xl text-kid-blue">★</span>
+    <div class="absolute top-80 left-12 opacity-50">
+      <span class="text-xl text-[#F48FB1]">✨</span>
     </div>
-    <div class="absolute top-52 right-1/4 opacity-65">
-      <span class="text-xl text-kid-yellow">⭐</span>
+    <div class="absolute bottom-36 right-12 opacity-55">
+      <span class="text-xl text-[#66D29A]">⭐</span>
     </div>
-    <div class="absolute top-72 right-6 opacity-75">
-      <span class="text-xl sm:text-2xl text-kid-coral">💛</span>
+    <div class="absolute bottom-24 left-1/3 opacity-45">
+      <span class="text-lg text-[#FFB703]">★</span>
     </div>
   </div>
 
-  <!-- Header Navigation -->
-  <header class="h-16 sm:h-20 bg-white/95 backdrop-blur-md border-b-2 border-kid-border px-3 sm:px-8 flex items-center justify-between shadow-xs shrink-0 z-30">
+  <!-- Top Navigation Bar -->
+  <header class="h-16 sm:h-20 bg-white/95 backdrop-blur-md border-b-2 border-slate-100 px-4 sm:px-8 flex items-center justify-between shadow-soft shrink-0 z-30">
     
-    <!-- Left: Kindergarten Crest -->
+    <!-- Brand / Kindergarten Logo -->
     <div class="flex items-center space-x-3 sm:space-x-4">
-      <div class="relative">
-        <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-gradient-to-br from-kid-blue to-kid-deepblue flex items-center justify-center text-white text-xl sm:text-2xl font-bold shadow-sm border-2 border-kid-yellow font-kid">
-          🧸
-        </div>
-        <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white animate-pulse"></span>
+      <div class="flex items-center space-x-1.5 font-kid text-xl sm:text-2xl font-black">
+        <span class="w-8 h-8 rounded-xl bg-[#FB8500] text-white flex items-center justify-center shadow-xs">K</span>
+        <span class="w-8 h-8 rounded-xl bg-[#FFB703] text-white flex items-center justify-center shadow-xs">O</span>
+        <span class="w-8 h-8 rounded-xl bg-[#70B6F6] text-white flex items-center justify-center shadow-xs">T</span>
+        <span class="w-8 h-8 rounded-xl bg-[#66D29A] text-white flex items-center justify-center shadow-xs">L</span>
+        <span class="ml-1 text-slate-800 font-extrabold tracking-tight">KIDS</span>
       </div>
-      <div>
-        <div class="flex items-center space-x-2">
-          <span class="font-extrabold text-lg sm:text-xl text-kid-deepblue tracking-tight font-kid">KOTL KIDS</span>
-          <span class="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full bg-kid-lightyellow border border-kid-yellow text-kid-gold font-bold">
-            KINDERGARTEN
-          </span>
-        </div>
-        <p class="text-[11px] sm:text-xs text-slate-500 truncate hidden sm:block font-medium">
-          પાર્થનું બાળપણ પ્રગતિ પત્રક • Playful Growth & Habits Hub
-        </p>
+      <div class="hidden sm:block border-l-2 border-slate-200 pl-3">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block">Pediatric Companion</span>
+        <span class="text-xs text-slate-600 font-bold">Growth & Learning Hub</span>
       </div>
     </div>
 
-    <!-- Center: Segmented Navigation (Desktop) -->
-    <nav class="hidden md:flex items-center bg-kid-paper p-1.5 rounded-2xl border-2 border-kid-border space-x-1.5 text-xs sm:text-sm font-bold">
-      <button id="tabBtnReport" onclick="switchTab('report')" class="px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 tab-active">
+    <!-- Center Navigation Tabs (Desktop) -->
+    <nav class="hidden md:flex items-center bg-[#F1F5F9] p-1.5 rounded-2xl border border-slate-200/80 space-x-1.5 text-xs sm:text-sm font-bold">
+      <button id="tabBtnReport" onclick="switchTab('report')" class="px-4 py-2 rounded-xl transition-all flex items-center space-x-2 tab-active">
         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
-        <span>📜 School Report Card</span>
+        <span>📜 Report Card</span>
       </button>
 
-      <button id="tabBtnMissions" onclick="switchTab('missions')" class="px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 text-slate-700 hover:text-kid-deepblue hover:bg-white">
-        <svg class="w-4 h-4 text-kid-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button id="tabBtnMissions" onclick="switchTab('missions')" class="px-4 py-2 rounded-xl transition-all flex items-center space-x-2 text-slate-600 hover:text-slate-900 hover:bg-white">
+        <svg class="w-4 h-4 text-[#FB8500]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
         </svg>
-        <span>🎯 Daily Habits & Goals</span>
-        <span id="activeMissionsCountBadge" class="ml-1 px-2 py-0.5 rounded-full bg-kid-lightyellow text-kid-deepblue text-xs font-mono font-bold border border-kid-yellow">4</span>
+        <span>🎯 Habits & Goals</span>
+        <span id="activeMissionsCountBadge" class="ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-[#FB8500] text-xs font-mono font-bold">4</span>
       </button>
 
-      <button id="tabBtnChat" onclick="switchTab('chat')" class="px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 text-slate-700 hover:text-kid-deepblue hover:bg-white">
-        <svg class="w-4 h-4 text-kid-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button id="tabBtnChat" onclick="switchTab('chat')" class="px-4 py-2 rounded-xl transition-all flex items-center space-x-2 text-slate-600 hover:text-slate-900 hover:bg-white">
+        <svg class="w-4 h-4 text-[#70B6F6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
         </svg>
-        <span>💬 Dialogue & Audio</span>
+        <span>💬 Dialogue & Voice</span>
       </button>
     </nav>
 
-    <!-- Right Controls: Status & Diagnostics -->
+    <!-- Right Controls: Status & Quick Tools -->
     <div class="flex items-center space-x-2 text-xs">
       <!-- Live Device Status Pill (QA Requirement) -->
-      <div id="deviceStatusPill" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-kid-lightgreen border-2 border-green-300 text-green-900 shadow-2xs shrink-0 select-none transition-colors">
-        <span id="deviceStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-        <span id="deviceStatusText" class="text-[11px] sm:text-xs font-mono font-bold text-green-900 whitespace-nowrap"><span class="hidden sm:inline">ESP32 </span>Live</span>
+      <div id="deviceStatusPill" class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#ECFDF5] border border-[#66D29A]/40 text-[#065F46] shadow-xs shrink-0 select-none transition-colors">
+        <span id="deviceStatusDot" class="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse shrink-0"></span>
+        <span id="deviceStatusText" class="text-[11px] sm:text-xs font-mono font-bold text-[#065F46] whitespace-nowrap"><span class="hidden sm:inline">ESP32 </span>Live</span>
       </div>
 
       <!-- Wi-Fi Setup Button -->
-      <button id="openWifiModalBtn" class="w-9 h-9 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-slate-700 hover:text-kid-blue transition-all shadow-2xs flex items-center justify-center shrink-0" title="ESP32 Wi-Fi & Device Config">
+      <button id="openWifiModalBtn" class="w-9 h-9 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-[#70B6F6] transition-all shadow-xs flex items-center justify-center shrink-0" title="ESP32 Wi-Fi & Device Config">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
         </svg>
       </button>
 
       <!-- Hardware Audio Test Button -->
-      <button id="openHardwareModalBtn" class="w-9 h-9 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-slate-700 hover:text-kid-blue transition-all shadow-2xs flex items-center justify-center shrink-0" title="Hardware Audio Diagnostics">
+      <button id="openHardwareModalBtn" class="w-9 h-9 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-[#70B6F6] transition-all shadow-xs flex items-center justify-center shrink-0" title="Hardware Audio Diagnostics">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.5v2.5m-4 0h8M7 5.5A5 5 0 0112 1a5 5 0 015 4.5m-10 0V10a5 5 0 0010 0V5.5M4 10a8 8 0 0016 0"></path>
         </svg>
       </button>
 
-      <!-- Quota Tracker Button -->
-      <button id="openQuotaModalBtn" class="w-9 h-9 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-slate-700 hover:text-kid-blue transition-all shadow-2xs flex items-center justify-center shrink-0" title="Free API Limits">
+      <!-- Quota Button -->
+      <button id="openQuotaModalBtn" class="w-9 h-9 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-[#70B6F6] transition-all shadow-xs flex items-center justify-center shrink-0" title="Free API Limits">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
@@ -283,371 +255,375 @@
     </div>
   </header>
 
-  <!-- Main Content Container -->
-  <main class="flex-1 overflow-hidden relative bg-[#FFFDF9] z-10 flex flex-col">
+  <!-- Main Content Body -->
+  <main class="flex-1 overflow-hidden relative bg-[#F8FAFC] z-10 flex flex-col">
 
     <!-- ======================================================== -->
     <!-- TAB 1: SCHOOL REPORT CARD (KINDERGARTEN GROWTH)          -->
     <!-- ======================================================== -->
-    <section id="viewReport" class="h-full overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-6xl mx-auto w-full">
+    <section id="viewReport" class="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-6xl mx-auto w-full">
       
-      <!-- Student Cloud Certificate Banner -->
-      <div class="app-card p-5 sm:p-7 bg-white relative overflow-hidden">
-        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+      <!-- 1. Top Child Profile Hero Card (Floating Organic Cloud Style) -->
+      <div class="cloud-hero p-6 sm:p-8 relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           
-          <!-- Student Details -->
-          <div class="flex items-center space-x-4">
-            <div id="reportChildAvatar" class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-kid-blue to-kid-deepblue flex items-center justify-center text-white text-3xl sm:text-4xl shadow-md font-extrabold shrink-0 border-4 border-kid-yellow">
-              🧒
+          <!-- Child Avatar & Bio -->
+          <div class="flex items-center space-x-5">
+            <div class="relative">
+              <div id="reportChildAvatar" class="w-18 h-18 sm:w-22 sm:h-22 rounded-3xl bg-gradient-to-tr from-[#70B6F6] to-[#38BDF8] flex items-center justify-center text-white text-3xl sm:text-4xl shadow-md font-extrabold shrink-0 border-3 border-white">
+                🧒
+              </div>
+              <span class="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-[#FFB703] text-white text-[10px] font-bold shadow-xs">★</span>
             </div>
-            <div>
+            
+            <div class="space-y-1.5">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-kid-lightblue text-kid-deepblue font-bold border border-blue-200">
+                <span class="text-xs px-3 py-1 rounded-full bg-[#E0F2FE] text-[#0369A1] font-bold border border-sky-200">
                   KINDERGARTEN STAR
                 </span>
-                <h1 id="reportChildName" class="text-2xl sm:text-4xl font-extrabold text-kid-deepblue tracking-tight font-kid">Parth</h1>
-                <span id="reportChildAgeBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-kid-lightyellow border border-kid-yellow text-kid-gold font-bold">6 Years Old</span>
-                <span id="reportChildGenderBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-kid-blue font-bold">👦 Boy</span>
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Live Synced
-                </span>
-                <button onclick="openProfileModal()" class="text-xs px-3 py-1 rounded-xl bg-kid-paper hover:bg-slate-200 border border-kid-border text-slate-700 font-bold flex items-center gap-1.5 transition-all shadow-2xs" title="Edit Child Profile, Age, Gender & Safety Guardrails">
+                <h1 id="reportChildName" class="text-2xl sm:text-4xl font-extrabold text-slate-800 tracking-tight font-kid">Parth</h1>
+                <span id="reportChildAgeBadge" class="text-xs px-3 py-1 rounded-full bg-[#FEF3C7] text-[#92400E] font-bold border border-amber-200">6 Years Old</span>
+                <span id="reportChildGenderBadge" class="text-xs px-3 py-1 rounded-full bg-[#F1F5F9] text-slate-700 font-bold border border-slate-200">👦 Boy</span>
+                <button onclick="openProfileModal()" class="text-xs px-3 py-1 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold flex items-center gap-1.5 transition-all shadow-xs" title="Edit Child Profile & Safety Guardrails">
                   <span>⚙️ Profile & Rules</span>
                 </button>
               </div>
-              <p class="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
-                Class: <strong>Sr. KG / Junior Minds</strong> • Companion: <span class="text-kid-blue font-bold">KOTL Robot Buddy</span> • Roll: <strong class="font-mono text-kid-deepblue">KOTL-2026-P04</strong>
+              <p class="text-xs sm:text-sm text-slate-600 font-medium flex items-center gap-2">
+                <span>Class: <strong>Sr. KG / Junior Minds</strong></span>
+                <span>•</span>
+                <span>Companion: <span class="text-[#70B6F6] font-bold">KOTL Buddy</span></span>
+                <span>•</span>
+                <span class="font-mono text-slate-500">Roll: KOTL-2026-P04</span>
               </p>
             </div>
           </div>
 
-          <!-- Academic Seal / Star Grade Distinction Stamp -->
-          <div class="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-amber-100">
-            <div class="school-seal px-5 py-2.5 bg-kid-lightblue flex flex-col items-center justify-center text-center">
-              <span class="text-[10px] uppercase font-mono tracking-widest text-kid-deepblue font-black flex items-center gap-1">
+          <!-- Academic Stamp Badge: Grade A+ (87/100) -->
+          <div class="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-4 lg:pt-0 border-slate-200">
+            <div class="stamp-badge px-6 py-3 flex flex-col items-center justify-center text-center shadow-xs">
+              <span class="text-[10px] uppercase font-mono tracking-widest text-[#B45309] font-black flex items-center gap-1">
                 ⭐ STAR GRADE
               </span>
-              <span class="text-2xl sm:text-3xl font-black text-kid-blue font-kid">GRADE A+</span>
-              <span class="text-[11px] text-kid-deepblue font-bold">DISTINCTION (૯૧%)</span>
+              <span class="text-2xl sm:text-3xl font-black text-[#FB8500] font-kid">GRADE A+</span>
+              <span class="text-xs text-slate-700 font-bold">DISTINCTION (87/100)</span>
             </div>
 
-            <div class="flex flex-col gap-1.5 shrink-0">
-              <div class="flex items-center space-x-1.5 text-xs text-slate-700 font-mono bg-kid-paper px-3 py-1.5 rounded-xl border border-kid-border">
+            <div class="flex flex-col gap-2 shrink-0">
+              <div class="flex items-center space-x-1.5 text-xs text-slate-600 font-mono bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-xs">
                 <span>📅</span>
                 <span id="reportDateBadge">October 24, 2026</span>
               </div>
               <div class="flex gap-2">
-                <button id="regenerateReportBtn" onclick="regenerateReport()" class="px-3.5 py-1.5 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-xs font-bold text-kid-deepblue transition-all flex items-center space-x-1.5 shadow-2xs">
-                  <svg id="refreshIcon" class="w-3.5 h-3.5 text-kid-blue shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button id="regenerateReportBtn" onclick="regenerateReport()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center space-x-1.5 shadow-xs">
+                  <svg id="refreshIcon" class="w-3.5 h-3.5 text-[#70B6F6] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                   </svg>
                   <span>Update</span>
                 </button>
-                <button onclick="window.print()" class="px-3.5 py-1.5 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-xs font-bold text-slate-700 transition-all flex items-center space-x-1.5 shadow-2xs">
+                <button onclick="window.print()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 transition-all flex items-center space-x-1.5 shadow-xs">
                   <span>🖨️ Print</span>
                 </button>
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
-      <!-- Top Deck: 4 Playful Kindergarten Pillar Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <!-- 2. KPI Metric Cards (Floating Pill Tiles with Pastel Inner Fills & Rounded Progress Meters) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         
-        <div class="app-card p-4 sm:p-5 bg-white flex flex-col justify-between space-y-2">
+        <!-- Tile 1: Overall Star (Sky Blue fill) -->
+        <div class="organic-card p-4 sm:p-5 bg-[#F0F8FF] border-2 border-[#BAE6FD] flex flex-col justify-between space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">Overall Star</span>
-            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold font-mono">A+ Top 5%</span>
+            <span class="text-xs uppercase font-mono tracking-wider text-slate-600 font-bold">Overall Star</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-white text-[#0369A1] border border-[#BAE6FD] text-[11px] font-bold font-mono">A+ Top 5%</span>
           </div>
           <div>
             <div class="flex items-baseline space-x-1">
-              <span id="reportOverallScore" class="text-3xl sm:text-4xl font-extrabold text-kid-deepblue font-mono">91</span>
+              <span id="reportOverallScore" class="text-3xl sm:text-4xl font-extrabold text-[#0369A1] font-mono">87</span>
               <span class="text-slate-400 text-sm font-mono font-medium">/100</span>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-2 border border-slate-200">
-              <div id="reportOverallBar" class="bg-gradient-to-r from-kid-blue to-kid-yellow h-2.5 rounded-full transition-all duration-500" style="width: 91%"></div>
+            <div class="w-full bg-white/80 rounded-full h-2.5 overflow-hidden mt-2 border border-[#BAE6FD]/60">
+              <div id="reportOverallBar" class="bg-[#70B6F6] h-2.5 rounded-full transition-all duration-500" style="width: 87%"></div>
             </div>
           </div>
-          <p class="text-xs text-slate-600 font-bold">ઉત્કૃષ્ટ સર્વાંગી વિકાસ 🌟</p>
+          <p class="text-xs text-slate-700 font-bold">Outstanding All-Round Growth 🌟</p>
         </div>
 
-        <div class="blue-card p-4 sm:p-5 bg-white flex flex-col justify-between space-y-2">
+        <!-- Tile 2: English & Words (Warm Orange fill) -->
+        <div class="organic-card p-4 sm:p-5 bg-[#FFF7ED] border-2 border-[#FED7AA] flex flex-col justify-between space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">English & Words</span>
-            <span id="reportVocabStatusBadge" class="px-2 py-0.5 rounded-full bg-blue-50 text-kid-blue border border-blue-200 text-xs font-bold font-mono">Grade A</span>
+            <span class="text-xs uppercase font-mono tracking-wider text-slate-600 font-bold">English & Words</span>
+            <span id="reportVocabStatusBadge" class="px-2.5 py-0.5 rounded-full bg-white text-[#C2410C] border border-[#FED7AA] text-[11px] font-bold font-mono">Grade A</span>
           </div>
           <div>
             <div class="flex items-baseline space-x-1">
-              <span id="reportVocabScore" class="text-3xl sm:text-4xl font-extrabold text-kid-blue font-mono">88%</span>
+              <span id="reportVocabScore" class="text-3xl sm:text-4xl font-extrabold text-[#EA580C] font-mono">84%</span>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-2 border border-slate-200">
-              <div id="reportVocabBar" class="bg-gradient-to-r from-blue-400 to-kid-blue h-2.5 rounded-full transition-all duration-500" style="width: 88%"></div>
+            <div class="w-full bg-white/80 rounded-full h-2.5 overflow-hidden mt-2 border border-[#FED7AA]/60">
+              <div id="reportVocabBar" class="bg-[#FB8500] h-2.5 rounded-full transition-all duration-500" style="width: 84%"></div>
             </div>
           </div>
-          <p class="text-xs text-slate-600 font-bold">વાર્તામાંથી નવા શબ્દો શીખે છે 📚</p>
+          <p class="text-xs text-slate-700 font-bold">Learns New English Words Daily 📚</p>
         </div>
 
-        <div class="app-card p-4 sm:p-5 bg-white flex flex-col justify-between space-y-2">
+        <!-- Tile 3: Space & Science (Mint Green fill) -->
+        <div class="organic-card p-4 sm:p-5 bg-[#F0FDF4] border-2 border-[#BBF7D0] flex flex-col justify-between space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">Space & Science</span>
-            <span id="reportCuriosityStatusBadge" class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300 text-xs font-bold font-mono">Grade A+</span>
+            <span class="text-xs uppercase font-mono tracking-wider text-slate-600 font-bold">Space & Science</span>
+            <span id="reportCuriosityStatusBadge" class="px-2.5 py-0.5 rounded-full bg-white text-[#15803D] border border-[#BBF7D0] text-[11px] font-bold font-mono">Grade A+</span>
           </div>
           <div>
             <div class="flex items-baseline space-x-1">
-              <span id="reportCuriosityScore" class="text-3xl sm:text-4xl font-extrabold text-amber-600 font-mono">94%</span>
+              <span id="reportCuriosityScore" class="text-3xl sm:text-4xl font-extrabold text-[#16A34A] font-mono">92%</span>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-2 border border-slate-200">
-              <div id="reportCuriosityBar" class="bg-gradient-to-r from-amber-400 to-amber-600 h-2.5 rounded-full transition-all duration-500" style="width: 94%"></div>
+            <div class="w-full bg-white/80 rounded-full h-2.5 overflow-hidden mt-2 border border-[#BBF7D0]/60">
+              <div id="reportCuriosityBar" class="bg-[#66D29A] h-2.5 rounded-full transition-all duration-500" style="width: 92%"></div>
             </div>
           </div>
-          <p class="text-xs text-slate-600 font-bold">અવકાશ અને તારાઓમાં ઉત્સુકતા 🚀</p>
+          <p class="text-xs text-slate-700 font-bold">High Curiosity in Space & Stars 🚀</p>
         </div>
 
-        <div class="app-card p-4 sm:p-5 bg-white flex flex-col justify-between space-y-2 border-kid-coral">
+        <!-- Tile 4: Good Habits (Soft Teal fill) -->
+        <div class="organic-card p-4 sm:p-5 bg-[#F0FDFA] border-2 border-[#99F6E4] flex flex-col justify-between space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">Good Habits</span>
-            <span class="px-2 py-0.5 rounded-full bg-kid-lightyellow text-kid-deepblue border border-kid-yellow text-xs font-bold font-mono">5/6 Done</span>
+            <span class="text-xs uppercase font-mono tracking-wider text-slate-600 font-bold">Good Habits</span>
+            <span class="px-2.5 py-0.5 rounded-full bg-white text-[#0F766E] border border-[#99F6E4] text-[11px] font-bold font-mono">3/6 Active</span>
           </div>
           <div>
             <div class="flex items-baseline space-x-1">
-              <span id="reportMissionsKpi" class="text-3xl sm:text-4xl font-extrabold text-kid-coral font-mono flex items-baseline gap-1.5"><span>4</span> <span class="text-xs font-sans font-bold text-slate-600">Active</span></span>
+              <span id="reportMissionsKpi" class="text-3xl sm:text-4xl font-extrabold text-[#0D9488] font-mono flex items-baseline gap-1.5">
+                <span>3</span> <span class="text-xs font-sans font-bold text-slate-500">Completed</span>
+              </span>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-2 border border-slate-200">
-              <div class="bg-gradient-to-r from-red-400 to-kid-coral h-2.5 rounded-full w-full"></div>
+            <div class="w-full bg-white/80 rounded-full h-2.5 overflow-hidden mt-2 border border-[#99F6E4]/60">
+              <div class="bg-[#14B8A6] h-2.5 rounded-full" style="width: 50%"></div>
             </div>
           </div>
-          <p class="text-xs text-slate-600 font-bold">બ્રશ, શાકભાજી, રમકડાં & ઊંઘ ⭐</p>
+          <p class="text-xs text-slate-700 font-bold">Brushing, Veggies & Bedtime ⭐</p>
         </div>
 
       </div>
 
-      <!-- Main Kindergarten Activity Marksheet Table -->
-      <div class="app-card p-5 sm:p-7 bg-white shadow-sm">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b-2 border-kid-border gap-2">
+      <!-- 3. Subject Progress & Kindergarten Marksheet (Playful Stacked Horizontal Banner Cards) -->
+      <div class="organic-card p-6 sm:p-7 bg-white space-y-5">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
           <div>
-            <h2 class="text-lg sm:text-xl font-extrabold text-kid-deepblue font-kid flex items-center gap-2">
+            <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 font-kid flex items-center gap-2">
               <span>🎨</span>
-              <span>પાર્થનું બાળ-મૈત્રીપૂર્ણ પ્રગતિ પત્રક (Kindergarten Marksheet)</span>
+              <span>Parth's Kindergarten Marksheet & Subject Progress</span>
             </h2>
-            <p class="text-xs sm:text-sm text-slate-500">Subject-wise playful stars and teacher observations</p>
+            <p class="text-xs sm:text-sm text-slate-500">Subject-wise playful stars, grades and companion observations</p>
           </div>
-          <span class="text-xs px-3 py-1 rounded-full bg-kid-lightyellow text-kid-deepblue border-2 border-kid-yellow font-bold">
+          <span class="text-xs px-3 py-1 rounded-full bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A] font-bold">
             🏆 6-Year Milestones: PASSED WITH STARS
           </span>
         </div>
 
-        <div class="overflow-x-auto mt-4">
-          <table class="w-full text-left border-collapse kindergarten-table">
-            <thead>
-              <tr>
-                <th class="rounded-l-2xl">Subject / Activity (વિષય)</th>
-                <th>Stars & Score</th>
-                <th>Grade</th>
-                <th>Status</th>
-                <th class="rounded-r-2xl">Companion Remark (અભિપ્રાય)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="font-bold text-kid-deepblue">
-                  <div class="flex items-center space-x-2.5">
-                    <span class="text-xl">🗣️</span>
-                    <div>
-                      <div>Spoken English & Words</div>
-                      <div class="text-[11px] font-normal text-slate-500">અંગ્રેજી બોલચાલ & શબ્દભંડોળ</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="text-amber-400 text-base">★★★★★</div>
-                  <span class="text-xs font-mono font-bold text-kid-blue">88 / 100</span>
-                </td>
-                <td><span class="px-2.5 py-1 rounded-lg bg-blue-100 text-kid-deepblue font-bold text-xs">Grade A</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">ઉત્કૃષ્ટ (Fluent)</span></td>
-                <td class="text-xs text-slate-700">બોલવામાં સ્પષ્ટતા છે, વાર્તામાંથી નવા શબ્દો તરત યાદ રાખી લે છે.</td>
-              </tr>
-
-              <tr>
-                <td class="font-bold text-kid-deepblue">
-                  <div class="flex items-center space-x-2.5">
-                    <span class="text-xl">🚀</span>
-                    <div>
-                      <div>Science, Space & Curiosity</div>
-                      <div class="text-[11px] font-normal text-slate-500">સામાન્ય જ્ઞાન & સ્પેસ</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="text-amber-400 text-base">★★★★★</div>
-                  <span class="text-xs font-mono font-bold text-amber-600">94 / 100</span>
-                </td>
-                <td><span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-xs">Grade A+</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">અસાધારણ (Curious)</span></td>
-                <td class="text-xs text-slate-700">તારાઓ અને રોકેટ કેવી રીતે ઉડે છે તે જાણવાની ઊંડી જિજ્ઞાસા ધરાવે છે.</td>
-              </tr>
-
-              <tr>
-                <td class="font-bold text-kid-deepblue">
-                  <div class="flex items-center space-x-2.5">
-                    <span class="text-xl">🪥</span>
-                    <div>
-                      <div>Good Habits & Manners</div>
-                      <div class="text-[11px] font-normal text-slate-500">સારી ટેવો & સંસ્કાર</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="text-amber-400 text-base">★★★★★</div>
-                  <span class="text-xs font-mono font-bold text-emerald-600">86 / 100</span>
-                </td>
-                <td><span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-bold text-xs">Grade A</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">સરસ શિસ્ત (Polite)</span></td>
-                <td class="text-xs text-slate-700">સવાર-સાંજ બ્રશ કરે છે, રમ્યા પછી રમકડાં યોગ્ય જગ્યાએ મૂકે છે.</td>
-              </tr>
-
-              <tr>
-                <td class="font-bold text-kid-deepblue">
-                  <div class="flex items-center space-x-2.5">
-                    <span class="text-xl">🎨</span>
-                    <div>
-                      <div>Creativity & Stories</div>
-                      <div class="text-[11px] font-normal text-slate-500">ચિત્રકામ & વાર્તા રસ</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="text-amber-400 text-base">★★★★★</div>
-                  <span class="text-xs font-mono font-bold text-purple-600">90 / 100</span>
-                </td>
-                <td><span class="px-2.5 py-1 rounded-lg bg-purple-100 text-purple-900 font-bold text-xs">Grade A</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">સર્જનાત્મક (Creative)</span></td>
-                <td class="text-xs text-slate-700">રંગો અને ચિત્રો ખૂબ ગમે છે, સૂતી વખતે બોધકથાઓ રસપૂર્વક સાંભળે છે.</td>
-              </tr>
-
-              <tr>
-                <td class="font-bold text-kid-deepblue">
-                  <div class="flex items-center space-x-2.5">
-                    <span class="text-xl">🤝</span>
-                    <div>
-                      <div>Politeness & Cheerfulness</div>
-                      <div class="text-[11px] font-normal text-slate-500">હસમુખો પ્રેમાળ સ્વભાવ</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="text-amber-400 text-base">★★★★★</div>
-                  <span class="text-xs font-mono font-bold text-kid-coral">95 / 100</span>
-                </td>
-                <td><span class="px-2.5 py-1 rounded-lg bg-red-100 text-red-900 font-bold text-xs">Grade A+</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">ખૂબ પ્રેમાળ (Kind)</span></td>
-                <td class="text-xs text-slate-700">સૌની સાથે આદરથી વાત કરે છે અને હંમેશા પોઝિટિવ ઉત્સાહથી રહે છે.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Two-Column Layout: Habits Tracker & Conversations -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        <!-- Left Column: Interactive Habits Tracker & Conversations -->
-        <div class="lg:col-span-7 space-y-6">
-
-          <!-- Interactive Daily Good Habits Checklist -->
-          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b-2 border-kid-border">
-              <div class="flex items-center space-x-2.5">
-                <span class="text-2xl">⭐</span>
-                <div>
-                  <h3 class="font-extrabold text-base text-kid-deepblue font-kid">પાલકો માટે દૈનિક આદતોનું ચેકલિસ્ટ (Habits Tracker)</h3>
-                  <p class="text-xs text-slate-500">Tap to mark what Parth achieved today</p>
-                </div>
+        <!-- Stacked Playful Cards -->
+        <div class="space-y-3">
+          
+          <!-- Card 1: Spoken English & Words -->
+          <div class="p-4 rounded-2xl bg-[#F0F8FF] border border-[#BAE6FD] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#70B6F6] transition-all">
+            <div class="flex items-center space-x-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-white border border-[#BAE6FD] flex items-center justify-center text-xl shrink-0 shadow-xs">
+                🗣️
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-kid-lightyellow text-kid-deepblue font-bold border border-kid-yellow">
-                5/6 Completed
-              </span>
+              <div>
+                <h4 class="font-extrabold text-sm text-slate-800 font-kid">Spoken English & Words</h4>
+                <p class="text-xs text-slate-600 mt-0.5">Expresses thoughts clearly and naturally. Assimilates 2-3 syllable vocabulary seamlessly into stories.</p>
+              </div>
             </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">🪥 સવાર-સાંજ દાંત બ્રશ કરવા</div>
-                  <div class="text-[11px] text-slate-500">Morning & Night Brushing</div>
-                </div>
-              </label>
-
-              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">🥛 સ્વચ્છ પાણી અને દૂધ પીવું</div>
-                  <div class="text-[11px] text-slate-500">Clean Water & Fresh Milk</div>
-                </div>
-              </label>
-
-              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
-                <input type="checkbox" class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">🥦 લીલા શાકભાજી & ફળો ખાવા</div>
-                  <div class="text-[11px] text-slate-500">Spinach, Carrots & Fruits</div>
-                </div>
-              </label>
-
-              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">🎒 સ્કૂલ બેગ અને રમકડાં વ્યવસ્થિત મૂકવા</div>
-                  <div class="text-[11px] text-slate-500">Tidying Up Toys & Bag</div>
-                </div>
-              </label>
-
-              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">📖 ૨૦ મિનિટ પુસ્તક વાંચન / વાર્તા</div>
-                  <div class="text-[11px] text-slate-500">20 Mins Story Reading</div>
-                </div>
-              </label>
-
-              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">😴 રાત્રે ૯:૦૦ વાગ્યે ઊંઘવું (મોબાઈલ વગર)</div>
-                  <div class="text-[11px] text-slate-500">9 PM Bedtime (No Screen)</div>
-                </div>
-              </label>
+            <div class="flex items-center space-x-3 self-end sm:self-center shrink-0">
+              <div class="text-amber-400 text-sm">★★★★★</div>
+              <span class="text-xs font-mono font-bold text-[#0369A1] bg-white px-2.5 py-1 rounded-xl border border-[#BAE6FD]">84 / 100</span>
+              <span class="px-2.5 py-1 rounded-xl bg-[#0369A1] text-white font-bold text-xs">Grade A • Fluent</span>
             </div>
           </div>
 
-          <!-- Real Conversation Highlights with Parth -->
-          <div class="blue-card p-5 sm:p-6 bg-white space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b-2 border-blue-200">
+          <!-- Card 2: Science, Space & Curiosity -->
+          <div class="p-4 rounded-2xl bg-[#F0FDF4] border border-[#BBF7D0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#66D29A] transition-all">
+            <div class="flex items-center space-x-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-white border border-[#BBF7D0] flex items-center justify-center text-xl shrink-0 shadow-xs">
+                🚀
+              </div>
+              <div>
+                <h4 class="font-extrabold text-sm text-slate-800 font-kid">Science, Space & Curiosity</h4>
+                <p class="text-xs text-slate-600 mt-0.5">Deeply curious about stars, planets, and rocket propulsion. Asks bright exploratory questions.</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3 self-end sm:self-center shrink-0">
+              <div class="text-amber-400 text-sm">★★★★★</div>
+              <span class="text-xs font-mono font-bold text-[#15803D] bg-white px-2.5 py-1 rounded-xl border border-[#BBF7D0]">92 / 100</span>
+              <span class="px-2.5 py-1 rounded-xl bg-[#15803D] text-white font-bold text-xs">Grade A+ • Curious</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Good Habits & Manners -->
+          <div class="p-4 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#F59E0B] transition-all">
+            <div class="flex items-center space-x-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-white border border-[#FDE68A] flex items-center justify-center text-xl shrink-0 shadow-xs">
+                🪥
+              </div>
+              <div>
+                <h4 class="font-extrabold text-sm text-slate-800 font-kid">Good Habits & Manners</h4>
+                <p class="text-xs text-slate-600 mt-0.5">Brushes teeth twice daily and tidies up school bag and toys cheerfully when encouraged.</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3 self-end sm:self-center shrink-0">
+              <div class="text-amber-400 text-sm">★★★★★</div>
+              <span class="text-xs font-mono font-bold text-[#B45309] bg-white px-2.5 py-1 rounded-xl border border-[#FDE68A]">86 / 100</span>
+              <span class="px-2.5 py-1 rounded-xl bg-[#B45309] text-white font-bold text-xs">Grade A • Polite</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Creativity & Stories -->
+          <div class="p-4 rounded-2xl bg-[#FAF5FF] border border-[#E9D5FF] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#A855F7] transition-all">
+            <div class="flex items-center space-x-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-white border border-[#E9D5FF] flex items-center justify-center text-xl shrink-0 shadow-xs">
+                🎨
+              </div>
+              <div>
+                <h4 class="font-extrabold text-sm text-slate-800 font-kid">Creativity & Stories</h4>
+                <p class="text-xs text-slate-600 mt-0.5">Loves drawing spacecraft and vibrant colors. Listens attentively to bedtime moral tales.</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3 self-end sm:self-center shrink-0">
+              <div class="text-amber-400 text-sm">★★★★★</div>
+              <span class="text-xs font-mono font-bold text-[#7E22CE] bg-white px-2.5 py-1 rounded-xl border border-[#E9D5FF]">90 / 100</span>
+              <span class="px-2.5 py-1 rounded-xl bg-[#7E22CE] text-white font-bold text-xs">Grade A+ • Creative</span>
+            </div>
+          </div>
+
+          <!-- Card 5: Politeness & Cheerfulness -->
+          <div class="p-4 rounded-2xl bg-[#FFF1F2] border border-[#FECDD3] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#FB7185] transition-all">
+            <div class="flex items-center space-x-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-white border border-[#FECDD3] flex items-center justify-center text-xl shrink-0 shadow-xs">
+                🤝
+              </div>
+              <div>
+                <h4 class="font-extrabold text-sm text-slate-800 font-kid">Politeness & Cheerfulness</h4>
+                <p class="text-xs text-slate-600 mt-0.5">Speaks politely with parents and companions. Radiates upbeat, cheerful, and loving energy.</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3 self-end sm:self-center shrink-0">
+              <div class="text-amber-400 text-sm">★★★★★</div>
+              <span class="text-xs font-mono font-bold text-[#BE123C] bg-white px-2.5 py-1 rounded-xl border border-[#FECDD3]">95 / 100</span>
+              <span class="px-2.5 py-1 rounded-xl bg-[#BE123C] text-white font-bold text-xs">Grade A+ • Kind</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 4. Habits Tracker & Companion Assessment (Split Module) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left: Habits Tracker with Bouncy Rounded Pill Toggles -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="organic-card p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
               <div class="flex items-center space-x-2.5">
-                <span class="text-2xl">💬</span>
+                <span class="text-2xl">⭐</span>
                 <div>
-                  <h3 class="font-extrabold text-base text-kid-deepblue font-kid">પાર્થ અને KOTL વચ્ચે થયેલી તાજેતરની વાતો</h3>
-                  <p class="text-xs text-slate-500">Real spoken dialogue from ESP32 live microphone</p>
+                  <h3 class="font-extrabold text-base text-slate-800 font-kid">Daily Habit Checklist & Routine Tracker</h3>
+                  <p class="text-xs text-slate-500">Tap to toggle what Parth completed today</p>
                 </div>
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-kid-lightblue text-kid-blue font-bold border border-blue-200">
-                Live Mic
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] font-bold border border-[#66D29A]">
+                3/6 Active
               </span>
             </div>
 
+            <!-- Bouncy Rounded Pill Toggles -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              
+              <!-- Habit 1 -->
+              <label class="flex items-start space-x-3 p-3.5 rounded-2xl bg-[#F0F8FF] border-2 border-[#BAE6FD] cursor-pointer hover:bg-sky-50 transition-all">
+                <input type="checkbox" checked class="mt-1 w-4 h-4 text-[#70B6F6] rounded-md focus:ring-[#70B6F6]">
+                <div>
+                  <div class="text-xs sm:text-sm font-bold text-slate-800">🪥 Morning & Night Brushing</div>
+                  <div class="text-[11px] text-slate-500">Shiny strong teeth routine</div>
+                </div>
+              </label>
+
+              <!-- Habit 2 -->
+              <label class="flex items-start space-x-3 p-3.5 rounded-2xl bg-[#F0FDF4] border-2 border-[#BBF7D0] cursor-pointer hover:bg-emerald-50 transition-all">
+                <input type="checkbox" checked class="mt-1 w-4 h-4 text-[#66D29A] rounded-md focus:ring-[#66D29A]">
+                <div>
+                  <div class="text-xs sm:text-sm font-bold text-slate-800">🥛 Clean Water & Fresh Milk</div>
+                  <div class="text-[11px] text-slate-500">Healthy hydration all day</div>
+                </div>
+              </label>
+
+              <!-- Habit 3 -->
+              <label class="flex items-start space-x-3 p-3.5 rounded-2xl bg-[#FFF7ED] border-2 border-[#FED7AA] cursor-pointer hover:bg-orange-50 transition-all">
+                <input type="checkbox" class="mt-1 w-4 h-4 text-[#FB8500] rounded-md focus:ring-[#FB8500]">
+                <div>
+                  <div class="text-xs sm:text-sm font-bold text-slate-800">🥗 Eating Veggies & Spinach</div>
+                  <div class="text-[11px] text-slate-500">Superhero stamina fuel</div>
+                </div>
+              </label>
+
+              <!-- Habit 4 -->
+              <label class="flex items-start space-x-3 p-3.5 rounded-2xl bg-[#FDF4FF] border-2 border-[#F0ABFC] cursor-pointer hover:bg-fuchsia-50 transition-all">
+                <input type="checkbox" checked class="mt-1 w-4 h-4 text-[#D946EF] rounded-md focus:ring-[#D946EF]">
+                <div>
+                  <div class="text-xs sm:text-sm font-bold text-slate-800">🧸 Tidy Up Toys & School Bag</div>
+                  <div class="text-[11px] text-slate-500">Neat toy organizer box</div>
+                </div>
+              </label>
+
+              <!-- Habit 5 -->
+              <label class="flex items-start space-x-3 p-3.5 rounded-2xl bg-[#FEF3C7] border-2 border-[#FDE68A] cursor-pointer hover:bg-amber-50 transition-all">
+                <input type="checkbox" class="mt-1 w-4 h-4 text-[#F59E0B] rounded-md focus:ring-[#F59E0B]">
+                <div>
+                  <div class="text-xs sm:text-sm font-bold text-slate-800">📖 20 Mins English Stories</div>
+                  <div class="text-[11px] text-slate-500">Bedtime story with KOTL</div>
+                </div>
+              </label>
+
+              <!-- Habit 6 -->
+              <label class="flex items-start space-x-3 p-3.5 rounded-2xl bg-[#F1F5F9] border-2 border-slate-300 cursor-pointer hover:bg-slate-100 transition-all">
+                <input type="checkbox" class="mt-1 w-4 h-4 text-slate-700 rounded-md focus:ring-slate-700">
+                <div>
+                  <div class="text-xs sm:text-sm font-bold text-slate-800">🌙 Sleep by 9:00 PM</div>
+                  <div class="text-[11px] text-slate-500">No screen before bedtime</div>
+                </div>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- 5. Recent Dialogue (Spoken Audio Feed) -->
+          <div class="organic-card p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center space-x-2.5">
+                <span class="text-2xl">💬</span>
+                <div>
+                  <h3 class="font-extrabold text-base text-slate-800 font-kid">Recent Dialogue (Spoken Audio Feed)</h3>
+                  <p class="text-xs text-slate-500">Real spoken speech turns from ESP32 live microphone</p>
+                </div>
+              </div>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#0369A1] font-bold border border-sky-200">
+                Audio Live
+              </span>
+            </div>
+
+            <!-- Dialogue Stream Container -->
             <div id="conversationEvidenceContainer" class="space-y-4">
-              <!-- Dynamically populated dialogue cards -->
+              <!-- Dynamically populated or default child/robot bubbles -->
             </div>
           </div>
 
           <!-- Parent Action Tips -->
-          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
-            <div class="flex items-center space-x-2.5 pb-3 border-b-2 border-kid-border">
+          <div class="organic-card p-6 bg-white space-y-4">
+            <div class="flex items-center space-x-2.5 pb-3 border-b border-slate-100">
               <span class="text-2xl">💡</span>
               <div>
-                <h3 class="font-extrabold text-base text-kid-deepblue font-kid">માતા-પિતા માટે સરળ સૂચનો (Parent Action Tips)</h3>
-                <p class="text-xs text-slate-500">Everyday fun activities to do with Parth at home</p>
+                <h3 class="font-extrabold text-base text-slate-800 font-kid">Parent Action Tips & Everyday Home Activities</h3>
+                <p class="text-xs text-slate-500">Fun 5-minute activities to do with Parth at home</p>
               </div>
             </div>
 
@@ -658,97 +634,96 @@
 
         </div>
 
-        <!-- Right Column: Teacher Observation & Passions -->
+        <!-- Right: Floating Sticky-Note Companion Observation & Tags -->
         <div class="lg:col-span-5 space-y-6">
 
-          <!-- Teacher / KOTL Companion Remark Box -->
-          <div class="app-card p-5 sm:p-6 bg-kid-lightyellow/60 border-2 border-kid-yellow space-y-3">
+          <!-- Floating Sticky Note / Clipboard Card -->
+          <div class="scallop-card p-6 bg-[#FFFDF5] border-2 border-[#FEF08A] relative space-y-3.5 shadow-soft">
             <div class="flex items-center justify-between pb-2 border-b border-amber-200">
               <div class="flex items-center space-x-2">
-                <span class="text-xl">📝</span>
-                <h3 class="font-extrabold text-sm sm:text-base text-kid-deepblue font-kid">શિક્ષક / KOTL નો અભિપ્રાય (Companion Remark)</h3>
+                <span class="text-xl">📌</span>
+                <h3 class="font-extrabold text-sm sm:text-base text-slate-800 font-kid">Teacher & KOTL Companion Observation</h3>
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-white text-kid-gold font-bold border border-kid-yellow">Verified</span>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-white text-[#B45309] font-bold border border-amber-200">Verified</span>
             </div>
 
-            <p id="reportExecutiveSummary" class="text-xs sm:text-sm text-slate-700 leading-relaxed font-sans">
-              Parth demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful, polite spirit during conversations with KOTL. He shows strong memory retention when talking about Space, Planets, and Creative Art. He grasps English vocabulary quickly, asks thoughtful questions, and is eagerly learning good daily habits like tidying up his toys and brushing his teeth.
+            <p id="reportExecutiveSummary" class="text-xs sm:text-sm text-slate-700 leading-relaxed">
+              Parth demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful, polite spirit during conversations with KOTL. He shows strong memory retention when talking about Space, Stars, and Creative Art. He grasps English vocabulary quickly, asks thoughtful questions, and is eagerly developing good daily habits like tidying up his toys and brushing his teeth.
             </p>
 
-            <div class="pt-2 flex flex-wrap gap-1.5 text-xs">
-              <span class="px-3 py-1 rounded-xl bg-white border border-kid-yellow text-kid-deepblue font-bold">🚀 Space Explorer</span>
-              <span class="px-3 py-1 rounded-xl bg-white border border-kid-yellow text-kid-deepblue font-bold">🎨 Creative Artist</span>
-              <span class="px-3 py-1 rounded-xl bg-white border border-kid-yellow text-kid-deepblue font-bold">🤝 Well Mannered</span>
+            <div class="pt-2 flex flex-wrap gap-2 text-xs">
+              <span class="px-3 py-1 rounded-xl bg-white border border-[#BAE6FD] text-[#0369A1] font-bold shadow-xs">🚀 Space Explorer</span>
+              <span class="px-3 py-1 rounded-xl bg-white border border-[#FED7AA] text-[#C2410C] font-bold shadow-xs">🎨 Creative</span>
+              <span class="px-3 py-1 rounded-xl bg-white border border-[#BBF7D0] text-[#15803D] font-bold shadow-xs">🤝 Well Mannered</span>
             </div>
           </div>
 
-          <!-- What Parth Loves (Relatable Everyday Interests) -->
-          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b-2 border-kid-border">
+          <!-- 6. Child Affinity & Curiosity Tags (Wavy Scallop-Bordered Cards) -->
+          <div class="organic-card p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <h3 class="font-extrabold text-sm sm:text-base text-kid-deepblue flex items-center space-x-2 font-kid">
+                <h3 class="font-extrabold text-sm sm:text-base text-slate-800 flex items-center space-x-2 font-kid">
                   <span>💖</span>
-                  <span>પાર્થની મનપસંદ પ્રવૃત્તિઓ (What Parth Loves)</span>
+                  <span>Parth's Favorite Passions & Topics</span>
                 </h3>
-                <p class="text-xs text-slate-500">Everyday topics Parth enjoys talking about</p>
+                <p class="text-xs text-slate-500">Everyday topics Parth loves exploring</p>
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-300">Affinities</span>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] font-bold border border-[#66D29A]">Affinities</span>
             </div>
 
             <div id="passionsContainer" class="space-y-2.5">
               <!-- Dynamically populated -->
             </div>
 
-            <!-- Quick Add Interest Input -->
-            <div class="pt-3 border-t-2 border-kid-border flex items-center space-x-2">
+            <div class="pt-3 border-t border-slate-100 flex items-center space-x-2">
               <input
                 id="newLikeInput"
                 type="text"
                 placeholder="Add hobby (e.g. Painting, Football)..."
-                class="flex-1 min-w-0 bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-kid-blue transition-colors"
+                class="flex-1 min-w-0 bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#70B6F6] transition-colors"
               />
-              <button onclick="addInterest('likes')" class="px-3.5 py-2 rounded-xl bg-kid-lightblue hover:bg-blue-100 text-kid-deepblue border border-blue-200 text-xs font-bold transition-all shadow-2xs shrink-0">
+              <button onclick="addInterest('likes')" class="px-3.5 py-2 rounded-xl bg-[#E0F2FE] hover:bg-sky-100 text-[#0369A1] border border-sky-200 text-xs font-bold transition-all shadow-xs shrink-0">
                 + Add
               </button>
             </div>
           </div>
 
-          <!-- Sensitivities & Gentle Care -->
-          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b-2 border-kid-border">
+          <!-- 7. Sensitivities & Gentle Care / Parent Tips -->
+          <div class="organic-card p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <h3 class="font-extrabold text-sm sm:text-base text-kid-deepblue flex items-center space-x-2 font-kid">
+                <h3 class="font-extrabold text-sm sm:text-base text-slate-800 flex items-center space-x-2 font-kid">
                   <span>🛡️</span>
-                  <span>ધ્યાન રાખવા જેવી બાબતો (Sensitivities & Care)</span>
+                  <span>Care Areas & Positive Guidance</span>
                 </h3>
                 <p class="text-xs text-slate-500">Handled with gentle positive guidance</p>
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-red-50 text-kid-coral font-bold border border-red-200">Gentle</span>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-[#FFF1F2] text-[#BE123C] font-bold border border-[#FECDD3]">Gentle</span>
             </div>
 
             <div id="sensitivitiesContainer" class="space-y-2.5">
               <!-- Dynamically populated -->
             </div>
 
-            <div class="pt-3 border-t-2 border-kid-border flex items-center space-x-2">
+            <div class="pt-3 border-t border-slate-100 flex items-center space-x-2">
               <input
                 id="newDislikeInput"
                 type="text"
                 placeholder="Add care area (e.g. Dark rooms)..."
-                class="flex-1 min-w-0 bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-kid-blue transition-colors"
+                class="flex-1 min-w-0 bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#70B6F6] transition-colors"
               />
-              <button onclick="addInterest('dislikes')" class="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-kid-coral border border-red-200 text-xs font-bold transition-all shadow-2xs shrink-0">
+              <button onclick="addInterest('dislikes')" class="px-3.5 py-2 rounded-xl bg-[#FFF1F2] hover:bg-rose-100 text-[#BE123C] border border-[#FECDD3] text-xs font-bold transition-all shadow-xs shrink-0">
                 + Add
               </button>
             </div>
           </div>
 
-          <!-- Milestones Card -->
-          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b-2 border-kid-border">
-              <h3 class="font-extrabold text-sm sm:text-base text-kid-deepblue flex items-center space-x-2 font-kid">
+          <!-- Milestones Achieved Card -->
+          <div class="organic-card p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 class="font-extrabold text-sm sm:text-base text-slate-800 flex items-center space-x-2 font-kid">
                 <span>🏆</span>
-                <span>પ્રગતિના લક્ષ્યો (Milestones Achieved)</span>
+                <span>Learning Milestones Achieved</span>
               </h3>
             </div>
 
@@ -769,54 +744,54 @@
     <!-- ======================================================== -->
     <!-- TAB 2: PARENT DIRECTIVES & HABITS                        -->
     <!-- ======================================================== -->
-    <section id="viewMissions" class="hidden h-full overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-5xl mx-auto w-full">
+    <section id="viewMissions" class="hidden h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-5xl mx-auto w-full">
       
-      <div class="app-card p-6 bg-white space-y-4">
+      <div class="organic-card p-6 sm:p-7 bg-white space-y-4">
         <div class="flex items-start justify-between gap-4">
           <div class="space-y-2">
             <div class="flex items-center space-x-2.5">
               <span class="text-3xl">🎯</span>
-              <h2 class="text-lg sm:text-2xl font-extrabold text-kid-deepblue font-kid">
-                માતા-પિતાના લક્ષ્યાંકો (Parent Directives & Habits)
+              <h2 class="text-lg sm:text-2xl font-extrabold text-slate-800 font-kid">
+                Parent Directives & Habit Missions
               </h2>
             </div>
             <p class="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-2xl">
-              તમે KOTL ને જે પણ આદતો શીખવવા કહેશો, KOTL વાતો કરતી વખતે પાર્થને રમત-રમતમાં તે શીખવશે.
+              Configure any habit or manner you want KOTL to gently encourage during daily conversations with Parth.
             </p>
           </div>
         </div>
 
         <!-- Preset Goal Chips -->
-        <div class="pt-4 border-t-2 border-kid-border flex flex-wrap gap-2 text-xs">
+        <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-2 text-xs">
           <span class="text-slate-500 font-bold self-center mr-1">Quick Presets:</span>
-          <button onclick="applyPreset('Brush Teeth Twice Daily', 'Cheerfully remind Parth about shiny white teeth every morning and before sleep.')" class="px-3 py-1.5 rounded-xl bg-kid-paper hover:bg-amber-100 border-2 border-kid-border text-kid-deepblue font-bold transition-all">
+          <button onclick="applyPreset('Brush Teeth Twice Daily', 'Cheerfully remind Parth about shiny white teeth every morning and before sleep.')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-sky-50 border border-slate-200 text-slate-700 font-bold transition-all">
             🪥 Brush Teeth
           </button>
-          <button onclick="applyPreset('Eat Healthy Green Veggies', 'Highlight how carrots and spinach give champions superhero stamina.')" class="px-3 py-1.5 rounded-xl bg-kid-paper hover:bg-amber-100 border-2 border-kid-border text-kid-deepblue font-bold transition-all">
+          <button onclick="applyPreset('Eat Healthy Green Veggies', 'Highlight how carrots and spinach give champions superhero stamina.')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-emerald-50 border border-slate-200 text-slate-700 font-bold transition-all">
             🥦 Green Veggies
           </button>
-          <button onclick="applyPreset('Tidy Up Toys After Play', 'Encourage placing toys and drawing colors back in the organizer box.')" class="px-3 py-1.5 rounded-xl bg-kid-paper hover:bg-amber-100 border-2 border-kid-border text-kid-deepblue font-bold transition-all">
-            🎒 Tidy Up Toys
+          <button onclick="applyPreset('Tidy Up Toys After Play', 'Encourage placing toys and drawing colors back in the organizer box.')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-amber-50 border border-slate-200 text-slate-700 font-bold transition-all">
+            🧸 Tidy Up Toys
           </button>
-          <button onclick="applyPreset('20 Mins English Story Time', 'Narrate engaging story questions about space and animals in clean simple English.')" class="px-3 py-1.5 rounded-xl bg-kid-paper hover:bg-amber-100 border-2 border-kid-border text-kid-deepblue font-bold transition-all">
+          <button onclick="applyPreset('20 Mins English Story Time', 'Narrate engaging story questions about space and animals in clean simple English.')" class="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-purple-50 border border-slate-200 text-slate-700 font-bold transition-all">
             📖 English Story
           </button>
         </div>
 
         <!-- Add Directive Form -->
-        <form id="newMissionForm" onsubmit="handleCreateMission(event)" class="pt-4 border-t-2 border-kid-border space-y-3">
+        <form id="newMissionForm" onsubmit="handleCreateMission(event)" class="pt-4 border-t border-slate-100 space-y-3">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="sm:col-span-1">
-              <label class="block text-xs font-bold text-kid-deepblue mb-1">Goal Title (લક્ષ્ય)</label>
-              <input id="missionTitleInput" type="text" placeholder="e.g. Brush Teeth Twice Daily" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" required>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Goal Title</label>
+              <input id="missionTitleInput" type="text" placeholder="e.g. Brush Teeth Twice Daily" class="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#70B6F6]" required>
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs font-bold text-kid-deepblue mb-1">KOTL Companion Directive (KOTL ને સૂચના)</label>
-              <input id="missionDirectiveInput" type="text" placeholder="e.g. Lovingly encourage Parth to brush his teeth before bed" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" required>
+              <label class="block text-xs font-bold text-slate-700 mb-1">KOTL Companion Directive</label>
+              <input id="missionDirectiveInput" type="text" placeholder="e.g. Lovingly encourage Parth to brush his teeth before bed" class="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-[#70B6F6]" required>
             </div>
           </div>
           <div class="flex justify-end">
-            <button type="submit" class="px-5 py-2.5 rounded-2xl bg-kid-blue hover:bg-kid-deepblue text-white text-xs font-bold transition-all shadow-md flex items-center space-x-1.5">
+            <button type="submit" class="px-5 py-2.5 rounded-2xl bg-[#70B6F6] hover:bg-[#38BDF8] text-white text-xs font-bold transition-all shadow-md flex items-center space-x-1.5">
               <span>+ Add Directive</span>
             </button>
           </div>
@@ -838,23 +813,23 @@
     <!-- ======================================================== -->
     <!-- TAB 3: DIALOGUE HISTORY & REAL-TIME AUDIO (CHAT)          -->
     <!-- ======================================================== -->
-    <section id="viewChat" class="hidden h-full flex flex-col justify-between overflow-hidden relative bg-kid-paper pb-16 md:pb-0">
+    <section id="viewChat" class="hidden h-full flex flex-col justify-between overflow-hidden relative bg-[#F8FAFC] pb-16 md:pb-0">
       
       <!-- Sub-header Bar -->
-      <div class="h-11 border-b-2 border-kid-border px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-slate-600 bg-white shrink-0">
+      <div class="h-12 border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-slate-600 bg-white shrink-0">
         <div class="flex items-center space-x-2">
-          <span class="font-bold text-kid-deepblue">Conversation Archive</span>
-          <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold">
+          <span class="font-bold text-slate-800">Conversation Archive</span>
+          <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#065F46] border border-[#66D29A] font-bold">
             Live Synced (Parth & KOTL)
           </span>
         </div>
-        <button onclick="clearSessionChat()" class="text-xs text-slate-500 hover:text-kid-coral transition-colors font-sans font-bold">
+        <button onclick="clearSessionChat()" class="text-xs text-slate-500 hover:text-rose-600 transition-colors font-sans font-bold">
           🗑️ Clear History
         </button>
       </div>
 
       <!-- Chat Messages Scroll Area -->
-      <div id="chatScrollArea" class="flex-1 overflow-y-auto px-3 sm:px-6 py-4 space-y-4 custom-scrollbar flex flex-col items-center w-full">
+      <div id="chatScrollArea" class="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-4 custom-scrollbar flex flex-col items-center w-full">
         <div id="chatContainer" class="w-full max-w-3xl space-y-4">
           <!-- Dynamically populated turns -->
         </div>
@@ -862,10 +837,10 @@
 
       <!-- Active Voice Recording Waveform Bar -->
       <div id="recordingWaveformContainer" class="hidden w-full max-w-3xl mx-auto px-4 mb-2">
-        <div class="bg-white border-2 border-kid-blue rounded-3xl p-3 flex items-center justify-between shadow-lg">
+        <div class="bg-white border-2 border-[#70B6F6] rounded-3xl p-3 flex items-center justify-between shadow-lg">
           <div class="flex items-center space-x-3">
-            <span class="w-3 h-3 rounded-full bg-kid-coral animate-pulse"></span>
-            <span class="text-xs font-mono text-slate-800 font-bold">Listening to voice (English / Gujarati / Hindi)...</span>
+            <span class="w-3 h-3 rounded-full bg-[#FB8500] animate-pulse"></span>
+            <span class="text-xs font-mono text-slate-800 font-bold">Listening to voice (English Audio Mic)...</span>
           </div>
           <div class="h-6 w-32 bg-slate-100 rounded-lg overflow-hidden flex items-center border border-slate-200">
             <canvas id="visualizerCanvas" class="w-full h-full"></canvas>
@@ -877,8 +852,8 @@
       </div>
 
       <!-- Bottom Chat Input Bar -->
-      <div class="w-full p-4 shrink-0 flex flex-col items-center justify-center bg-white border-t-2 border-kid-border">
-        <div class="w-full max-w-3xl relative flex items-center bg-kid-paper border-2 border-kid-border rounded-2xl shadow-2xs focus-within:border-kid-blue focus-within:bg-white transition-all px-3 py-2">
+      <div class="w-full p-4 shrink-0 flex flex-col items-center justify-center bg-white border-t border-slate-200">
+        <div class="w-full max-w-3xl relative flex items-center bg-[#F8FAFC] border-2 border-slate-200 rounded-2xl shadow-xs focus-within:border-[#70B6F6] focus-within:bg-white transition-all px-3 py-2">
           
           <input
             id="chatInput"
@@ -894,12 +869,12 @@
               id="recordBtn"
               type="button"
               title="Push to Talk"
-              class="w-9 h-9 rounded-full bg-white hover:bg-kid-paper text-kid-deepblue flex items-center justify-center transition-all focus:outline-none border-2 border-kid-border shadow-2xs"
+              class="w-9 h-9 rounded-full bg-white hover:bg-slate-50 text-slate-800 flex items-center justify-center transition-all focus:outline-none border border-slate-200 shadow-xs"
             >
-              <svg id="micIcon" class="w-4 h-4 text-kid-deepblue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg id="micIcon" class="w-4 h-4 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3z"></path>
               </svg>
-              <div id="recordingSpinner" class="hidden w-4 h-4 border-2 border-kid-coral border-t-transparent rounded-full animate-spin"></div>
+              <div id="recordingSpinner" class="hidden w-4 h-4 border-2 border-[#FB8500] border-t-transparent rounded-full animate-spin"></div>
             </button>
 
             <!-- Send Button -->
@@ -907,7 +882,7 @@
               id="sendBtn"
               type="button"
               title="Send Message"
-              class="w-9 h-9 rounded-full bg-kid-blue hover:bg-kid-deepblue text-white flex items-center justify-center transition-all focus:outline-none font-bold disabled:opacity-30 shadow-md"
+              class="w-9 h-9 rounded-full bg-[#70B6F6] hover:bg-[#38BDF8] text-white flex items-center justify-center transition-all focus:outline-none font-bold disabled:opacity-30 shadow-md"
               disabled
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -917,8 +892,8 @@
           </div>
         </div>
 
-        <p class="text-[11px] text-slate-500 mt-2 text-center font-mono">
-          KOTL Kindergarten • Parth's AI Buddy • Next.js App Router • Groq Neural LLM
+        <p class="text-[11px] text-slate-400 mt-2 text-center font-mono">
+          KOTL Kindergarten • Parth's AI Companion • Next.js App Router • Groq Neural LLM
         </p>
       </div>
 
@@ -927,9 +902,9 @@
   </main>
 
   <!-- Fixed Mobile Bottom Navigation Bar (QA verified) -->
-  <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t-2 border-kid-border px-4 py-2 flex items-center justify-around shadow-lg pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-    <button onclick="switchTab('report')" id="mobTabReport" class="flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-kid-deepblue font-bold bg-kid-lightblue transition-all">
-      <svg class="w-5 h-5 text-kid-deepblue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2 flex items-center justify-around shadow-lg pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <button onclick="switchTab('report')" id="mobTabReport" class="flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-[#0369A1] font-bold bg-[#E0F2FE] transition-all">
+      <svg class="w-5 h-5 text-[#0369A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
       </svg>
       <span class="text-xs">Report</span>
@@ -939,7 +914,7 @@
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
         </svg>
-        <span id="mobMissionsBadge" class="absolute -top-1 -right-2.5 px-1.5 py-0.2 rounded-full bg-kid-yellow text-kid-deepblue text-[9px] font-mono font-bold">4</span>
+        <span id="mobMissionsBadge" class="absolute -top-1 -right-2.5 px-1.5 py-0.2 rounded-full bg-[#FFB703] text-white text-[9px] font-mono font-bold">4</span>
       </div>
       <span class="text-xs">Habits</span>
     </button>
@@ -954,13 +929,13 @@
   <!-- ======================================================== -->
   <!-- MODAL 1: CHILD PROFILE & SAFETY GUARDRAILS (QA Verified)  -->
   <!-- ======================================================== -->
-  <div id="childProfileModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="app-card w-full max-w-xl max-h-[90vh] overflow-y-auto p-5 sm:p-7 space-y-5 bg-white border-2 border-kid-border shadow-xl">
-      <div class="flex items-center justify-between border-b-2 border-kid-border pb-3">
+  <div id="childProfileModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+    <div class="organic-card w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 sm:p-7 space-y-5 bg-white border border-slate-200 shadow-xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center space-x-2.5">
           <span class="text-2xl">⚙️</span>
           <div>
-            <h3 class="font-extrabold text-base sm:text-lg text-kid-deepblue font-kid">Child Profile & Safety Guardrails</h3>
+            <h3 class="font-extrabold text-base sm:text-lg text-slate-800 font-kid">Child Profile & Safety Guardrails</h3>
             <p class="text-xs text-slate-500">Configure child age, name, bedtime routine & safety permissions</p>
           </div>
         </div>
@@ -970,132 +945,128 @@
       <form id="childProfileForm" onsubmit="saveChildProfileForm(event)" class="space-y-4 text-xs sm:text-sm">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block font-bold text-kid-deepblue mb-1">Child's Name (નામ)</label>
-            <input id="profNameInput" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" required>
+            <label class="block font-bold text-slate-700 mb-1">Child's Name</label>
+            <input id="profNameInput" type="text" class="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-[#70B6F6]" required>
           </div>
           <div>
-            <label class="block font-bold text-kid-deepblue mb-1">Age (ઉંમર)</label>
-            <input id="profAgeInput" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" required>
+            <label class="block font-bold text-slate-700 mb-1">Age</label>
+            <input id="profAgeInput" type="text" class="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-[#70B6F6]" required>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block font-bold text-kid-deepblue mb-1">Gender (જાતિ)</label>
-            <select id="profGenderInput" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue">
-              <option value="Boy">👦 Boy (દીકરો / બેટા)</option>
-              <option value="Girl">👧 Girl (દીકરી / બેટી)</option>
+            <label class="block font-bold text-slate-700 mb-1">Gender</label>
+            <select id="profGenderInput" class="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-[#70B6F6]">
+              <option value="Boy">👦 Boy</option>
+              <option value="Girl">👧 Girl</option>
             </select>
           </div>
           <div>
-            <label class="block font-bold text-kid-deepblue mb-1">Bedtime Routine (ઊંઘવાનો સમય)</label>
-            <input id="profBedtimeInput" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs font-mono font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" placeholder="21:00">
+            <label class="block font-bold text-slate-700 mb-1">Bedtime Routine (IST)</label>
+            <input id="profBedtimeInput" type="text" class="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-[#70B6F6]" placeholder="21:00">
           </div>
         </div>
 
-        <div class="pt-2 border-t-2 border-kid-border space-y-2">
-          <label class="block font-bold text-kid-deepblue">Mandatory Parental Guardrails (માતા-પિતાની પરવાનગી)</label>
-          <div class="space-y-2 text-xs text-slate-700">
+        <div class="pt-2 border-t border-slate-100 space-y-2">
+          <label class="block font-bold text-slate-700">Mandatory Parental Safety Guardrails</label>
+          <div class="space-y-2 text-xs text-slate-600">
             <label class="flex items-center space-x-2.5">
-              <input id="permMedicines" type="checkbox" checked class="w-4 h-4 text-kid-blue rounded">
+              <input id="permMedicines" type="checkbox" checked class="w-4 h-4 text-[#70B6F6] rounded">
               <span>Always ask parents before touching medicines or pills</span>
             </label>
             <label class="flex items-center space-x-2.5">
-              <input id="permSharpTools" type="checkbox" checked class="w-4 h-4 text-kid-blue rounded">
+              <input id="permSharpTools" type="checkbox" checked class="w-4 h-4 text-[#70B6F6] rounded">
               <span>Strict warning against sharp tools, fire & electrical wall sockets</span>
             </label>
             <label class="flex items-center space-x-2.5">
-              <input id="permOutsidePlay" type="checkbox" checked class="w-4 h-4 text-kid-blue rounded">
+              <input id="permOutsidePlay" type="checkbox" checked class="w-4 h-4 text-[#70B6F6] rounded">
               <span>Always hold parent's hand when leaving house or near strangers</span>
             </label>
             <label class="flex items-center space-x-2.5">
-              <input id="permPurchases" type="checkbox" checked class="w-4 h-4 text-kid-blue rounded">
-              <span>Block any in-app purchases or money discussions</span>
+              <input id="permPurchases" type="checkbox" checked class="w-4 h-4 text-[#70B6F6] rounded">
+              <span>Never confirm purchases or financial subscriptions without mommy/daddy</span>
             </label>
           </div>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-3 border-t-2 border-kid-border">
-          <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all">Cancel</button>
-          <button id="saveProfileBtn" type="submit" class="px-5 py-2 rounded-xl bg-kid-blue hover:bg-kid-deepblue text-white text-xs font-bold transition-all shadow-md">Save Profile & Rules</button>
+        <div class="flex justify-end space-x-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-all text-xs">
+            Cancel
+          </button>
+          <button id="saveProfileBtn" type="submit" class="px-5 py-2 rounded-xl bg-[#70B6F6] hover:bg-[#38BDF8] text-white font-bold transition-all shadow-md text-xs">
+            Save Profile
+          </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL 2: WI-FI SETUP -->
-  <div id="wifiModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="app-card w-full max-w-md p-5 sm:p-6 space-y-4 bg-white shadow-xl">
-      <div class="flex items-center justify-between border-b-2 border-kid-border pb-3">
-        <h3 class="font-bold text-base text-kid-deepblue font-kid">ESP32 Wi-Fi & Device Config</h3>
-        <button id="closeWifiModalBtn" class="text-slate-400 hover:text-slate-700">✕</button>
+  <!-- MODAL 2: Wi-Fi Setup Modal -->
+  <div id="wifiModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+    <div class="organic-card w-full max-w-md p-6 space-y-4 bg-white border border-slate-200 shadow-xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-base text-slate-800 font-kid">ESP32 Wi-Fi & Device Config</h3>
+        <button id="closeWifiModalBtn" class="text-slate-400 hover:text-slate-700 text-lg">✕</button>
       </div>
-      <form id="wifiConfigForm" onsubmit="saveWifiConfig(event)" class="space-y-3 text-xs sm:text-sm">
+      <form id="deviceConfigForm" onsubmit="saveDeviceConfig(event)" class="space-y-3 text-xs">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Wi-Fi SSID</label>
-          <input id="cfgWifiSsid" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs" required>
+          <input id="cfgWifiSsid" type="text" class="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-slate-900" placeholder="Home Wi-Fi Network">
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Wi-Fi Password</label>
-          <input id="cfgWifiPassword" type="password" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs">
+          <input id="cfgWifiPass" type="password" class="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-slate-900" placeholder="••••••••">
         </div>
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Backend Base URL</label>
-          <input id="cfgBackendUrl" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs" required>
+          <label class="block font-bold text-slate-700 mb-1">Backend Server Target</label>
+          <input id="cfgTargetUrl" type="text" class="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono" value="https://kotl.onrender.com">
         </div>
-        <div class="flex justify-end space-x-2 pt-2">
-          <button type="submit" class="px-4 py-2 rounded-xl bg-kid-blue text-white text-xs font-bold">Save Config</button>
+        <div class="flex justify-end pt-2">
+          <button type="submit" class="px-4 py-2 rounded-xl bg-[#70B6F6] text-white font-bold shadow-md">Save Config</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- MODAL 3: HARDWARE DIAGNOSTICS -->
-  <div id="hardwareModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="app-card w-full max-w-lg p-5 sm:p-6 space-y-4 bg-white shadow-xl">
-      <div class="flex items-center justify-between border-b-2 border-kid-border pb-3">
-        <h3 class="font-bold text-base text-kid-deepblue font-kid">Hardware Audio Diagnostics</h3>
-        <button id="closeHardwareModalBtn" class="text-slate-400 hover:text-slate-700">✕</button>
+  <!-- MODAL 3: Hardware Diagnostics Modal -->
+  <div id="hardwareModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+    <div class="organic-card w-full max-w-md p-6 space-y-4 bg-white border border-slate-200 shadow-xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-base text-slate-800 font-kid">Hardware Audio Diagnostics</h3>
+        <button id="closeHardwareModalBtn" class="text-slate-400 hover:text-slate-700 text-lg">✕</button>
       </div>
       <div class="space-y-3 text-xs">
-        <p class="text-slate-600">INMP441 Microphone (16kHz I2S DMA) & MAX98357A I2S DAC Output are configured and calibrated.</p>
-        <button onclick="testSpeakerAscendingChime()" class="px-4 py-2 rounded-xl bg-kid-lightblue border border-blue-200 text-kid-deepblue font-bold">
-          🔊 Test Electronic Chime
+        <p class="text-slate-600">Test the MAX98357A I2S DAC speaker output with an ascending electronic chime.</p>
+        <button onclick="testSpeakerAscendingChime()" class="w-full py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-800 font-bold transition-all flex items-center justify-center space-x-2">
+          <span>🔔 Test Ascending Chime (880Hz → 1175Hz)</span>
         </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL 4: QUOTA TRACKER -->
-  <div id="quotaModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="app-card w-full max-w-md p-5 sm:p-6 space-y-4 bg-white shadow-xl">
-      <div class="flex items-center justify-between border-b-2 border-kid-border pb-3">
-        <h3 class="font-bold text-base text-kid-deepblue font-kid">Free API Limits & Engine</h3>
-        <button onclick="document.getElementById('quotaModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">✕</button>
-      </div>
-      <div class="space-y-2 text-xs text-slate-700">
-        <div class="flex justify-between py-1 border-b border-slate-100">
-          <span class="font-bold">Groq Neural LLM:</span>
-          <span class="text-emerald-700 font-mono font-bold">100% Free Tier (14,400 RPD)</span>
-        </div>
-        <div class="flex justify-between py-1 border-b border-slate-100">
-          <span class="font-bold">Microsoft Edge v2 TTS:</span>
-          <span class="text-emerald-700 font-mono font-bold">Unlimited Free (0 API Cost)</span>
-        </div>
-        <div class="flex justify-between py-1 border-b border-slate-100">
-          <span class="font-bold">Groq Whisper STT:</span>
-          <span class="text-emerald-700 font-mono font-bold">7,200 sec/day Free</span>
+        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-600 space-y-1">
+          <div>OLED I2C: GPIO 21 (SDA), GPIO 22 (SCL) [400kHz]</div>
+          <div>INMP441 MIC: GPIO 32 (SCK), 33 (WS), 35 (SD)</div>
+          <div>MAX98357A DAC: GPIO 25 (LRC), 26 (BCLK), 27 (DIN)</div>
+          <div>Capacitive Touch: GPIO 4 (Head Sensor)</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Hidden Audio Player for Web Voice Playback -->
-  <audio id="ttsAudioPlayer" class="hidden"></audio>
+  <!-- MODAL 4: Free API Limits Modal -->
+  <div id="quotaModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+    <div class="organic-card w-full max-w-md p-6 space-y-4 bg-white border border-slate-200 shadow-xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-base text-slate-800 font-kid">Free API Limits & Engine</h3>
+        <button onclick="document.getElementById('quotaModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700 text-lg">✕</button>
+      </div>
+      <div class="space-y-2 text-xs text-slate-600">
+        <div class="flex justify-between p-2 rounded-lg bg-slate-50"><span>Groq Whisper STT</span><span class="font-mono font-bold text-emerald-600">100% Free Tier</span></div>
+        <div class="flex justify-between p-2 rounded-lg bg-slate-50"><span>Groq Llama 3.3 70B</span><span class="font-mono font-bold text-emerald-600">High Speed / Free</span></div>
+        <div class="flex justify-between p-2 rounded-lg bg-slate-50"><span>Edge Neural TTS</span><span class="font-mono font-bold text-emerald-600">Unlimited / Free</span></div>
+      </div>
+    </div>
+  </div>
 
-  <!-- ======================================================== -->
-  <!-- APPLICATION SCRIPT LOGIC                                 -->
-  <!-- ======================================================== -->
+  <!-- Dynamic Scripts & API Connectivity -->
   <script>
     // Tab Navigation
     let currentTab = 'report';
@@ -1121,15 +1092,15 @@
         if (key === tab) {
           views[key].classList.remove('hidden');
           if (buttons[key]) {
-            buttons[key].className = 'px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 tab-active';
+            buttons[key].className = 'px-4 py-2 rounded-xl transition-all flex items-center space-x-2 tab-active';
           }
           if (mobButtons[key]) {
-            mobButtons[key].className = 'flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-kid-deepblue font-bold bg-kid-lightblue transition-all';
+            mobButtons[key].className = 'flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-[#0369A1] font-bold bg-[#E0F2FE] transition-all';
           }
         } else {
           views[key].classList.add('hidden');
           if (buttons[key]) {
-            buttons[key].className = 'px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 text-slate-700 hover:text-kid-deepblue hover:bg-white';
+            buttons[key].className = 'px-4 py-2 rounded-xl transition-all flex items-center space-x-2 text-slate-600 hover:text-slate-900 hover:bg-white';
           }
           if (mobButtons[key]) {
             mobButtons[key].className = 'flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-slate-500 font-medium transition-all';
@@ -1280,7 +1251,7 @@
       const execSummary = document.getElementById('reportExecutiveSummary');
       if (execSummary) execSummary.textContent = rep.executive_summary || '';
 
-      const overallScore = rep.overall_development_score || 91;
+      const overallScore = rep.overall_development_score || 87;
       const overallScoreElem = document.getElementById('reportOverallScore');
       if (overallScoreElem) overallScoreElem.textContent = overallScore;
 
@@ -1288,76 +1259,82 @@
       if (overallBar) overallBar.style.width = overallScore + '%';
 
       const skills = rep.skills_assessment || {};
-      const vocab = skills.vocabulary || { score: 88, status: 'Grade A' };
-      const curiosity = skills.curiosity || { score: 94, status: 'Grade A+' };
+      const vocab = skills.vocabulary || { score: 84, status: 'Grade A' };
+      const curiosity = skills.curiosity || { score: 92, status: 'Grade A+' };
 
       const vocabScoreElem = document.getElementById('reportVocabScore');
-      if (vocabScoreElem) vocabScoreElem.textContent = (vocab.score || 88) + '%';
+      if (vocabScoreElem) vocabScoreElem.textContent = (vocab.score || 84) + '%';
 
       const vocabStatusBadge = document.getElementById('reportVocabStatusBadge');
       if (vocabStatusBadge) {
-        vocabStatusBadge.textContent = (vocab.status || 'Grade A').replace(/\s+for\s+age/i, '');
+        vocabStatusBadge.textContent = (vocab.status || 'Grade A').replace(/s+fors+age/i, '');
       }
 
       const vocabBar = document.getElementById('reportVocabBar');
-      if (vocabBar) vocabBar.style.width = (vocab.score || 88) + '%';
+      if (vocabBar) vocabBar.style.width = (vocab.score || 84) + '%';
 
       const curiosityScoreElem = document.getElementById('reportCuriosityScore');
-      if (curiosityScoreElem) curiosityScoreElem.textContent = (curiosity.score || 94) + '%';
+      if (curiosityScoreElem) curiosityScoreElem.textContent = (curiosity.score || 92) + '%';
 
       const curiosityStatusBadge = document.getElementById('reportCuriosityStatusBadge');
       if (curiosityStatusBadge) curiosityStatusBadge.textContent = curiosity.status || 'Grade A+';
 
       const curiosityBar = document.getElementById('reportCuriosityBar');
-      if (curiosityBar) curiosityBar.style.width = (curiosity.score || 94) + '%';
+      if (curiosityBar) curiosityBar.style.width = (curiosity.score || 92) + '%';
 
-      // Conversation Evidence / Dialogue Highlights
+      // Dialogue Evidence Stream (Card-based Speech Bubbles)
       const evidenceCont = document.getElementById('conversationEvidenceContainer');
       if (evidenceCont) {
         evidenceCont.innerHTML = '';
         const evidenceList = rep.dialogue_evidence || rep.conversation_evidence || [];
         if (evidenceList.length === 0) {
           evidenceCont.innerHTML = `
-            <div class="p-6 bg-kid-paper border-2 border-kid-border rounded-2xl text-center text-sm text-slate-500">
+            <div class="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center text-sm text-slate-500">
               Speak through the ESP32 microphone to generate grounded observations.
             </div>
           `;
         } else {
           evidenceList.forEach(item => {
             const card = document.createElement('div');
-            card.className = 'p-4 bg-kid-paper border-2 border-kid-border rounded-2xl space-y-3';
+            card.className = 'p-4 bg-slate-50/60 border border-slate-200 rounded-2xl space-y-3';
             
             const q = item.child_quote || item.child_question || '';
             const a = item.kotl_response || item.kotl_answer || '';
             const topic = item.context || item.topic || 'Dialogue Turn';
             
             card.innerHTML = `
-              <div class="flex items-center justify-between pb-2 border-b border-amber-200">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-200/60">
                 <div class="flex items-center space-x-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-kid-blue shrink-0"></span>
-                  <h4 class="font-bold text-xs sm:text-sm text-kid-deepblue">${escapeHtml(topic)}</h4>
+                  <span class="w-2.5 h-2.5 rounded-full bg-[#70B6F6] shrink-0"></span>
+                  <h4 class="font-bold text-xs sm:text-sm text-slate-800">${escapeHtml(topic)}</h4>
                 </div>
-                <button onclick="playOrSpeakText('${encodeURIComponent(a)}')" class="text-xs text-kid-blue hover:text-kid-deepblue flex items-center gap-1 font-bold">
+                <button onclick="playOrSpeakText('${encodeURIComponent(a)}')" class="text-xs text-[#0369A1] hover:text-[#0284C7] flex items-center gap-1 font-bold">
                   <span>▶ Play Spoken Voice</span>
                 </button>
               </div>
 
-              <div class="space-y-2">
-                <!-- Parth Bubble -->
-                <div class="p-3 rounded-2xl bg-white border-2 border-blue-200 flex items-start space-x-2.5">
-                  <span class="text-base shrink-0">🧒</span>
-                  <div>
-                    <div class="text-[10px] font-mono font-bold text-kid-blue uppercase">Parth Asked / Spoke:</div>
+              <div class="space-y-2.5">
+                <!-- Child Speech Bubble (Left aligned soft blue) -->
+                <div class="flex items-start space-x-2.5 max-w-[90%]">
+                  <div class="w-8 h-8 rounded-full bg-[#E0F2FE] border border-sky-200 flex items-center justify-center text-sm shrink-0">
+                    🧒
+                  </div>
+                  <div class="p-3.5 rounded-2xl rounded-tl-xs bg-[#F0F8FF] border border-[#BAE6FD] shadow-xs">
+                    <div class="text-[10px] font-mono font-bold text-[#0369A1] uppercase mb-0.5">Parth Asked:</div>
                     <p class="text-xs sm:text-sm font-medium text-slate-800 italic">“${escapeHtml(q)}”</p>
                   </div>
                 </div>
 
-                <!-- KOTL Bubble -->
-                <div class="p-3 rounded-2xl bg-white border-2 border-amber-200 flex items-start space-x-2.5">
-                  <span class="text-base shrink-0">🤖</span>
-                  <div>
-                    <div class="text-[10px] font-mono font-bold text-kid-gold uppercase">KOTL Companion Answer:</div>
-                    <p class="text-xs sm:text-sm text-slate-700">“${escapeHtml(a)}”</p>
+                <!-- KOTL Robot Bubble (Right aligned soft mint/orange) -->
+                <div class="flex items-start justify-end space-x-2.5 w-full">
+                  <div class="flex items-start space-x-2.5 max-w-[90%] flex-row-reverse space-x-reverse">
+                    <div class="w-8 h-8 rounded-full bg-[#ECFDF5] border border-emerald-200 flex items-center justify-center text-sm shrink-0">
+                      🤖
+                    </div>
+                    <div class="p-3.5 rounded-2xl rounded-tr-xs bg-[#F0FDF4] border border-[#BBF7D0] shadow-xs text-left">
+                      <div class="text-[10px] font-mono font-bold text-[#15803D] uppercase mb-0.5">KOTL Companion:</div>
+                      <p class="text-xs sm:text-sm text-slate-700">“${escapeHtml(a)}”</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1367,17 +1344,17 @@
         }
       }
 
-      // Passions / Likes Breakdown
+      // Passions / Likes Breakdown (Wavy Scallop Cards)
       const passionsCont = document.getElementById('passionsContainer');
       if (passionsCont) {
         passionsCont.innerHTML = '';
         (rep.passions_analysis || []).forEach(item => {
           const div = document.createElement('div');
-          div.className = 'p-3 bg-kid-paper border-2 border-kid-border rounded-xl space-y-1';
+          div.className = 'p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1 hover:border-[#70B6F6] transition-all';
           div.innerHTML = `
             <div class="flex items-center justify-between">
-              <span class="font-bold text-xs sm:text-sm text-kid-deepblue">${escapeHtml(item.topic)}</span>
-              <span class="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-300">${escapeHtml(item.affinity)}</span>
+              <span class="font-bold text-xs sm:text-sm text-slate-800">${escapeHtml(item.topic)}</span>
+              <span class="text-xs font-mono font-bold text-[#065F46] bg-[#ECFDF5] px-2.5 py-0.5 rounded-full border border-[#66D29A]">${escapeHtml(item.affinity)}</span>
             </div>
             <p class="text-xs text-slate-600">${escapeHtml(item.observation)}</p>
           `;
@@ -1392,13 +1369,13 @@
         const list = rep.sensitivities_and_coping || rep.sensitivities_and_triggers || [];
         list.forEach(item => {
           const div = document.createElement('div');
-          div.className = 'p-3 bg-kid-paper border-2 border-kid-border rounded-xl space-y-1';
+          div.className = 'p-3.5 bg-[#FFF1F2]/50 border border-[#FECDD3] rounded-2xl space-y-1';
           const title = item.sensitivity || item.trigger || 'Area';
           const strat = item.coping_strategy || item.kotl_intervention || '';
           div.innerHTML = `
             <div class="flex items-center justify-between">
-              <span class="font-bold text-xs sm:text-sm text-kid-deepblue">${escapeHtml(title)}</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-kid-coral border border-red-200 font-mono font-bold">Gentle</span>
+              <span class="font-bold text-xs sm:text-sm text-slate-800">${escapeHtml(title)}</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-white text-[#BE123C] border border-[#FECDD3] font-mono font-bold">Gentle Guidance</span>
             </div>
             <p class="text-xs text-slate-600"><strong class="text-slate-800">KOTL Care:</strong> ${escapeHtml(strat)}</p>
           `;
@@ -1406,15 +1383,15 @@
         });
       }
 
-      // Parent Recommendations
+      // Parent Recommendations (Home Activities)
       const recoCont = document.getElementById('parentRecommendationsContainer');
       if (recoCont) {
         recoCont.innerHTML = '';
         (rep.parent_recommendations || []).forEach(item => {
           const card = document.createElement('div');
-          card.className = 'p-3.5 bg-kid-paper border-2 border-kid-border rounded-2xl space-y-1.5';
+          card.className = 'p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5 hover:border-amber-300 transition-all';
           card.innerHTML = `
-            <h4 class="font-bold text-xs sm:text-sm text-kid-deepblue flex items-center space-x-1.5">
+            <h4 class="font-bold text-xs sm:text-sm text-slate-800 flex items-center space-x-1.5">
               <span>✨</span>
               <span>${escapeHtml(item.area || item.title || 'Tip')}</span>
             </h4>
@@ -1424,19 +1401,19 @@
         });
       }
 
-      // Milestones
+      // Milestones Achieved
       const mileCont = document.getElementById('milestonesContainer');
       if (mileCont) {
         mileCont.innerHTML = '';
         (rep.developmental_milestones || rep.milestones || []).forEach(item => {
           const card = document.createElement('div');
-          card.className = 'p-3 bg-kid-paper border-2 border-kid-border rounded-xl space-y-1 flex flex-col justify-between';
+          card.className = 'p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1 flex flex-col justify-between';
           card.innerHTML = `
             <div class="flex items-center justify-between">
-              <span class="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-blue-50 text-kid-blue border border-blue-200">${escapeHtml(item.badge || item.status || 'Active')}</span>
-              <span class="text-xs font-mono font-bold text-emerald-700">Achieved</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-[#E0F2FE] text-[#0369A1] border border-sky-200">${escapeHtml(item.badge || item.status || 'Active')}</span>
+              <span class="text-xs font-mono font-bold text-[#16A34A]">Achieved</span>
             </div>
-            <h5 class="font-bold text-xs text-kid-deepblue">${escapeHtml(item.title)}</h5>
+            <h5 class="font-bold text-xs text-slate-800 mt-1">${escapeHtml(item.title)}</h5>
             <p class="text-[11px] text-slate-500">${escapeHtml(item.description || '')}</p>
           `;
           mileCont.appendChild(card);
@@ -1448,62 +1425,48 @@
       const btn = document.getElementById('regenerateReportBtn');
       const icon = document.getElementById('refreshIcon');
       btn.disabled = true;
-      icon.classList.add('animate-spin');
+      if (icon) icon.classList.add('animate-spin');
       try {
-        const res = await fetch('/api/child/report/generate', { method: 'POST' });
+        const res = await fetch('/api/child/report/regenerate', { method: 'POST' });
         if (res.ok) {
           const data = await res.json();
           currentReport = data.report;
           renderChildReport(currentReport);
         }
-      } catch (err) {
-        alert('Report generation failed: ' + err.message);
+      } catch (e) {
+        console.warn('Error refreshing report:', e);
       } finally {
         btn.disabled = false;
-        icon.classList.remove('animate-spin');
+        if (icon) icon.classList.remove('animate-spin');
       }
     }
 
     async function addInterest(type) {
-      const input = document.getElementById(type === 'likes' ? 'newLikeInput' : 'newDislikeInput');
+      const input = type === 'likes' ? document.getElementById('newLikeInput') : document.getElementById('newDislikeInput');
       const val = input.value.trim();
       if (!val) return;
-
       try {
-        const profRes = await fetch('/api/child/profile');
-        const profData = await profRes.json();
-        const prof = profData.profile || {};
-        if (!prof[type]) prof[type] = [];
-        if (!prof[type].includes(val)) {
-          prof[type].push(val);
-          await fetch('/api/child/profile', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(prof)
-          });
+        const res = await fetch('/api/child/interests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, item: val })
+        });
+        if (res.ok) {
           input.value = '';
           await regenerateReport();
         }
       } catch (e) {
-        console.error('Error adding interest:', e);
+        console.warn('Error adding interest:', e);
       }
     }
 
-    // Parent Directives Logic
-    let parentMissions = [];
-
-    function applyPreset(title, directive) {
-      document.getElementById('missionTitleInput').value = title;
-      document.getElementById('missionDirectiveInput').value = directive;
-    }
-
+    // Tab 2: Parent Missions
     async function loadParentMissions() {
       try {
-        const res = await fetch('/api/parent/missions');
+        const res = await fetch('/api/child/missions');
         if (res.ok) {
           const data = await res.json();
-          parentMissions = data.missions || [];
-          renderParentMissions(parentMissions);
+          renderParentMissions(data.missions || []);
         }
       } catch (e) {
         console.warn('Error loading missions:', e);
@@ -1511,256 +1474,181 @@
     }
 
     function renderParentMissions(missions) {
-      const cont = document.getElementById('missionsListContainer');
-      cont.innerHTML = '';
-      const activeCount = missions.filter(m => m.active).length;
-      document.getElementById('activeMissionsCountBadge').textContent = activeCount;
+      const container = document.getElementById('missionsListContainer');
+      const badge = document.getElementById('activeMissionsCountBadge');
       const mobBadge = document.getElementById('mobMissionsBadge');
-      if (mobBadge) {
-        mobBadge.textContent = activeCount;
-      }
-      const kpiElem = document.getElementById('reportMissionsKpi');
-      if (kpiElem) {
-        kpiElem.innerHTML = `<span>${activeCount}</span> <span class="text-xs sm:text-sm font-sans font-bold text-slate-600">Active</span>`;
-      }
+      
+      const activeCount = missions.filter(m => m.active).length;
+      if (badge) badge.textContent = activeCount;
+      if (mobBadge) mobBadge.textContent = activeCount;
 
+      if (!container) return;
+      container.innerHTML = '';
       if (missions.length === 0) {
-        cont.innerHTML = `
-          <div class="p-8 bg-white rounded-2xl border-2 border-kid-border text-center text-sm text-slate-500 shadow-xs">
-            No active directives configured. Create a directive above to guide KOTL's conversations.
-          </div>
-        `;
+        container.innerHTML = `<p class="text-xs text-slate-500 italic p-4 bg-white rounded-2xl border border-slate-200">No active directives. Add one above.</p>`;
         return;
       }
 
       missions.forEach(m => {
-        const card = document.createElement('div');
-        card.className = 'app-card p-4 sm:p-5 space-y-2 bg-white ' + (m.active ? 'border-kid-blue' : 'opacity-70');
-        
-        card.innerHTML = `
-          <div class="flex items-start justify-between gap-3">
-            <div class="space-y-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-base">${m.active ? '🎯' : '⏸️'}</span>
-                <h4 class="font-bold text-sm sm:text-base text-kid-deepblue">${escapeHtml(m.title)}</h4>
-                ${m.active ? '<span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-kid-blue border border-blue-200 font-mono font-bold">Active in Prompt</span>' : '<span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 font-mono">Paused</span>'}
-              </div>
-              <p class="text-xs sm:text-sm text-slate-600 pl-6">
-                <strong class="text-kid-deepblue">KOTL Instruction:</strong> ${escapeHtml(m.directive)}
-              </p>
+        const div = document.createElement('div');
+        div.className = `p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${m.active ? 'bg-white border-slate-200 shadow-xs' : 'bg-slate-50/70 border-slate-200 opacity-60'}`;
+        div.innerHTML = `
+          <div class="space-y-0.5">
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full ${m.active ? 'bg-emerald-500' : 'bg-slate-400'}"></span>
+              <h4 class="font-bold text-sm text-slate-800">${escapeHtml(m.title)}</h4>
             </div>
-
-            <div class="flex items-center space-x-2 shrink-0">
-              <button onclick="toggleMission('${m.id}', ${!m.active})" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${m.active ? 'bg-kid-lightblue text-kid-deepblue hover:bg-blue-100 border border-blue-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
-                ${m.active ? 'Active' : 'Paused'}
-              </button>
-              <button onclick="deleteMission('${m.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-kid-coral transition-colors" title="Delete Directive">
-                ✕
-              </button>
-            </div>
+            <p class="text-xs text-slate-600">${escapeHtml(m.directive)}</p>
+          </div>
+          <div class="flex items-center space-x-2 shrink-0">
+            <button onclick="toggleMission('${m.id}')" class="px-3 py-1 rounded-xl text-xs font-bold border transition-all ${m.active ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600'}">
+              ${m.active ? 'Active' : 'Paused'}
+            </button>
+            <button onclick="deleteMission('${m.id}')" class="p-1 text-slate-400 hover:text-rose-500 text-xs">🗑️</button>
           </div>
         `;
-        cont.appendChild(card);
+        container.appendChild(div);
       });
     }
 
     async function handleCreateMission(e) {
       e.preventDefault();
-      const title = document.getElementById('missionTitleInput').value.trim();
-      const directive = document.getElementById('missionDirectiveInput').value.trim();
-      if (!title) return;
-
+      const titleInput = document.getElementById('missionTitleInput');
+      const dirInput = document.getElementById('missionDirectiveInput');
+      const title = titleInput.value.trim();
+      const directive = dirInput.value.trim();
+      if (!title || !directive) return;
       try {
-        const res = await fetch('/api/parent/missions', {
+        const res = await fetch('/api/child/missions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, directive })
         });
         if (res.ok) {
-          const data = await res.json();
-          parentMissions = data.missions || [];
-          renderParentMissions(parentMissions);
-          document.getElementById('newMissionForm').reset();
+          titleInput.value = '';
+          dirInput.value = '';
+          await loadParentMissions();
         }
       } catch (err) {
-        alert('Error creating mission: ' + err.message);
+        console.warn('Error creating mission:', err);
       }
     }
 
-    async function toggleMission(id, activeState) {
+    async function toggleMission(id) {
       try {
-        const res = await fetch('/api/parent/missions/toggle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, active: activeState })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          parentMissions = data.missions || [];
-          renderParentMissions(parentMissions);
-        }
+        await fetch(`/api/child/missions/${id}/toggle`, { method: 'POST' });
+        await loadParentMissions();
       } catch (err) {
-        console.error('Error toggling mission:', err);
+        console.warn('Error toggling mission:', err);
       }
     }
 
     async function deleteMission(id) {
-      if (!confirm('Are you sure you want to remove this directive?')) return;
       try {
-        const res = await fetch('/api/parent/missions/' + id, { method: 'DELETE' });
-        if (res.ok) {
-          const data = await res.json();
-          parentMissions = data.missions || [];
-          renderParentMissions(parentMissions);
-        }
+        await fetch(`/api/child/missions/${id}`, { method: 'DELETE' });
+        await loadParentMissions();
       } catch (err) {
-        console.error('Error deleting mission:', err);
+        console.warn('Error deleting mission:', err);
       }
     }
 
-    // Chat Conversation & Audio
+    function applyPreset(title, directive) {
+      document.getElementById('missionTitleInput').value = title;
+      document.getElementById('missionDirectiveInput').value = directive;
+    }
+
+    // Tab 3: Chat & Spoken Audio
     const chatContainer = document.getElementById('chatContainer');
-    const chatScrollArea = document.getElementById('chatScrollArea');
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
     const recordBtn = document.getElementById('recordBtn');
-    const micIcon = document.getElementById('micIcon');
-    const recordingSpinner = document.getElementById('recordingSpinner');
-    const recordingWaveformContainer = document.getElementById('recordingWaveformContainer');
-    const cancelRecordBtn = document.getElementById('cancelRecordBtn');
-    const ttsAudioPlayer = document.getElementById('ttsAudioPlayer');
-
-    const sessionId = 'default-session';
-    const renderedMsgMap = new Map();
+    let sessionHistory = [];
 
     chatInput.addEventListener('input', () => {
       sendBtn.disabled = !chatInput.value.trim();
     });
-
     chatInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey && chatInput.value.trim()) {
-        e.preventDefault();
         handleSubmitText();
       }
     });
+    sendBtn.addEventListener('click', handleSubmitText);
 
-    sendBtn.addEventListener('click', () => {
-      if (chatInput.value.trim()) handleSubmitText();
-    });
-
-    function formatTime(ts) {
-      if (!ts) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const d = new Date(ts);
-      return isNaN(d.getTime()) ? new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    function formatTime(iso) {
+      try {
+        return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } catch (_) {
+        return '';
+      }
     }
 
     function renderMessageElement(msg) {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'w-full flex ' + (msg.role === 'user' ? 'justify-end' : 'justify-start');
-      const uniqueKey = msg.id || (msg.role + '-' + (msg.text || msg.content));
-      msgDiv.dataset.msgId = uniqueKey;
+      const isUser = msg.role === 'user';
+      const wrapper = document.createElement('div');
+      wrapper.className = `flex w-full ${isUser ? 'justify-end' : 'justify-start'}`;
 
-      const timeStr = formatTime(msg.timestamp);
-      const isEsp = msg.source === 'esp32' || msg.source === 'device';
-      const sourceBadge = isEsp 
-        ? `<span class="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-mono">🎙️ ESP32 Device</span>`
-        : `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-mono">💻 Web</span>`;
+      const bubble = document.createElement('div');
+      bubble.className = `max-w-[85%] sm:max-w-[75%] p-4 rounded-3xl space-y-1.5 ${
+        isUser
+          ? 'bg-[#E0F2FE] text-slate-800 rounded-tr-xs border border-sky-200'
+          : 'bg-white text-slate-800 rounded-tl-xs border border-slate-200 shadow-xs'
+      }`;
 
-      if (msg.role === 'user') {
-        msgDiv.innerHTML = `
-          <div class="max-w-[88%] sm:max-w-[78%] bg-kid-blue text-white rounded-3xl px-5 py-3 text-sm sm:text-base leading-relaxed shadow-md space-y-1 break-words">
-            <div class="flex items-center justify-end space-x-2 text-xs text-blue-100 font-mono">
-              <span class="font-bold text-white">Parth</span>
-              <span>•</span>
-              ${sourceBadge}
-              <span>${timeStr}</span>
-            </div>
-            <div class="break-words font-sans text-white">${escapeHtml(msg.text || msg.content || '')}</div>
-          </div>
-        `;
-      } else {
-        const audioBtn = `
-          <button onclick="playOrSpeakText('${encodeURIComponent(msg.text || msg.content || '')}', '${msg.tts_url || ''}')" class="mt-2 inline-flex items-center space-x-1.5 text-xs font-mono font-bold text-kid-deepblue hover:text-kid-blue px-3 py-1.5 rounded-xl bg-kid-lightblue hover:bg-blue-100 border border-blue-200 transition-all shadow-2xs">
-            <span class="text-kid-blue">▶</span>
-            <span>Play Spoken Voice</span>
-          </button>
-        `;
+      const header = document.createElement('div');
+      header.className = 'flex items-center justify-between text-[10px] font-mono opacity-60 pb-1 border-b border-black/5 gap-3';
+      header.innerHTML = `
+        <span>${isUser ? '🧒 Parth' : '🤖 KOTL Buddy'}</span>
+        <span>${formatTime(msg.timestamp || new Date())}</span>
+      `;
 
-        msgDiv.innerHTML = `
-          <div class="flex items-start space-x-3.5 max-w-[95%] sm:max-w-[85%]">
-            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-kid-yellow to-kid-gold text-kid-deepblue flex items-center justify-center font-bold text-lg shrink-0 mt-0.5 shadow-sm border-2 border-kid-yellow">
-              🤖
-            </div>
-            <div class="space-y-1.5 min-w-0 flex-1">
-              <div class="flex items-center space-x-2 text-xs text-slate-500 font-mono">
-                <span class="text-kid-deepblue font-bold font-kid">KOTL (Companion)</span>
-                <span>•</span>
-                <span>${timeStr}</span>
-              </div>
-              <div class="text-sm sm:text-base text-slate-800 leading-relaxed font-sans break-words bg-white p-4 rounded-3xl border-2 border-kid-border shadow-xs">
-                ${escapeHtml(msg.text || msg.content || '')}
-              </div>
-              ${audioBtn}
-            </div>
-          </div>
-        `;
+      const body = document.createElement('p');
+      body.className = 'text-xs sm:text-sm leading-relaxed whitespace-pre-wrap';
+      body.textContent = msg.content || '';
+
+      bubble.appendChild(header);
+      bubble.appendChild(body);
+
+      if (!isUser && msg.content) {
+        const playBtn = document.createElement('button');
+        playBtn.className = 'text-[11px] text-[#0369A1] hover:text-[#0284C7] font-bold flex items-center gap-1 mt-1 pt-1 border-t border-black/5';
+        playBtn.innerHTML = '<span>▶ Listen Audio</span>';
+        playBtn.onclick = () => playOrSpeakText(encodeURIComponent(msg.content));
+        bubble.appendChild(playBtn);
       }
 
-      chatContainer.appendChild(msgDiv);
+      wrapper.appendChild(bubble);
+      return wrapper;
     }
 
     async function syncLiveServerHistory() {
       try {
-        const res = await fetch('/api/history?sessionId=' + sessionId);
+        const res = await fetch('/api/chat/history?sessionId=default-session');
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.history)) {
-            let hasNew = false;
-            if (data.history.length === 0 && chatContainer.children.length === 0) {
-              chatContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center min-h-[40vh] text-center space-y-3">
-                  <div class="w-14 h-14 rounded-3xl bg-kid-lightblue text-kid-deepblue flex items-center justify-center text-2xl font-bold border-2 border-blue-200">
-                    🧸
-                  </div>
-                  <h3 class="text-base font-bold text-kid-deepblue">No Conversation History Yet</h3>
-                  <p class="text-xs text-slate-500 max-w-sm">
-                    Speak through the ESP32 physical microphone or type your question below.
-                  </p>
-                </div>
-              `;
-            }
-
-            data.history.forEach(item => {
-              const uniqueKey = item.id || (item.role + '-' + (item.content || item.text));
-              if (!renderedMsgMap.has(uniqueKey)) {
-                if (chatContainer.querySelector('h3')) chatContainer.innerHTML = '';
-                renderedMsgMap.set(uniqueKey, item);
-                renderMessageElement(item);
-                hasNew = true;
-              }
-            });
-
-            if (hasNew && currentTab === 'chat') {
-              scrollToBottom();
-            }
-          }
+          sessionHistory = data.history || [];
+          chatContainer.innerHTML = '';
+          sessionHistory.forEach(msg => {
+            chatContainer.appendChild(renderMessageElement(msg));
+          });
+          scrollToBottom();
         }
-      } catch (e) {}
+      } catch (err) {
+        console.warn('Error syncing history:', err);
+      }
     }
 
     async function clearSessionChat() {
       if (!confirm('Clear all conversation history?')) return;
       try {
-        await fetch('/api/reset-session', {
+        await fetch('/api/chat/clear', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
+          body: JSON.stringify({ sessionId: 'default-session' })
         });
-        renderedMsgMap.clear();
+        sessionHistory = [];
         chatContainer.innerHTML = '';
-        syncLiveServerHistory();
       } catch (e) {
-        alert('Error: ' + e.message);
+        alert('Failed to clear chat: ' + e.message);
       }
     }
 
@@ -1770,163 +1658,138 @@
       chatInput.value = '';
       sendBtn.disabled = true;
 
-      const userMsg = {
-        role: 'user',
-        content: text,
-        source: 'web',
-        timestamp: new Date().toISOString()
-      };
-      renderMessageElement(userMsg);
+      const userMsg = { role: 'user', content: text, timestamp: new Date().toISOString() };
+      chatContainer.appendChild(renderMessageElement(userMsg));
       scrollToBottom();
 
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, sessionId })
+          body: JSON.stringify({ message: text, sessionId: 'default-session' })
         });
         if (res.ok) {
           const data = await res.json();
+          const assistantMsg = { role: 'assistant', content: data.reply || '', timestamp: new Date().toISOString() };
+          chatContainer.appendChild(renderMessageElement(assistantMsg));
+          scrollToBottom();
           if (data.reply) {
-            const assistantMsg = {
-              role: 'assistant',
-              content: data.reply,
-              source: 'kotl',
-              timestamp: new Date().toISOString()
-            };
-            renderMessageElement(assistantMsg);
-            scrollToBottom();
+            playOrSpeakText(encodeURIComponent(data.reply));
           }
-        }
-      } catch (e) {
-        console.error('Chat error:', e);
-      }
-    }
-
-    async function playOrSpeakText(encodedText, ttsUrl) {
-      if (ttsUrl && ttsUrl !== 'null' && ttsUrl !== 'undefined') {
-        playAudioClip(ttsUrl);
-        return;
-      }
-      try {
-        const text = decodeURIComponent(encodedText);
-        const res = await fetch('/api/speak', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, sessionId })
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.url) {
-            playAudioClip(data.url);
-          }
+          await loadChildReport();
         }
       } catch (err) {
-        console.error('Speech synthesis error:', err);
+        console.error('Chat error:', err);
       }
     }
 
+    function playOrSpeakText(encodedText) {
+      const text = decodeURIComponent(encodedText);
+      const url = `/api/tts?text=${encodeURIComponent(text)}`;
+      playAudioClip(url);
+    }
+
+    let activeAudio = null;
     function playAudioClip(url) {
-      if (!url) return;
-      ttsAudioPlayer.src = url;
-      ttsAudioPlayer.play().catch(e => console.warn('Audio play error:', e));
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio = null;
+      }
+      activeAudio = new Audio(url);
+      activeAudio.play().catch(err => {
+        console.warn('Audio play prevented (user interaction needed):', err);
+      });
     }
 
     function scrollToBottom() {
-      chatScrollArea.scrollTop = chatScrollArea.scrollHeight;
-    }
-
-    // Audio Diagnostics Test Chime
-    async function testSpeakerAscendingChime() {
-      try {
-        const res = await fetch('/api/hardware-test/speaker-chime', { method: 'POST' });
-        if (res.ok) {
-          alert('Electronic double-beep chime sent to ESP32 MAX98357A speaker!');
-        }
-      } catch (err) {
-        alert('Speaker test error: ' + err.message);
+      const scrollArea = document.getElementById('chatScrollArea');
+      if (scrollArea) {
+        scrollArea.scrollTop = scrollArea.scrollHeight;
       }
     }
 
-    // Web Voice Mic Recording
-    let mediaRecorder = null;
-    let audioChunks = [];
-
-    recordBtn.addEventListener('click', async () => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        return;
-      }
+    function testSpeakerAscendingChime() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-        mediaRecorder.onstart = () => {
-          recordBtn.classList.add('bg-kid-lightyellow', 'border-kid-yellow');
-          recordingSpinner.classList.remove('hidden');
-          micIcon.classList.add('hidden');
-          recordingWaveformContainer.classList.remove('hidden');
-        };
-        mediaRecorder.onstop = async () => {
-          recordBtn.classList.remove('bg-kid-lightyellow', 'border-kid-yellow');
-          recordingSpinner.classList.add('hidden');
-          micIcon.classList.remove('hidden');
-          recordingWaveformContainer.classList.add('hidden');
-          stream.getTracks().forEach(t => t.stop());
-
-          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          const formData = new FormData();
-          formData.append('audio', audioBlob, 'mic.webm');
-          try {
-            const res = await fetch('/api/audio/upload', {
-              method: 'POST',
-              headers: { 'x-session-id': sessionId },
-              body: formData
-            });
-            if (res.ok) {
-              await syncLiveServerHistory();
-              await loadChildReport();
-            }
-          } catch (err) {
-            console.error('Audio upload error:', err);
-          }
-        };
-        mediaRecorder.start();
-      } catch (err) {
-        alert('Microphone access denied: ' + err.message);
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        const now = audioCtx.currentTime;
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.exponentialRampToValueAtTime(1175, now + 0.35);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.45);
+      } catch (e) {
+        console.warn('Chime audio error:', e);
       }
-    });
+    }
 
-    cancelRecordBtn.addEventListener('click', () => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-      }
-    });
-
-    // Device Status Polling
     async function pollDeviceStatus() {
       try {
-        const res = await fetch('/api/status');
+        const res = await fetch('/api/device/status');
+        const pill = document.getElementById('deviceStatusPill');
+        const dot = document.getElementById('deviceStatusDot');
+        const txt = document.getElementById('deviceStatusText');
         if (res.ok) {
           const data = await res.json();
-          const dot = document.getElementById('deviceStatusDot');
-          const text = document.getElementById('deviceStatusText');
-          if (data.status === 'online') {
-            dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0';
-            text.innerHTML = '<span class="hidden sm:inline">ESP32 </span>Live';
+          const online = data.online !== false;
+          if (online) {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse shrink-0';
+            txt.innerHTML = '<span class="hidden sm:inline">ESP32 </span>Live';
+            pill.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#ECFDF5] border border-[#66D29A]/40 text-[#065F46] shadow-xs shrink-0 select-none transition-colors';
+          } else {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0';
+            txt.innerHTML = '<span class="hidden sm:inline">ESP32 </span>Standby';
+            pill.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 shadow-xs shrink-0 select-none transition-colors';
           }
         }
       } catch (_) {}
     }
 
-    // App Initialization
-    window.addEventListener('DOMContentLoaded', async () => {
-      await loadChildReport();
-      await loadParentMissions();
-      await syncLiveServerHistory();
-      setInterval(syncLiveServerHistory, 2500);
-      setInterval(pollDeviceStatus, 5000);
+    async function loadDeviceConfig() {
+      try {
+        const res = await fetch('/api/device/config');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.wifi_ssid) document.getElementById('cfgWifiSsid').value = data.wifi_ssid;
+          if (data.target_url) document.getElementById('cfgTargetUrl').value = data.target_url;
+        }
+      } catch (_) {}
+    }
+
+    async function saveDeviceConfig(e) {
+      e.preventDefault();
+      const payload = {
+        wifi_ssid: document.getElementById('cfgWifiSsid').value.trim(),
+        wifi_pass: document.getElementById('cfgWifiPass').value.trim(),
+        target_url: document.getElementById('cfgTargetUrl').value.trim()
+      };
+      try {
+        const res = await fetch('/api/device/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          alert('Config saved. Restart ESP32 to connect to new network.');
+          document.getElementById('wifiModal').classList.add('hidden');
+        }
+      } catch (err) {
+        alert('Failed to save config: ' + err.message);
+      }
+    }
+
+    // Initial Load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadChildReport();
+      loadParentMissions();
+      syncLiveServerHistory();
+      pollDeviceStatus();
+      setInterval(pollDeviceStatus, 15000);
     });
   </script>
 </body>
