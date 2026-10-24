@@ -1,705 +1,637 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import KindergartenDoodles from '../components/KindergartenDoodles';
-import {
-  Sparkles,
-  BookOpen,
-  Trophy,
-  Smile,
-  Mic,
-  Send,
-  RefreshCw,
-  Printer,
-  Settings,
-  Wifi,
-  Activity,
-  Award,
-  Volume2,
-  Trash2,
-  CheckCircle2,
-  Star,
-  Heart,
-  Lightbulb,
-  Compass,
-  Plus
-} from 'lucide-react';
 
 export default function KindergartenDashboard() {
-  const [currentTab, setCurrentTab] = useState('report');
   const [profile, setProfile] = useState({
     name: 'Parth',
-    age: '6 Years',
+    age: 6,
     gender: 'Boy',
-    bedtime: '21:00',
-    parent_permissions: { medicines: true, sharp_tools: true, outside_play: true, purchases: true }
+    bedtime: '21:00'
   });
-  const [report, setReport] = useState(null);
-  const [missions, setMissions] = useState([]);
-  const [chatHistory, setChatHistory] = useState([]);
-  const [chatInput, setChatInput] = useState('');
-  const [isUpdatingReport, setIsUpdatingReport] = useState(false);
-  const [deviceStatus, setDeviceStatus] = useState('Live');
-
-  // Modals state
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [deviceOnline, setDeviceOnline] = useState(true);
 
-  // Daily Habits Interactive Checklist State (Bouncy rounded pill toggles)
-  const [habits, setHabits] = useState([
-    { id: 1, title: '🪥 Morning & Night Brushing', subtitle: 'Shiny strong teeth routine', done: true, color: 'border-sky-300 bg-sky-50 text-sky-900' },
-    { id: 2, title: '🥛 Clean Water & Fresh Milk', subtitle: 'Healthy hydration all day', done: true, color: 'border-emerald-300 bg-emerald-50 text-emerald-900' },
-    { id: 3, title: '🥗 Eating Veggies & Spinach', subtitle: 'Superhero stamina fuel', done: false, color: 'border-amber-300 bg-amber-50 text-amber-900' },
-    { id: 4, title: '🧸 Tidy Up Toys & School Bag', subtitle: 'Neat toy organizer box', done: true, color: 'border-purple-300 bg-purple-50 text-purple-900' },
-    { id: 5, title: '📖 20 Mins English Stories', subtitle: 'Bedtime story with KOTL', done: false, color: 'border-indigo-300 bg-indigo-50 text-indigo-900' },
-    { id: 6, title: '🌙 Sleep by 9:00 PM', subtitle: 'No screen before bedtime', done: false, color: 'border-rose-300 bg-rose-50 text-rose-900' },
-  ]);
+  // Interactive toggle switches state
+  const [habits, setHabits] = useState({
+    spoken_english: true,
+    clean_water: true,
+    spinach_greens: true,
+    brushing: true,
+    water: true,
+    spinach: true
+  });
 
-  const toggleHabit = (id) => {
-    setHabits(prev => prev.map(h => h.id === id ? { ...h, done: !h.done } : h));
+  const toggleHabit = (key) => {
+    setHabits(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const fetchReport = async () => {
+  const playChime = () => {
     try {
-      const res = await fetch('/api/child/report');
-      if (res.ok) {
-        const data = await res.json();
-        setReport(data.report);
-      }
-    } catch (e) {
-      console.warn('Error fetching report:', e);
-    }
-  };
-
-  const fetchMissions = async () => {
-    try {
-      const res = await fetch('/api/child/missions');
-      if (res.ok) {
-        const data = await res.json();
-        setMissions(data.missions || []);
-      }
-    } catch (e) {
-      console.warn('Error fetching missions:', e);
-    }
-  };
-
-  const fetchHistory = async () => {
-    try {
-      const res = await fetch('/api/chat/history?sessionId=default-session');
-      if (res.ok) {
-        const data = await res.json();
-        setChatHistory(data.history || []);
-      }
-    } catch (e) {
-      console.warn('Error fetching history:', e);
-    }
-  };
-
-  const pollStatus = async () => {
-    try {
-      const res = await fetch('/api/device/status');
-      if (res.ok) {
-        const data = await res.json();
-        setDeviceStatus(data.online !== false ? 'Live' : 'Standby');
-      }
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.3);
     } catch (_) {}
   };
 
   useEffect(() => {
-    fetchReport();
-    fetchMissions();
-    fetchHistory();
-    pollStatus();
-    const timer = setInterval(pollStatus, 15000);
-    return () => clearInterval(timer);
+    const checkStatus = async () => {
+      try {
+        const res = await fetch('/api/device/status');
+        if (res.ok) {
+          const data = await res.json();
+          setDeviceOnline(data.online !== false);
+        }
+      } catch (_) {}
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 15000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-
-    const userText = chatInput.trim();
-    setChatInput('');
-    const newTurn = { role: 'user', content: userText, timestamp: new Date().toISOString() };
-    setChatHistory(prev => [...prev, newTurn]);
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userText, sessionId: 'default-session' })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setChatHistory(prev => [...prev, { role: 'assistant', content: data.reply || '', timestamp: new Date().toISOString() }]);
-        fetchReport();
-      }
-    } catch (err) {
-      console.error('Chat error:', err);
-    }
-  };
-
-  const playVoice = (text) => {
-    const audio = new Audio(`/api/tts?text=${encodeURIComponent(text)}`);
-    audio.play().catch(e => console.warn('Audio playback error:', e));
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#1E293B] relative font-['Nunito'] overflow-x-hidden">
+    <div className="min-h-screen flex flex-col antialiased bg-[#FFFDF9] relative font-nunito selection:bg-amber-200">
+      
+      {/* Background Micro Doodles */}
       <KindergartenDoodles />
 
-      {/* Header Navigation */}
-      <header className="h-16 sm:h-20 bg-white/95 backdrop-blur-md border-b-2 border-slate-100 px-4 sm:px-8 flex items-center justify-between shadow-xs sticky top-0 z-30">
-        <div className="flex items-center space-x-3 sm:space-x-4">
-          <div className="flex items-center space-x-1.5 font-bold text-xl sm:text-2xl font-['Fredoka']">
-            <span className="w-8 h-8 rounded-xl bg-orange-500 text-white flex items-center justify-center shadow-xs">K</span>
-            <span className="w-8 h-8 rounded-xl bg-amber-400 text-white flex items-center justify-center shadow-xs">O</span>
-            <span className="w-8 h-8 rounded-xl bg-sky-400 text-white flex items-center justify-center shadow-xs">T</span>
-            <span className="w-8 h-8 rounded-xl bg-emerald-400 text-white flex items-center justify-center shadow-xs">L</span>
-            <span className="ml-1 text-slate-800 tracking-tight">KIDS</span>
+      {/* Top Header / Navigation Bar */}
+      <header className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
+        <div className="bg-white/95 backdrop-blur-md border-2 border-amber-200 rounded-3xl px-5 py-3.5 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-500 flex items-center justify-center text-white text-xl shadow-md shadow-sky-500/20">
+              🧸
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-fredoka text-xl font-bold tracking-tight text-slate-800">KOTL KIDS</span>
+                <span className="bg-amber-100 text-amber-800 text-[11px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-amber-300">
+                  Kindergarten
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-medium hidden sm:block">Intelligent Pediatric Companion & Smart Behavioral Habit Hub</p>
+            </div>
           </div>
-          <div className="hidden sm:block border-l-2 border-slate-200 pl-3">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block">Preschool Companion</span>
-            <span className="text-xs text-slate-600 font-bold">Growth & Learning Hub</span>
-          </div>
-        </div>
 
-        {/* Center Tabs */}
-        <nav className="hidden md:flex items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-200 space-x-1.5 text-xs sm:text-sm font-bold font-['Fredoka']">
-          <button
-            onClick={() => setCurrentTab('report')}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center space-x-2 ${
-              currentTab === 'report' ? 'bg-sky-400 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-            }`}
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>📜 Report Card</span>
-          </button>
-          <button
-            onClick={() => setCurrentTab('missions')}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center space-x-2 ${
-              currentTab === 'missions' ? 'bg-sky-400 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-            }`}
-          >
-            <Trophy className="w-4 h-4 text-amber-500" />
-            <span>🎯 Habits & Goals</span>
-            <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-mono font-bold">
-              {missions.filter(m => m.active).length || 4}
+          <div className="flex items-center gap-3">
+            <span id="deviceStatusPill" className="bg-emerald-50 text-emerald-700 text-xs px-3.5 py-1.5 rounded-full font-bold border border-emerald-300 flex items-center gap-2 shadow-sm whitespace-nowrap">
+              <span className={`w-2.5 h-2.5 rounded-full ${deviceOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+              <span>• ESP32 Live</span>
             </span>
-          </button>
-          <button
-            onClick={() => setCurrentTab('chat')}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center space-x-2 ${
-              currentTab === 'chat' ? 'bg-sky-400 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-            }`}
-          >
-            <Smile className="w-4 h-4 text-sky-500" />
-            <span>💬 Dialogue & Voice</span>
-          </button>
-        </nav>
 
-        {/* Right Status */}
-        <div className="flex items-center space-x-2 text-xs">
-          <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 shadow-xs select-none">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-            <span className="text-[11px] sm:text-xs font-mono font-bold whitespace-nowrap">ESP32 Live</span>
+            <button onClick={() => setIsProfileModalOpen(true)} title="Child Profile & Settings" className="w-9 h-9 rounded-2xl bg-amber-50 border border-amber-200 hover:bg-amber-100 text-amber-800 flex items-center justify-center text-base transition-colors shadow-sm">
+              ⚙️
+            </button>
+
+            <div className="w-9 h-9 rounded-2xl bg-sky-100 border border-sky-300 text-sky-800 flex items-center justify-center text-base font-bold shadow-sm">
+              👦
+            </div>
           </div>
-
-          <button onClick={() => setIsProfileModalOpen(true)} className="w-9 h-9 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 hover:text-sky-500 transition-all shadow-xs flex items-center justify-center">
-            <Settings className="w-4 h-4" />
-          </button>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6 z-10">
-        
-        {currentTab === 'report' && (
-          <div className="space-y-6">
+      {/* Main Content: Desktop 3-Column / Mobile 1-Column */}
+      <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* COLUMN 1: Profile Hero, 4 Metrics, Mini Toggles & Memo Pad */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
             
-            {/* TOP PROFILE HEADER (Organic Scalloped Card rounded-[32px]) */}
-            <div className="relative bg-white border-2 border-amber-300 rounded-[32px] p-6 shadow-[0_12px_30px_rgba(251,191,36,0.12)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-3xl shadow-inner shrink-0">
-                  👦
-                </div>
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-bold font-['Fredoka'] text-slate-800">{profile.name}</h1>
-                    <span className="bg-emerald-100 text-emerald-700 text-xs px-3 py-1 rounded-full font-semibold border border-emerald-300 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ESP32 Live
-                    </span>
+            {/* 1. Parth Profile Hero Card */}
+            <div className="p-6 relative overflow-hidden bg-[#FFFDF0] border-[3px] border-[#F6D365] rounded-[38px] shadow-[0_12px_30px_rgba(246,211,101,0.22)]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-[22px] bg-blue-600 flex items-center justify-center text-3xl shadow-md shadow-blue-500/30 text-white">
+                    👦
                   </div>
-                  <p className="text-slate-500 text-sm mt-0.5">{profile.age} • Sr. KG • Companion: <span className="font-bold text-sky-600">KOTL Buddy</span></p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-2xl font-bold font-fredoka text-slate-800">{profile.name}</h1>
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold border border-emerald-300">
+                        • ESP32 Live
+                      </span>
+                    </div>
+                    <p className="text-slate-700 font-bold text-sm mt-0.5">{profile.age} Years</p>
+                    <p className="text-slate-500 text-xs font-semibold">Class: Sr. KG • KID: KOTL Buddy</p>
+                  </div>
                 </div>
-              </div>
-              
-              {/**/}
-              <div className="bg-gradient-to-br from-amber-400 to-orange-500 text-white px-5 py-3 rounded-2xl shadow-lg shadow-orange-500/20 text-center self-end sm:self-center shrink-0">
-                <div className="text-xs uppercase tracking-wider font-semibold">Star Grade</div>
-                <div className="text-2xl font-black font-['Fredoka']">A+ <span className="text-xs font-normal">(87/100)</span></div>
+
+                {/* Scalloped Cookie Rosette Stamp Badge */}
+                <div className="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
+                  <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md">
+                    <circle cx="50" cy="50" r="46" fill="#F59E0B" />
+                    <path d="M 50 2 C 55 2 60 7 64 10 C 69 7 75 10 77 15 C 82 14 87 19 87 25 C 92 27 94 33 93 39 C 97 43 97 49 95 55 C 97 61 94 67 90 71 C 91 77 86 82 81 84 C 78 89 72 91 67 89 C 63 93 57 95 51 94 C 45 95 39 93 35 89 C 30 91 24 89 21 84 C 16 82 11 77 12 71 C 8 67 5 61 7 55 C 5 49 5 43 9 39 C 8 33 10 27 15 25 C 15 19 20 14 25 15 C 27 10 33 7 38 10 C 42 7 47 2 50 2 Z" fill="#D97706" />
+                    <circle cx="50" cy="50" r="41" fill="#F59E0B" />
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="#FEF3C7" strokeWidth="2" strokeDasharray="3 3" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white select-none">
+                    <span className="text-[9px] font-bold tracking-wider uppercase opacity-90 leading-tight">Grade</span>
+                    <span className="font-fredoka text-2xl font-black leading-none my-0.5">A+</span>
+                    <span className="text-[9px] font-semibold opacity-90 leading-tight">(87/100)</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* 4 TOP METRIC TILES (Colorful Chunky Cards rounded-3xl) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-sky-50 border-2 border-sky-300 rounded-3xl p-5 shadow-sm">
-                <span className="text-xs font-bold text-sky-600 uppercase font-['Fredoka']">Overall Star</span>
-                <div className="text-3xl font-extrabold font-['Fredoka'] text-sky-800 mt-1">87<span className="text-sm text-sky-500">/100</span></div>
-                <div className="w-full bg-sky-200 h-2.5 rounded-full mt-3 overflow-hidden">
+            {/* 2. Four Chunky Metric Tiles */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
+              <div className="bg-sky-50 border-2 border-sky-300 rounded-3xl p-3.5 shadow-sm">
+                <span className="text-[10px] font-bold text-sky-700 uppercase tracking-wider">Overall Star</span>
+                <div className="text-2xl font-extrabold font-fredoka text-sky-900 mt-0.5">87<span className="text-xs font-normal text-sky-600">/100</span></div>
+                <div className="w-full bg-sky-200 h-2 rounded-full mt-2 overflow-hidden">
                   <div className="bg-sky-500 h-full rounded-full" style={{ width: '87%' }}></div>
                 </div>
-                <p className="text-xs text-sky-900 font-bold mt-2">Outstanding All-Round Growth 🌟</p>
               </div>
 
-              <div className="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 shadow-sm">
-                <span className="text-xs font-bold text-amber-600 uppercase font-['Fredoka']">English & Words</span>
-                <div className="text-3xl font-extrabold font-['Fredoka'] text-amber-800 mt-1">84%</div>
-                <div className="w-full bg-amber-200 h-2.5 rounded-full mt-3 overflow-hidden">
+              <div className="bg-amber-50 border-2 border-amber-300 rounded-3xl p-3.5 shadow-sm">
+                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">English</span>
+                <div className="text-2xl font-extrabold font-fredoka text-amber-900 mt-0.5">84%</div>
+                <div className="w-full bg-amber-200 h-2 rounded-full mt-2 overflow-hidden">
                   <div className="bg-amber-500 h-full rounded-full" style={{ width: '84%' }}></div>
                 </div>
-                <p className="text-xs text-amber-900 font-bold mt-2">Learns New English Words Daily 📚</p>
               </div>
 
-              <div className="bg-emerald-50 border-2 border-emerald-300 rounded-3xl p-5 shadow-sm">
-                <span className="text-xs font-bold text-emerald-600 uppercase font-['Fredoka']">Space & Science</span>
-                <div className="text-3xl font-extrabold font-['Fredoka'] text-emerald-800 mt-1">92%</div>
-                <div className="w-full bg-emerald-200 h-2.5 rounded-full mt-3 overflow-hidden">
+              <div className="bg-emerald-50 border-2 border-emerald-300 rounded-3xl p-3.5 shadow-sm">
+                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Space</span>
+                <div className="text-2xl font-extrabold font-fredoka text-emerald-900 mt-0.5">92%</div>
+                <div className="w-full bg-emerald-200 h-2 rounded-full mt-2 overflow-hidden">
                   <div className="bg-emerald-500 h-full rounded-full" style={{ width: '92%' }}></div>
                 </div>
-                <p className="text-xs text-emerald-900 font-bold mt-2">High Curiosity in Space & Stars 🚀</p>
               </div>
 
-              <div className="bg-purple-50 border-2 border-purple-300 rounded-3xl p-5 shadow-sm">
-                <span className="text-xs font-bold text-purple-600 uppercase font-['Fredoka']">Good Habits</span>
-                <div className="text-3xl font-extrabold font-['Fredoka'] text-purple-800 mt-1">3<span className="text-sm text-purple-500">/6 Active</span></div>
-                <div className="w-full bg-purple-200 h-2.5 rounded-full mt-3 overflow-hidden">
-                  <div className="bg-purple-500 h-full rounded-full" style={{ width: '50%' }}></div>
+              <div className="bg-teal-50 border-2 border-teal-300 rounded-3xl p-3.5 shadow-sm">
+                <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wider">Good Habits</span>
+                <div className="text-2xl font-extrabold font-fredoka text-teal-900 mt-0.5">3<span className="text-xs font-normal text-teal-600">/6</span></div>
+                <div className="w-full bg-teal-200 h-2 rounded-full mt-2 overflow-hidden">
+                  <div className="bg-teal-500 h-full rounded-full" style={{ width: '50%' }}></div>
                 </div>
-                <p className="text-xs text-purple-900 font-bold mt-2">Brushing, Veggies & Bedtime ⭐</p>
               </div>
             </div>
 
-            {/* SUBJECT PROGRESS & MARKSHEET (Colorful Pastel Cards with rounded-[28px]) */}
-            <div className="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
-                <div>
-                  <h2 className="text-xl font-bold font-['Fredoka'] text-slate-800 flex items-center gap-2">
-                    <span>🎨</span>
-                    <span>Parth's Kindergarten Marksheet & Subject Progress</span>
-                  </h2>
-                  <p className="text-xs text-slate-500">Playful cards with subject scores, stars, and companion remarks</p>
+            {/* 3. Mini Habit Toggles */}
+            <div className="bg-white border-2 border-slate-200 rounded-3xl p-4 shadow-sm flex flex-col gap-3">
+              <div className="flex items-center justify-between p-2.5 rounded-2xl bg-sky-50/70 border border-sky-200">
+                <div className="flex items-center gap-3">
+                  <span className="w-7 h-7 rounded-xl bg-sky-500 text-white flex items-center justify-center text-xs font-bold">★</span>
+                  <div>
+                    <div className="text-xs font-bold text-slate-800">Spoken English & Words</div>
+                    <div className="text-[10px] text-slate-500 font-medium">Clear language pronunciation</div>
+                  </div>
                 </div>
-                <span className="text-xs px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold font-['Fredoka']">
-                  🏆 6-Year Milestones: PASSED WITH STARS
+                <input type="checkbox" checked={habits.spoken_english} onChange={() => toggleHabit('spoken_english')} className="w-5 h-5 accent-sky-500 cursor-pointer" />
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 rounded-2xl bg-amber-50/70 border border-amber-200">
+                <div className="flex items-center gap-3">
+                  <span className="w-7 h-7 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs font-bold">💧</span>
+                  <div>
+                    <div className="text-xs font-bold text-slate-800">Clean water</div>
+                    <div className="text-[10px] text-slate-500 font-medium">Drinking water routine</div>
+                  </div>
+                </div>
+                <input type="checkbox" checked={habits.clean_water} onChange={() => toggleHabit('clean_water')} className="w-5 h-5 accent-amber-500 cursor-pointer" />
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200">
+                <div className="flex items-center gap-3">
+                  <span className="w-7 h-7 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xs font-bold">🥬</span>
+                  <div>
+                    <div className="text-xs font-bold text-slate-800">Eating spinach greens</div>
+                    <div className="text-[10px] text-slate-500 font-medium">Healthy nutrition habits</div>
+                  </div>
+                </div>
+                <input type="checkbox" checked={habits.spinach_greens} onChange={() => toggleHabit('spinach_greens')} className="w-5 h-5 accent-emerald-500 cursor-pointer" />
+              </div>
+            </div>
+
+            {/* 4. Companion Remark Memo Sheet with Paperclip */}
+            <div className="p-5 pt-7 relative bg-[#FEFCE8] border-[2.5px] border-[#FACC15] rounded-[24px] shadow-[0_10px_25px_rgba(234,179,8,0.15)]">
+              {/* Paperclip */}
+              <div className="absolute -top-3.5 right-7 w-5 h-12 border-[3px] border-slate-400 rounded-t-xl pointer-events-none"></div>
+
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg">📋</span>
+                <h3 className="font-fredoka text-lg font-bold text-amber-950">Companion Remark</h3>
+              </div>
+
+              <p className="text-xs leading-relaxed text-slate-700 font-medium pr-4 mb-4">
+                Parth demonstrates exceptional inquisitiveness and imaginative engagement with KOTL, showing high empathy in manners & routines. In conversations on Science and Space, he shows keen interest and follows storytelling brisk healthy early bedtime-time habits.
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-amber-300/40">
+                <span className="bg-amber-200/80 text-amber-900 text-[10px] px-2.5 py-1 rounded-full font-bold border border-amber-300">
+                  ✔ Space Explorer
+                </span>
+                <span className="bg-amber-200/80 text-amber-900 text-[10px] px-2.5 py-1 rounded-full font-bold border border-amber-300">
+                  ✔ Creative Mind
+                </span>
+                <span className="bg-amber-200/80 text-amber-900 text-[10px] px-2.5 py-1 rounded-full font-bold border border-amber-300">
+                  ✔ Well Mannered
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* COLUMN 2: Subject Marksheet Cards & Dialogue Feed */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
+            
+            {/* 5 Wavy Subject Cards */}
+            <div className="flex flex-col gap-3.5">
+              
+              {/* Subject 1: Spoken English & Words */}
+              <div className="bg-[#EBF7FF] border-[2.5px] border-[#7DD3FC] rounded-[32px] p-4 flex items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="text-center flex-shrink-0">
+                    <span className="text-xl">⭐</span>
+                    <div className="text-[10px] font-bold font-fredoka text-sky-800">87/100</div>
+                  </div>
+                  <div>
+                    <h4 className="font-fredoka text-sm font-bold text-slate-800">Spoken English & Words</h4>
+                    <p className="text-[11px] text-slate-600 line-clamp-1">Parental remarks: a companion willingly stars & fluent.</p>
+                  </div>
+                </div>
+                <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold border border-emerald-300 whitespace-nowrap">
+                  Grade A (Fluent)
                 </span>
               </div>
 
-              <div className="space-y-3.5">
-                <div className="bg-sky-50/70 border-2 border-sky-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-white border-2 border-sky-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🗣️</div>
-                    <div>
-                      <h4 className="font-bold text-base text-sky-900 font-['Fredoka']">Spoken English & Words</h4>
-                      <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">Expresses thoughts clearly and naturally. Assimilates 2-3 syllable vocabulary seamlessly into stories.</p>
-                    </div>
+              {/* Subject 2: Science, Space & Curiosity */}
+              <div className="bg-[#FFF4E8] border-[2.5px] border-[#FDBA74] rounded-[32px] p-4 flex items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="text-center flex-shrink-0">
+                    <span className="text-xl">⭐</span>
+                    <div className="text-[10px] font-bold font-fredoka text-amber-800">95/100</div>
                   </div>
-                  <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                    <div className="text-amber-400 text-base">★★★★★</div>
-                    <span className="text-xs font-mono font-bold text-sky-800 bg-white px-3 py-1 rounded-xl border border-sky-200">84 / 100</span>
-                    <span className="px-3 py-1 rounded-xl bg-sky-600 text-white font-bold text-xs font-['Fredoka']">Grade A • Fluent</span>
+                  <div>
+                    <h4 className="font-fredoka text-sm font-bold text-slate-800">Science, Space & Curiosity</h4>
+                    <p className="text-[11px] text-slate-600 line-clamp-1">Curious remarks: eager engaging to feed your mindset.</p>
                   </div>
                 </div>
-
-                <div className="bg-emerald-50/70 border-2 border-emerald-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-white border-2 border-emerald-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🚀</div>
-                    <div>
-                      <h4 className="font-bold text-base text-emerald-900 font-['Fredoka']">Science, Space & Curiosity</h4>
-                      <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">Deeply curious about stars, planets, and rocket propulsion. Asks bright exploratory questions.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                    <div className="text-amber-400 text-base">★★★★★</div>
-                    <span className="text-xs font-mono font-bold text-emerald-800 bg-white px-3 py-1 rounded-xl border border-emerald-200">92 / 100</span>
-                    <span className="px-3 py-1 rounded-xl bg-emerald-600 text-white font-bold text-xs font-['Fredoka']">Grade A+ • Curious</span>
-                  </div>
-                </div>
-
-                <div className="bg-amber-50/70 border-2 border-amber-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-white border-2 border-amber-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🪥</div>
-                    <div>
-                      <h4 className="font-bold text-base text-amber-900 font-['Fredoka']">Good Habits & Manners</h4>
-                      <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">Brushes teeth twice daily and tidies up school bag and toys cheerfully when encouraged.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                    <div className="text-amber-400 text-base">★★★★★</div>
-                    <span className="text-xs font-mono font-bold text-amber-800 bg-white px-3 py-1 rounded-xl border border-amber-200">86 / 100</span>
-                    <span className="px-3 py-1 rounded-xl bg-amber-600 text-white font-bold text-xs font-['Fredoka']">Grade A • Polite</span>
-                  </div>
-                </div>
-
-                <div className="bg-purple-50/70 border-2 border-purple-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-white border-2 border-purple-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🎨</div>
-                    <div>
-                      <h4 className="font-bold text-base text-purple-900 font-['Fredoka']">Creativity & Stories</h4>
-                      <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">Loves drawing spacecraft and vibrant colors. Listens attentively to bedtime moral tales.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                    <div className="text-amber-400 text-base">★★★★★</div>
-                    <span className="text-xs font-mono font-bold text-purple-800 bg-white px-3 py-1 rounded-xl border border-purple-200">90 / 100</span>
-                    <span className="px-3 py-1 rounded-xl bg-purple-600 text-white font-bold text-xs font-['Fredoka']">Grade A+ • Creative</span>
-                  </div>
-                </div>
-
-                <div className="bg-rose-50/70 border-2 border-rose-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-white border-2 border-rose-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🤝</div>
-                    <div>
-                      <h4 className="font-bold text-base text-rose-900 font-['Fredoka']">Politeness & Cheerfulness</h4>
-                      <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">Speaks politely with parents and companions. Radiates upbeat, cheerful, and loving energy.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                    <div className="text-amber-400 text-base">★★★★★</div>
-                    <span className="text-xs font-mono font-bold text-rose-800 bg-white px-3 py-1 rounded-xl border border-rose-200">95 / 100</span>
-                    <span className="px-3 py-1 rounded-xl bg-rose-600 text-white font-bold text-xs font-['Fredoka']">Grade A+ • Kind</span>
-                  </div>
-                </div>
+                <span className="bg-cyan-100 text-cyan-800 text-xs px-2.5 py-1 rounded-full font-bold border border-cyan-300 whitespace-nowrap">
+                  Grade A+ (Curious)
+                </span>
               </div>
+
+              {/* Subject 3: Good Habits & Politeness */}
+              <div className="bg-[#E8FBF0] border-[2.5px] border-[#86EFAC] rounded-[32px] p-4 flex items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="text-center flex-shrink-0">
+                    <span className="text-xl">⭐</span>
+                    <div className="text-[10px] font-bold font-fredoka text-emerald-800">95/100</div>
+                  </div>
+                  <div>
+                    <h4 className="font-fredoka text-sm font-bold text-slate-800">Good Habits & Politeness</h4>
+                    <p className="text-[11px] text-slate-600 line-clamp-1">Companion remarks: nice and courtesy engaged sensitivity.</p>
+                  </div>
+                </div>
+                <span className="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold border border-amber-300 whitespace-nowrap">
+                  Grade A
+                </span>
+              </div>
+
+              {/* Subject 4: Creativity & Studies */}
+              <div className="bg-[#FFF0F2] border-[2.5px] border-[#FCA5A5] rounded-[32px] p-4 flex items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="text-center flex-shrink-0">
+                    <span className="text-xl">⭐</span>
+                    <div className="text-[10px] font-bold font-fredoka text-rose-800">95/100</div>
+                  </div>
+                  <div>
+                    <h4 className="font-fredoka text-sm font-bold text-slate-800">Creativity & Studies</h4>
+                    <p className="text-[11px] text-slate-600 line-clamp-1">Story habits: loves curious storytelling and executing habits.</p>
+                  </div>
+                </div>
+                <span className="bg-blue-100 text-blue-800 text-xs px-2.5 py-1 rounded-full font-bold border border-blue-300 whitespace-nowrap">
+                  Grade A+ (Creative)
+                </span>
+              </div>
+
+              {/* Subject 5: Politeness & Cheerfulness */}
+              <div className="bg-[#EEF4FF] border-[2.5px] border-[#93C5FD] rounded-[32px] p-4 flex items-center justify-between gap-3 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="text-center flex-shrink-0">
+                    <span className="text-xl">⭐</span>
+                    <div className="text-[10px] font-bold font-fredoka text-indigo-800">95/100</div>
+                  </div>
+                  <div>
+                    <h4 className="font-fredoka text-sm font-bold text-slate-800">Politeness & Cheerfulness</h4>
+                    <p className="text-[11px] text-slate-600 line-clamp-1">Pleasing habits: swift connection playful and bedtime-routine habits.</p>
+                  </div>
+                </div>
+                <span className="bg-rose-100 text-rose-800 text-xs px-2.5 py-1 rounded-full font-bold border border-rose-300 whitespace-nowrap">
+                  Grade A+
+                </span>
+              </div>
+
             </div>
 
-            {/* HABITS TRACKER & CHAT (Split Module) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Speech Dialogue Feed */}
+            <div className="bg-white border-2 border-slate-200 rounded-3xl p-5 shadow-sm">
+              <div className="mb-4">
+                <h3 className="font-fredoka text-lg font-bold text-slate-800">Recent Dialogue</h3>
+                <p className="text-xs text-slate-500">Real-time companion conversations with audio replay</p>
+              </div>
 
-              {/* Left: Habits Tracker with Bouncy Rounded Pill Toggles */}
-              <div className="lg:col-span-7 space-y-6">
-                <div className="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div className="flex items-center space-x-2.5">
-                      <span className="text-2xl">⭐</span>
-                      <div>
-                        <h3 className="font-bold text-base text-slate-800 font-['Fredoka']">Daily Habit Checklist & Routine Tracker</h3>
-                        <p className="text-xs text-slate-500">Tap to toggle what Parth achieved today</p>
-                      </div>
-                    </div>
-                    <span className="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold font-['Fredoka'] border border-emerald-300">
-                      {habits.filter(h => h.done).length}/{habits.length} Done
-                    </span>
+              <div className="flex flex-col gap-4 max-h-[460px] overflow-y-auto pr-1">
+                {/* Turn 1: Parth */}
+                <div className="flex items-start gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-sm flex-shrink-0 mt-1">
+                    👦
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                    {habits.map(habit => (
-                      <label
-                        key={habit.id}
-                        onClick={() => toggleHabit(habit.id)}
-                        className={`flex items-start gap-3 p-4 rounded-[24px] border-2 ${habit.color} cursor-pointer hover:shadow-xs transition-all`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={habit.done}
-                          onChange={() => {}}
-                          className="mt-1 w-4 h-4 rounded-md"
-                        />
-                        <div>
-                          <div className="text-xs sm:text-sm font-bold font-['Fredoka']">{habit.title}</div>
-                          <div className="text-[11px] opacity-75 font-medium">{habit.subtitle}</div>
-                        </div>
-                      </label>
-                    ))}
+                  <div className="bg-sky-50 border-2 border-sky-200 rounded-2xl rounded-tl-none p-3 shadow-sm max-w-[85%]">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-xs font-bold text-sky-700">Parth</span>
+                      <button onClick={playChime} className="w-6 h-6 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] shadow-sm">
+                        ▶
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                      "KOTL, how do stars shine at night, and can we fly a rocket to the moon?"
+                    </p>
                   </div>
                 </div>
 
-                {/* SPEECH BUBBLE CHAT (With Bubble Tails & Kid Avatars) */}
-                <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 shadow-sm">
-                  <h3 className="text-lg font-bold font-['Fredoka'] text-slate-800 mb-4">💬 Live Companion Dialogue</h3>
-                  
-                  {/**/}
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-lg shrink-0">👦</div>
-                    <div className="bg-sky-50 border border-sky-200 text-slate-800 rounded-2xl rounded-tl-sm p-4 max-w-lg shadow-sm">
-                      <p className="text-xs font-bold text-sky-600 mb-1 font-['Fredoka']">Parth asked:</p>
-                      <p className="text-sm leading-relaxed font-medium">"KOTL, how do stars shine at night, and can we fly a rocket to the moon?"</p>
+                {/* Turn 2: KOTL Robot */}
+                <div className="flex items-start justify-end gap-2.5">
+                  <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl rounded-tr-none p-3 shadow-sm max-w-[85%]">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-xs font-bold text-emerald-700">KOTL Robot</span>
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 border border-emerald-300">
+                        🔊 Audio Play
+                      </span>
                     </div>
+                    <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                      "Stars shine because they are giant balls of glowing gas, and yes! Astronauts travel on powerful rockets into space!"
+                    </p>
                   </div>
-
-                  {/**/}
-                  <div className="flex items-start justify-end gap-3 mb-4">
-                    <div className="bg-amber-50 border border-amber-200 text-slate-800 rounded-2xl rounded-tr-sm p-4 max-w-lg shadow-sm text-left">
-                      <div className="flex items-center justify-between pb-1 mb-1 border-b border-amber-200/60 gap-3">
-                        <p className="text-xs font-bold text-amber-700 font-['Fredoka']">KOTL Companion answered:</p>
-                        <button
-                          onClick={() => playVoice('Stars are giant glowing suns far away in space, Parth! They twinkle because their light travels across the sky to say hello to you!')}
-                          className="text-xs text-amber-600 hover:text-amber-800 flex items-center gap-1 font-bold font-['Fredoka']"
-                        >
-                          <Volume2 className="w-3.5 h-3.5" />
-                          <span>Play Voice</span>
-                        </button>
-                      </div>
-                      <p className="text-sm leading-relaxed text-slate-700">"Stars are giant glowing suns far away in space, Parth! They twinkle because their light travels across the sky to say hello to you!"</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-amber-100 border border-amber-400 flex items-center justify-center text-lg shrink-0">🤖</div>
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-sm flex-shrink-0 mt-1">
+                    🤖
                   </div>
                 </div>
 
-                {/* Parent Action Tips */}
-                <div className="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-                  <div className="flex items-center space-x-2.5 pb-3 border-b border-slate-100">
-                    <span className="text-2xl">💡</span>
-                    <div>
-                      <h3 className="font-bold text-base text-slate-800 font-['Fredoka']">Parent Action Tips & Everyday Home Activities</h3>
-                      <p className="text-xs text-slate-500">Fun 5-minute activities to do with Parth at home</p>
+                {/* Turn 3: KOTL Robot Water Reminder */}
+                <div className="flex items-start justify-end gap-2.5">
+                  <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl rounded-tr-none p-3 shadow-sm max-w-[85%]">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-xs font-bold text-amber-700">KOTL Robot</span>
+                      <span className="text-[10px] text-amber-600 font-semibold">Habit Care</span>
                     </div>
+                    <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                      "Parth, remember to drink a fresh glass of water after your playground games!"
+                    </p>
                   </div>
+                  <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center text-sm flex-shrink-0 mt-1">
+                    🤖
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-4 bg-amber-50/70 border-2 border-amber-300 rounded-[24px] space-y-1.5 shadow-xs">
-                      <h4 className="font-bold text-xs sm:text-sm text-amber-950 flex items-center space-x-1.5 font-['Fredoka']">
-                        <span>✨</span>
-                        <span>Superhero Fuel Game</span>
-                      </h4>
-                      <p className="text-xs text-slate-600">Serve crunchy carrots & fruit snacks as superhero power-ups during lunch.</p>
+                {/* Turn 4: Parth */}
+                <div className="flex items-start gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-sm flex-shrink-0 mt-1">
+                    👦
+                  </div>
+                  <div className="bg-sky-50 border-2 border-sky-200 rounded-2xl rounded-tl-none p-3 shadow-sm max-w-[85%]">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-xs font-bold text-sky-700">Parth</span>
+                      <button onClick={playChime} className="w-6 h-6 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center text-[10px] shadow-sm">
+                        ▶
+                      </button>
                     </div>
+                    <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                      "Stars are glowing suns with no rest, and space is full of big rockets!"
+                    </p>
+                  </div>
+                </div>
 
-                    <div className="p-4 bg-sky-50/70 border-2 border-sky-300 rounded-[24px] space-y-1.5 shadow-xs">
-                      <h4 className="font-bold text-xs sm:text-sm text-sky-950 flex items-center space-x-1.5 font-['Fredoka']">
-                        <span>✨</span>
-                        <span>5-Min Night Sky Routine</span>
-                      </h4>
-                      <p className="text-xs text-slate-600">Spend 5 quiet minutes at the window observing the moon and stars before bed.</p>
+                {/* Turn 5: KOTL Robot */}
+                <div className="flex items-start justify-end gap-2.5">
+                  <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl rounded-tr-none p-3 shadow-sm max-w-[85%]">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-xs font-bold text-emerald-700">KOTL Robot</span>
                     </div>
-
-                    <div className="p-4 bg-emerald-50/70 border-2 border-emerald-300 rounded-[24px] space-y-1.5 shadow-xs">
-                      <h4 className="font-bold text-xs sm:text-sm text-emerald-950 flex items-center space-x-1.5 font-['Fredoka']">
-                        <span>✨</span>
-                        <span>Two-Word Discovery</span>
-                      </h4>
-                      <p className="text-xs text-slate-600">Ask Parth to teach you one cool word he learned from KOTL today.</p>
-                    </div>
+                    <p className="text-xs text-slate-800 leading-relaxed font-medium">
+                      "Did you finish eating your delicious greens today?"
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-sm flex-shrink-0 mt-1">
+                    🤖
                   </div>
                 </div>
 
               </div>
-
-              {/* Right: Floating Sticky Note Companion Observation */}
-              <div className="lg:col-span-5 space-y-6">
-
-                {/* Sticky Note Card */}
-                <div className="bg-amber-50/80 border-2 border-amber-300 rounded-[32px] p-6 shadow-sm relative space-y-3.5">
-                  <div className="flex items-center justify-between pb-2 border-b border-amber-200">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl">📌</span>
-                      <h3 className="font-bold text-base text-amber-950 font-['Fredoka']">Teacher & KOTL Companion Observation</h3>
-                    </div>
-                    <span className="text-[10px] uppercase font-mono px-2.5 py-1 rounded-full bg-white text-amber-800 font-bold border border-amber-300 shadow-2xs">Verified</span>
-                  </div>
-
-                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-sans">
-                    Parth demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful, polite spirit during conversations with KOTL. He shows strong memory retention when talking about Space, Stars, and Creative Art. He grasps English vocabulary quickly, asks thoughtful questions, and is eagerly developing good daily habits like tidying up his toys and brushing his teeth.
-                  </p>
-
-                  <div className="pt-2 flex flex-wrap gap-2 text-xs font-['Fredoka']">
-                    <span className="px-3.5 py-1.5 rounded-2xl bg-white border border-sky-300 text-sky-800 font-bold shadow-xs">🚀 Space Explorer</span>
-                    <span className="px-3.5 py-1.5 rounded-2xl bg-white border border-amber-300 text-amber-800 font-bold shadow-xs">🎨 Creative</span>
-                    <span className="px-3.5 py-1.5 rounded-2xl bg-white border border-emerald-300 text-emerald-800 font-bold shadow-xs">🤝 Well Mannered</span>
-                  </div>
-                </div>
-
-                {/* Child Affinity & Curiosity Tags */}
-                <div className="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div>
-                      <h3 className="font-bold text-base text-slate-800 flex items-center space-x-2 font-['Fredoka']">
-                        <span>💖</span>
-                        <span>Parth's Favorite Passions & Topics</span>
-                      </h3>
-                      <p className="text-xs text-slate-500">Everyday topics Parth loves exploring</p>
-                    </div>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">Affinities</span>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    <div className="p-3.5 bg-emerald-50/70 border-2 border-emerald-300 rounded-[24px] space-y-1 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-emerald-950 font-['Fredoka']">Space Exploration & Rocketry</span>
-                        <span className="text-xs font-mono font-bold text-emerald-800 bg-white px-2.5 py-0.5 rounded-full border border-emerald-300">95%</span>
-                      </div>
-                      <p className="text-xs text-slate-600">Displays immense excitement when talking about stars, the moon, and rocket missions.</p>
-                    </div>
-
-                    <div className="p-3.5 bg-sky-50/70 border-2 border-sky-300 rounded-[24px] space-y-1 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-sky-950 font-['Fredoka']">Creative Drawing & Visual Imagination</span>
-                        <span className="text-xs font-mono font-bold text-sky-800 bg-white px-2.5 py-0.5 rounded-full border border-sky-300">90%</span>
-                      </div>
-                      <p className="text-xs text-slate-600">Enjoys visualizing colors, describing spacecraft designs, and creating artwork.</p>
-                    </div>
-
-                    <div className="p-3.5 bg-purple-50/70 border-2 border-purple-300 rounded-[24px] space-y-1 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-purple-950 font-['Fredoka']">Bedtime Quests & Heroic Stories</span>
-                        <span className="text-xs font-mono font-bold text-purple-800 bg-white px-2.5 py-0.5 rounded-full border border-purple-300">88%</span>
-                      </div>
-                      <p className="text-xs text-slate-600">Thrives when participating as an active hero in short story chapters before bed.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sensitivities & Gentle Care */}
-                <div className="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div>
-                      <h3 className="font-bold text-base text-slate-800 flex items-center space-x-2 font-['Fredoka']">
-                        <span>🛡️</span>
-                        <span>Care Areas & Positive Guidance</span>
-                      </h3>
-                      <p className="text-xs text-slate-500">Handled with gentle positive guidance</p>
-                    </div>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold border border-rose-300">Gentle</span>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    <div className="p-3.5 bg-rose-50/70 border-2 border-rose-300 rounded-[24px] space-y-1 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-rose-950 font-['Fredoka']">Bitter & Green Vegetables</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-white text-rose-800 border border-rose-300 font-mono font-bold">Gentle Care</span>
-                      </div>
-                      <p className="text-xs text-slate-600"><strong className="text-slate-800">KOTL Care:</strong> Enthusiastically relates vegetable nutrients to superhero stamina, avoiding lecturing.</p>
-                    </div>
-
-                    <div className="p-3.5 bg-rose-50/70 border-2 border-rose-300 rounded-[24px] space-y-1 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-sm text-rose-950 font-['Fredoka']">Dark Rooms & Night Shadows</span>
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-white text-rose-800 border border-rose-300 font-mono font-bold">Gentle Care</span>
-                      </div>
-                      <p className="text-xs text-slate-600"><strong className="text-slate-800">KOTL Care:</strong> Provides soothing ambient audio, calm reassuring bedtime tales of guardian stars.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Milestones Achieved Card */}
-                <div className="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <h3 className="font-bold text-base text-slate-800 flex items-center space-x-2 font-['Fredoka']">
-                      <span>🏆</span>
-                      <span>Learning Milestones Achieved</span>
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div className="p-3.5 bg-sky-50/70 border-2 border-sky-300 rounded-[24px] space-y-1 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-white text-sky-800 border border-sky-300">Milestone</span>
-                        <span className="text-xs font-mono font-bold text-emerald-600">Achieved</span>
-                      </div>
-                      <h5 className="font-bold text-xs text-sky-950 mt-1 font-['Fredoka']">Grasped 50+ Lexical Terms</h5>
-                    </div>
-
-                    <div className="p-3.5 bg-sky-50/70 border-2 border-sky-300 rounded-[24px] space-y-1 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-white text-sky-800 border border-sky-300">Milestone</span>
-                        <span className="text-xs font-mono font-bold text-emerald-600">Achieved</span>
-                      </div>
-                      <h5 className="font-bold text-xs text-sky-950 mt-1 font-['Fredoka']">20+ Inquiries Initiated</h5>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
             </div>
 
           </div>
-        )}
 
-        {/* Tab 2: Parent Directives & Habits */}
-        {currentTab === 'missions' && (
-          <div className="space-y-6">
-            <div className="bg-white border-2 border-slate-200 rounded-[32px] p-6 sm:p-7 space-y-4 shadow-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center space-x-2.5">
-                    <span className="text-3xl">🎯</span>
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-800 font-['Fredoka']">Parent Directives & Habit Missions</h2>
+          {/* COLUMN 3: Habits Tracker, Affinity Cards, Care & Tips */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
+
+            {/* Habits Tracker */}
+            <div className="bg-white border-2 border-slate-200 rounded-3xl p-5 shadow-sm">
+              <div className="mb-3">
+                <h3 className="font-fredoka text-lg font-bold text-slate-800">Habits Tracker</h3>
+                <p className="text-xs text-slate-500">Top mark centers and options for check-list</p>
+              </div>
+
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-sky-50 border border-sky-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-lg bg-sky-500 text-white flex items-center justify-center text-xs font-bold">✓</div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Brushing teeth</div>
+                      <div className="text-[10px] text-slate-500 font-medium">Morning health habits</div>
+                    </div>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-2xl">
-                    Configure any habit or manner you want KOTL to gently encourage during daily conversations with Parth.
+                  <input type="checkbox" checked={habits.brushing} onChange={() => toggleHabit('brushing')} className="w-5 h-5 accent-emerald-500 cursor-pointer" />
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-50 border border-amber-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs font-bold">✓</div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Clean water</div>
+                      <div className="text-[10px] text-slate-500 font-medium">Clean tap toggle</div>
+                    </div>
+                  </div>
+                  <input type="checkbox" checked={habits.water} onChange={() => toggleHabit('water')} className="w-5 h-5 accent-amber-500 cursor-pointer" />
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-xs font-bold">✓</div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Eating spinach greens</div>
+                      <div className="text-[10px] text-slate-500 font-medium">Nutritious meal room</div>
+                    </div>
+                  </div>
+                  <input type="checkbox" checked={habits.spinach} onChange={() => toggleHabit('spinach')} className="w-5 h-5 accent-emerald-500 cursor-pointer" />
+                </div>
+              </div>
+            </div>
+
+            {/* Affinity Cards: Cute Lion & Cute Rocket */}
+            <div>
+              <div className="mb-3">
+                <h3 className="font-fredoka text-lg font-bold text-slate-800">Affinity cards</h3>
+                <p className="text-xs text-slate-500">Scallop cards, asymmetrical cards</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#FFEFE8] border-[2.5px] border-[#F97316] rounded-[32px] p-4 relative overflow-hidden flex flex-col justify-between">
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-orange-100 border border-orange-300 flex items-center justify-center text-2xl mb-2 shadow-sm">
+                      🦁
+                    </div>
+                    <h4 className="font-fredoka text-sm font-bold text-slate-800 leading-tight">Prehistoric Science</h4>
+                    <p className="text-[10px] text-slate-600 mt-1 leading-snug">
+                      Curious about wildlife habits, animal species, and nature science.
+                    </p>
+                  </div>
+                  <div className="mt-3 flex justify-end text-orange-500 opacity-70 text-lg">
+                    ⚛️
+                  </div>
+                </div>
+
+                <div className="bg-[#E7F9EE] border-[2.5px] border-[#10B981] rounded-[32px] p-4 relative overflow-hidden flex flex-col justify-between">
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-2xl mb-2 shadow-sm">
+                      🚀
+                    </div>
+                    <h4 className="font-fredoka text-sm font-bold text-slate-800 leading-tight">Space Exploration</h4>
+                    <p className="text-[10px] text-slate-600 mt-1 leading-snug">
+                      Fascinated by planetary orbits, astronauts, telescopes, and cosmic star systems.
+                    </p>
+                  </div>
+                  <div className="mt-3 flex justify-end text-emerald-600 opacity-70 text-lg">
+                    🪐
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sensitivities & Care Cloud Cards */}
+            <div>
+              <div className="mb-3">
+                <h3 className="font-fredoka text-lg font-bold text-slate-800">Sensitivities & Care</h3>
+                <p className="text-xs text-slate-500">Handle with age high condition & Care</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#DCFCE7] border-[2.5px] border-[#22C55E] rounded-[34px] p-3.5 relative">
+                  <div className="flex items-center gap-1.5 mb-1 text-emerald-800 font-bold text-xs">
+                    <span>🥬</span>
+                    <span>Bitter Vegetables</span>
+                  </div>
+                  <p className="text-[10px] text-emerald-950 font-medium leading-tight">
+                    Prefers spinach pureed or mild in cream; dislikes raw bitter textures.
+                  </p>
+                </div>
+
+                <div className="bg-[#E0E7FF] border-[2.5px] border-[#6366F1] rounded-[34px] p-3.5 relative">
+                  <div className="flex items-center gap-1.5 mb-1 text-indigo-900 font-bold text-xs">
+                    <span>🌙</span>
+                    <span>Dark Rooms</span>
+                  </div>
+                  <p className="text-[10px] text-indigo-950 font-medium leading-tight">
+                    Prefers soft 2700K ambient night light; calmed by gentle bedtime melodies.
                   </p>
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-3 pt-3 border-t border-slate-100">
-                {missions.map(m => (
-                  <div key={m.id} className="p-4 rounded-[24px] border-2 border-emerald-300 bg-white flex items-center justify-between gap-3 shadow-xs">
-                    <div>
-                      <h4 className="font-bold text-sm text-slate-800 font-['Fredoka']">{m.title}</h4>
-                      <p className="text-xs text-slate-600">{m.directive}</p>
-                    </div>
-                    <span className="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 font-['Fredoka']">Active</span>
+            {/* Parent Action Tips & Milestones Achieved */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3">
+              <div className="bg-amber-50/70 border-2 border-amber-300 rounded-3xl p-3.5 shadow-sm">
+                <div className="flex items-center gap-1.5 mb-2 text-amber-900 font-bold text-xs">
+                  <span>💡</span>
+                  <span className="font-fredoka">Parent Action Tips</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="bg-white/80 border border-amber-200 rounded-xl p-2">
+                    <div className="text-[10px] font-bold text-amber-800">Bedtime Wind-Down</div>
+                    <div className="text-[9px] text-slate-600 leading-tight">Read a 10-minute bedtime space story at 8:30 PM.</div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 3: Dialogue History */}
-        {currentTab === 'chat' && (
-          <div className="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-base text-slate-800 font-['Fredoka']">Real-Time Spoken Dialogue Stream</h3>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300 font-['Fredoka']">Live Synced</span>
-            </div>
-
-            <div className="h-96 overflow-y-auto space-y-4 pr-2">
-              {chatHistory.map((turn, i) => (
-                <div key={i} className={`flex ${turn.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] p-4 rounded-3xl ${turn.role === 'user' ? 'bg-sky-50 text-slate-800 rounded-tr-xs border-2 border-sky-200' : 'bg-amber-50 text-slate-800 rounded-tl-xs border-2 border-amber-200'}`}>
-                    <div className="text-[10px] font-mono opacity-60 mb-1 font-['Fredoka']">{turn.role === 'user' ? '🧒 Parth' : '🤖 KOTL Buddy'}</div>
-                    <p className="text-xs sm:text-sm leading-relaxed">{turn.content}</p>
+                  <div className="bg-white/80 border border-amber-200 rounded-xl p-2">
+                    <div className="text-[10px] font-bold text-amber-800">Two-Word Discovery</div>
+                    <div className="text-[9px] text-slate-600 leading-tight">Introduce 2 new vocabulary words during mealtime.</div>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="bg-amber-50/70 border-2 border-amber-300 rounded-3xl p-3.5 shadow-sm">
+                <div className="flex items-center gap-1.5 mb-2 text-amber-900 font-bold text-xs">
+                  <span>⭐</span>
+                  <span className="font-fredoka">Milestones Achieved</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="bg-white/80 border border-emerald-200 rounded-xl p-1.5 text-center">
+                    <span className="text-[9px] font-bold text-emerald-700 block">Linguistic</span>
+                    <span className="text-[8px] bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded font-semibold">Achieved</span>
+                  </div>
+                  <div className="bg-white/80 border border-emerald-200 rounded-xl p-1.5 text-center">
+                    <span className="text-[9px] font-bold text-emerald-700 block">Hydration</span>
+                    <span className="text-[8px] bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded font-semibold">Achieved</span>
+                  </div>
+                  <div className="bg-white/80 border border-emerald-200 rounded-xl p-1.5 text-center">
+                    <span className="text-[9px] font-bold text-emerald-700 block">Healthy Greens</span>
+                    <span className="text-[8px] bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded font-semibold">Achieved</span>
+                  </div>
+                  <div className="bg-white/80 border border-emerald-200 rounded-xl p-1.5 text-center">
+                    <span className="text-[9px] font-bold text-emerald-700 block">Sleep Routine</span>
+                    <span className="text-[8px] bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded font-semibold">Achieved</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <form onSubmit={handleSendMessage} className="pt-3 border-t border-slate-100 flex items-center space-x-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                placeholder="Type a message to KOTL..."
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-sky-400"
-              />
-              <button type="submit" className="p-2.5 rounded-2xl bg-sky-500 text-white hover:bg-sky-600 shadow-md">
-                <Send className="w-4 h-4" />
-              </button>
-            </form>
           </div>
-        )}
 
+        </div>
       </main>
 
-      {/* Profile Modal */}
+      {/* Cloud Wave Footer */}
+      <div className="relative w-full overflow-hidden leading-none z-0 mt-8">
+        <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-full h-12 text-[#FFF7E6] fill-current">
+          <path d="M0,0 C150,90 350,-40 500,45 C650,130 900,10 1200,50 L1200,120 L0,120 Z"></path>
+        </svg>
+        <div className="bg-[#FFF7E6] py-3 text-center text-xs text-amber-900/60 font-semibold">
+          KOTL Kids Pediatric Behavioral & Intelligence Companion • Pure Kindergarten Edition
+        </div>
+      </div>
+
+      {/* Child Profile Modal */}
       {isProfileModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-          <div className="w-full max-w-xl p-6 sm:p-7 rounded-[32px] bg-white border-2 border-slate-200 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-base sm:text-lg text-slate-800 font-['Fredoka']">Child Profile & Safety Guardrails</h3>
-              <button onClick={() => setIsProfileModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-lg">✕</button>
-            </div>
-            <div className="space-y-3 text-xs">
-              <p className="text-slate-600">Child: <strong>Parth</strong> (6 Years, Boy). Bedtime routine set to 21:00 IST.</p>
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 font-['Fredoka']">
-                <div>✓ Always ask parents before touching medicines</div>
-                <div>✓ Strict warning against sharp tools & fire</div>
-                <div>✓ Never confirm purchases without parents</div>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border-2 border-amber-300 rounded-[32px] p-6 max-w-lg w-full shadow-2xl relative">
+            <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center">
+              ✕
+            </button>
+            <h2 className="font-fredoka text-xl font-bold text-slate-800 mb-2">Child Profile & Safety Settings</h2>
+            <div className="flex flex-col gap-3 text-xs font-semibold text-slate-700">
+              <div>
+                <label className="block mb-1">Child Name</label>
+                <input type="text" value={profile.name} onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))} className="w-full px-3 py-2 rounded-xl border border-slate-200" />
               </div>
-            </div>
-            <div className="flex justify-end pt-2">
-              <button onClick={() => setIsProfileModalOpen(false)} className="px-5 py-2 rounded-xl bg-sky-500 text-white font-bold text-xs shadow-md font-['Fredoka']">Close</button>
+              <div>
+                <label className="block mb-1">Age</label>
+                <input type="number" value={profile.age} onChange={(e) => setProfile(p => ({ ...p, age: parseInt(e.target.value, 10) }))} className="w-full px-3 py-2 rounded-xl border border-slate-200" />
+              </div>
+              <div className="flex justify-end gap-2 mt-2">
+                <button onClick={() => setIsProfileModalOpen(false)} className="px-4 py-2 rounded-xl bg-amber-500 text-white font-bold font-fredoka">
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
