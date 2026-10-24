@@ -851,7 +851,7 @@ void loop()
     // Butter-smooth ~33 FPS OLED animations on Core 1 - rate-limited to eliminate any screen flickering!
     static uint32_t s_lastOledUpdateMs = 0;
     const uint32_t nowOledMs = millis();
-    if (nowOledMs - s_lastOledUpdateMs >= 30)
+    if (nowOledMs - s_lastOledUpdateMs >= 25)
     {
       s_lastOledUpdateMs = nowOledMs;
       roboEyes.update();
@@ -1035,6 +1035,14 @@ void initEyes()
 void applyVoiceEyeAnimation(const String &expression)
 {
   if (expression.length() == 0) return;
+  static String s_lastVoiceExpr = "";
+  static uint32_t s_lastVoiceExprMs = 0;
+  if (expression == s_lastVoiceExpr && (millis() - s_lastVoiceExprMs < 800))
+  {
+    return; // Reject rapid duplicate eye animations to prevent display jitter/flickering
+  }
+  s_lastVoiceExpr = expression;
+  s_lastVoiceExprMs = millis();
   s_activeVoiceEyeExpr = expression;
   Serial.print("[RoboEyes] Voice Eye Animation: ");
   Serial.println(expression);
@@ -2919,10 +2927,11 @@ void serviceMicrophoneInput()
   if (nowMs - s_lastNoiseFloorUpdateMs >= 100)
   {
     s_lastNoiseFloorUpdateMs = nowMs;
-    // Only adapt noise floor when quiet (below trigger threshold) so speech doesn't pollute the baseline
-    if (micState.amplitude < dynamicSpikeThreshold)
+    // Only adapt noise floor when genuinely quiet (< 150) so speech NEVER pollutes the baseline!
+    if (micState.amplitude < 150)
     {
       s_ambientNoiseFloor = (s_ambientNoiseFloor * 31 + micState.amplitude) / 32;
+      if (s_ambientNoiseFloor > 120) s_ambientNoiseFloor = 120;
     }
   }
 

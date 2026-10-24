@@ -418,6 +418,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     );
 
     let offset = 0;
+    let totalStreamedBytes = 0;
     while (offset < pcmAudio.length && ws.readyState === WebSocket.OPEN) {
       const nextOffset = Math.min(offset + AUDIO_CHUNK_STREAM_SIZE, pcmAudio.length);
       const chunk = pcmAudio.subarray(offset, nextOffset);
