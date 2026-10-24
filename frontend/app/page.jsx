@@ -14,6 +14,11 @@ export default function KindergartenHubPage() {
   const [isAddWordBookOpen, setIsAddWordBookOpen] = useState(false);
   const [isLogPlayOpen, setIsLogPlayOpen] = useState(false);
   const [isAddHabitOpen, setIsAddHabitOpen] = useState(false);
+  const [deviceVolume, setDeviceVolume] = useState(75);
+  const [isSleepMode, setIsSleepMode] = useState(false);
+  const [isSosActive, setIsSosActive] = useState(false);
+  const [isVolumeModalOpen, setIsVolumeModalOpen] = useState(false);
+  const [isSosModalOpen, setIsSosModalOpen] = useState(false);
 
   // Profile State
   const [profile, setProfile] = useState({
@@ -339,6 +344,53 @@ export default function KindergartenHubPage() {
     setActivePlayMins(p => p + mins);
     setIsLogPlayOpen(false);
     playVoice('Logged ' + mins + ' minutes of active play for Parth!');
+  };
+
+  const handleVolumeChange = (val) => {
+    const v = parseInt(val, 10) || 0;
+    setDeviceVolume(v);
+    fetch('/api/device/control', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ volume: v })
+    }).catch(() => {});
+  };
+
+  const toggleSleepMode = () => {
+    const next = !isSleepMode;
+    setIsSleepMode(next);
+    if (next) {
+      playVoice('Bedtime mode active. Goodnight Parth, sweet dreams among the stars!');
+    } else {
+      playVoice('Good morning Parth! KOTL is awake and ready for fun learning!');
+    }
+    fetch('/api/device/sleep', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sleep: next })
+    }).catch(() => {});
+  };
+
+  const toggleSosBeacon = (active) => {
+    setIsSosActive(active);
+    if (active) {
+      playVoice('Emergency Alert activated! Please stay safe, Mummy and Papa are notified!');
+    }
+    fetch('/api/device/emergency-sos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active })
+    }).catch(() => {});
+  };
+
+  const rebootDevice = () => {
+    if (confirm('Reboot KOTL ESP32 Device?')) {
+      fetch('/api/device/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reboot: true })
+      }).then(() => alert('Device reboot command sent!')).catch(() => alert('Reboot signaled.'));
+    }
   };
 
   const handleAddHabit = (e) => {

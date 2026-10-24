@@ -502,9 +502,17 @@ function getDeviceConfig() {
     backend_url: defaultBackend,
     version: 1,
     last_updated: new Date().toISOString(),
+    volume: 75,
+    sleep_mode: false,
+    mic_muted: false,
+    night_light: false,
+    battery_pct: 88,
+    battery_charging: true,
+    emergency_sos: false,
+    emergency_sos_time: null,
     device_status: {
       ip: null,
-      rssi: null,
+      rssi: -58,
       online: false,
       last_seen: null,
       last_seen_seconds_ago: null
@@ -581,6 +589,98 @@ app.post("/api/device/config", (req, res) => {
   saveDeviceConfig(updated);
   console.log(`[Device Config] Updated to version ${updated.version}: SSID="${wifi_ssid}", Backend="${backend_url}"`);
   res.json({ success: true, message: "Device config updated successfully", config: updated });
+});
+
+// Hardware Remote Cockpit State & Volume/SOS/Sleep Controls
+app.get("/api/device/state", (_req, res) => {
+  const config = getDeviceConfig();
+  res.json({
+    success: true,
+    volume: typeof config.volume === "number" ? config.volume : 75,
+    sleep_mode: !!config.sleep_mode,
+    mic_muted: !!config.mic_muted,
+    night_light: !!config.night_light,
+    battery_pct: typeof config.battery_pct === "number" ? config.battery_pct : 88,
+    battery_charging: config.battery_charging !== false,
+    emergency_sos: !!config.emergency_sos,
+    emergency_sos_time: config.emergency_sos_time || null,
+    device_status: config.device_status || {}
+  });
+});
+
+app.post("/api/device/control", (req, res) => {
+  const current = getDeviceConfig();
+  const { volume, sleep_mode, mic_muted, night_light, reboot } = req.body || {};
+
+  if (typeof volume === "number") {
+    current.volume = Math.max(0, Math.min(100, Math.round(volume)));
+  }
+  if (typeof sleep_mode === "boolean") {
+    current.sleep_mode = sleep_mode;
+  }
+  if (typeof mic_muted === "boolean") {
+    current.mic_muted = mic_muted;
+  }
+  if (typeof night_light === "boolean") {
+    current.night_light = night_light;
+  }
+  if (reboot) {
+    current.last_reboot = new Date().toISOString();
+  }
+  current.last_updated = new Date().toISOString();
+  saveDeviceConfig(current);
+
+  res.json({
+    success: true,
+    message: reboot ? "Device reboot triggered" : "Device control settings updated",
+    state: {
+      volume: current.volume,
+      sleep_mode: current.sleep_mode,
+      mic_muted: current.mic_muted,
+      night_light: current.night_light,
+      battery_pct: current.battery_pct,
+      battery_charging: current.battery_charging,
+      emergency_sos: current.emergency_sos
+    }
+  });
+});
+
+app.post("/api/device/emergency-sos", (req, res) => {
+  const current = getDeviceConfig();
+  const { active } = req.body || {};
+  current.emergency_sos = active !== false;
+  current.emergency_sos_time = current.emergency_sos ? new Date().toISOString() : null;
+  saveDeviceConfig(current);
+
+  res.json({
+    success: true,
+    emergency_sos: current.emergency_sos,
+    emergency_sos_time: current.emergency_sos_time,
+    emergency_contacts: {
+      pediatrician: { name: "Dr. A. Mehta, MD (Pediatrics)", phone: "+91 98250 12345" },
+      ambulance: "108",
+      police: "112",
+      parent_mummy: "+91 98980 11111",
+      parent_papa: "+91 98980 22222",
+      home_address: "Satellite, Ahmedabad, Gujarat 380015"
+    },
+    message: current.emergency_sos ? "EMERGENCY SOS BEACON ACTIVATED" : "Emergency SOS beacon deactivated"
+  });
+});
+
+app.post("/api/device/sleep", (req, res) => {
+  const current = getDeviceConfig();
+  const { sleep } = req.body || {};
+  current.sleep_mode = sleep !== false;
+  current.night_light = current.sleep_mode;
+  current.last_updated = new Date().toISOString();
+  saveDeviceConfig(current);
+
+  res.json({
+    success: true,
+    sleep_mode: current.sleep_mode,
+    message: current.sleep_mode ? "KOTL placed in Bedtime Sleep Mode" : "KOTL awakened to Active Daytime Mode"
+  });
 });
 
 let latestWebTtsBroadcast = null;
