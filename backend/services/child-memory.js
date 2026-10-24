@@ -11,6 +11,7 @@ const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
 const PROFILE_FILE = path.join(UPLOADS_DIR, "child_profile.json");
 const MISSIONS_FILE = path.join(UPLOADS_DIR, "parent_missions.json");
 const REPORT_FILE = path.join(UPLOADS_DIR, "child_report.json");
+const VOICE_MEMOS_FILE = path.join(UPLOADS_DIR, "voice_memos.json");
 
 function ensureUploadsDir() {
   if (!fs.existsSync(UPLOADS_DIR)) {
@@ -24,12 +25,46 @@ const DEFAULT_PROFILE = {
   avatar: "🧒",
   gender: "Boy",
   bedtime: "21:00",
+  daily_talk_limit_mins: 30,
+  remote_volume: 80,
+  battery_level: 88,
   parent_permissions: {
     medicines: true,
     outside_play: true,
     sharp_tools: true,
     purchases: true
   },
+  medical: {
+    blood_group: "B+",
+    allergies: ["Dust / Pollen (Mild)", "Raw Bitter Vegetables"],
+    emergency_contact: {
+      pediatrician_name: "Dr. A. Mehta, MD (Pediatrics)",
+      phone: "+91 98765 43210",
+      clinic: "Rainbow Kids Clinic"
+    },
+    vitals: {
+      height_cm: 116,
+      weight_kg: 21.5,
+      percentile: "75th (Healthy)",
+      bmi: 15.9,
+      last_checked: "October 2026"
+    },
+    vaccinations: [
+      { id: "vac-1", name: "MMR Booster", age_due: "5-6 Years", status: "completed", date: "April 2026" },
+      { id: "vac-2", name: "DPT Booster 2", age_due: "5-6 Years", status: "completed", date: "July 2026" },
+      { id: "vac-3", name: "Typhoid Conjugate", age_due: "6 Years", status: "upcoming", due_date: "November 2026" },
+      { id: "vac-4", name: "Annual Flu Shot", age_due: "Annual", status: "upcoming", due_date: "December 2026" }
+    ],
+    sickness_logs: [
+      { id: "sick-1", date: "Oct 18, 2026", symptom: "Mild Cold & Runny Nose", status: "recovered", remedy: "Warm turmeric milk & honey" }
+    ]
+  },
+  daily_routine: [
+    { id: "r-1", time: "07:30 AM", title: "Morning Rise & Shine", directive: "Cheerful wake-up greeting & brushing reminder", active: true },
+    { id: "r-2", time: "01:30 PM", title: "Healthy Lunch & Fresh Milk", directive: "Superhero stamina fuel & clean water", active: true },
+    { id: "r-3", time: "05:00 PM", title: "Outdoor Play & Movement", directive: "Fresh air, cricket & playground fun", active: true },
+    { id: "r-4", time: "08:30 PM", title: "Bedtime Wind-Down & Sleep Story", directive: "Calm star journey & peaceful sleep", active: true }
+  ],
   likes: [
     "Bedtime Stories",
     "Space & Stars Exploration",
@@ -44,8 +79,8 @@ const DEFAULT_PROFILE = {
     "Sudden Loud Noises"
   ],
   skills: {
-    vocabulary: 84,
-    curiosity: 92,
+    vocabulary: 88,
+    curiosity: 94,
     emotional_tone: "Cheerful, Loving & Playful",
     languages: ["English", "Gujarati", "Hindi"]
   },
@@ -73,6 +108,71 @@ const DEFAULT_PROFILE = {
   last_interaction: new Date().toISOString(),
   last_updated: new Date().toISOString()
 };
+
+const DEFAULT_VOICE_MEMOS = [
+  {
+    id: "memo-1",
+    timestamp: "Today, 10:30 AM",
+    sender: "Mummy",
+    text: "Parth beta, drink your fresh glass of water and playground game!",
+    preset: "Drink Water",
+    audio_url: null,
+    status: "Delivered to KOTL"
+  },
+  {
+    id: "memo-2",
+    timestamp: "Yesterday, 08:45 PM",
+    sender: "Papa",
+    text: "Bedtime soon champ! Let's listen to KOTL's star story and sleep on time.",
+    preset: "Bedtime Hug",
+    audio_url: null,
+    status: "Played by Parth"
+  }
+];
+
+function getVoiceMemos() {
+  ensureUploadsDir();
+  try {
+    if (fs.existsSync(VOICE_MEMOS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(VOICE_MEMOS_FILE, "utf-8"));
+      if (Array.isArray(data)) return data;
+    }
+  } catch (err) {
+    console.warn("[Child Memory] Error reading voice memos:", err.message);
+  }
+  saveVoiceMemos(DEFAULT_VOICE_MEMOS);
+  return [...DEFAULT_VOICE_MEMOS];
+}
+
+function saveVoiceMemos(memos) {
+  ensureUploadsDir();
+  try {
+    fs.writeFileSync(VOICE_MEMOS_FILE, JSON.stringify(memos, null, 2), "utf-8");
+    return true;
+  } catch (err) {
+    console.error("[Child Memory] Error saving voice memos:", err.message);
+    return false;
+  }
+}
+
+function addVoiceMemo({ sender = "Parent", text = "", preset = null, audio_url = null }) {
+  const memos = getVoiceMemos();
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const newMemo = {
+    id: "memo-" + Date.now(),
+    timestamp: "Today, " + timeStr,
+    sender: sender || "Parent",
+    text: (text || (preset ? preset : "Voice memo from parent")).trim(),
+    preset: preset || null,
+    audio_url: audio_url || null,
+    status: "Delivered to KOTL"
+  };
+  memos.unshift(newMemo);
+  if (memos.length > 25) memos.pop();
+  saveVoiceMemos(memos);
+  return newMemo;
+}
 
 const DEFAULT_MISSIONS = [
   {
@@ -575,4 +675,6 @@ module.exports = {
   buildChildContextPrompt,
   getChildDevelopmentReport,
   generateChildDevelopmentReport,
+  getVoiceMemos,
+  addVoiceMemo,
 };

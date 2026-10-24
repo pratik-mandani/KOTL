@@ -29,6 +29,8 @@ const {
   extractMemoryFromDialogue,
   getChildDevelopmentReport,
   generateChildDevelopmentReport,
+  getVoiceMemos,
+  addVoiceMemo,
 } = require("./services/child-memory");
 
 const app = express();
@@ -310,6 +312,63 @@ app.delete("/api/parent/missions/:id", (req, res) => {
   const id = req.params.id;
   const updatedList = deleteParentMission(id);
   res.json({ success: true, missions: updatedList });
+});
+
+// --- Parent Walkie-Talkie & Voice Memos ---
+app.get("/api/voice-memo/history", (_req, res) => {
+  res.json({ success: true, memos: getVoiceMemos() });
+});
+
+app.post("/api/voice-memo/send", async (req, res) => {
+  try {
+    const { sender, text, preset } = req.body || {};
+    const memo = addVoiceMemo({ sender, text, preset });
+    
+    // Broadcast notification to WebSocket clients if open
+    wss.clients.forEach(client => {
+      if (client.readyState === 1) { // OPEN
+        client.send(JSON.stringify({
+          type: "voice_memo_notification",
+          memo
+        }));
+      }
+    });
+
+    res.json({ success: true, memo, memos: getVoiceMemos() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- Child Health, Medical & Limits ---
+app.post("/api/child/medical", (req, res) => {
+  try {
+    const { medical } = req.body || {};
+    const profile = getChildProfile();
+    const updated = updateChildProfile({
+      medical: { ...(profile.medical || {}), ...(medical || {}) }
+    });
+    res.json({ success: true, medical: updated.medical, profile: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/child/limits", (req, res) => {
+  try {
+    const { daily_talk_limit_mins, bedtime, remote_volume, parent_permissions, daily_routine } = req.body || {};
+    const updates = {};
+    if (daily_talk_limit_mins !== undefined) updates.daily_talk_limit_mins = Number(daily_talk_limit_mins);
+    if (bedtime !== undefined) updates.bedtime = bedtime;
+    if (remote_volume !== undefined) updates.remote_volume = Number(remote_volume);
+    if (parent_permissions !== undefined) updates.parent_permissions = parent_permissions;
+    if (daily_routine !== undefined) updates.daily_routine = daily_routine;
+
+    const updated = updateChildProfile(updates);
+    res.json({ success: true, profile: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Device Configuration Store (uploads/device_config.json)
