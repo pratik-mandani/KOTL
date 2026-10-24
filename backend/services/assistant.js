@@ -244,6 +244,29 @@ function getSessionHistory(sessionId) {
     }));
 }
 
+function generateContextualFallbackReply(transcript) {
+  const t = (transcript || "").toLowerCase();
+  if (t.includes("rocket") || t.includes("space") || t.includes("moon") || t.includes("star") || t.includes("orbit")) {
+    return "That sounds like a thrilling space adventure, Parth! Imagine soaring in our rocket past the twinkling stars! What color should our spaceship be?";
+  }
+  if (t.includes("water") || t.includes("drink")) {
+    return "Super job staying hydrated, Parth! Drinking fresh water gives your muscles and brain superhero stamina!";
+  }
+  if (t.includes("dadi") || t.includes("mummy") || t.includes("papa")) {
+    return "You have such a kind and thoughtful heart, Parth! Taking care of your family makes you a true champion!";
+  }
+  if (t.includes("draw") || t.includes("color") || t.includes("paint") || t.includes("art")) {
+    return "You are such a creative artist, Parth! What bright colors are you using in your drawing today?";
+  }
+  if (t.includes("why") || t.includes("how") || t.includes("what")) {
+    return "That is a brilliant question, Parth! Your scientific curiosity is amazing! Let us discover the answer together!";
+  }
+  if (t.includes("hello") || t.includes("hi") || t.includes("hey")) {
+    return "Hello Parth, my superhero buddy! I am so happy to chat with you! What fun things are we learning today?";
+  }
+  return "That is so wonderful, Parth! Tell me more about that, champ! You always have the most exciting ideas!";
+}
+
 async function generateAssistantReply({ transcript, prompt, sessionId = null, source = "esp32", tts_url = null }) {
   const systemPrompt = buildSystemPrompt();
   const rawText = transcript || prompt || "";
@@ -310,8 +333,13 @@ async function generateAssistantReply({ transcript, prompt, sessionId = null, so
     content: typeof m.content === "string" ? m.content : ""
   }));
 
+  // Optimize prompt tokens: keep system prompt plus last 6 recent conversation turns
+  const messagesForLlm = cleanMessages.length > 7
+    ? [cleanMessages[0], ...cleanMessages.slice(-6)]
+    : cleanMessages;
+
   if (provider === "openai") {
-    const result = await generateOpenAIAssistantReply({ messages: cleanMessages, sessionId: historyKey });
+    const result = await generateOpenAIAssistantReply({ messages: messagesForLlm, sessionId: historyKey });
     if (result.success) {
       history.push({
         id: "msg-" + Date.now() + "-a",
@@ -322,8 +350,8 @@ async function generateAssistantReply({ transcript, prompt, sessionId = null, so
         timestamp: new Date().toISOString(),
       });
       saveSessionsToDisk();
+      return result;
     }
-    return result;
   }
 
   // Handle Groq and Gemini routing with fallback mechanism
@@ -342,8 +370,8 @@ async function generateAssistantReply({ transcript, prompt, sessionId = null, so
     secondaryName = "gemini";
   }
 
-  console.log(`[Assistant] Trying primary LLM provider: ${primaryName} for session ${historyKey} with history of ${cleanMessages.length} messages`);
-  let result = await primaryFn({ messages: cleanMessages, sessionId: historyKey });
+  console.log(`[Assistant] Trying primary LLM provider: ${primaryName} for session ${historyKey} with history of ${messagesForLlm.length} messages`);
+  let result = await primaryFn({ messages: messagesForLlm, sessionId: historyKey });
 
   if (result.success) {
     history.push({
@@ -363,7 +391,7 @@ async function generateAssistantReply({ transcript, prompt, sessionId = null, so
 
   console.warn(`[Assistant] Primary LLM provider ${primaryName} failed: ${result.error || "unknown error"}. Falling back to ${secondaryName}...`);
   
-  result = await secondaryFn({ messages: cleanMessages, sessionId: historyKey });
+  result = await secondaryFn({ messages: messagesForLlm, sessionId: historyKey });
   if (result.success) {
     console.log(`[Assistant] Fallback to LLM provider ${secondaryName} succeeded.`);
     history.push({
@@ -381,8 +409,24 @@ async function generateAssistantReply({ transcript, prompt, sessionId = null, so
     return result;
   }
 
-  console.error(`[Assistant] Both primary and fallback LLM providers failed.`);
-  return result;
+  console.warn(`[Assistant] Both primary (${primaryName}) and fallback (${secondaryName}) providers rate-limited or unavailable. Activating pediatric safety fallback response.`);
+  const fallbackReply = generateContextualFallbackReply(normalizedTranscript);
+  history.push({
+    id: "msg-" + Date.now() + "-a",
+    role: "assistant",
+    content: fallbackReply,
+    source: "kotl",
+    tts_url: tts_url || null,
+    timestamp: new Date().toISOString(),
+  });
+  saveSessionsToDisk();
+  return {
+    success: true,
+    reply: fallbackReply,
+    provider: "local-pediatric-fallback",
+    model: "kotl-safety-engine",
+    error: null,
+  };
 }
 
 module.exports = {

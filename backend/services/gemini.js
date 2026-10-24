@@ -6,7 +6,7 @@ try {
   } catch (__) {}
 }
 const DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const DEFAULT_MODEL = process.env.GEMINI_CHAT_MODEL || "gemini-3.5-flash";
+const DEFAULT_MODEL = process.env.GEMINI_CHAT_MODEL || "gemini-3.5-flash-lite";
 const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.GEMINI_TIMEOUT_MS || "", 10) || 15000;
 
 async function generateGeminiAssistantReply({ messages, sessionId = null }) {
@@ -31,74 +31,77 @@ async function generateGeminiAssistantReply({ messages, sessionId = null }) {
     };
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  const primaryModel = process.env.GEMINI_CHAT_MODEL || "gemini-3.5-flash-lite";
+  const candidateModels = [primaryModel, "gemini-3.5-flash-lite", "gemini-2.5-flash"].filter(
+    (m, i, arr) => arr.indexOf(m) === i
+  );
 
-  try {
-    const cleanMessages = messages.map((m) => ({
-      role: m.role,
-      content: typeof m.content === "string" ? m.content : "",
-    }));
+  const cleanMessages = messages.map((m) => ({
+    role: m.role,
+    content: typeof m.content === "string" ? m.content : "",
+  }));
 
-    const response = await fetch(DEFAULT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        messages: cleanMessages,
-        stream: false,
-      }),
-      signal: controller.signal,
-    });
+  let lastError = null;
 
-    if (!response.ok) {
-      const errorText = await response.text();
+  for (const modelToUse of candidateModels) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(DEFAULT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: modelToUse,
+          messages: cleanMessages,
+          stream: false,
+        }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.warn(`[Gemini LLM] Model ${modelToUse} returned ${response.status}: ${errorText.slice(0, 100)}. Trying next candidate...`);
+        lastError = `Gemini assistant failed (${modelToUse}): ${response.status} ${errorText}`;
+        continue;
+      }
+
+      const data = await response.json();
+      const reply = typeof data.choices?.[0]?.message?.content === "string" 
+        ? data.choices[0].message.content.trim() 
+        : "";
+
+      if (!reply) {
+        console.warn(`[Gemini LLM] Model ${modelToUse} returned empty reply.`);
+        lastError = `Gemini model ${modelToUse} returned empty reply`;
+        continue;
+      }
+
       return {
-        success: false,
-        reply: null,
+        success: true,
+        reply,
         provider: "gemini",
-        model: DEFAULT_MODEL,
-        error: `Gemini assistant failed: ${response.status} ${errorText}`,
+        model: modelToUse,
+        error: null,
       };
+    } catch (error) {
+      const isTimeout = error && (error.name === "AbortError" || error.code === "ABORT_ERR");
+      lastError = isTimeout ? `Gemini timeout after ${DEFAULT_TIMEOUT_MS}ms` : error.message;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data = await response.json();
-    const reply = typeof data.choices?.[0]?.message?.content === "string" 
-      ? data.choices[0].message.content.trim() 
-      : "";
-
-    if (!reply) {
-      return {
-        success: false,
-        reply: null,
-        provider: "gemini",
-        model: DEFAULT_MODEL,
-        error: "assistant reply empty",
-      };
-    }
-
-    return {
-      success: true,
-      reply,
-      provider: "gemini",
-      model: DEFAULT_MODEL,
-      error: null,
-    };
-  } catch (error) {
-    const isTimeout = error && (error.name === "AbortError" || error.code === "ABORT_ERR");
-    return {
-      success: false,
-      reply: null,
-      provider: "gemini",
-      model: DEFAULT_MODEL,
-      error: isTimeout ? `assistant timeout after ${DEFAULT_TIMEOUT_MS}ms` : error.message,
-    };
-  } finally {
-    clearTimeout(timeout);
   }
+
+  return {
+    success: false,
+    reply: null,
+    provider: "gemini",
+    model: DEFAULT_MODEL,
+    error: lastError || "All Gemini candidate models failed",
+  };
 }
 
 module.exports = {

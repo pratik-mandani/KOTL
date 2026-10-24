@@ -2102,12 +2102,53 @@
       }
     }
 
+    var currentDashboardAudio = null;
+
     function playLocalVoice(text) {
+      if (!text || !text.trim()) return;
+
+      if (currentDashboardAudio) {
+        try { currentDashboardAudio.pause(); currentDashboardAudio = null; } catch(e) {}
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+
+      // Fetch authentic hardware Edge TTS voice (en-IN-PrabhatNeural - Male)
+      fetch('/api/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.trim() })
+      })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.success && data.url) {
+            var audio = new Audio(data.url);
+            currentDashboardAudio = audio;
+            audio.play().catch(function() {
+              fallbackBrowserTts(text);
+            });
+          } else {
+            fallbackBrowserTts(text);
+          }
+        })
+        .catch(function() {
+          fallbackBrowserTts(text);
+        });
+    }
+
+    function fallbackBrowserTts(text) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         var u = new SpeechSynthesisUtterance(text);
         u.lang = 'en-IN';
         u.rate = 0.95;
+        var voices = window.speechSynthesis.getVoices();
+        var maleVoice = voices.find(function(v) {
+          var n = v.name.toLowerCase();
+          return (n.includes('prabhat') || n.includes('male') || n.includes('david') || n.includes('ravi') || n.includes('george')) && !n.includes('female');
+        });
+        if (maleVoice) u.voice = maleVoice;
         window.speechSynthesis.speak(u);
       }
     }
