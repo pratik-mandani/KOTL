@@ -173,10 +173,10 @@
   <div class="section-nav-bar relative z-20 w-full max-w-7xl mx-auto px-3 sm:px-6 pt-2 pb-2">
     <div class="bg-amber-50/90 backdrop-blur-sm border-2 border-amber-200 rounded-2xl p-1.5 flex items-center gap-1.5 sm:gap-2 overflow-x-auto custom-scrollbar shadow-xs">
       
-      <!-- Tab 1: School Report -->
+      <!-- Tab 1: School Report & Skills -->
       <button id="secBtn_report" onclick="switchSection('report')" class="sec-tab-active px-3.5 sm:px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap">
         <span>📜</span>
-        <span>School Report</span>
+        <span>School Report & Skills</span>
       </button>
 
       <!-- Tab 2: Mentor Quests -->
@@ -185,10 +185,10 @@
         <span>Mentor Quests</span>
       </button>
 
-      <!-- Tab 3: Learn & Play -->
+      <!-- Tab 3: Learn, Play & Habits -->
       <button id="secBtn_growth" onclick="switchSection('growth')" class="px-3.5 sm:px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200 transition-all flex items-center gap-1.5 whitespace-nowrap">
-        <span>🎨</span>
-        <span>Learn & Play</span>
+        <span>🌟</span>
+        <span>Learn, Play & Habits</span>
       </button>
 
       <!-- Tab 4: Health Passport -->
@@ -210,7 +210,7 @@
   <main class="relative z-10 flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-2 pb-20">
 
     <!-- ============================================================ -->
-    <!-- SECTION 1: SCHOOL REPORT & KINDERGARTEN MARKSHEET             -->
+    <!-- SECTION 1: SCHOOL REPORT & DETAILED SKILLS DIRECTORY          -->
     <!-- ============================================================ -->
     <div id="section_report" class="space-y-5 printable-area">
       
@@ -229,7 +229,7 @@
                 </span>
               </div>
               <p class="text-xs sm:text-sm text-amber-50 font-medium">
-                <span id="childHeroAge">6 Years Old</span> • Boy • Daily Bedtime: <strong>09:00 PM</strong> • Academic Term 2026
+                <span id="childHeroAge">6 Years Old</span> • Boy • Daily Bedtime: <strong>09:00 PM</strong> • Term Assessment: <strong>October 24, 2026</strong>
               </p>
               <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
                 <span class="bg-emerald-900/40 text-emerald-100 font-semibold px-2.5 py-0.5 rounded-lg border border-emerald-300/30">
@@ -257,170 +257,228 @@
                 <span>Grade A+</span>
                 <span class="text-xs font-normal opacity-90">(Advanced)</span>
               </div>
-              <div class="text-[10px] text-amber-100">Pediatric Milestone: Exceeded</div>
+              <div class="text-[10px] text-amber-100">Pediatric Status: Advanced Curiosity</div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- BENTO GRID (2 COLUMNS ON DESKTOP) -->
+      <!-- EXECUTIVE DEVELOPMENTAL REPORT SUMMARY CARD -->
+      <div class="bg-white border-2 border-amber-200 rounded-[32px] p-5 sm:p-6 shadow-xs space-y-3">
+        <div class="flex items-center justify-between border-b border-amber-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="text-2xl">📋</span>
+            <div>
+              <h3 class="font-fredoka text-lg font-bold text-slate-800">Executive Pedagogical Report Summary</h3>
+              <p class="text-xs text-slate-500">Official clinical & cognitive analysis generated from 19 voice conversation sessions</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+            Validated by AI Pediatrician
+          </span>
+        </div>
+
+        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium bg-amber-50/50 p-4 rounded-2xl border border-amber-200/60">
+          <strong>Parth</strong> demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful, imaginative spirit during conversations with KOTL. He shows strong memory retention when engaged in storytelling about <em>Space Exploration, Stars, and Creative Art</em>. While his vocabulary and cognitive curiosity exceed standard developmental benchmarks for 6-year-olds, KOTL is actively providing supportive storytelling to help build enthusiastic habits around healthy nutrition and consistent bedtime wind-down routines.
+        </p>
+
+        <!-- 1-Minute Audio Briefing + Print PDF -->
+        <div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <button onclick="playLocalVoice('Parth had an extraordinary learning day! His cognitive curiosity reached ninety-four percent, asking advanced questions regarding planetary orbits and space exploration. He also agreed to eat his superhero green vegetables and demonstrated polite conversational turn taking with family.')" class="btn-3d-sky px-4 py-2 text-white rounded-xl font-fredoka font-bold text-xs flex items-center gap-1.5 shadow-xs">
+              <span>▶ Play 1-Minute Audio Briefing</span>
+            </button>
+            <span class="text-xs text-slate-500 font-semibold">• English (Natural Indian-English Voice)</span>
+          </div>
+
+          <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-fredoka font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all">
+            <span>🖨️</span>
+            <span>Print Official Report Card (PDF)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- BENTO GRID (2 COLUMNS: SKILLS DIRECTORY & CONVERSATIONAL EVIDENCE) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
-        <!-- Left Bento Column (7 Columns): Marksheet, Audio Briefing, Print -->
-        <div class="lg:col-span-7 space-y-5">
-          
-          <!-- Kindergarten Progress Marksheet -->
-          <div class="bg-white border-2 border-amber-200 rounded-[32px] p-5 shadow-xs space-y-4">
-            <div class="flex items-center justify-between border-b border-amber-100 pb-3">
+        <!-- Left Bento Column (7 Columns): 4 DETAILED CORE SKILLS WITH EVALUATION & STRENGTHS -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-fredoka text-base font-bold text-slate-800 flex items-center gap-2">
+              <span>🧠</span><span>Core Cognitive & Behavioral Skills Directory</span>
+            </h3>
+            <span class="text-xs font-bold text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full">
+              4 Developmental Pillars
+            </span>
+          </div>
+
+          <!-- Skill 1: Curiosity & STEM (94%) -->
+          <div class="p-4 rounded-3xl bg-white border-2 border-purple-200 shadow-2xs space-y-2.5 hover:border-purple-300 transition-colors">
+            <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">📋</span>
-                <h3 class="font-fredoka text-lg font-bold text-slate-800">Kindergarten Developmental Marksheet</h3>
-              </div>
-              <span class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
-                Official Term Report
-              </span>
-            </div>
-
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr class="border-b-2 border-slate-100 text-slate-400 font-bold uppercase text-[10px]">
-                    <th class="py-2 px-3">Subject / Domain</th>
-                    <th class="py-2 px-3">Key Observation</th>
-                    <th class="py-2 px-3">Score</th>
-                    <th class="py-2 px-3">Grade</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
-                  <tr class="hover:bg-amber-50/50">
-                    <td class="py-2.5 px-3 font-bold flex items-center gap-1.5">
-                      <span>🔤</span><span>English & Phonics</span>
-                    </td>
-                    <td class="py-2.5 px-3 text-slate-500">Learned 30+ multisyllabic terms ('orbit', 'stamina')</td>
-                    <td class="py-2.5 px-3 font-bold text-sky-700">88/100</td>
-                    <td class="py-2.5 px-3"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md text-[10px]">A+ Excellent</span></td>
-                  </tr>
-                  <tr class="hover:bg-amber-50/50">
-                    <td class="py-2.5 px-3 font-bold flex items-center gap-1.5">
-                      <span>🔬</span><span>Curiosity & STEM</span>
-                    </td>
-                    <td class="py-2.5 px-3 text-slate-500">Asks profound 'why' questions about stars and gravity</td>
-                    <td class="py-2.5 px-3 font-bold text-purple-700">94/100</td>
-                    <td class="py-2.5 px-3"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md text-[10px]">A+ Gifted</span></td>
-                  </tr>
-                  <tr class="hover:bg-amber-50/50">
-                    <td class="py-2.5 px-3 font-bold flex items-center gap-1.5">
-                      <span>❤️</span><span>Emotional & Empathy</span>
-                    </td>
-                    <td class="py-2.5 px-3 text-slate-500">Displays polite turn-taking, respectful to Dadi and parents</td>
-                    <td class="py-2.5 px-3 font-bold text-rose-700">90/100</td>
-                    <td class="py-2.5 px-3"><span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md text-[10px]">A+ Superb</span></td>
-                  </tr>
-                  <tr class="hover:bg-amber-50/50">
-                    <td class="py-2.5 px-3 font-bold flex items-center gap-1.5">
-                      <span>🥦</span><span>Habits & Nutrition</span>
-                    </td>
-                    <td class="py-2.5 px-3 text-slate-500">Responding to superhero stamina greens & tidy desk</td>
-                    <td class="py-2.5 px-3 font-bold text-amber-700">82/100</td>
-                    <td class="py-2.5 px-3"><span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-md text-[10px]">B+ Growing</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- 1-Minute Parent Audio Briefing Card -->
-            <div class="mt-2 p-4 rounded-2xl bg-gradient-to-r from-sky-50 to-indigo-50 border border-sky-200 space-y-2">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <span class="text-xl">🎙️</span>
-                  <div>
-                    <h4 class="font-fredoka text-xs sm:text-sm font-bold text-slate-800">1-Minute AI Pediatric Audio Briefing</h4>
-                    <p class="text-[11px] text-slate-500">Listen to KOTL's executive voice summary of Parth's day</p>
-                  </div>
+                <span class="text-xl">🔬</span>
+                <div>
+                  <h4 class="font-fredoka font-bold text-slate-800 text-sm">Scientific Curiosity & Inquiry (STEM)</h4>
+                  <span class="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">Exceptional / Gifted</span>
                 </div>
-                <button onclick="playLocalVoice('Parth had an extraordinary learning day! His cognitive curiosity reached ninety-four percent, asking advanced questions regarding planetary orbits and space exploration. He also agreed to eat his superhero green vegetables and demonstrated polite conversational turn taking with family.')" class="btn-3d-sky px-3 py-1.5 text-white rounded-xl font-fredoka font-bold text-xs flex items-center gap-1 shadow-xs">
-                  <span>▶ Play Briefing</span>
-                </button>
               </div>
+              <span class="font-fredoka text-xl font-bold text-purple-700">94%</span>
             </div>
-
-            <!-- Print Official PDF Button -->
-            <div class="flex items-center justify-end pt-2">
-              <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-fredoka font-bold text-xs shadow-sm flex items-center gap-1.5 transition-all">
-                <span>🖨️</span>
-                <span>Print Official Report Card (PDF)</span>
-              </button>
+            <div class="w-full bg-purple-100 h-2 rounded-full overflow-hidden">
+              <div class="bg-purple-600 h-full rounded-full" style="width: 94%"></div>
             </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              <strong>Evaluation:</strong> Consistently drives conversations with 'why' and 'how' exploratory questions about astronomy, creative art, and nature.
+            </p>
+            <div class="text-[11px] text-purple-900 bg-purple-50 p-2.5 rounded-xl border border-purple-200/80 font-medium">
+              ⭐ <strong>Key Strength:</strong> Shows genuine desire to understand mechanisms rather than just surface facts.
+            </div>
+          </div>
 
+          <!-- Skill 2: English Vocabulary (88%) -->
+          <div class="p-4 rounded-3xl bg-white border-2 border-sky-200 shadow-2xs space-y-2.5 hover:border-sky-300 transition-colors">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🔤</span>
+                <div>
+                  <h4 class="font-fredoka font-bold text-slate-800 text-sm">English Vocabulary & Expression</h4>
+                  <span class="text-[10px] font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-md">Advanced for Age</span>
+                </div>
+              </div>
+              <span class="font-fredoka text-xl font-bold text-sky-700">88%</span>
+            </div>
+            <div class="w-full bg-sky-100 h-2 rounded-full overflow-hidden">
+              <div class="bg-sky-600 h-full rounded-full" style="width: 88%"></div>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              <strong>Evaluation:</strong> Demonstrates rapid assimilation of 2-to-3 syllable English and bilingual words when embedded in narrative adventures.
+            </p>
+            <div class="text-[11px] text-sky-900 bg-sky-50 p-2.5 rounded-xl border border-sky-200/80 font-medium">
+              ⭐ <strong>Key Strength:</strong> Retains scientific terms like 'orbit', 'stamina', and 'telescope' after single interactive story sessions.
+            </div>
+          </div>
+
+          <!-- Skill 3: Emotional Intelligence (90%) -->
+          <div class="p-4 rounded-3xl bg-white border-2 border-rose-200 shadow-2xs space-y-2.5 hover:border-rose-300 transition-colors">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">❤️</span>
+                <div>
+                  <h4 class="font-fredoka font-bold text-slate-800 text-sm">Emotional Intelligence & Kindness</h4>
+                  <span class="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md">Very High Empathy</span>
+                </div>
+              </div>
+              <span class="font-fredoka text-xl font-bold text-rose-700">90%</span>
+            </div>
+            <div class="w-full bg-rose-100 h-2 rounded-full overflow-hidden">
+              <div class="bg-rose-500 h-full rounded-full" style="width: 90%"></div>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              <strong>Evaluation:</strong> Displays high empathy and cheerful disposition. Reacts enthusiastically to KOTL's expressive eye animations and vocal inflections.
+            </p>
+            <div class="text-[11px] text-rose-900 bg-rose-50 p-2.5 rounded-xl border border-rose-200/80 font-medium">
+              ⭐ <strong>Key Strength:</strong> Openly expresses happiness and offers polite turn-taking during dialogue.
+            </div>
+          </div>
+
+          <!-- Skill 4: Listening & Habits (78%) -->
+          <div class="p-4 rounded-3xl bg-white border-2 border-emerald-200 shadow-2xs space-y-2.5 hover:border-emerald-300 transition-colors">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">👂</span>
+                <div>
+                  <h4 class="font-fredoka font-bold text-slate-800 text-sm">Listening & Daily Habit Formation</h4>
+                  <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">Developing Nicely</span>
+                </div>
+              </div>
+              <span class="font-fredoka text-xl font-bold text-emerald-700">78%</span>
+            </div>
+            <div class="w-full bg-emerald-100 h-2 rounded-full overflow-hidden">
+              <div class="bg-emerald-600 h-full rounded-full" style="width: 78%"></div>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              <strong>Evaluation:</strong> Follows conversational cues attentively. Gradually warming up to toy organization and healthy eating when framed as superhero training.
+            </p>
+            <div class="text-[11px] text-emerald-900 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200/80 font-medium">
+              ⭐ <strong>Key Strength:</strong> Responds enthusiastically to gamified incentives and playful encouragement.
+            </div>
           </div>
 
         </div>
 
-        <!-- Right Bento Column (5 Columns): Skills, Passions, Guidance -->
-        <div class="lg:col-span-5 space-y-5">
+        <!-- Right Bento Column (5 Columns): PASSIONS & CONVERSATIONAL EVIDENCE -->
+        <div class="lg:col-span-5 space-y-4">
           
-          <!-- Cognitive & Behavioral Skills Directory -->
-          <div class="bg-white border-2 border-amber-200 rounded-[32px] p-5 shadow-xs space-y-4">
-            <div class="flex items-center gap-2 border-b border-amber-100 pb-3">
-              <span class="text-2xl">🧠</span>
-              <h3 class="font-fredoka text-lg font-bold text-slate-800">Core Skill Analytics</h3>
+          <!-- Passions Analysis Card -->
+          <div class="bg-white border-2 border-amber-200 rounded-[32px] p-5 shadow-xs space-y-3.5">
+            <div class="flex items-center justify-between border-b border-amber-100 pb-2.5">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🌟</span>
+                <h3 class="font-fredoka text-base font-bold text-slate-800">Passions & Deep Interests</h3>
+              </div>
+              <span class="text-xs font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">Affinity %</span>
             </div>
 
-            <!-- Skill 1: Curiosity -->
-            <div class="space-y-1">
-              <div class="flex justify-between text-xs font-bold">
-                <span class="text-slate-700">Scientific Curiosity & Inquiry</span>
-                <span class="text-purple-600 font-fredoka">94% (Exceptional)</span>
+            <div class="space-y-2.5 text-xs">
+              <div class="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center">
+                <div>
+                  <strong>🚀 Space Exploration & Stars</strong>
+                  <div class="text-[10px] text-slate-500">Fascinated by stars, moon rovers and astronauts</div>
+                </div>
+                <span class="font-fredoka font-bold text-sm text-purple-700">95%</span>
               </div>
-              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                <div class="bg-purple-500 h-full rounded-full" style="width: 94%"></div>
+              <div class="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center">
+                <div>
+                  <strong>🛸 Rocketry & Planetary Orbits</strong>
+                  <div class="text-[10px] text-slate-500">Loves zero gravity floating and rocket propulsion</div>
+                </div>
+                <span class="font-fredoka font-bold text-sm text-sky-700">90%</span>
               </div>
-            </div>
-
-            <!-- Skill 2: Vocabulary -->
-            <div class="space-y-1">
-              <div class="flex justify-between text-xs font-bold">
-                <span class="text-slate-700">English Vocabulary & Expression</span>
-                <span class="text-sky-600 font-fredoka">88% (Advanced)</span>
+              <div class="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center">
+                <div>
+                  <strong>🌙 Bedtime Quests & Stories</strong>
+                  <div class="text-[10px] text-slate-500">Thrives as active hero in evening story chapters</div>
+                </div>
+                <span class="font-fredoka font-bold text-sm text-rose-700">88%</span>
               </div>
-              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                <div class="bg-sky-500 h-full rounded-full" style="width: 88%"></div>
-              </div>
-            </div>
-
-            <!-- Skill 3: Emotional Tone -->
-            <div class="space-y-1">
-              <div class="flex justify-between text-xs font-bold">
-                <span class="text-slate-700">Emotional Tone & Kindness</span>
-                <span class="text-rose-600 font-fredoka">90% (Very High)</span>
-              </div>
-              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                <div class="bg-rose-500 h-full rounded-full" style="width: 90%"></div>
+              <div class="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center">
+                <div>
+                  <strong>🎨 Creative Drawing & Visual Art</strong>
+                  <div class="text-[10px] text-slate-500">Visualizing spacecraft designs and vibrant colors</div>
+                </div>
+                <span class="font-fredoka font-bold text-sm text-amber-700">82%</span>
               </div>
             </div>
+          </div>
 
-            <!-- Skill 4: Habits & Listening -->
-            <div class="space-y-1">
-              <div class="flex justify-between text-xs font-bold">
-                <span class="text-slate-700">Daily Routine & Habit Building</span>
-                <span class="text-emerald-600 font-fredoka">78% (Steady Growth)</span>
+          <!-- Conversational Evidence Archive -->
+          <div class="bg-white border-2 border-amber-200 rounded-[32px] p-5 shadow-xs space-y-3">
+            <div class="flex items-center gap-2 border-b border-amber-100 pb-2">
+              <span class="text-xl">💬</span>
+              <h3 class="font-fredoka text-base font-bold text-slate-800">Notable Conversational Evidence</h3>
+            </div>
+            
+            <div class="space-y-3 text-xs">
+              <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-1.5">
+                <div class="flex justify-between text-[10px] font-bold text-amber-900 uppercase">
+                  <span>Space Inquiry Milestone</span>
+                  <span>Live Voice</span>
+                </div>
+                <div class="text-slate-800">🧒 <strong>Parth:</strong> "KOTL, how do stars shine at night, and can we fly a rocket to the moon?"</div>
+                <div class="text-slate-600">🤖 <strong>KOTL:</strong> "Stars are giant glowing suns far away in space, Parth! They twinkle to say hello to you!"</div>
+                <div class="text-[10px] text-slate-500 italic">• Demonstrates natural wonder and spatial curiosity beyond age 6 benchmarks.</div>
               </div>
-              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full rounded-full" style="width: 78%"></div>
+
+              <div class="p-3 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-1.5">
+                <div class="flex justify-between text-[10px] font-bold text-emerald-900 uppercase">
+                  <span>Parent Directive in Action</span>
+                  <span>Mealtime</span>
+                </div>
+                <div class="text-slate-800">🧒 <strong>Parth:</strong> "I really don't want to eat green spinach on my plate today!"</div>
+                <div class="text-slate-600">🤖 <strong>KOTL:</strong> "Spinach has iron superpower fuel for astronaut stamina! Just one bite gives superhero endurance!"</div>
+                <div class="text-[10px] text-slate-500 italic">• KOTL executed active habit mission; child agreed to take two bites.</div>
               </div>
             </div>
-
-            <!-- Passions & Sensitivities Quick Badges -->
-            <div class="pt-2 border-t border-slate-100 space-y-2">
-              <div class="text-[11px] font-bold text-slate-500 uppercase">Parth Loves:</div>
-              <div class="flex flex-wrap gap-1.5 text-xs">
-                <span class="bg-sky-50 text-sky-800 border border-sky-200 px-2.5 py-0.5 rounded-lg font-semibold">🚀 Space & Stars</span>
-                <span class="bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-lg font-semibold">🎨 Creative Drawing</span>
-                <span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-lg font-semibold">🏏 Cricket Games</span>
-                <span class="bg-purple-50 text-purple-800 border border-purple-200 px-2.5 py-0.5 rounded-lg font-semibold">🌙 Bedtime Tales</span>
-              </div>
-            </div>
-
           </div>
 
         </div>
@@ -505,7 +563,6 @@
               </div>
             </div>
 
-            <!-- How Socratic Mentoring Works Notice -->
             <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs text-slate-600">
               <div class="font-bold text-slate-800 flex items-center gap-1">
                 <span>💡</span><span>How KOTL Mentors Parth:</span>
@@ -524,25 +581,25 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- SECTION 3: LEARN & PLAY (360° LIFE GROWTH)                   -->
+    <!-- SECTION 3: LEARN, PLAY & HABIT ACADEMY (GOOD & BAD HABITS)   -->
     <!-- ============================================================ -->
     <div id="section_growth" class="hidden space-y-5">
       
-      <!-- Growth Header -->
+      <!-- Growth & Habits Header -->
       <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 rounded-[32px] p-6 text-white shadow-md border-3 border-emerald-400 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center text-3xl shadow-inner">
-            🎨
+            🌟
           </div>
           <div>
-            <h2 class="font-fredoka text-xl sm:text-2xl font-bold">Learn & Play (360° Life Growth)</h2>
-            <p class="text-xs sm:text-sm text-emerald-100">Harmonizing early literacy, active physical sports, and social character building</p>
+            <h2 class="font-fredoka text-xl sm:text-2xl font-bold">Learn, Play & Habit Academy</h2>
+            <p class="text-xs sm:text-sm text-emerald-100">Positive habits cultivation, behavioral guidance, early phonics & active physical sports</p>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
-          <button onclick="openAddWordBookModal()" class="btn-3d-emerald bg-white text-emerald-900 border-emerald-300 hover:bg-emerald-50 px-4 py-2 rounded-2xl font-fredoka font-bold text-xs shadow-sm flex items-center gap-1.5">
-            <span>➕</span><span>Add Word / Book</span>
+          <button onclick="openAddHabitGoalModal()" class="btn-3d-emerald bg-white text-emerald-900 border-emerald-300 hover:bg-emerald-50 px-4 py-2 rounded-2xl font-fredoka font-bold text-xs shadow-sm flex items-center gap-1.5">
+            <span>➕</span><span>Add Habit Goal</span>
           </button>
           <button onclick="openLogPlayTimeModal()" class="btn-3d-emerald bg-emerald-700 text-white border-emerald-900 px-4 py-2 rounded-2xl font-fredoka font-bold text-xs shadow-sm flex items-center gap-1.5">
             <span>⚽</span><span>Log Play Time</span>
@@ -550,22 +607,193 @@
         </div>
       </div>
 
-      <!-- BENTO GRID (6 Cols Phonics & Reading / 6 Cols Sports & Character) -->
+      <!-- 🌟 CORE FEATURE: GOOD HABITS VS HABITS NEEDING IMPROVEMENT (BAD HABITS) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
-        <!-- Left Col: Phonics Words & Reading Shelf -->
-        <div class="lg:col-span-6 space-y-5">
-          
-          <!-- Phonics Sight Words Card -->
+        <!-- Left Bento Col (6 Columns): ✨ GOOD HABITS ESTABLISHED (STRENGTHS) -->
+        <div class="lg:col-span-6 space-y-4">
+          <div class="bg-white border-2 border-emerald-200 rounded-[32px] p-5 sm:p-6 shadow-xs space-y-4">
+            <div class="flex items-center justify-between border-b border-emerald-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">✨</span>
+                <div>
+                  <h3 class="font-fredoka text-base sm:text-lg font-bold text-emerald-950">Good Habits Established</h3>
+                  <p class="text-xs text-slate-500">Positive daily routines mastered by Parth with KOTL praise</p>
+                </div>
+              </div>
+              <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+                5 Active Strengths
+              </span>
+            </div>
+
+            <!-- Good Habit 1: Brushing -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs text-emerald-900 flex items-center gap-1.5">
+                  <span>🪥</span><span>Brushing Teeth Twice Daily (Morning & Bedtime)</span>
+                </strong>
+                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-200/80 px-2 py-0.5 rounded-md">Established ✓</span>
+              </div>
+              <p class="text-[11px] text-slate-600">Cheerfully wakes up at 7:30 AM and brushes with morning song reminder.</p>
+            </div>
+
+            <!-- Good Habit 2: Packing Toys -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs text-emerald-900 flex items-center gap-1.5">
+                  <span>🧸</span><span>Tidying Up Study Desk & Toy Box</span>
+                </strong>
+                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-200/80 px-2 py-0.5 rounded-md">Established ✓</span>
+              </div>
+              <p class="text-[11px] text-slate-600">Sorts color crayons and places storybooks neatly in order after study.</p>
+            </div>
+
+            <!-- Good Habit 3: Drinking Pure Water -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs text-emerald-900 flex items-center gap-1.5">
+                  <span>💧</span><span>Drinking Fresh Water After Play</span>
+                </strong>
+                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-200/80 px-2 py-0.5 rounded-md">Daily Habit ✓</span>
+              </div>
+              <p class="text-[11px] text-slate-600">Drinks 2 full glasses of clean water after cricket games to maintain stamina.</p>
+            </div>
+
+            <!-- Good Habit 4: Polite Greetings -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs text-emerald-900 flex items-center gap-1.5">
+                  <span>🤝</span><span>Polite Turn-Taking & Respect for Dadi</span>
+                </strong>
+                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-200/80 px-2 py-0.5 rounded-md">12 Stars Earned ⭐</span>
+              </div>
+              <p class="text-[11px] text-slate-600">Says 'Please' and 'Thank you' cheerfully; carried warm water bottle for Dadi.</p>
+            </div>
+
+            <!-- Good Habit 5: Cognitive Questions -->
+            <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs text-emerald-900 flex items-center gap-1.5">
+                  <span>🔭</span><span>Asking Independent Science Questions</span>
+                </strong>
+                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-200/80 px-2 py-0.5 rounded-md">94% Curiosity ✓</span>
+              </div>
+              <p class="text-[11px] text-slate-600">Explores 'why' stars shine and how gravity works instead of passive screen viewing.</p>
+            </div>
+
+            <div class="pt-1 flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-600">Praise Parth for Good Habits:</span>
+              <button onclick="giveMannerStar()" class="btn-3d-amber px-3.5 py-1.5 text-amber-950 rounded-xl font-fredoka font-bold text-xs">
+                ⭐ Award Good Habit Star
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right Bento Col (6 Columns): ⚠️ HABITS NEEDING IMPROVEMENT (BAD HABITS & KOTL ACTION PLANS) -->
+        <div class="lg:col-span-6 space-y-4">
+          <div class="bg-white border-2 border-amber-200 rounded-[32px] p-5 sm:p-6 shadow-xs space-y-4">
+            <div class="flex items-center justify-between border-b border-amber-100 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">⚠️</span>
+                <div>
+                  <h3 class="font-fredoka text-base sm:text-lg font-bold text-amber-950">Habits Needing Improvement</h3>
+                  <p class="text-xs text-slate-500">Reluctances & behaviors KOTL is actively guiding with story adventures</p>
+                </div>
+              </div>
+              <span class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
+                Active Training
+              </span>
+            </div>
+
+            <!-- Improvement 1: Bitter Vegetables -->
+            <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs text-amber-900 flex items-center gap-1.5">
+                  <span>🥦</span><span>Eating Green Vegetables (Spinach & Broccoli)</span>
+                </strong>
+                <span class="text-[10px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-md">In Progress ⏳</span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                <strong>Reluctance:</strong> Tends to push green vegetables away at lunch.
+              </p>
+              <div class="text-[11px] text-amber-950 bg-white/80 p-2 rounded-xl border border-amber-200">
+                🤖 <strong>KOTL Strategy:</strong> Shares fun superhero stories about natural stamina fuel from carrots & spinach without lecturing. Parth now takes 2 test bites!
+              </div>
+            </div>
+
+            <!-- Improvement 2: Evening Screen Time -->
+            <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs text-amber-900 flex items-center gap-1.5">
+                  <span>📱</span><span>Mobile Video Screen Time Reluctance</span>
+                </strong>
+                <span class="text-[10px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-md">In Training ⏳</span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                <strong>Reluctance:</strong> Asks for mobile screen videos before evening bedtime.
+              </p>
+              <div class="text-[11px] text-amber-950 bg-white/80 p-2 rounded-xl border border-amber-200">
+                🤖 <strong>KOTL Strategy:</strong> Replaces screen time with 20 minutes creative drawing and interactive star story quests.
+              </div>
+            </div>
+
+            <!-- Improvement 3: Resisting 9:00 PM Bedtime -->
+            <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs text-amber-900 flex items-center gap-1.5">
+                  <span>🌙</span><span>Consistent 09:00 PM Bedtime Wind-Down</span>
+                </strong>
+                <span class="text-[10px] font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-md">Curfew Active 🌙</span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                <strong>Reluctance:</strong> Occasionally delays sleep to keep playing with cardboard rovers.
+              </p>
+              <div class="text-[11px] text-amber-950 bg-white/80 p-2 rounded-xl border border-amber-200">
+                🤖 <strong>KOTL Strategy:</strong> Automatically activates calming ambient lullaby audio and narrating peaceful space journey at 9 PM.
+              </div>
+            </div>
+
+            <!-- Improvement 4: Fear of Dark Room -->
+            <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1.5">
+              <div class="flex items-center justify-between">
+                <strong class="text-xs text-amber-900 flex items-center gap-1.5">
+                  <span>🌑</span><span>Night Room Shadow Sensitivity</span>
+                </strong>
+                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">Calmed ✓</span>
+              </div>
+              <p class="text-[11px] text-slate-600 leading-relaxed">
+                <strong>Reluctance:</strong> Feels uncertain when bedroom lights go off.
+              </p>
+              <div class="text-[11px] text-amber-950 bg-white/80 p-2 rounded-xl border border-amber-200">
+                🤖 <strong>KOTL Strategy:</strong> Reassures Parth that he is a brave explorer and constellations guard his peaceful sleep.
+              </div>
+            </div>
+
+            <div class="pt-1 flex items-center justify-end">
+              <button onclick="openAddHabitGoalModal()" class="text-xs font-bold text-amber-800 hover:text-amber-950 flex items-center gap-1">
+                <span>➕</span><span>Set New Habit Directive for KOTL</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SECOND BENTO ROW: PHONICS READING & 60-MIN SPORTS PLAY -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 pt-2">
+        
+        <!-- Left: Phonics Sight Words & Reading Shelf -->
+        <div class="lg:col-span-6 space-y-4">
           <div class="bg-white border-2 border-emerald-200 rounded-[32px] p-5 shadow-xs space-y-3.5">
             <div class="flex items-center justify-between border-b border-emerald-100 pb-2.5">
               <div class="flex items-center gap-2">
                 <span class="text-xl">🔤</span>
-                <h3 class="font-fredoka text-base font-bold text-slate-800">English Sight Words Mastered</h3>
+                <h3 class="font-fredoka text-base font-bold text-slate-800">English Sight Words & Phonics</h3>
               </div>
-              <span id="sightWordsBadge" class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                5 Active Words
-              </span>
+              <button onclick="openAddWordBookModal()" class="text-xs font-bold text-emerald-700 hover:text-emerald-800">+ Add Word</button>
             </div>
 
             <div id="sightWordsContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
@@ -591,41 +819,10 @@
               </div>
             </div>
           </div>
-
-          <!-- Reading Book Log -->
-          <div class="bg-white border-2 border-emerald-200 rounded-[32px] p-5 shadow-xs space-y-3.5">
-            <div class="flex items-center justify-between border-b border-emerald-100 pb-2.5">
-              <div class="flex items-center gap-2">
-                <span class="text-xl">📖</span>
-                <h3 class="font-fredoka text-base font-bold text-slate-800">Favorite Storybook Log</h3>
-              </div>
-              <button onclick="openAddWordBookModal()" class="text-xs font-bold text-emerald-700 hover:text-emerald-800">+ Add Book</button>
-            </div>
-
-            <div id="booksContainer" class="space-y-2 text-xs">
-              <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div>
-                  <div class="font-bold text-slate-800">🚀 The Little Star Explorer</div>
-                  <div class="text-[11px] text-slate-500">Bedtime exploration of lunar mountains and constellations</div>
-                </div>
-                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">Completed</span>
-              </div>
-              <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div>
-                  <div class="font-bold text-slate-800">☁️ Where Do Clouds Go to Sleep?</div>
-                  <div class="text-[11px] text-slate-500">Calm soothing rain cycle story with KOTL ambient audio</div>
-                </div>
-                <span class="text-[10px] font-bold text-sky-800 bg-sky-100 px-2 py-0.5 rounded-md">Reading Now</span>
-              </div>
-            </div>
-          </div>
-
         </div>
 
-        <!-- Right Col: Sports Physical Goal & Social Manners -->
-        <div class="lg:col-span-6 space-y-5">
-          
-          <!-- Sports Daily 60-Min Play Goal with Circular Donut Ring -->
+        <!-- Right: Sports Daily 60-Min Movement Goal -->
+        <div class="lg:col-span-6 space-y-4">
           <div class="bg-white border-2 border-emerald-200 rounded-[32px] p-5 shadow-xs space-y-4">
             <div class="flex items-center justify-between border-b border-emerald-100 pb-2.5">
               <div class="flex items-center gap-2">
@@ -635,7 +832,7 @@
               <button onclick="openLogPlayTimeModal()" class="text-xs font-bold text-emerald-700 hover:text-emerald-800">+ Log Minutes</button>
             </div>
 
-            <div class="flex items-center gap-5 p-3 rounded-2xl bg-emerald-50/60 border border-emerald-200">
+            <div class="flex items-center gap-5 p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200">
               <div class="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
                 <svg class="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
                   <path class="text-emerald-200 stroke-current" stroke-width="4" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -645,39 +842,11 @@
               </div>
               <div>
                 <div class="font-fredoka font-bold text-base text-slate-800">45 of 60 Minutes Active Today</div>
-                <p class="text-xs text-slate-600">Playground cricket (30m) + Cycling (15m)</p>
+                <p class="text-xs text-slate-600">Playground cricket (30m) + Cycling in garden (15m)</p>
                 <span class="text-[10px] font-bold text-emerald-700">75% Complete • High Physical Stamina</span>
               </div>
             </div>
           </div>
-
-          <!-- Social Manners & Respect Card -->
-          <div class="bg-white border-2 border-emerald-200 rounded-[32px] p-5 shadow-xs space-y-4">
-            <div class="flex items-center justify-between border-b border-emerald-100 pb-2.5">
-              <div class="flex items-center gap-2">
-                <span class="text-xl">🌟</span>
-                <h3 class="font-fredoka text-base font-bold text-slate-800">Social Character & Manners</h3>
-              </div>
-              <button onclick="giveMannerStar()" class="px-3 py-1 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-fredoka font-bold text-xs shadow-2xs">
-                ⭐ Award Manner Star
-              </button>
-            </div>
-
-            <div class="space-y-2 text-xs">
-              <div class="p-3 rounded-2xl bg-amber-50/70 border border-amber-200 flex items-center justify-between">
-                <div>
-                  <strong>Polite Turn-Taking & Greetings</strong>
-                  <div class="text-[11px] text-slate-500">Cheerfully says 'Please' and 'Thank you' to elders</div>
-                </div>
-                <span id="mannerStarsDisplay" class="font-fredoka font-bold text-xs text-amber-900 bg-amber-200 px-2.5 py-0.5 rounded-full">12 Stars Earned</span>
-              </div>
-              <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200">
-                <strong>Family Empathy:</strong>
-                <div class="text-[11px] text-slate-500">Carried warm water bottle for Dadi and shared drawing colors</div>
-              </div>
-            </div>
-          </div>
-
         </div>
 
       </div>
@@ -1049,7 +1218,7 @@
       <span class="text-lg">🧭</span><span>Quests</span>
     </button>
     <button onclick="switchSection('growth')" id="mobBtn_growth" class="flex flex-col items-center font-bold text-[10px] text-slate-500">
-      <span class="text-lg">🎨</span><span>Learn</span>
+      <span class="text-lg">🌟</span><span>Habits</span>
     </button>
     <button onclick="switchSection('health')" id="mobBtn_health" class="flex flex-col items-center font-bold text-[10px] text-slate-500">
       <span class="text-lg">🏥</span><span>Health</span>
@@ -1200,7 +1369,42 @@
     </div>
   </div>
 
-  <!-- 4. LOG SICKNESS & MEDICINE MODAL -->
+  <!-- 4. ADD HABIT GOAL MODAL (GOOD & BAD HABITS) -->
+  <div id="addHabitGoalModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-emerald-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🎯</span>
+          <h3 class="font-fredoka text-lg font-bold text-slate-800">Set Habit & Behavioral Goal</h3>
+        </div>
+        <button onclick="closeAddHabitGoalModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center">✕</button>
+      </div>
+
+      <form onsubmit="handleSaveHabitGoal(event)" class="space-y-3 text-xs font-semibold text-slate-700">
+        <div>
+          <label class="block mb-1">Habit Type:</label>
+          <select id="habitInputType" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none font-bold">
+            <option value="good">✨ Good Habit to Cultivate / Strengthen</option>
+            <option value="bad">⚠️ Reluctance / Habit to Improve with KOTL Guidance</option>
+          </select>
+        </div>
+        <div>
+          <label class="block mb-1">Habit Title:</label>
+          <input id="habitInputTitle" type="text" placeholder="e.g. Drinking fresh milk without sugar or Putting shoes on rack" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none" required />
+        </div>
+        <div>
+          <label class="block mb-1">KOTL Mentoring Strategy / Directive:</label>
+          <input id="habitInputStrategy" type="text" placeholder="e.g. Cheerfully remind Parth how strong athletes drink pure milk" class="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none" />
+        </div>
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeAddHabitGoalModal()" class="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 font-bold">Cancel</button>
+          <button type="submit" class="btn-3d-emerald px-5 py-2.5 rounded-xl text-white font-fredoka font-bold shadow-md">Add Habit Goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. LOG SICKNESS & MEDICINE MODAL -->
   <div id="logSicknessModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white border-2 border-rose-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b pb-3">
@@ -1249,7 +1453,7 @@
     </div>
   </div>
 
-  <!-- 5. ADD VACCINE MODAL -->
+  <!-- 6. ADD VACCINE MODAL -->
   <div id="addVaccineModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white border-2 border-rose-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b pb-3">
@@ -1290,7 +1494,7 @@
     </div>
   </div>
 
-  <!-- 6. UPDATE VITALS MODAL -->
+  <!-- 7. UPDATE VITALS MODAL -->
   <div id="updateVitalsModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white border-2 border-rose-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b pb-3">
@@ -1318,7 +1522,7 @@
     </div>
   </div>
 
-  <!-- 7. ADD WORD OR BOOK MODAL -->
+  <!-- 8. ADD WORD OR BOOK MODAL -->
   <div id="addWordBookModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white border-2 border-emerald-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b pb-3">
@@ -1353,7 +1557,7 @@
     </div>
   </div>
 
-  <!-- 8. LOG PLAY TIME MODAL -->
+  <!-- 9. LOG PLAY TIME MODAL -->
   <div id="logPlayTimeModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white border-2 border-emerald-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b pb-3">
@@ -1381,7 +1585,7 @@
     </div>
   </div>
 
-  <!-- 9. GROQ QUOTA MODAL -->
+  <!-- 10. GROQ QUOTA MODAL -->
   <div id="quotaModal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white border-2 border-amber-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b pb-3">
@@ -1509,6 +1713,9 @@
 
     function openAssignQuestModal() { document.getElementById('assignQuestModal').classList.remove('hidden'); }
     function closeAssignQuestModal() { document.getElementById('assignQuestModal').classList.add('hidden'); }
+
+    function openAddHabitGoalModal() { document.getElementById('addHabitGoalModal').classList.remove('hidden'); }
+    function closeAddHabitGoalModal() { document.getElementById('addHabitGoalModal').classList.add('hidden'); }
 
     function openLogSicknessModal() {
       document.getElementById('sickInputDate').value = new Date().toISOString().split('T')[0];
@@ -1704,6 +1911,15 @@
         input.placeholder = "Ask KOTL a test question as Parth (e.g. 'What is a shooting star?')...";
         input.focus();
       });
+    }
+
+    function handleSaveHabitGoal(e) {
+      e.preventDefault();
+      var type = document.getElementById('habitInputType').value;
+      var title = document.getElementById('habitInputTitle').value.trim();
+      var strategy = document.getElementById('habitInputStrategy').value.trim();
+      closeAddHabitGoalModal();
+      alert('Habit goal "' + title + '" saved! KOTL will incorporate this into daily mentoring.');
     }
 
     function handleSaveMedicalId(e) {
@@ -1996,19 +2212,9 @@
           '<button onclick="playLocalVoice(\'' + safeTitle + '\')" class="text-emerald-700 hover:text-emerald-900">🔊</button>';
         container.prepend(card);
       } else {
-        var containerBooks = document.getElementById('booksContainer');
-        var cardBook = document.createElement('div');
-        cardBook.className = 'p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between';
-        cardBook.innerHTML = 
-          '<div>' +
-            '<div class="font-bold text-slate-800">📖 ' + title + '</div>' +
-            '<div class="text-[11px] text-slate-500">' + (desc || 'Engaging storybook reading') + '</div>' +
-          '</div>' +
-          '<span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">New Entry</span>';
-        containerBooks.prepend(cardBook);
+        alert('Added storybook to library!');
       }
       closeAddWordBookModal();
-      alert('Added successfully to library!');
     }
 
     function handleSavePlayTime(e) {
@@ -2024,9 +2230,8 @@
 
     function giveMannerStar() {
       mannerStarsCount++;
-      document.getElementById('mannerStarsDisplay').innerText = mannerStarsCount + ' Stars Earned';
-      playLocalVoice('Super star for Parth! You are demonstrating wonderful kindness and manners!');
-      alert('⭐ Manner Star awarded to Parth for polite behavior and respect!');
+      playLocalVoice('Super star for Parth! You are demonstrating wonderful manners and positive habits!');
+      alert('⭐ Good Habit Star awarded to Parth for positive routine & respect!');
     }
 
     function toggleWalkieRecording() {
@@ -2165,9 +2370,9 @@
   KOTL KINDERGARTEN EXTENSIVE ARCHITECTURE NOTES
   ================================================================================
   Pure Kindergarten Pedagogical Companion UI Architecture
-  - Menu 1: School Report (Academic Marks, Progress Table, 1-Min Briefing, Print PDF)
+  - Menu 1: School Report & Skills Directory (Executive Pediatric Report, 4 Skills Assessment with Evaluations & Strengths, Passions Analysis, Conversational Evidence Archive, Milestones Checklist)
   - Menu 2: Mentor Quests (Socratic AI Challenges, Step-by-Step hints, Badge Unlocks)
-  - Menu 3: Learn & Play (Phonics Sight Words, Reading Book Shelf, Sports Play Goal, Manner Stars)
+  - Menu 3: Learn, Play & Habits (Good Habits Established vs Habits Needing Guidance / Bad Habits, Phonics, Sports Movement)
   - Menu 4: Health Passport (Emergency Medical ID, Sickness Log, Vaccination Tracker, Vitals)
   - Menu 5: Parent & Voice (Walkie Mic Transmitter, Curfew & Limits, DAY-WISE CHAT ARCHIVE)
   ================================================================================
