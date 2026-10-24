@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>KOTL Kids • Kindergarten Growth & Intelligence Dashboard</title>
   
-  <!-- Playful Preschool Google Fonts: Fredoka & Nunito -->
+  <!-- Playful Preschool Fonts: Fredoka & Nunito -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -53,6 +53,68 @@
     .tab-active svg {
       color: #FFFFFF !important;
     }
+    
+    /* Toggle switch slider */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #CBD5E1;
+      transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 24px;
+    }
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    input:checked + .toggle-slider-emerald {
+      background-color: #34D399;
+    }
+    input:checked + .toggle-slider-amber {
+      background-color: #FBBF24;
+    }
+    input:checked + .toggle-slider-sky {
+      background-color: #38BDF8;
+    }
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Paperclip decoration */
+    .paperclip-clip {
+      position: absolute;
+      top: -12px;
+      right: 24px;
+      width: 22px;
+      height: 48px;
+      border: 3px solid #94A3B8;
+      border-radius: 12px 12px 6px 6px;
+      background: transparent;
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.1);
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* Floating micro animations */
     @keyframes gentle-float {
       0%, 100% { transform: translateY(0px) rotate(0deg); }
       50% { transform: translateY(-5px) rotate(1.5deg); }
@@ -73,11 +135,12 @@
     }
   </style>
 </head>
-<body class="h-screen flex flex-col antialiased select-none md:select-auto bg-[#F8FAFC] relative font-['Nunito']">
+<body class="h-screen flex flex-col antialiased select-none md:select-auto bg-[#F8FAFC] relative font-nunito">
 
-  <!-- Micro-Decorations across White Margins (Airplanes, Rainbows, Stars) -->
+  <!-- Micro-Decorations across White Margins (Airplanes, Rainbows, Stars, Pencils) -->
   <div class="kindergarten-doodles pointer-events-none fixed inset-0 overflow-hidden select-none z-0">
-    <div class="absolute top-6 left-8 animate-float opacity-75">
+    <!-- Top-Left Floating Paper Airplane with Dashed Trail -->
+    <div class="absolute top-6 left-8 animate-float opacity-80">
       <svg width="80" height="60" viewBox="0 0 100 80" fill="none" class="w-16 h-12">
         <path d="M 5 65 C 25 30 45 70 65 40 C 75 25 85 30 90 25" stroke="#70B6F6" stroke-width="2" stroke-dasharray="4 4" fill="none" />
         <g transform="translate(65, 10) rotate(-10)">
@@ -88,7 +151,8 @@
       </svg>
     </div>
 
-    <div class="absolute top-6 right-10 animate-float opacity-70">
+    <!-- Top-Right Mini Rainbow -->
+    <div class="absolute top-6 right-10 animate-float opacity-75">
       <svg width="70" height="50" viewBox="0 0 80 50" fill="none" class="w-14 h-10">
         <path d="M 10 45 C 10 20 70 20 70 45" stroke="#F48FB1" stroke-width="3" stroke-linecap="round" fill="none" />
         <path d="M 18 45 C 18 26 62 26 62 45" stroke="#FFB703" stroke-width="3" stroke-linecap="round" fill="none" />
@@ -96,7 +160,8 @@
       </svg>
     </div>
 
-    <div class="absolute top-28 left-1/4 opacity-60"><span class="text-xl text-[#FFB703]">⭐</span></div>
+    <!-- Scattered Outline Stars -->
+    <div class="absolute top-32 left-1/4 opacity-60"><span class="text-xl text-[#FFB703]">⭐</span></div>
     <div class="absolute top-44 right-1/4 opacity-50"><span class="text-lg text-[#70B6F6]">★</span></div>
     <div class="absolute bottom-36 right-12 opacity-55"><span class="text-xl text-[#66D29A]">⭐</span></div>
     <div class="absolute bottom-24 left-1/3 opacity-45"><span class="text-lg text-[#FFB703]">★</span></div>
@@ -177,410 +242,447 @@
     <!-- ======================================================== -->
     <!-- TAB 1: SCHOOL REPORT CARD (KINDERGARTEN GROWTH)          -->
     <!-- ======================================================== -->
-    <section id="viewReport" class="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-6xl mx-auto w-full">
+    <section id="viewReport" class="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-7xl mx-auto w-full">
       
-      <!-- TOP PROFILE HEADER (Organic Scalloped Card rounded-[32px]) -->
-      <div class="relative bg-white border-2 border-amber-300 rounded-[32px] p-6 shadow-[0_12px_30px_rgba(251,191,36,0.12)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-          <div id="reportChildAvatar" class="w-16 h-16 rounded-full bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-3xl shadow-inner shrink-0">
-            👦
-          </div>
-          <div>
-            <div class="flex items-center gap-3">
-              <h1 id="reportChildName" class="text-2xl font-bold font-fredoka text-slate-800">Parth</h1>
-              <span id="reportChildAgeBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-amber-300">6 Years</span>
-              <span id="reportChildGenderBadge" class="bg-sky-100 text-sky-800 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-sky-300">👦 Boy</span>
-              <button onclick="openProfileModal()" class="text-xs px-3 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-bold flex items-center gap-1 shadow-xs font-fredoka">
-                <span>⚙️ Profile</span>
-              </button>
-            </div>
-            <p class="text-slate-500 text-sm mt-0.5">Class: <strong class="text-slate-700">Sr. KG</strong> • Companion: <span class="font-bold text-sky-600">KOTL Buddy</span> • Roll: <span class="font-mono text-slate-600">KOTL-2026-P04</span></p>
-          </div>
-        </div>
-
-        <!-- Grade Badge -->
-        <div class="bg-gradient-to-br from-amber-400 to-orange-500 text-white px-5 py-3 rounded-2xl shadow-lg shadow-orange-500/20 text-center self-end sm:self-center shrink-0">
-          <div class="text-[10px] uppercase tracking-wider font-semibold">Star Grade</div>
-          <div class="text-2xl font-black font-fredoka">A+ <span class="text-xs font-normal">(87/100)</span></div>
-        </div>
-      </div>
-
-      <!-- 4 TOP METRIC TILES (Colorful Chunky Cards rounded-[32px]) -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <!-- Tile 1: Overall Star (Sky Blue fill) -->
-        <div class="bg-sky-50 border-2 border-sky-300 rounded-[32px] p-5 shadow-sm flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-sky-600 uppercase font-fredoka">Overall Star</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-white text-sky-700 font-bold border border-sky-200">A+ Top 5%</span>
-          </div>
-          <div class="mt-2">
-            <div class="text-3xl font-extrabold font-fredoka text-sky-800">
-              <span id="reportOverallScore">87</span><span class="text-sm text-sky-500">/100</span>
-            </div>
-            <div class="w-full bg-sky-200 h-2.5 rounded-full mt-3 overflow-hidden">
-              <div id="reportOverallBar" class="bg-sky-500 h-full rounded-full transition-all duration-500" style="width: 87%"></div>
-            </div>
-          </div>
-          <p class="text-xs text-sky-900 font-bold mt-2 font-['Nunito']">Outstanding All-Round Growth 🌟</p>
-        </div>
-
-        <!-- Tile 2: English & Words (Amber fill) -->
-        <div class="bg-amber-50 border-2 border-amber-300 rounded-[32px] p-5 shadow-sm flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-amber-600 uppercase font-fredoka">English & Words</span>
-            <span id="reportVocabStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-white text-amber-700 font-bold border border-amber-200">Grade A</span>
-          </div>
-          <div class="mt-2">
-            <div id="reportVocabScore" class="text-3xl font-extrabold font-fredoka text-amber-800">84%</div>
-            <div class="w-full bg-amber-200 h-2.5 rounded-full mt-3 overflow-hidden">
-              <div id="reportVocabBar" class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: 84%"></div>
-            </div>
-          </div>
-          <p class="text-xs text-amber-900 font-bold mt-2 font-['Nunito']">Learns New English Words Daily 📚</p>
-        </div>
-
-        <!-- Tile 3: Space & Science (Emerald fill) -->
-        <div class="bg-emerald-50 border-2 border-emerald-300 rounded-[32px] p-5 shadow-sm flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-emerald-600 uppercase font-fredoka">Space & Science</span>
-            <span id="reportCuriosityStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-white text-emerald-700 font-bold border border-emerald-200">Grade A+</span>
-          </div>
-          <div class="mt-2">
-            <div id="reportCuriosityScore" class="text-3xl font-extrabold font-fredoka text-emerald-800">92%</div>
-            <div class="w-full bg-emerald-200 h-2.5 rounded-full mt-3 overflow-hidden">
-              <div id="reportCuriosityBar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 92%"></div>
-            </div>
-          </div>
-          <p class="text-xs text-emerald-900 font-bold mt-2 font-['Nunito']">High Curiosity in Space & Stars 🚀</p>
-        </div>
-
-        <!-- Tile 4: Good Habits (Purple fill) -->
-        <div class="bg-purple-50 border-2 border-purple-300 rounded-[32px] p-5 shadow-sm flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-purple-600 uppercase font-fredoka">Good Habits</span>
-            <span class="text-[10px] px-2 py-0.5 rounded-full bg-white text-purple-700 font-bold border border-purple-200">3/6 Active</span>
-          </div>
-          <div class="mt-2">
-            <div id="reportMissionsKpi" class="text-3xl font-extrabold font-fredoka text-purple-800">
-              3<span class="text-sm text-purple-500">/6 Active</span>
-            </div>
-            <div class="w-full bg-purple-200 h-2.5 rounded-full mt-3 overflow-hidden">
-              <div class="bg-purple-500 h-full rounded-full" style="width: 50%"></div>
-            </div>
-          </div>
-          <p class="text-xs text-purple-900 font-bold mt-2 font-['Nunito']">Brushing, Veggies & Bedtime ⭐</p>
-        </div>
-
-      </div>
-
-      <!-- SUBJECT PROGRESS & MARKSHEET (Colorful Pastel Cards with rounded-[28px]) -->
-      <div class="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
-          <div>
-            <h2 class="text-xl font-bold font-fredoka text-slate-800 flex items-center gap-2">
-              <span>🎨</span>
-              <span>Parth's Kindergarten Marksheet & Subject Progress</span>
-            </h2>
-            <p class="text-xs text-slate-500">Playful cards with subject scores, stars, and companion remarks</p>
-          </div>
-          <span class="text-xs px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold font-fredoka">
-            🏆 6-Year Milestones: PASSED WITH STARS
-          </span>
-        </div>
-
-        <div class="space-y-3.5">
-          
-          <!-- Spoken English & Words -->
-          <div class="bg-sky-50/70 border-2 border-sky-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-sky-400 transition-all">
-            <div class="flex items-center gap-3.5">
-              <div class="w-12 h-12 rounded-2xl bg-white border-2 border-sky-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🗣️</div>
-              <div>
-                <h4 class="font-bold text-base text-sky-900 font-fredoka">Spoken English & Words</h4>
-                <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">Expresses thoughts clearly and naturally. Assimilates 2-3 syllable vocabulary seamlessly into stories.</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 self-end sm:self-center shrink-0">
-              <div class="text-amber-400 text-base">★★★★★</div>
-              <span class="text-xs font-mono font-bold text-sky-800 bg-white px-3 py-1 rounded-xl border border-sky-200">84 / 100</span>
-              <span class="px-3 py-1 rounded-xl bg-sky-600 text-white font-bold text-xs font-fredoka">Grade A • Fluent</span>
-            </div>
-          </div>
-
-          <!-- Science, Space & Curiosity -->
-          <div class="bg-emerald-50/70 border-2 border-emerald-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-emerald-400 transition-all">
-            <div class="flex items-center gap-3.5">
-              <div class="w-12 h-12 rounded-2xl bg-white border-2 border-emerald-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🚀</div>
-              <div>
-                <h4 class="font-bold text-base text-emerald-900 font-fredoka">Science, Space & Curiosity</h4>
-                <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">Deeply curious about stars, planets, and rocket propulsion. Asks bright exploratory questions.</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 self-end sm:self-center shrink-0">
-              <div class="text-amber-400 text-base">★★★★★</div>
-              <span class="text-xs font-mono font-bold text-emerald-800 bg-white px-3 py-1 rounded-xl border border-emerald-200">92 / 100</span>
-              <span class="px-3 py-1 rounded-xl bg-emerald-600 text-white font-bold text-xs font-fredoka">Grade A+ • Curious</span>
-            </div>
-          </div>
-
-          <!-- Good Habits & Manners -->
-          <div class="bg-amber-50/70 border-2 border-amber-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-amber-400 transition-all">
-            <div class="flex items-center gap-3.5">
-              <div class="w-12 h-12 rounded-2xl bg-white border-2 border-amber-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🪥</div>
-              <div>
-                <h4 class="font-bold text-base text-amber-900 font-fredoka">Good Habits & Manners</h4>
-                <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">Brushes teeth twice daily and tidies up school bag and toys cheerfully when encouraged.</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 self-end sm:self-center shrink-0">
-              <div class="text-amber-400 text-base">★★★★★</div>
-              <span class="text-xs font-mono font-bold text-amber-800 bg-white px-3 py-1 rounded-xl border border-amber-200">86 / 100</span>
-              <span class="px-3 py-1 rounded-xl bg-amber-600 text-white font-bold text-xs font-fredoka">Grade A • Polite</span>
-            </div>
-          </div>
-
-          <!-- Creativity & Stories -->
-          <div class="bg-purple-50/70 border-2 border-purple-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-purple-400 transition-all">
-            <div class="flex items-center gap-3.5">
-              <div class="w-12 h-12 rounded-2xl bg-white border-2 border-purple-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🎨</div>
-              <div>
-                <h4 class="font-bold text-base text-purple-900 font-fredoka">Creativity & Stories</h4>
-                <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">Loves drawing spacecraft and vibrant colors. Listens attentively to bedtime moral tales.</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 self-end sm:self-center shrink-0">
-              <div class="text-amber-400 text-base">★★★★★</div>
-              <span class="text-xs font-mono font-bold text-purple-800 bg-white px-3 py-1 rounded-xl border border-purple-200">90 / 100</span>
-              <span class="px-3 py-1 rounded-xl bg-purple-600 text-white font-bold text-xs font-fredoka">Grade A+ • Creative</span>
-            </div>
-          </div>
-
-          <!-- Politeness & Cheerfulness -->
-          <div class="bg-rose-50/70 border-2 border-rose-300 rounded-[28px] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-rose-400 transition-all">
-            <div class="flex items-center gap-3.5">
-              <div class="w-12 h-12 rounded-2xl bg-white border-2 border-rose-300 flex items-center justify-center text-2xl shrink-0 shadow-xs">🤝</div>
-              <div>
-                <h4 class="font-bold text-base text-rose-900 font-fredoka">Politeness & Cheerfulness</h4>
-                <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">Speaks politely with parents and companions. Radiates upbeat, cheerful, and loving energy.</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 self-end sm:self-center shrink-0">
-              <div class="text-amber-400 text-base">★★★★★</div>
-              <span class="text-xs font-mono font-bold text-rose-800 bg-white px-3 py-1 rounded-xl border border-rose-200">95 / 100</span>
-              <span class="px-3 py-1 rounded-xl bg-rose-600 text-white font-bold text-xs font-fredoka">Grade A+ • Kind</span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- HABITS TRACKER & STICKY NOTE (Split Module) -->
+      <!-- 3-COLUMN RESPONSIVE LAYOUT (Exact Match to User Mockup Image) -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- Left: Habits Tracker with Bouncy Rounded Pill Toggles -->
-        <div class="lg:col-span-7 space-y-6">
-          <div class="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div class="flex items-center space-x-2.5">
-                <span class="text-2xl">⭐</span>
-                <div>
-                  <h3 class="font-bold text-base text-slate-800 font-fredoka">Daily Habit Checklist & Routine Tracker</h3>
-                  <p class="text-xs text-slate-500">Tap to toggle what Parth achieved today</p>
-                </div>
+        <!-- ======================================================== -->
+        <!-- COLUMN 1: Profile Cloud, 4 Metric Tiles, Mini Toggle Card -->
+        <!-- ======================================================== -->
+        <div class="lg:col-span-4 space-y-5">
+          
+          <!-- TOP PROFILE HEADER (Organic Scalloped Cloud Card with Rosette Badge) -->
+          <div class="relative bg-[#FFFDF7] border-2 border-amber-300 rounded-[36px] p-6 shadow-[0_10px_25px_rgba(251,191,36,0.12)] flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+              <!-- Rounded squircle avatar in vivid blue -->
+              <div id="reportChildAvatar" class="w-16 h-16 rounded-2xl bg-[#2563EB] border-2 border-white flex items-center justify-center text-3xl shadow-md shrink-0">
+                👦
               </div>
-              <span class="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold font-fredoka border border-emerald-300">
-                3/6 Active
-              </span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h1 id="reportChildName" class="text-2xl font-bold font-fredoka text-slate-800">Parth</h1>
+                  <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-emerald-300 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live
+                  </span>
+                </div>
+                <p id="reportChildAgeBadge" class="text-slate-700 font-bold text-sm mt-0.5 font-fredoka">6 Years</p>
+                <p class="text-slate-500 text-xs">Class: <strong class="text-slate-700">Sr. KG</strong> • <span class="font-bold text-sky-600">KOTL Buddy</span></p>
+                <button onclick="openProfileModal()" class="mt-1.5 text-[11px] px-2.5 py-0.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 font-bold flex items-center gap-1 shadow-2xs font-fredoka">
+                  <span>⚙️ Rules</span>
+                </button>
+              </div>
             </div>
 
-            <!-- Bouncy Rounded Pill Toggles -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-              <label class="flex items-start gap-3 p-4 rounded-[24px] bg-sky-50 border-2 border-sky-300 cursor-pointer hover:bg-sky-100/70 transition-all shadow-xs">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-sky-600 rounded-md focus:ring-sky-500">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-sky-900 font-fredoka">🪥 Morning & Night Brushing</div>
-                  <div class="text-[11px] text-slate-500 font-medium">Shiny strong teeth routine</div>
-                </div>
-              </label>
+            <!-- Ruffled Rosette Stamp Badge: Grade A+ (87/100) -->
+            <div class="w-22 h-22 rounded-full border-4 border-dashed border-amber-400 bg-gradient-to-br from-amber-400 to-orange-500 text-white flex flex-col items-center justify-center text-center shadow-md shrink-0 font-fredoka">
+              <span class="text-[9px] uppercase tracking-wider font-semibold opacity-90">Grade</span>
+              <span class="text-2xl font-black leading-none my-0.5">A+</span>
+              <span class="text-[10px] font-medium opacity-90">(87/100)</span>
+            </div>
+          </div>
 
-              <label class="flex items-start gap-3 p-4 rounded-[24px] bg-emerald-50 border-2 border-emerald-300 cursor-pointer hover:bg-emerald-100/70 transition-all shadow-xs">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-emerald-600 rounded-md focus:ring-emerald-500">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-emerald-900 font-fredoka">🥛 Clean Water & Fresh Milk</div>
-                  <div class="text-[11px] text-slate-500 font-medium">Healthy hydration all day</div>
-                </div>
-              </label>
+          <!-- 4 CHUNKY COLORFUL METRIC TILES -->
+          <div class="grid grid-cols-2 gap-3.5">
+            
+            <!-- Tile 1: Overall Star (Sky Blue fill) -->
+            <div class="bg-[#E0F2FE] border-2 border-[#70B6F6] rounded-[26px] p-4 text-center shadow-xs flex flex-col justify-between">
+              <span class="text-xs font-bold text-sky-700 uppercase font-fredoka">Overall Star</span>
+              <div class="text-2xl font-extrabold font-fredoka text-sky-900 my-1">
+                <span id="reportOverallScore">87</span><span class="text-xs text-sky-600">/100</span>
+              </div>
+              <div class="w-full bg-sky-200/80 h-2 rounded-full overflow-hidden mt-1">
+                <div id="reportOverallBar" class="bg-sky-500 h-full rounded-full transition-all duration-500" style="width: 87%"></div>
+              </div>
+            </div>
 
-              <label class="flex items-start gap-3 p-4 rounded-[24px] bg-amber-50 border-2 border-amber-300 cursor-pointer hover:bg-amber-100/70 transition-all shadow-xs">
-                <input type="checkbox" class="mt-1 w-4 h-4 text-amber-600 rounded-md focus:ring-amber-500">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-amber-900 font-fredoka">🥗 Eating Veggies & Spinach</div>
-                  <div class="text-[11px] text-slate-500 font-medium">Superhero stamina fuel</div>
-                </div>
-              </label>
+            <!-- Tile 2: English (Amber fill) -->
+            <div class="bg-[#FEF3C7] border-2 border-[#FBBF24] rounded-[26px] p-4 text-center shadow-xs flex flex-col justify-between">
+              <span class="text-xs font-bold text-amber-700 uppercase font-fredoka">English</span>
+              <div id="reportVocabScore" class="text-2xl font-extrabold font-fredoka text-amber-900 my-1">84%</div>
+              <div class="w-full bg-amber-200/80 h-2 rounded-full overflow-hidden mt-1">
+                <div id="reportVocabBar" class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: 84%"></div>
+              </div>
+            </div>
 
-              <label class="flex items-start gap-3 p-4 rounded-[24px] bg-purple-50 border-2 border-purple-300 cursor-pointer hover:bg-purple-100/70 transition-all shadow-xs">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-purple-600 rounded-md focus:ring-purple-500">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-purple-900 font-fredoka">🧸 Tidy Up Toys & School Bag</div>
-                  <div class="text-[11px] text-slate-500 font-medium">Neat toy organizer box</div>
-                </div>
-              </label>
+            <!-- Tile 3: Space (Mint fill) -->
+            <div class="bg-[#DCFCE7] border-2 border-[#4ADE80] rounded-[26px] p-4 text-center shadow-xs flex flex-col justify-between">
+              <span class="text-xs font-bold text-emerald-700 uppercase font-fredoka">Space</span>
+              <div id="reportCuriosityScore" class="text-2xl font-extrabold font-fredoka text-emerald-900 my-1">92%</div>
+              <div class="w-full bg-emerald-200/80 h-2 rounded-full overflow-hidden mt-1">
+                <div id="reportCuriosityBar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 92%"></div>
+              </div>
+            </div>
 
-              <label class="flex items-start gap-3 p-4 rounded-[24px] bg-indigo-50 border-2 border-indigo-300 cursor-pointer hover:bg-indigo-100/70 transition-all shadow-xs">
-                <input type="checkbox" class="mt-1 w-4 h-4 text-indigo-600 rounded-md focus:ring-indigo-500">
-                <div>
-                  <div class="text-xs sm:text-sm font-bold text-indigo-900 font-fredoka">📖 20 Mins English Stories</div>
-                  <div class="text-[11px] text-slate-500 font-medium">Bedtime story with KOTL</div>
-                </div>
-              </label>
+            <!-- Tile 4: Good Habits (Teal fill) -->
+            <div class="bg-[#E6FFFA] border-2 border-[#2DD4BF] rounded-[26px] p-4 text-center shadow-xs flex flex-col justify-between">
+              <span class="text-xs font-bold text-teal-700 uppercase font-fredoka">Good Habits</span>
+              <div id="reportMissionsKpi" class="text-2xl font-extrabold font-fredoka text-teal-900 my-1">
+                3<span class="text-xs text-teal-600">/6</span>
+              </div>
+              <div class="w-full bg-teal-200/80 h-2 rounded-full overflow-hidden mt-1">
+                <div class="bg-teal-500 h-full rounded-full" style="width: 50%"></div>
+              </div>
+            </div>
 
-              <label class="flex items-start gap-3 p-4 rounded-[24px] bg-rose-50 border-2 border-rose-300 cursor-pointer hover:bg-rose-100/70 transition-all shadow-xs">
-                <input type="checkbox" class="mt-1 w-4 h-4 text-rose-600 rounded-md focus:ring-rose-500">
+          </div>
+
+          <!-- MINI HABIT TOGGLES (As shown in bottom-left of user mockup) -->
+          <div class="space-y-2.5">
+            <div class="p-3.5 rounded-[22px] bg-[#E0F2FE] border-2 border-[#70B6F6] flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-2.5">
+                <span class="text-lg">⭐</span>
                 <div>
-                  <div class="text-xs sm:text-sm font-bold text-rose-900 font-fredoka">🌙 Sleep by 9:00 PM</div>
-                  <div class="text-[11px] text-slate-500 font-medium">No screen before bedtime</div>
+                  <div class="text-xs font-bold text-sky-950 font-fredoka">Spoken English & Words</div>
+                  <div class="text-[10px] text-sky-700">Fluent pronunciation practice</div>
                 </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider toggle-slider-sky"></span>
+              </label>
+            </div>
+
+            <div class="p-3.5 rounded-[22px] bg-[#FEF3C7] border-2 border-[#FBBF24] flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-2.5">
+                <span class="text-lg">🥛</span>
+                <div>
+                  <div class="text-xs font-bold text-amber-950 font-fredoka">Clean Water & Milk</div>
+                  <div class="text-[10px] text-amber-700">Healthy hydration all day</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider toggle-slider-amber"></span>
+              </label>
+            </div>
+
+            <div class="p-3.5 rounded-[22px] bg-[#DCFCE7] border-2 border-[#4ADE80] flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-2.5">
+                <span class="text-lg">🥗</span>
+                <div>
+                  <div class="text-xs font-bold text-emerald-950 font-fredoka">Eating Veggies & Fruits</div>
+                  <div class="text-[10px] text-emerald-700">Superhero stamina fuel</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider toggle-slider-emerald"></span>
               </label>
             </div>
           </div>
 
-          <!-- SPEECH BUBBLE CHAT (With Bubble Tails & Kid Avatars) -->
-          <div class="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div class="flex items-center space-x-2.5">
-                <span class="text-2xl">💬</span>
-                <div>
-                  <h3 class="text-lg font-bold font-fredoka text-slate-800">Live Companion Dialogue</h3>
-                  <p class="text-xs text-slate-500">Real spoken speech turns from ESP32 live microphone</p>
+          <!-- REALISTIC COMPANION REMARK NOTEPAD WITH PAPERCLIP 📎 -->
+          <div class="relative bg-[#FFFDF0] border-2 border-slate-300 rounded-[28px] p-6 shadow-md space-y-3">
+            <div class="paperclip-clip"></div>
+            
+            <div class="flex items-center gap-2 border-b border-amber-200 pb-2">
+              <span class="text-xl">📝</span>
+              <h3 class="font-bold text-base text-slate-800 font-fredoka">Companion Remark</h3>
+            </div>
+            
+            <p id="reportExecutiveSummary" class="text-xs text-slate-700 leading-relaxed font-nunito">
+              Parth demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful spirit during conversations with KOTL. He shows strong memory retention when talking about Space, Stars, and Creative Art. He grasps English vocabulary quickly, asks thoughtful questions, and is eagerly developing good daily habits like tidying up his toys and brushing his teeth.
+            </p>
+
+            <div class="pt-2 flex flex-wrap gap-2 text-xs font-fredoka">
+              <span class="px-2.5 py-1 rounded-xl bg-white border border-sky-300 text-sky-800 font-bold shadow-2xs">🚀 Space Explorer</span>
+              <span class="px-2.5 py-1 rounded-xl bg-white border border-amber-300 text-amber-800 font-bold shadow-2xs">🎨 Creative</span>
+              <span class="px-2.5 py-1 rounded-xl bg-white border border-emerald-300 text-emerald-800 font-bold shadow-2xs">🤝 Well Mannered</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- COLUMN 2: Wavy Subject Banner Cards & Speech Bubble Chat -->
+        <!-- ======================================================== -->
+        <div class="lg:col-span-4 space-y-5">
+
+          <!-- 4 WAVY / SCALLOPED SUBJECT PROGRESS CARDS -->
+          <div class="space-y-3.5">
+            
+            <!-- Card 1: Spoken English & Words (Blue) -->
+            <div class="bg-[#DDF2FD] border-2 border-[#70B6F6] rounded-[24px] p-4 shadow-xs flex flex-col justify-between space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">⭐</span>
+                  <div>
+                    <h4 class="font-bold text-sm text-sky-950 font-fredoka">Spoken English & Words</h4>
+                    <span class="text-xs font-mono font-bold text-sky-800">87 / 100</span>
+                  </div>
                 </div>
+                <span class="px-2.5 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-300 text-xs font-bold font-fredoka shrink-0">
+                  Grade A • Fluent
+                </span>
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold border border-sky-300">
+              <p class="text-xs text-slate-600 leading-relaxed">Parental remarks: Expresses thoughts clearly and with natural 2-3 syllable vocabulary.</p>
+            </div>
+
+            <!-- Card 2: Science, Space & Curiosity (Orange / Amber) -->
+            <div class="bg-[#FFE6C2] border-2 border-[#FB923C] rounded-[24px] p-4 shadow-xs flex flex-col justify-between space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">⭐</span>
+                  <div>
+                    <h4 class="font-bold text-sm text-amber-950 font-fredoka">Science, Space & Curiosity</h4>
+                    <span class="text-xs font-mono font-bold text-amber-800">95 / 100</span>
+                  </div>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-300 text-xs font-bold font-fredoka shrink-0">
+                  Grade A+ • Curious
+                </span>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed">Curious remarks: Keen engagement to explore astronomy, rocket physics, and stars.</p>
+            </div>
+
+            <!-- Card 3: Good Habits & Politeness (Mint Green) -->
+            <div class="bg-[#D7F7E6] border-2 border-[#4ADE80] rounded-[24px] p-4 shadow-xs flex flex-col justify-between space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">⭐</span>
+                  <div>
+                    <h4 class="font-bold text-sm text-emerald-950 font-fredoka">Good Habits & Politeness</h4>
+                    <span class="text-xs font-mono font-bold text-emerald-800">95 / 100</span>
+                  </div>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full bg-white text-orange-600 border border-orange-300 text-xs font-bold font-fredoka shrink-0">
+                  Grade A
+                </span>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed">Companion remarks: Polite turn-taking, respectful manners, and active toy organizing routine.</p>
+            </div>
+
+            <!-- Card 4: Creativity & Studies (Periwinkle Blue) -->
+            <div class="bg-[#DBEAFE] border-2 border-[#60A5FA] rounded-[24px] p-4 shadow-xs flex flex-col justify-between space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">⭐</span>
+                  <div>
+                    <h4 class="font-bold text-sm text-blue-950 font-fredoka">Creativity & Studies</h4>
+                    <span class="text-xs font-mono font-bold text-blue-800">95 / 100</span>
+                  </div>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full bg-white text-orange-600 border border-orange-300 text-xs font-bold font-fredoka shrink-0">
+                  Grade A+
+                </span>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed">Story habits: Loves drawing spacecraft designs, vibrant colors, and bedtime moral tales.</p>
+            </div>
+
+          </div>
+
+          <!-- RECENT DIALOGUE (Exact Speech Bubble Layout from User Image) -->
+          <div class="bg-white border-2 border-slate-200 rounded-[28px] p-5 shadow-sm space-y-3.5">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div>
+                <h3 class="text-base font-bold font-fredoka text-slate-800">Recent Dialogue</h3>
+                <p class="text-[11px] text-slate-500">Spoken turns served from live ESP32 microphone</p>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 font-bold border border-sky-300">
                 Audio Live
               </span>
             </div>
 
-            <div id="conversationEvidenceContainer" class="space-y-4">
-              <!-- Dynamically populated or default speech bubbles -->
-            </div>
-          </div>
-
-          <!-- Parent Action Tips -->
-          <div class="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-            <div class="flex items-center space-x-2.5 pb-3 border-b border-slate-100">
-              <span class="text-2xl">💡</span>
-              <div>
-                <h3 class="font-bold text-base text-slate-800 font-fredoka">Parent Action Tips & Everyday Home Activities</h3>
-                <p class="text-xs text-slate-500">Fun 5-minute activities to do with Parth at home</p>
+            <div id="conversationEvidenceContainer" class="space-y-3.5">
+              
+              <!-- Turn 1: Child Bubble (Left aligned with tail & circular orange Play button) -->
+              <div class="flex items-start gap-2.5">
+                <div class="w-9 h-9 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-sm shrink-0 shadow-2xs">👦</div>
+                <div class="bg-[#E0F2FE] border-2 border-[#BAE6FD] text-slate-800 rounded-2xl rounded-tl-none p-3.5 flex-1 shadow-xs flex items-center justify-between gap-2">
+                  <div>
+                    <p class="text-[10px] font-bold text-sky-700 font-fredoka uppercase">Parth</p>
+                    <p class="text-xs leading-relaxed font-medium mt-0.5">"KOTL, how do stars shine at night, and can we fly a rocket to the moon?"</p>
+                  </div>
+                  <button onclick="playOrSpeakText('KOTL, how do stars shine at night, and can we fly a rocket to the moon?')" class="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0 hover:bg-orange-600 shadow-xs" title="Play Voice">
+                    <span class="text-xs ml-0.5">▶</span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div id="parentRecommendationsContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <!-- Dynamically populated -->
+              <!-- Turn 2: KOTL Robot Bubble (Right aligned with tail & Audio Play pill) -->
+              <div class="flex items-start justify-end gap-2.5">
+                <div class="bg-[#DCFCE7] border-2 border-[#BBF7D0] text-slate-800 rounded-2xl rounded-tr-none p-3.5 flex-1 shadow-xs text-left">
+                  <div class="flex items-center justify-between pb-1 mb-1 border-b border-emerald-200/60">
+                    <p class="text-[10px] font-bold text-emerald-800 font-fredoka uppercase">KOTL Robot</p>
+                    <button onclick="playOrSpeakText('Stars are giant glowing suns far away in space, Parth! They twinkle because their light travels across the sky to say hello to you!')" class="text-[10px] text-emerald-700 hover:text-emerald-900 flex items-center gap-1 font-bold font-fredoka bg-white px-2 py-0.5 rounded-full border border-emerald-200">
+                      <span>🔊 Audio Play</span>
+                    </button>
+                  </div>
+                  <p class="text-xs leading-relaxed text-slate-700">"Stars are giant glowing suns far away in space, Parth! They twinkle because their light travels across the sky to say hello to you!"</p>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-sm shrink-0 shadow-2xs">🤖</div>
+              </div>
+
+              <!-- Turn 3: Child Bubble Follow-up -->
+              <div class="flex items-start gap-2.5">
+                <div class="w-9 h-9 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-sm shrink-0 shadow-2xs">👦</div>
+                <div class="bg-[#E0F2FE] border-2 border-[#BAE6FD] text-slate-800 rounded-2xl rounded-tl-none p-3.5 flex-1 shadow-xs flex items-center justify-between gap-2">
+                  <div>
+                    <p class="text-[10px] font-bold text-sky-700 font-fredoka uppercase">Parth</p>
+                    <p class="text-xs leading-relaxed font-medium mt-0.5">"Stars are glowing suns wish to rest, and sparks with its powerful energy!"</p>
+                  </div>
+                  <button onclick="playOrSpeakText('Stars are glowing suns wish to rest, and sparks with its powerful energy!')" class="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0 hover:bg-orange-600 shadow-xs" title="Play Voice">
+                    <span class="text-xs ml-0.5">▶</span>
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
 
         </div>
 
-        <!-- Right: Floating Sticky-Note Companion Observation & Tags -->
-        <div class="lg:col-span-5 space-y-6">
+        <!-- ======================================================== -->
+        <!-- COLUMN 3: Habits Tracker, Affinity Cards, Parent Tips   -->
+        <!-- ======================================================== -->
+        <div class="lg:col-span-4 space-y-5">
 
-          <!-- Sticky Note Card -->
-          <div class="bg-amber-50/80 border-2 border-amber-300 rounded-[32px] p-6 shadow-sm relative space-y-3.5">
-            <div class="flex items-center justify-between pb-2 border-b border-amber-200">
-              <div class="flex items-center space-x-2">
-                <span class="text-2xl">📌</span>
-                <h3 class="font-bold text-base text-amber-950 font-fredoka">Teacher & KOTL Companion Observation</h3>
+          <!-- HABITS TRACKER SECTION (Top-Right in user mockup) -->
+          <div class="space-y-3">
+            <div>
+              <h3 class="text-base font-bold font-fredoka text-slate-800">Habits Tracker</h3>
+              <p class="text-xs text-slate-500">Top mark centers and options for check-list</p>
+            </div>
+
+            <!-- Brushing teeth (green) -->
+            <div class="p-3.5 rounded-[22px] bg-[#D7F7E6] border-2 border-[#4ADE80] flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-2.5">
+                <input type="checkbox" checked class="w-4 h-4 text-emerald-600 rounded">
+                <div>
+                  <div class="text-xs font-bold text-emerald-950 font-fredoka">Brushing teeth</div>
+                  <div class="text-[10px] text-emerald-700">Morning & night routine</div>
+                </div>
               </div>
-              <span class="text-[10px] uppercase font-mono px-2.5 py-1 rounded-full bg-white text-amber-800 font-bold border border-amber-300 shadow-2xs">Verified</span>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider toggle-slider-emerald"></span>
+              </label>
             </div>
 
-            <p id="reportExecutiveSummary" class="text-xs sm:text-sm text-slate-700 leading-relaxed font-sans">
-              Parth demonstrates exceptional inquisitiveness, bright verbal enthusiasm, and a joyful, polite spirit during conversations with KOTL. He shows strong memory retention when talking about Space, Stars, and Creative Art. He grasps English vocabulary quickly, asks thoughtful questions, and is eagerly developing good daily habits like tidying up his toys and brushing his teeth.
-            </p>
-
-            <div class="pt-2 flex flex-wrap gap-2 text-xs font-fredoka">
-              <span class="px-3.5 py-1.5 rounded-2xl bg-white border border-sky-300 text-sky-800 font-bold shadow-xs">🚀 Space Explorer</span>
-              <span class="px-3.5 py-1.5 rounded-2xl bg-white border border-amber-300 text-amber-800 font-bold shadow-xs">🎨 Creative</span>
-              <span class="px-3.5 py-1.5 rounded-2xl bg-white border border-emerald-300 text-emerald-800 font-bold shadow-xs">🤝 Well Mannered</span>
-            </div>
-          </div>
-
-          <!-- Child Affinity & Curiosity Tags -->
-          <div class="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2 font-fredoka">
-                  <span>💖</span>
-                  <span>Parth's Favorite Passions & Topics</span>
-                </h3>
-                <p class="text-xs text-slate-500">Everyday topics Parth loves exploring</p>
+            <!-- Clean water (amber) -->
+            <div class="p-3.5 rounded-[22px] bg-[#FFE6C2] border-2 border-[#FB923C] flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-2.5">
+                <input type="checkbox" checked class="w-4 h-4 text-amber-600 rounded">
+                <div>
+                  <div class="text-xs font-bold text-amber-950 font-fredoka">Clean water</div>
+                  <div class="text-[10px] text-amber-700">Healthy hydration all day</div>
+                </div>
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">Affinities</span>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider toggle-slider-amber"></span>
+              </label>
             </div>
 
-            <div id="passionsContainer" class="space-y-2.5">
-              <!-- Dynamically populated -->
-            </div>
-
-            <div class="pt-3 border-t border-slate-100 flex items-center space-x-2">
-              <input
-                id="newLikeInput"
-                type="text"
-                placeholder="Add hobby (e.g. Painting, Football)..."
-                class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-400 transition-colors"
-              />
-              <button onclick="addInterest('likes')" class="px-3.5 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-800 border border-sky-300 text-xs font-bold transition-all shadow-xs shrink-0 font-fredoka">
-                + Add
-              </button>
-            </div>
-          </div>
-
-          <!-- Sensitivities & Gentle Care -->
-          <div class="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2 font-fredoka">
-                  <span>🛡️</span>
-                  <span>Care Areas & Positive Guidance</span>
-                </h3>
-                <p class="text-xs text-slate-500">Handled with gentle positive guidance</p>
+            <!-- Eating spinach (green) -->
+            <div class="p-3.5 rounded-[22px] bg-[#D7F7E6] border-2 border-[#4ADE80] flex items-center justify-between shadow-xs">
+              <div class="flex items-center gap-2.5">
+                <input type="checkbox" checked class="w-4 h-4 text-emerald-600 rounded">
+                <div>
+                  <div class="text-xs font-bold text-emerald-950 font-fredoka">Eating spinach & veggies</div>
+                  <div class="text-[10px] text-emerald-700">Superhero stamina energy</div>
+                </div>
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold border border-rose-300">Gentle</span>
-            </div>
-
-            <div id="sensitivitiesContainer" class="space-y-2.5">
-              <!-- Dynamically populated -->
-            </div>
-
-            <div class="pt-3 border-t border-slate-100 flex items-center space-x-2">
-              <input
-                id="newDislikeInput"
-                type="text"
-                placeholder="Add care area (e.g. Dark rooms)..."
-                class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-sky-400 transition-colors"
-              />
-              <button onclick="addInterest('dislikes')" class="px-3.5 py-2 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 border border-rose-300 text-xs font-bold transition-all shadow-xs shrink-0 font-fredoka">
-                + Add
-              </button>
+              <label class="toggle-switch">
+                <input type="checkbox" checked>
+                <span class="toggle-slider toggle-slider-emerald"></span>
+              </label>
             </div>
           </div>
 
-          <!-- Milestones Achieved Card -->
-          <div class="bg-white border-2 border-slate-200 rounded-[32px] p-6 shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 class="font-bold text-base text-slate-800 flex items-center space-x-2 font-fredoka">
-                <span>🏆</span>
-                <span>Learning Milestones Achieved</span>
-              </h3>
+          <!-- AFFINITY CARDS (Scalloped Organic Cards with Mascot Doodles) -->
+          <div class="space-y-3">
+            <div>
+              <h3 class="text-base font-bold font-fredoka text-slate-800">Affinity cards</h3>
+              <p class="text-xs text-slate-500">Scalloped asymmetrical curiosity cards</p>
             </div>
 
-            <div id="milestonesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <!-- Dynamically populated -->
+            <!-- Card 1: Animal & Nature Science (Terracotta/Peach with Cute Lion Doodle 🦁) -->
+            <div class="bg-[#FFEDD5] border-2 border-[#FB923C] rounded-[28px] p-5 shadow-xs relative overflow-hidden space-y-2">
+              <div class="flex items-start justify-between">
+                <!-- Cute Mascot Doodle 🦁 -->
+                <div class="w-10 h-10 rounded-2xl bg-white border border-amber-300 flex items-center justify-center text-xl shadow-xs">
+                  🦁
+                </div>
+                <!-- Science Atom Icon -->
+                <span class="text-lg opacity-75">⚛️</span>
+              </div>
+              <h4 class="font-bold text-base text-amber-950 font-fredoka">Animal & Nature Science</h4>
+              <p class="text-xs text-slate-700 leading-relaxed">
+                Displays lively fascination for wildlife habitats, lion prides, and natural wonders with deep observation.
+              </p>
             </div>
+
+            <!-- Card 2: Space Exploration (Cloud Blue with Rocket Doodle 🚀) -->
+            <div class="bg-[#E0F2FE] border-2 border-[#38BDF8] rounded-[28px] p-5 shadow-xs relative overflow-hidden space-y-2">
+              <div class="flex items-start justify-between">
+                <!-- Cute Rocket Mascot Doodle 🚀 -->
+                <div class="w-10 h-10 rounded-2xl bg-white border border-sky-300 flex items-center justify-center text-xl shadow-xs">
+                  🚀
+                </div>
+                <!-- Orbit Icon -->
+                <span class="text-lg opacity-75">🪐</span>
+              </div>
+              <h4 class="font-bold text-base text-sky-950 font-fredoka">Space Exploration</h4>
+              <p class="text-xs text-slate-700 leading-relaxed">
+                Fascinated by planetary orbits, astronauts floating in zero gravity, and rocket missions to touch the stars.
+              </p>
+            </div>
+
+            <div id="passionsContainer" class="hidden"></div>
           </div>
 
-          <!-- Hidden Cognitive Grid placeholder for QA compatibility -->
+          <!-- BOTTOM SECTION: Parent Action Tips & Milestones Achieved -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            
+            <!-- Parent Action Tips (Lightbulb) -->
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-[24px] p-4 shadow-xs space-y-2">
+              <div class="flex items-center gap-1.5 border-b border-amber-200 pb-1.5">
+                <span class="text-base">💡</span>
+                <h4 class="font-bold text-xs text-amber-950 font-fredoka">Parent Action Tips</h4>
+              </div>
+              <div id="parentRecommendationsContainer" class="space-y-2">
+                <div class="bg-white p-2.5 rounded-xl border border-amber-200">
+                  <p class="text-[10px] font-bold text-amber-900 font-fredoka">Superhero Fuel Game</p>
+                  <p class="text-[10px] text-slate-600 mt-0.5">Serve crunchy carrots & fruit snacks as superhero power-ups.</p>
+                </div>
+                <div class="bg-white p-2.5 rounded-xl border border-amber-200">
+                  <p class="text-[10px] font-bold text-amber-900 font-fredoka">5-Min Sky Routine</p>
+                  <p class="text-[10px] text-slate-600 mt-0.5">Spend 5 quiet minutes observing moon and stars before bed.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Milestones Achieved (Star) -->
+            <div class="bg-amber-50/70 border-2 border-amber-300 rounded-[24px] p-4 shadow-xs space-y-2">
+              <div class="flex items-center gap-1.5 border-b border-amber-200 pb-1.5">
+                <span class="text-base">⭐</span>
+                <h4 class="font-bold text-xs text-amber-950 font-fredoka">Milestones Achieved</h4>
+              </div>
+              <div id="milestonesContainer" class="grid grid-cols-2 gap-1.5">
+                <div class="bg-white p-2 rounded-xl border border-amber-200 text-center">
+                  <span class="text-[9px] font-bold text-emerald-600 block">Achieved</span>
+                  <p class="text-[10px] font-bold text-slate-800 font-fredoka mt-0.5">50+ Words</p>
+                </div>
+                <div class="bg-white p-2 rounded-xl border border-amber-200 text-center">
+                  <span class="text-[9px] font-bold text-emerald-600 block">Achieved</span>
+                  <p class="text-[10px] font-bold text-slate-800 font-fredoka mt-0.5">20+ Inquiries</p>
+                </div>
+                <div class="bg-white p-2 rounded-xl border border-amber-200 text-center">
+                  <span class="text-[9px] font-bold text-amber-600 block">In Progress</span>
+                  <p class="text-[10px] font-bold text-slate-800 font-fredoka mt-0.5">Eat Veggies</p>
+                </div>
+                <div class="bg-white p-2 rounded-xl border border-amber-200 text-center">
+                  <span class="text-[9px] font-bold text-emerald-600 block">Achieved</span>
+                  <p class="text-[10px] font-bold text-slate-800 font-fredoka mt-0.5">9 PM Bedtime</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div id="sensitivitiesContainer" class="hidden"></div>
           <div id="skillsAssessmentGrid" class="hidden"></div>
 
         </div>
@@ -1002,12 +1104,6 @@
       const ageBadge = document.getElementById('reportChildAgeBadge');
       if (ageBadge) ageBadge.textContent = rep.age || '6 Years';
 
-      const genderBadge = document.getElementById('reportChildGenderBadge');
-      if (genderBadge) {
-        const isGirl = (rep.gender || '').toLowerCase() === 'girl';
-        genderBadge.textContent = isGirl ? '👧 Girl' : '👦 Boy';
-      }
-
       const avatarElem = document.getElementById('reportChildAvatar');
       if (avatarElem) {
         const isGirl = (rep.gender || '').toLowerCase() === 'girl';
@@ -1031,157 +1127,17 @@
       const vocabScoreElem = document.getElementById('reportVocabScore');
       if (vocabScoreElem) vocabScoreElem.textContent = (vocab.score || 84) + '%';
 
-      const vocabStatusBadge = document.getElementById('reportVocabStatusBadge');
-      if (vocabStatusBadge) {
-        vocabStatusBadge.textContent = (vocab.status || 'Grade A').replace(/s+fors+age/i, '');
-      }
-
       const vocabBar = document.getElementById('reportVocabBar');
       if (vocabBar) vocabBar.style.width = (vocab.score || 84) + '%';
 
       const curiosityScoreElem = document.getElementById('reportCuriosityScore');
       if (curiosityScoreElem) curiosityScoreElem.textContent = (curiosity.score || 92) + '%';
 
-      const curiosityStatusBadge = document.getElementById('reportCuriosityStatusBadge');
-      if (curiosityStatusBadge) curiosityStatusBadge.textContent = curiosity.status || 'Grade A+';
-
       const curiosityBar = document.getElementById('reportCuriosityBar');
       if (curiosityBar) curiosityBar.style.width = (curiosity.score || 92) + '%';
-
-      // SPEECH BUBBLE DIALOGUE FEED
-      const evidenceCont = document.getElementById('conversationEvidenceContainer');
-      if (evidenceCont) {
-        evidenceCont.innerHTML = '';
-        const evidenceList = rep.dialogue_evidence || rep.conversation_evidence || [];
-        if (evidenceList.length === 0) {
-          evidenceCont.innerHTML = `
-            <div class="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center text-sm text-slate-500">
-              Speak through the ESP32 microphone to generate grounded observations.
-            </div>
-          `;
-        } else {
-          evidenceList.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'space-y-3';
-            
-            const q = item.child_quote || item.child_question || '';
-            const a = item.kotl_response || item.kotl_answer || '';
-            const topic = item.context || item.topic || 'Dialogue Turn';
-            
-            card.innerHTML = `
-              <!-- Child Speech Bubble (Left aligned with bubble tail) -->
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-lg shrink-0 shadow-xs">👦</div>
-                <div class="bg-sky-50 border-2 border-sky-200 text-slate-800 rounded-2xl rounded-tl-sm p-4 max-w-lg shadow-sm">
-                  <div class="flex items-center justify-between pb-1 mb-1 border-b border-sky-200/60 gap-3">
-                    <p class="text-xs font-bold text-sky-600 font-fredoka">Parth asked:</p>
-                    <span class="text-[10px] font-mono text-sky-500 uppercase">${escapeHtml(topic)}</span>
-                  </div>
-                  <p class="text-sm leading-relaxed font-medium">"${escapeHtml(q)}"</p>
-                </div>
-              </div>
-
-              <!-- Robot Speech Bubble (Right aligned with bubble tail) -->
-              <div class="flex items-start justify-end gap-3">
-                <div class="bg-amber-50 border-2 border-amber-200 text-slate-800 rounded-2xl rounded-tr-sm p-4 max-w-lg shadow-sm text-left">
-                  <div class="flex items-center justify-between pb-1 mb-1 border-b border-amber-200/60 gap-3">
-                    <p class="text-xs font-bold text-amber-700 font-fredoka">KOTL Companion answered:</p>
-                    <button onclick="playOrSpeakText('${encodeURIComponent(a)}')" class="text-xs text-amber-600 hover:text-amber-800 flex items-center gap-1 font-bold font-fredoka">
-                      <span>▶ Play Voice</span>
-                    </button>
-                  </div>
-                  <p class="text-sm leading-relaxed text-slate-700">"${escapeHtml(a)}"</p>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-lg shrink-0 shadow-xs">🤖</div>
-              </div>
-            `;
-            evidenceCont.appendChild(card);
-          });
-        }
-      }
-
-      // Passions / Likes Breakdown
-      const passionsCont = document.getElementById('passionsContainer');
-      if (passionsCont) {
-        passionsCont.innerHTML = '';
-        (rep.passions_analysis || []).forEach(item => {
-          const div = document.createElement('div');
-          div.className = 'p-3.5 bg-emerald-50/70 border-2 border-emerald-300 rounded-[24px] space-y-1 shadow-xs hover:border-emerald-400 transition-all';
-          div.innerHTML = `
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-emerald-950 font-fredoka">${escapeHtml(item.topic)}</span>
-              <span class="text-xs font-mono font-bold text-emerald-800 bg-white px-2.5 py-0.5 rounded-full border border-emerald-300">${escapeHtml(item.affinity)}</span>
-            </div>
-            <p class="text-xs text-slate-600">${escapeHtml(item.observation)}</p>
-          `;
-          passionsCont.appendChild(div);
-        });
-      }
-
-      // Sensitivities Breakdown
-      const sensCont = document.getElementById('sensitivitiesContainer');
-      if (sensCont) {
-        sensCont.innerHTML = '';
-        const list = rep.sensitivities_and_coping || rep.sensitivities_and_triggers || [];
-        list.forEach(item => {
-          const div = document.createElement('div');
-          div.className = 'p-3.5 bg-rose-50/70 border-2 border-rose-300 rounded-[24px] space-y-1 shadow-xs';
-          const title = item.sensitivity || item.trigger || 'Area';
-          const strat = item.coping_strategy || item.kotl_intervention || '';
-          div.innerHTML = `
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-sm text-rose-950 font-fredoka">${escapeHtml(title)}</span>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-white text-rose-800 border border-rose-300 font-mono font-bold">Gentle Care</span>
-            </div>
-            <p class="text-xs text-slate-600"><strong class="text-slate-800">KOTL Care:</strong> ${escapeHtml(strat)}</p>
-          `;
-          sensCont.appendChild(div);
-        });
-      }
-
-      // Parent Recommendations (Home Activities)
-      const recoCont = document.getElementById('parentRecommendationsContainer');
-      if (recoCont) {
-        recoCont.innerHTML = '';
-        (rep.parent_recommendations || []).forEach(item => {
-          const card = document.createElement('div');
-          card.className = 'p-4 bg-amber-50/70 border-2 border-amber-300 rounded-[24px] space-y-1.5 shadow-xs hover:border-amber-400 transition-all';
-          card.innerHTML = `
-            <h4 class="font-bold text-xs sm:text-sm text-amber-950 flex items-center space-x-1.5 font-fredoka">
-              <span>✨</span>
-              <span>${escapeHtml(item.area || item.title || 'Tip')}</span>
-            </h4>
-            <p class="text-xs text-slate-600">${escapeHtml(item.suggestion || item.action || '')}</p>
-          `;
-          recoCont.appendChild(card);
-        });
-      }
-
-      // Milestones Achieved
-      const mileCont = document.getElementById('milestonesContainer');
-      if (mileCont) {
-        mileCont.innerHTML = '';
-        (rep.developmental_milestones || rep.milestones || []).forEach(item => {
-          const card = document.createElement('div');
-          card.className = 'p-3.5 bg-sky-50/70 border-2 border-sky-300 rounded-[24px] space-y-1 flex flex-col justify-between shadow-xs';
-          card.innerHTML = `
-            <div class="flex items-center justify-between">
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-white text-sky-800 border border-sky-300">${escapeHtml(item.badge || item.status || 'Active')}</span>
-              <span class="text-xs font-mono font-bold text-emerald-600">Achieved</span>
-            </div>
-            <h5 class="font-bold text-xs text-sky-950 mt-1 font-fredoka">${escapeHtml(item.title)}</h5>
-            <p class="text-[11px] text-slate-500">${escapeHtml(item.description || '')}</p>
-          `;
-          mileCont.appendChild(card);
-        });
-      }
     }
 
     async function regenerateReport() {
-      const btn = document.getElementById('regenerateReportBtn');
-      const icon = document.getElementById('refreshIcon');
-      if (btn) btn.disabled = true;
-      if (icon) icon.classList.add('animate-spin');
       try {
         const res = await fetch('/api/child/report/regenerate', { method: 'POST' });
         if (res.ok) {
@@ -1191,28 +1147,6 @@
         }
       } catch (e) {
         console.warn('Error refreshing report:', e);
-      } finally {
-        if (btn) btn.disabled = false;
-        if (icon) icon.classList.remove('animate-spin');
-      }
-    }
-
-    async function addInterest(type) {
-      const input = type === 'likes' ? document.getElementById('newLikeInput') : document.getElementById('newDislikeInput');
-      const val = input.value.trim();
-      if (!val) return;
-      try {
-        const res = await fetch('/api/child/interests', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type, item: val })
-        });
-        if (res.ok) {
-          input.value = '';
-          await regenerateReport();
-        }
-      } catch (e) {
-        console.warn('Error adding interest:', e);
       }
     }
 
@@ -1240,13 +1174,13 @@
       if (!container) return;
       container.innerHTML = '';
       if (missions.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 italic p-4 bg-white rounded-2xl border border-slate-200">No active directives. Add one above.</p>`;
+        container.innerHTML = '<p class="text-xs text-slate-500 italic p-4 bg-white rounded-2xl border border-slate-200">No active directives. Add one above.</p>';
         return;
       }
 
       missions.forEach(m => {
         const div = document.createElement('div');
-        div.className = `p-4 rounded-[24px] border-2 transition-all flex items-center justify-between gap-3 ${m.active ? 'bg-white border-emerald-300 shadow-xs' : 'bg-slate-50 border-slate-200 opacity-60'}`;
+        div.className = 'p-4 rounded-[24px] border-2 transition-all flex items-center justify-between gap-3 ' + (m.active ? 'bg-white border-emerald-300 shadow-xs' : 'bg-slate-50 border-slate-200 opacity-60');
         div.innerHTML = `
           <div class="space-y-0.5">
             <div class="flex items-center space-x-2">
@@ -1291,7 +1225,7 @@
 
     async function toggleMission(id) {
       try {
-        await fetch(`/api/child/missions/${id}/toggle`, { method: 'POST' });
+        await fetch('/api/child/missions/' + id + '/toggle', { method: 'POST' });
         await loadParentMissions();
       } catch (err) {
         console.warn('Error toggling mission:', err);
@@ -1300,7 +1234,7 @@
 
     async function deleteMission(id) {
       try {
-        await fetch(`/api/child/missions/${id}`, { method: 'DELETE' });
+        await fetch('/api/child/missions/' + id, { method: 'DELETE' });
         await loadParentMissions();
       } catch (err) {
         console.warn('Error deleting mission:', err);
@@ -1315,7 +1249,6 @@
     const chatContainer = document.getElementById('chatContainer');
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
-    const recordBtn = document.getElementById('recordBtn');
     let sessionHistory = [];
 
     chatInput.addEventListener('input', () => {
@@ -1339,14 +1272,14 @@
     function renderMessageElement(msg) {
       const isUser = msg.role === 'user';
       const wrapper = document.createElement('div');
-      wrapper.className = `flex w-full ${isUser ? 'justify-end' : 'justify-start'}`;
+      wrapper.className = 'flex w-full ' + (isUser ? 'justify-end' : 'justify-start');
 
       const bubble = document.createElement('div');
-      bubble.className = `max-w-[85%] sm:max-w-[75%] p-4 rounded-3xl space-y-1.5 ${
+      bubble.className = 'max-w-[85%] sm:max-w-[75%] p-4 rounded-3xl space-y-1.5 ' + (
         isUser
           ? 'bg-sky-50 text-slate-800 rounded-tr-xs border-2 border-sky-200'
           : 'bg-amber-50 text-slate-800 rounded-tl-xs border-2 border-amber-200 shadow-xs'
-      }`;
+      );
 
       const header = document.createElement('div');
       header.className = 'flex items-center justify-between text-[10px] font-mono opacity-60 pb-1 border-b border-black/5 gap-3';
@@ -1439,7 +1372,7 @@
 
     function playOrSpeakText(encodedText) {
       const text = decodeURIComponent(encodedText);
-      const url = `/api/tts?text=${encodeURIComponent(text)}`;
+      const url = '/api/tts?text=' + encodeURIComponent(text);
       playAudioClip(url);
     }
 
@@ -1451,7 +1384,7 @@
       }
       activeAudio = new Audio(url);
       activeAudio.play().catch(err => {
-        console.warn('Audio play prevented (user interaction needed):', err);
+        console.warn('Audio play prevented:', err);
       });
     }
 
