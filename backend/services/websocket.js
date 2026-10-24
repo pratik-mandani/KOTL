@@ -51,7 +51,7 @@ async function synthesizeSpeechPcm(text) {
   }
 
   const spokenText = toPhoneticSpokenText(text.trim(), lang);
-  const speechRate = process.env.EDGE_TTS_RATE || "-22%";
+  const speechRate = process.env.EDGE_TTS_RATE || "-20%";
 
   // 1. Primary: Edge TTS v2 with Sec-MS-GEC v2 (Native Node.js - Fast, Unlimited, Never blocked)
   try {
@@ -104,7 +104,7 @@ function initWebSocketServer(httpServer) {
     // Session state for this connection
     ws.isAlive = true;
     ws.deviceId = `ESP32-${Date.now().toString(36)}`;
-    ws.sessionId = `ws-session-${Date.now()}`;
+    ws.sessionId = "default-session";
     ws.state = "IDLE"; // IDLE, LISTENING, THINKING, SPEAKING
     ws.audioChunks = [];
     ws.totalAudioBytes = 0;

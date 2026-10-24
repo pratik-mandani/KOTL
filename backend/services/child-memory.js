@@ -19,7 +19,7 @@ function ensureUploadsDir() {
 }
 
 const DEFAULT_PROFILE = {
-  name: "Aarav",
+  name: "Parth",
   age: "6 Years",
   avatar: "🧒",
   gender: "Boy",
@@ -32,9 +32,11 @@ const DEFAULT_PROFILE = {
   },
   likes: [
     "Bedtime Stories",
-    "Dinosaurs & Fossils",
-    "Drawing & Coloring",
-    "Space & Rocket Science"
+    "Space & Stars Exploration",
+    "Drawing, Colors & Creative Art",
+    "Cricket & Outdoor Playground Games",
+    "Moral & Bedtime Stories",
+    "Animals & Birds Nature"
   ],
   dislikes: [
     "Bitter Vegetables",
