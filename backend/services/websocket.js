@@ -291,6 +291,9 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     // 2. Transcribe Audio (Groq Whisper)
     console.log(`[WebSocket ${ws.deviceId}] Transcribing audio...`);
     const sttResult = await transcribeAudio(tempWavPath);
+    if (!sttResult.success) {
+      console.warn(`[WebSocket ${ws.deviceId}] STT error: ${sttResult.error}`);
+    }
     const transcript = (sttResult.text || "").trim();
 
     if (!transcript || isBlacklistedNoiseTranscript(transcript)) {

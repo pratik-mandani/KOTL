@@ -279,66 +279,74 @@ async function transcribeWithGroq(filePath) {
 
   const audioBuffer = fs.readFileSync(filePath);
   const fileName = path.basename(filePath);
-  const model = process.env.GROQ_TRANSCRIPTION_MODEL || "whisper-large-v3";
 
-  const { form, language, prompt } = prepareCompletionsFormData(
-    audioBuffer,
-    fileName,
-    model,
-    "en",
-    "Hello KOTL."
-  );
+  const candidateModels = [
+    process.env.GROQ_TRANSCRIPTION_MODEL,
+    "whisper-large-v3-turbo",
+    "whisper-large-v3"
+  ].filter(Boolean);
+  const uniqueModels = [...new Set(candidateModels)];
 
-  console.log(`[STT groq] Sending request to Groq STT API. Model: ${model}, Language: ${language}, Prompt: "${prompt}"`);
+  let lastError = null;
 
-  try {
-    const response = await fetch(GROQ_TRANSCRIPTION_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: form,
-    });
+  for (const model of uniqueModels) {
+    const { form, language, prompt } = prepareCompletionsFormData(
+      audioBuffer,
+      fileName,
+      model,
+      "en",
+      "Hello KOTL."
+    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[STT groq] API returned error status: ${response.status}. Response: ${errorText}`);
+    console.log(`[STT groq] Sending request to Groq STT API. Model: ${model}, Language: ${language}, Prompt: "${prompt}"`);
+
+    try {
+      const response = await fetch(GROQ_TRANSCRIPTION_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: form,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.warn(`[STT groq] Model ${model} returned status ${response.status}: ${errorText.slice(0, 120)}. Trying next candidate...`);
+        lastError = `Groq transcription failed (${model}): ${response.status} ${errorText}`;
+        continue;
+      }
+
+      const data = await response.json();
+      console.log(`[STT groq] Raw response received from ${model}:`, JSON.stringify(data));
+
+      const rawTranscript = typeof data.text === "string" ? data.text.trim() : "";
+      const cleanTranscript = isBlacklistedNoiseTranscript(rawTranscript) ? "" : rawTranscript;
+
+      if (rawTranscript && !cleanTranscript) {
+        console.log(`[STT groq] Filtered blacklisted noise/hallucination: "${rawTranscript}"`);
+      }
+
       return {
-        success: false,
+        success: true,
         provider: "groq",
-        text: null,
-        confidence: null,
-        error: `Groq transcription failed: ${response.status} ${errorText}`,
+        model,
+        text: cleanTranscript,
+        confidence: typeof data.x_groq?.error === "undefined" ? 1.0 : null,
+        error: null,
       };
+    } catch (error) {
+      console.warn(`[STT groq] Model ${model} fetch error: ${error.message}. Trying next candidate...`);
+      lastError = error.message;
     }
-
-    const data = await response.json();
-    console.log(`[STT groq] Raw response received:`, JSON.stringify(data));
-
-    const rawTranscript = typeof data.text === "string" ? data.text.trim() : "";
-    const cleanTranscript = isBlacklistedNoiseTranscript(rawTranscript) ? "" : rawTranscript;
-
-    if (rawTranscript && !cleanTranscript) {
-      console.log(`[STT groq] Filtered blacklisted noise/hallucination: "${rawTranscript}"`);
-    }
-
-    return {
-      success: true,
-      provider: "groq",
-      text: cleanTranscript,
-      confidence: typeof data.x_groq?.error === "undefined" ? 1.0 : null,
-      error: null,
-    };
-  } catch (error) {
-    console.error(`[STT groq] Fetch error:`, error.message);
-    return {
-      success: false,
-      provider: "groq",
-      text: null,
-      confidence: null,
-      error: error.message,
-    };
   }
+
+  return {
+    success: false,
+    provider: "groq",
+    text: null,
+    confidence: null,
+    error: lastError || "All Groq STT models failed",
+  };
 }
 
 async function transcribeWithWhisperCpp(filePath) {
