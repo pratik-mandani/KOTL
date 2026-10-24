@@ -16,6 +16,7 @@ const ffmpegBin = require("ffmpeg-static");
 const { EdgeTTS } = require("@andresaya/edge-tts");
 const { detectEyeExpression } = require("./eye-animation");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
+const { synthesizeGeminiPcm } = require("./gemini-tts");
 const { extractMemoryFromDialogue } = require("./child-memory");
 
 const HEARTBEAT_INTERVAL_MS = 15000;
@@ -51,24 +52,31 @@ async function synthesizeSpeechPcm(text) {
   const spokenText = toPhoneticSpokenText(text.trim(), lang);
   const speechRate = process.env.EDGE_TTS_RATE || "-20%";
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const tts = new EdgeTTS();
-      await tts.synthesize(spokenText, voice, { rate: speechRate });
-      const mp3Buffer = await tts.toBuffer();
-      if (mp3Buffer && mp3Buffer.length > 0) {
-        const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, 16000);
-        return wavBytes.subarray(44);
-      }
-    } catch (edgeErr) {
-      console.warn(`[WebSocket TTS] Edge TTS attempt ${attempt + 1} failed (${edgeErr.message}). Retrying...`);
-      if (attempt < 2) {
-        await new Promise((r) => setTimeout(r, 600));
-      }
+  // 1. Try Edge TTS (High quality Indian Male voices)
+  try {
+    const tts = new EdgeTTS();
+    await tts.synthesize(spokenText, voice, { rate: speechRate });
+    const mp3Buffer = await tts.toBuffer();
+    if (mp3Buffer && mp3Buffer.length > 0) {
+      const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, 16000);
+      return wavBytes.subarray(44);
     }
+  } catch (edgeErr) {
+    console.warn(`[WebSocket TTS] Edge TTS failed (${edgeErr.message}). Seamlessly switching to Gemini Neural Male Voice ("Puck")...`);
   }
 
-  console.error("[WebSocket TTS] Edge TTS completely failed after 3 attempts.");
+  // 2. Guaranteed Datacenter-Unblocked Neural Male Voice Fallback (Gemini "Puck" - Never blocked on Render)
+  try {
+    const geminiPcm = await synthesizeGeminiPcm(spokenText);
+    if (geminiPcm && geminiPcm.length > 0) {
+      console.log(`[WebSocket TTS] Gemini Neural Male Voice successfully generated ${geminiPcm.length} bytes!`);
+      return geminiPcm;
+    }
+  } catch (geminiErr) {
+    console.error(`[WebSocket TTS] Gemini TTS failed: ${geminiErr.message}`);
+  }
+
+  console.error("[WebSocket TTS] All TTS providers exhausted.");
   return Buffer.alloc(0);
 }
 

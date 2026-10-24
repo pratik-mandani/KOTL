@@ -12,6 +12,7 @@ const path = require("path");
 const { promisify } = require("util");
 const { EdgeTTS } = require("@andresaya/edge-tts");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
+const { generateGeminiSpeech } = require("./gemini-tts");
 
 const execFileAsync = promisify(execFile);
 
@@ -491,9 +492,16 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
   if (edgeResult.success) {
     return edgeResult;
   }
-  console.warn(`[TTS] Edge TTS failed (${edgeResult.error}). Checking backup providers...`);
+  console.warn(`[TTS] Edge TTS failed (${edgeResult.error}). Switching to Gemini Neural Male Voice ("Puck")...`);
 
-  // 2. Fallback to Piper if configured
+  // 2. Guaranteed Datacenter-Unblocked Neural Male Voice Fallback (Gemini "Puck" - Never blocked on Render)
+  const geminiResult = await generateGeminiSpeech({ text, sessionId });
+  if (geminiResult.success) {
+    return geminiResult;
+  }
+  console.warn(`[TTS] Gemini TTS failed (${geminiResult.error}). Checking backup providers...`);
+
+  // 3. Fallback to Piper if configured
   if (provider === "piper") {
     const piperResult = await generatePiperSpeech({ text, sessionId });
     if (piperResult.success) {
@@ -501,7 +509,7 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
     }
   }
 
-  // 3. Fallback to OpenAI if configured
+  // 4. Fallback to OpenAI if configured
   if (process.env.OPENAI_API_KEY) {
     return generateOpenAiSpeech({ text, sessionId });
   }
@@ -513,7 +521,7 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
     provider: "edge",
     voice: voice || EDGE_VOICE,
     model: "neural",
-    error: `TTS failed: Edge (${edgeResult.error})`,
+    error: `TTS failed: Edge (${edgeResult.error}), Gemini (${geminiResult.error})`,
   };
 }
 
