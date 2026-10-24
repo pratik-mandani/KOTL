@@ -13,6 +13,7 @@ const { promisify } = require("util");
 const { EdgeTTS } = require("@andresaya/edge-tts");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
 const { generateGeminiSpeech } = require("./gemini-tts");
+const { synthesizeEdgePython } = require("./edge-python-tts");
 
 const execFileAsync = promisify(execFile);
 
@@ -150,15 +151,36 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
   }
   const normalizedFilename = buildTtsFilename();
   const normalizedPath = path.join(TTS_UPLOADS_DIR, normalizedFilename);
-
   ensureTtsUploadsDir();
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  const speechRate = process.env.EDGE_TTS_RATE || "-20%";
+  const spokenText = toPhoneticSpokenText(text.trim(), selectedLang);
+
+  // 1. Try Python edge-tts CLI (Sec-MS-GEC v2)
+  try {
+    const pcm = await synthesizeEdgePython(spokenText, selectedVoice, speechRate);
+    if (pcm && pcm.length > 0) {
+      const { pcmToWavBuffer } = require("./gemini-tts");
+      const wavBytes = pcmToWavBuffer(pcm, NORMALIZED_SAMPLE_RATE);
+      fs.writeFileSync(normalizedPath, wavBytes);
+      return {
+        success: true,
+        filename: normalizedFilename,
+        url: `/tts/${normalizedFilename}`,
+        provider: "edge",
+        voice: selectedVoice,
+        model: "neural-v2",
+        error: null,
+      };
+    }
+  } catch (pyErr) {
+    console.warn(`[TTS Edge Python] Failed: ${pyErr.message}`);
+  }
+
+  // 2. Try Node Edge-TTS
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const speechRate = process.env.EDGE_TTS_RATE || "-20%";
       const tts = new EdgeTTS();
-      const spokenText = toPhoneticSpokenText(text.trim(), selectedLang);
-      console.log(`[TTS Edge] Synthesizing speech with voice "${selectedVoice}" ("${spokenText}") attempt ${attempt + 1}...`);
       await tts.synthesize(spokenText, selectedVoice, { rate: speechRate });
       const mp3Buffer = await tts.toBuffer();
       if (!mp3Buffer || mp3Buffer.length === 0) {
@@ -168,9 +190,6 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
       const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
       const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, NORMALIZED_SAMPLE_RATE);
       fs.writeFileSync(normalizedPath, wavBytes);
-
-      const stats = fs.statSync(normalizedPath);
-      console.log(`[TTS Edge] Success! Generated ${normalizedFilename} (${stats.size} bytes)`);
 
       return {
         success: true,
@@ -182,22 +201,22 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
         error: null,
       };
     } catch (error) {
-      console.warn(`[TTS Edge] Attempt ${attempt + 1} failed: ${error.message}`);
-      if (attempt < 2) {
+      console.warn(`[TTS Edge Node] Attempt ${attempt + 1} failed: ${error.message}`);
+      if (attempt < 1) {
         await new Promise((r) => setTimeout(r, 600));
-      } else {
-        return {
-          success: false,
-          filename: null,
-          url: null,
-          provider: "edge",
-          voice: selectedVoice,
-          model: "neural",
-          error: error.message,
-        };
       }
     }
   }
+
+  return {
+    success: false,
+    filename: null,
+    url: null,
+    provider: "edge",
+    voice: selectedVoice,
+    model: "neural",
+    error: "All Edge-TTS methods failed",
+  };
 }
 
 async function runPiperSynthesis({ text, outputPath }) {

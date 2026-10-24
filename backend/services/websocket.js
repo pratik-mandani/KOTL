@@ -17,6 +17,7 @@ const { EdgeTTS } = require("@andresaya/edge-tts");
 const { detectEyeExpression } = require("./eye-animation");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
 const { synthesizeGeminiPcm } = require("./gemini-tts");
+const { synthesizeEdgePython } = require("./edge-python-tts");
 const { extractMemoryFromDialogue } = require("./child-memory");
 
 const HEARTBEAT_INTERVAL_MS = 15000;
@@ -52,7 +53,18 @@ async function synthesizeSpeechPcm(text) {
   const spokenText = toPhoneticSpokenText(text.trim(), lang);
   const speechRate = process.env.EDGE_TTS_RATE || "-20%";
 
-  // 1. Try Edge TTS (High quality Indian Male voices)
+  // 1. Try Python edge-tts CLI (Official Sec-MS-GEC v2 algorithm - Works on Render & Local)
+  try {
+    const pyPcm = await synthesizeEdgePython(spokenText, voice, speechRate);
+    if (pyPcm && pyPcm.length > 0) {
+      console.log(`[WebSocket TTS] Edge-TTS (Python v2) successfully generated ${pyPcm.length} bytes audio!`);
+      return pyPcm;
+    }
+  } catch (pyErr) {
+    console.warn(`[WebSocket TTS] Edge Python attempt failed: ${pyErr.message}`);
+  }
+
+  // 2. Try Node Edge-TTS
   try {
     const tts = new EdgeTTS();
     await tts.synthesize(spokenText, voice, { rate: speechRate });
@@ -62,10 +74,10 @@ async function synthesizeSpeechPcm(text) {
       return wavBytes.subarray(44);
     }
   } catch (edgeErr) {
-    console.warn(`[WebSocket TTS] Edge TTS failed (${edgeErr.message}). Seamlessly switching to Gemini Neural Male Voice ("Puck")...`);
+    console.warn(`[WebSocket TTS] Node Edge-TTS failed (${edgeErr.message})...`);
   }
 
-  // 2. Guaranteed Datacenter-Unblocked Neural Male Voice Fallback (Gemini "Puck" - Never blocked on Render)
+  // 3. Fallback to Gemini Neural Male Voice ("Puck")
   try {
     const geminiPcm = await synthesizeGeminiPcm(spokenText);
     if (geminiPcm && geminiPcm.length > 0) {

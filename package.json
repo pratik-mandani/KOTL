@@ -4,7 +4,7 @@
   "private": true,
   "description": "KOTL AI Companion - Multilingual Assistant",
   "scripts": {
-    "postinstall": "cd backend && npm install",
+    "postinstall": "cd backend && npm install && (pip install edge-tts || python3 -m pip install edge-tts || true)",
     "start": "node backend/server.js"
   },
   "dependencies": {
