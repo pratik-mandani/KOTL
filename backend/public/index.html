@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>KOTL • Child Growth Report Card & Parent Hub</title>
+  <title>KOTL • Kindergarten Growth Hub & Report Card</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Comic+Neue:wght@700&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -14,25 +14,25 @@
         extend: {
           fontFamily: {
             sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
-            display: ['"Fredoka"', 'system-ui', 'sans-serif'],
             mono: ['"JetBrains Mono"', 'monospace'],
+            kid: ['"Fredoka"', '"Comic Neue"', 'cursive', 'sans-serif'],
           },
           colors: {
-            school: {
-              navy: '#162E6B',
-              darkblue: '#1E3A8A',
-              blue: '#2563EB',
-              skyblue: '#38BDF8',
-              lightblue: '#EFF6FF',
-              red: '#DC2626',
-              darkred: '#991B1B',
-              lightred: '#FEF2F2',
-              yellow: '#F59E0B',
-              lightyellow: '#FEF3C7',
+            kid: {
+              blue: '#1E88E5',
+              deepblue: '#0D47A1',
+              lightblue: '#E3F2FD',
+              yellow: '#FDD835',
+              gold: '#FFB300',
+              lightyellow: '#FFF9C4',
               warmwhite: '#FFFDF9',
               paper: '#FAF7F2',
-              cream: '#F4ECE1',
-              border: '#E8DED1',
+              cream: '#FFF8E7',
+              coral: '#FF5252',
+              red: '#E53935',
+              green: '#43A047',
+              lightgreen: '#E8F5E9',
+              border: '#FFE082',
             }
           }
         }
@@ -46,9 +46,6 @@
       overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
       font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    .font-display {
-      font-family: 'Fredoka', 'Plus Jakarta Sans', sans-serif;
     }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -65,87 +62,46 @@
       background: #94A3B8;
     }
     .tab-active {
-      background: #1E3A8A !important;
+      background: #1E88E5 !important;
       color: #FFFFFF !important;
       font-weight: 700 !important;
-      box-shadow: 0 4px 12px rgba(30, 58, 138, 0.28) !important;
-      border-color: #1E3A8A !important;
+      box-shadow: 0 4px 0 #0D47A1 !important;
+      border-color: #0D47A1 !important;
     }
     .tab-active svg {
       color: #FFFFFF !important;
     }
-    .school-card {
+    .app-card {
       background: #FFFFFF;
-      border: 2px dashed #D1D5DB;
-      border-radius: 1.25rem;
-      box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
-      position: relative;
+      border: 2.5px solid #FFE082;
+      border-radius: 1.5rem;
+      box-shadow: 0 6px 0 rgba(255, 179, 0, 0.22);
       transition: all 0.2s ease;
     }
-    .school-card:hover {
-      border-color: #3B82F6;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+    .app-card:hover {
+      border-color: #FFB300;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 0 rgba(255, 179, 0, 0.28);
     }
-    .washi-tape-blue {
-      position: absolute;
-      top: -10px;
-      left: 50%;
-      transform: translateX(-50%) rotate(-1deg);
-      width: 64px;
-      height: 18px;
-      background: rgba(147, 197, 253, 0.75);
-      border-left: 2px dotted #60A5FA;
-      border-right: 2px dotted #60A5FA;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      z-index: 10;
+    .blue-card {
+      background: #FFFFFF;
+      border: 2.5px solid #90CAF9;
+      border-radius: 1.5rem;
+      box-shadow: 0 6px 0 rgba(30, 136, 229, 0.2);
+      transition: all 0.2s ease;
     }
-    .washi-tape-red {
-      position: absolute;
-      top: -10px;
-      left: 50%;
-      transform: translateX(-50%) rotate(1deg);
-      width: 64px;
-      height: 18px;
-      background: rgba(252, 165, 165, 0.75);
-      border-left: 2px dotted #F87171;
-      border-right: 2px dotted #F87171;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      z-index: 10;
-    }
-    .washi-tape-yellow {
-      position: absolute;
-      top: -10px;
-      left: 50%;
-      transform: translateX(-50%) rotate(-1.5deg);
-      width: 64px;
-      height: 18px;
-      background: rgba(253, 224, 71, 0.75);
-      border-left: 2px dotted #FBBF24;
-      border-right: 2px dotted #FBBF24;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      z-index: 10;
+    .blue-card:hover {
+      border-color: #1E88E5;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 0 rgba(30, 136, 229, 0.25);
     }
     .school-seal {
-      border: 3px double #DC2626;
+      border: 3px double #1E88E5;
       border-radius: 9999px;
-      box-shadow: 0 0 0 3px #FEF2F2;
+      box-shadow: 0 0 0 4px #E3F2FD;
     }
-    .scallop-divider {
-      background-image: radial-gradient(circle at 10px 0, #1E3A8A 10px, transparent 11px);
-      background-size: 20px 10px;
-      background-repeat: repeat-x;
-      height: 10px;
-      width: 100%;
-    }
-    .scallop-white {
-      background-image: radial-gradient(circle at 10px 10px, #FFFFFF 10px, transparent 11px);
-      background-size: 20px 10px;
-      background-repeat: repeat-x;
-      height: 10px;
-      width: 100%;
-    }
-    .report-table th {
-      background-color: #1E3A8A;
+    .kindergarten-table th {
+      background-color: #1E88E5;
       color: #FFFFFF;
       font-weight: 700;
       text-transform: uppercase;
@@ -153,16 +109,26 @@
       letter-spacing: 0.05em;
       padding: 0.85rem 1rem;
     }
-    .report-table td {
+    .kindergarten-table td {
       padding: 0.85rem 1rem;
-      border-bottom: 1px dashed #E5E7EB;
+      border-bottom: 1.5px solid #FFE082;
       font-size: 0.875rem;
     }
-    .report-table tr:nth-child(even) td {
-      background-color: #F8FAFC;
+    .kindergarten-table tr:nth-child(even) td {
+      background-color: #FFFDF7;
+    }
+    @keyframes float-gentle {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-6px) rotate(2deg); }
+    }
+    .animate-float {
+      animation: float-gentle 4s ease-in-out infinite;
+    }
+    .animate-float-delayed {
+      animation: float-gentle 5s ease-in-out 2s infinite;
     }
     @media print {
-      header, nav, #mobileBottomNav, #recordingWaveformContainer, .no-print {
+      header, nav, #mobileBottomNav, #recordingWaveformContainer, .no-print, .kindergarten-doodles {
         display: none !important;
       }
       body, main, section {
@@ -171,92 +137,145 @@
         overflow: visible !important;
         height: auto !important;
       }
-      .school-card {
+      .app-card, .blue-card {
         background: white !important;
-        border: 1px solid #CBD5E1 !important;
+        border: 1px solid #E2E8F0 !important;
         color: black !important;
         box-shadow: none !important;
       }
     }
   </style>
 </head>
-<body class="h-screen flex flex-col antialiased select-none md:select-auto bg-[#FFFDF9]">
+<body class="h-screen flex flex-col antialiased select-none md:select-auto bg-[#FFFDF9] relative">
 
-  <!-- Top Playful School Elements Bar (Red, Dark Blue, Yellow wave) -->
-  <div class="h-2 w-full bg-gradient-to-r from-school-red via-school-darkblue via-school-yellow to-school-red"></div>
+  <!-- Top Kindergarten Colorful Ribbon -->
+  <div class="h-2 w-full bg-gradient-to-r from-kid-blue via-kid-yellow to-kid-coral z-30 shrink-0"></div>
+
+  <!-- Cute Kindergarten Doodles (Smiling Pencil, Glowing Lightbulb, Flying Paper Airplane, Stars) -->
+  <div class="kindergarten-doodles pointer-events-none absolute inset-0 overflow-hidden select-none z-0">
+    <!-- Top-Left: Flying Paper Airplane with dashed loop trail -->
+    <div class="absolute top-4 left-3 sm:left-10 animate-float opacity-80 sm:opacity-95">
+      <svg width="70" height="70" viewBox="0 0 100 100" fill="none" class="w-12 h-12 sm:w-16 sm:h-16">
+        <path d="M10 50 C 30 20, 50 60, 70 30" stroke="#1E88E5" stroke-width="2.5" stroke-dasharray="4 4" fill="none" />
+        <polygon points="65,20 85,30 65,40 70,30" fill="#1E88E5" stroke="#0D47A1" stroke-width="2" />
+      </svg>
+    </div>
+
+    <!-- Top-Right: Smiling Cartoon Pencil with Eyes & Mouth -->
+    <div class="absolute top-3 right-4 sm:right-12 animate-float-delayed opacity-85 sm:opacity-100">
+      <svg width="65" height="95" viewBox="0 0 70 100" fill="none" class="w-10 h-14 sm:w-14 sm:h-20">
+        <rect x="20" y="20" width="30" height="55" rx="6" fill="#FDD835" stroke="#0D47A1" stroke-width="2.5" />
+        <polygon points="20,75 50,75 35,95" fill="#FFE082" stroke="#0D47A1" stroke-width="2.5" />
+        <polygon points="30,88 40,88 35,95" fill="#212121" />
+        <path d="M20 20 Q 35 8, 50 20 Z" fill="#FF5252" stroke="#0D47A1" stroke-width="2.5" />
+        <circle cx="30" cy="42" r="3" fill="#212121" />
+        <circle cx="40" cy="42" r="3" fill="#212121" />
+        <path d="M30 50 Q 35 56, 40 50" stroke="#212121" stroke-width="2.5" stroke-linecap="round" fill="none" />
+        <line x1="12" y1="25" x2="6" y2="20" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
+        <line x1="14" y1="35" x2="8" y2="38" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <!-- Top-Mid Right: Glowing Idea Lightbulb -->
+    <div class="absolute top-28 right-3 sm:right-8 animate-float opacity-80 sm:opacity-95">
+      <svg width="55" height="55" viewBox="0 0 60 60" fill="none" class="w-9 h-9 sm:w-12 sm:h-12">
+        <circle cx="30" cy="25" r="16" fill="#FFF59D" stroke="#0D47A1" stroke-width="2.5" />
+        <path d="M25 41 L35 41 L33 48 L27 48 Z" fill="#90CAF9" stroke="#0D47A1" stroke-width="2" />
+        <path d="M26 23 Q 30 18, 34 23 Q 30 28, 30 33" stroke="#F57F17" stroke-width="2" fill="none" />
+        <line x1="30" y1="3" x2="30" y2="7" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
+        <line x1="12" y1="12" x2="16" y2="15" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
+        <line x1="48" y1="12" x2="44" y2="15" stroke="#212121" stroke-width="2.5" stroke-linecap="round" />
+      </svg>
+    </div>
+
+    <!-- Floating Doodle Stars & Hearts -->
+    <div class="absolute top-16 left-1/4 opacity-60">
+      <span class="text-xl sm:text-2xl text-kid-yellow">⭐</span>
+    </div>
+    <div class="absolute top-36 left-8 opacity-70">
+      <span class="text-lg sm:text-xl text-kid-blue">★</span>
+    </div>
+    <div class="absolute top-52 right-1/4 opacity-65">
+      <span class="text-xl text-kid-yellow">⭐</span>
+    </div>
+    <div class="absolute top-72 right-6 opacity-75">
+      <span class="text-xl sm:text-2xl text-kid-coral">💛</span>
+    </div>
+  </div>
 
   <!-- Header Navigation -->
-  <header class="h-16 border-b border-[#E8DED1] bg-white px-3 sm:px-6 flex items-center justify-between shadow-xs shrink-0 z-30 relative">
+  <header class="h-16 sm:h-20 bg-white/95 backdrop-blur-md border-b-2 border-kid-border px-3 sm:px-8 flex items-center justify-between shadow-xs shrink-0 z-30">
     
-    <!-- Left: Playful School Brand & Pencil Logo -->
+    <!-- Left: Kindergarten Crest -->
     <div class="flex items-center space-x-3 sm:space-x-4">
-      <div class="relative flex items-center">
-        <!-- Cute Cartoon Pencil & Star Crest -->
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-school-darkblue to-school-blue flex items-center justify-center text-white shadow-sm font-display font-bold text-lg tracking-wider border-2 border-school-red">
-          ✏️
+      <div class="relative">
+        <div class="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-gradient-to-br from-kid-blue to-kid-deepblue flex items-center justify-center text-white text-xl sm:text-2xl font-bold shadow-sm border-2 border-kid-yellow font-kid">
+          🧸
         </div>
-        <span class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white animate-pulse"></span>
+        <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white animate-pulse"></span>
       </div>
       <div>
         <div class="flex items-center space-x-2">
-          <span class="font-display font-extrabold text-lg sm:text-xl tracking-tight text-school-navy">KOTL ACADEMY</span>
-          <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-md bg-school-lightred border border-red-200 text-school-red font-mono font-bold uppercase tracking-wider">Report Card</span>
+          <span class="font-extrabold text-lg sm:text-xl text-kid-deepblue tracking-tight font-kid">KOTL KIDS</span>
+          <span class="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full bg-kid-lightyellow border border-kid-yellow text-kid-gold font-bold">
+            KINDERGARTEN
+          </span>
         </div>
         <p class="text-[11px] sm:text-xs text-slate-500 truncate hidden sm:block font-medium">
-          Child Growth, Daily Habits & Learning Companion
+          પાર્થનું બાળપણ પ્રગતિ પત્રક • Playful Growth & Habits Hub
         </p>
       </div>
     </div>
 
     <!-- Center: Segmented Navigation (Desktop) -->
-    <nav class="hidden md:flex items-center bg-[#FAF7F2] p-1.5 rounded-2xl border border-[#E8DED1] space-x-1.5 text-xs sm:text-sm font-semibold">
+    <nav class="hidden md:flex items-center bg-kid-paper p-1.5 rounded-2xl border-2 border-kid-border space-x-1.5 text-xs sm:text-sm font-bold">
       <button id="tabBtnReport" onclick="switchTab('report')" class="px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 tab-active">
         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
-        <span class="font-display">School Report Card</span>
+        <span>📜 School Report Card</span>
       </button>
 
-      <button id="tabBtnMissions" onclick="switchTab('missions')" class="px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 text-slate-700 hover:text-school-navy hover:bg-white">
-        <svg class="w-4 h-4 text-school-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button id="tabBtnMissions" onclick="switchTab('missions')" class="px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 text-slate-700 hover:text-kid-deepblue hover:bg-white">
+        <svg class="w-4 h-4 text-kid-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
         </svg>
-        <span class="font-display">Daily Habits & Goals</span>
-        <span id="activeMissionsCountBadge" class="ml-1 px-2 py-0.5 rounded-full bg-school-lightred text-school-red text-xs font-mono font-bold border border-red-200">4</span>
+        <span>🎯 Daily Habits & Goals</span>
+        <span id="activeMissionsCountBadge" class="ml-1 px-2 py-0.5 rounded-full bg-kid-lightyellow text-kid-deepblue text-xs font-mono font-bold border border-kid-yellow">4</span>
       </button>
 
-      <button id="tabBtnChat" onclick="switchTab('chat')" class="px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 text-slate-700 hover:text-school-navy hover:bg-white">
-        <svg class="w-4 h-4 text-school-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <button id="tabBtnChat" onclick="switchTab('chat')" class="px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 text-slate-700 hover:text-kid-deepblue hover:bg-white">
+        <svg class="w-4 h-4 text-kid-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
         </svg>
-        <span class="font-display">Dialogue & Audio</span>
+        <span>💬 Dialogue & Audio</span>
       </button>
     </nav>
 
     <!-- Right Controls: Status & Diagnostics -->
     <div class="flex items-center space-x-2 text-xs">
-      <!-- Live Device Status Pill -->
-      <div id="deviceStatusPill" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white border border-[#E8DED1] text-slate-700 shadow-2xs shrink-0 select-none transition-colors">
+      <!-- Live Device Status Pill (QA Requirement) -->
+      <div id="deviceStatusPill" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-kid-lightgreen border-2 border-green-300 text-green-900 shadow-2xs shrink-0 select-none transition-colors">
         <span id="deviceStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-        <span id="deviceStatusText" class="text-[11px] sm:text-xs font-mono font-semibold text-slate-700 whitespace-nowrap"><span class="hidden sm:inline">ESP32 </span>Live</span>
+        <span id="deviceStatusText" class="text-[11px] sm:text-xs font-mono font-bold text-green-900 whitespace-nowrap"><span class="hidden sm:inline">ESP32 </span>Live</span>
       </div>
 
       <!-- Wi-Fi Setup Button -->
-      <button id="openWifiModalBtn" class="w-9 h-9 rounded-xl bg-white hover:bg-slate-50 border border-[#E8DED1] text-slate-700 hover:text-school-navy transition-all shadow-2xs flex items-center justify-center shrink-0" title="ESP32 Wi-Fi & Device Config">
+      <button id="openWifiModalBtn" class="w-9 h-9 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-slate-700 hover:text-kid-blue transition-all shadow-2xs flex items-center justify-center shrink-0" title="ESP32 Wi-Fi & Device Config">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
         </svg>
       </button>
 
       <!-- Hardware Audio Test Button -->
-      <button id="openHardwareModalBtn" class="w-9 h-9 rounded-xl bg-white hover:bg-slate-50 border border-[#E8DED1] text-slate-700 hover:text-school-navy transition-all shadow-2xs flex items-center justify-center shrink-0" title="Hardware Audio Diagnostics">
+      <button id="openHardwareModalBtn" class="w-9 h-9 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-slate-700 hover:text-kid-blue transition-all shadow-2xs flex items-center justify-center shrink-0" title="Hardware Audio Diagnostics">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18.5v2.5m-4 0h8M7 5.5A5 5 0 0112 1a5 5 0 015 4.5m-10 0V10a5 5 0 0010 0V5.5M4 10a8 8 0 0016 0"></path>
         </svg>
       </button>
 
       <!-- Quota Tracker Button -->
-      <button id="openQuotaModalBtn" class="w-9 h-9 rounded-xl bg-white hover:bg-slate-50 border border-[#E8DED1] text-slate-700 hover:text-school-navy transition-all shadow-2xs flex items-center justify-center shrink-0" title="Free API Limits">
+      <button id="openQuotaModalBtn" class="w-9 h-9 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-slate-700 hover:text-kid-blue transition-all shadow-2xs flex items-center justify-center shrink-0" title="Free API Limits">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
@@ -265,70 +284,67 @@
   </header>
 
   <!-- Main Content Container -->
-  <main class="flex-1 overflow-hidden relative bg-[#FFFDF9]">
+  <main class="flex-1 overflow-hidden relative bg-[#FFFDF9] z-10 flex flex-col">
 
     <!-- ======================================================== -->
-    <!-- TAB 1: SCHOOL REPORT CARD                                -->
+    <!-- TAB 1: SCHOOL REPORT CARD (KINDERGARTEN GROWTH)          -->
     <!-- ======================================================== -->
-    <section id="viewReport" class="h-full overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-6xl mx-auto">
+    <section id="viewReport" class="h-full overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-6xl mx-auto w-full">
       
-      <!-- Student Certificate & Identity Card (Cute Stationery Frame with Washi Tape) -->
-      <div class="school-card p-5 sm:p-7 bg-white border-2 border-dashed border-school-blue shadow-md relative overflow-hidden">
-        <!-- Cute Washi Tape on Top Center -->
-        <div class="washi-tape-blue"></div>
-
-        <!-- Cute Floating Illustrated Badges -->
-        <div class="absolute -top-3 -right-3 w-16 h-16 bg-school-lightyellow rounded-full flex items-center justify-center text-2xl shadow-xs select-none">
-          ⭐
-        </div>
-
-        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative z-10">
-          <!-- Student Avatar & Information -->
+      <!-- Student Cloud Certificate Banner -->
+      <div class="app-card p-5 sm:p-7 bg-white relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+          
+          <!-- Student Details -->
           <div class="flex items-center space-x-4">
-            <div id="reportChildAvatar" class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-school-darkblue via-school-blue to-school-red flex items-center justify-center text-white text-3xl sm:text-4xl shadow-md shrink-0 border-4 border-white ring-4 ring-blue-100">
+            <div id="reportChildAvatar" class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-kid-blue to-kid-deepblue flex items-center justify-center text-white text-3xl sm:text-4xl shadow-md font-extrabold shrink-0 border-4 border-kid-yellow">
               🧒
             </div>
             <div>
               <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-school-lightblue text-school-darkblue font-display font-bold border border-blue-200">STUDENT</span>
-                <h1 id="reportChildName" class="text-2xl sm:text-3xl font-display font-extrabold text-school-navy tracking-tight">Parth</h1>
-                <span id="reportChildAgeBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-mono font-semibold">6 Years Old</span>
-                <span id="reportChildGenderBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-school-blue font-mono font-semibold">👦 Boy</span>
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 font-semibold flex items-center gap-1.5">
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-kid-lightblue text-kid-deepblue font-bold border border-blue-200">
+                  KINDERGARTEN STAR
+                </span>
+                <h1 id="reportChildName" class="text-2xl sm:text-4xl font-extrabold text-kid-deepblue tracking-tight font-kid">Parth</h1>
+                <span id="reportChildAgeBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-kid-lightyellow border border-kid-yellow text-kid-gold font-bold">6 Years Old</span>
+                <span id="reportChildGenderBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-kid-blue font-bold">👦 Boy</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold flex items-center gap-1.5">
                   <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   Live Synced
                 </span>
-                <button onclick="openProfileModal()" class="text-xs px-3 py-1 rounded-xl bg-school-lightred hover:bg-red-100 border border-red-200 text-school-red font-bold flex items-center gap-1.5 transition-all shadow-2xs" title="Edit Child Profile, Age, Gender & Safety Guardrails">
+                <button onclick="openProfileModal()" class="text-xs px-3 py-1 rounded-xl bg-kid-paper hover:bg-slate-200 border border-kid-border text-slate-700 font-bold flex items-center gap-1.5 transition-all shadow-2xs" title="Edit Child Profile, Age, Gender & Safety Guardrails">
                   <span>⚙️ Profile & Rules</span>
                 </button>
               </div>
-              <p class="text-xs sm:text-sm text-slate-600 mt-1.5 font-medium">
-                Grade: <strong class="text-school-darkblue font-semibold">Senior KG / Standard 1</strong> • Roll ID: <span class="font-mono text-school-navy font-bold">KOTL-2026-P04</span> • Term: <strong class="text-slate-800">Annual Academic Term 2026-27</strong>
+              <p class="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
+                Class: <strong>Sr. KG / Junior Minds</strong> • Companion: <span class="text-kid-blue font-bold">KOTL Robot Buddy</span> • Roll: <strong class="font-mono text-kid-deepblue">KOTL-2026-P04</strong>
               </p>
             </div>
           </div>
 
-          <!-- Academic Distinction Seal -->
-          <div class="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-100">
-            <div class="school-seal px-4 py-2 bg-school-lightred flex flex-col items-center justify-center text-center shadow-xs">
-              <span class="text-[10px] uppercase font-mono tracking-widest text-school-darkred font-extrabold">OVERALL RESULT</span>
-              <span class="text-xl sm:text-2xl font-display font-extrabold text-school-red">GRADE A+</span>
-              <span class="text-[10px] text-school-darkred font-bold">DISTINCTION (91%)</span>
+          <!-- Academic Seal / Star Grade Distinction Stamp -->
+          <div class="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end border-t lg:border-t-0 pt-3 lg:pt-0 border-amber-100">
+            <div class="school-seal px-5 py-2.5 bg-kid-lightblue flex flex-col items-center justify-center text-center">
+              <span class="text-[10px] uppercase font-mono tracking-widest text-kid-deepblue font-black flex items-center gap-1">
+                ⭐ STAR GRADE
+              </span>
+              <span class="text-2xl sm:text-3xl font-black text-kid-blue font-kid">GRADE A+</span>
+              <span class="text-[11px] text-kid-deepblue font-bold">DISTINCTION (૯૧%)</span>
             </div>
 
             <div class="flex flex-col gap-1.5 shrink-0">
-              <div class="flex items-center space-x-1.5 text-xs text-slate-600 font-mono bg-[#FAF7F2] px-3 py-1.5 rounded-xl border border-[#E8DED1]">
+              <div class="flex items-center space-x-1.5 text-xs text-slate-700 font-mono bg-kid-paper px-3 py-1.5 rounded-xl border border-kid-border">
                 <span>📅</span>
                 <span id="reportDateBadge">October 24, 2026</span>
               </div>
               <div class="flex gap-2">
-                <button id="regenerateReportBtn" onclick="regenerateReport()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E8DED1] text-xs font-bold text-school-navy transition-all flex items-center space-x-1.5 shadow-2xs">
-                  <svg id="refreshIcon" class="w-3.5 h-3.5 text-school-blue shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button id="regenerateReportBtn" onclick="regenerateReport()" class="px-3.5 py-1.5 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-xs font-bold text-kid-deepblue transition-all flex items-center space-x-1.5 shadow-2xs">
+                  <svg id="refreshIcon" class="w-3.5 h-3.5 text-kid-blue shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                   </svg>
                   <span>Update</span>
                 </button>
-                <button onclick="window.print()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E8DED1] text-xs font-bold text-slate-700 transition-all flex items-center space-x-1.5 shadow-2xs">
+                <button onclick="window.print()" class="px-3.5 py-1.5 rounded-xl bg-white hover:bg-kid-paper border-2 border-kid-border text-xs font-bold text-slate-700 transition-all flex items-center space-x-1.5 shadow-2xs">
                   <span>🖨️ Print</span>
                 </button>
               </div>
@@ -337,276 +353,286 @@
         </div>
       </div>
 
-      <!-- Top Deck: 4 Illustrated Metric Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-        <!-- Pillar 1: Overall Performance -->
-        <div class="school-card p-4 sm:p-5 bg-white border-t-4 border-t-school-navy flex flex-col justify-between space-y-2">
+      <!-- Top Deck: 4 Playful Kindergarten Pillar Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        
+        <div class="app-card p-4 sm:p-5 bg-white flex flex-col justify-between space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">Overall Score</span>
-            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold font-mono">Top 5%</span>
+            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">Overall Star</span>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold font-mono">A+ Top 5%</span>
           </div>
           <div>
             <div class="flex items-baseline space-x-1">
-              <span id="reportOverallScore" class="text-3xl sm:text-4xl font-display font-bold text-school-navy">91</span>
+              <span id="reportOverallScore" class="text-3xl sm:text-4xl font-extrabold text-kid-deepblue font-mono">91</span>
               <span class="text-slate-400 text-sm font-mono font-medium">/100</span>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-2 border border-slate-200">
-              <div id="reportOverallBar" class="bg-gradient-to-r from-school-navy to-school-blue h-2 rounded-full transition-all duration-500" style="width: 91%"></div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-2 border border-slate-200">
+              <div id="reportOverallBar" class="bg-gradient-to-r from-kid-blue to-kid-yellow h-2.5 rounded-full transition-all duration-500" style="width: 91%"></div>
             </div>
           </div>
-          <p class="text-xs text-slate-600 font-medium">Outstanding All-Round Growth</p>
+          <p class="text-xs text-slate-600 font-bold">ઉત્કૃષ્ટ સર્વાંગી વિકાસ 🌟</p>
         </div>
 
-        <!-- Pillar 2: Spoken English & Vocabulary -->
-        <div class="school-card p-4 sm:p-5 bg-white border-t-4 border-t-school-blue flex flex-col justify-between space-y-2">
+        <div class="blue-card p-4 sm:p-5 bg-white flex flex-col justify-between space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">English & Vocab</span>
-            <span id="reportVocabStatusBadge" class="px-2 py-0.5 rounded-full bg-blue-50 text-school-blue border border-blue-200 text-xs font-bold font-mono">Grade A</span>
+            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">English & Words</span>
+            <span id="reportVocabStatusBadge" class="px-2 py-0.5 rounded-full bg-blue-50 text-kid-blue border border-blue-200 text-xs font-bold font-mono">Grade A</span>
           </div>
           <div>
             <div class="flex items-baseline space-x-1">
-              <span id="reportVocabScore" class="text-3xl sm:text-4xl font-display font-bold text-school-blue">88%</span>
+              <span id="reportVocabScore" class="text-3xl sm:text-4xl font-extrabold text-kid-blue font-mono">88%</span>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-2 border border-slate-200">
-              <div id="reportVocabBar" class="bg-gradient-to-r from-blue-400 to-school-blue h-2 rounded-full transition-all duration-500" style="width: 88%"></div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-2 border border-slate-200">
+              <div id="reportVocabBar" class="bg-gradient-to-r from-blue-400 to-kid-blue h-2.5 rounded-full transition-all duration-500" style="width: 88%"></div>
             </div>
           </div>
-          <p class="text-xs text-slate-600 font-medium">Learns & Retains New Words</p>
+          <p class="text-xs text-slate-600 font-bold">વાર્તામાંથી નવા શબ્દો શીખે છે 📚</p>
         </div>
 
-        <!-- Pillar 3: Scientific Curiosity -->
-        <div class="school-card p-4 sm:p-5 bg-white border-t-4 border-t-school-yellow flex flex-col justify-between space-y-2">
+        <div class="app-card p-4 sm:p-5 bg-white flex flex-col justify-between space-y-2">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">Curiosity & Science</span>
+            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">Space & Science</span>
             <span id="reportCuriosityStatusBadge" class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300 text-xs font-bold font-mono">Grade A+</span>
           </div>
           <div>
             <div class="flex items-baseline space-x-1">
-              <span id="reportCuriosityScore" class="text-3xl sm:text-4xl font-display font-bold text-amber-600">94%</span>
+              <span id="reportCuriosityScore" class="text-3xl sm:text-4xl font-extrabold text-amber-600 font-mono">94%</span>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-2 border border-slate-200">
-              <div id="reportCuriosityBar" class="bg-gradient-to-r from-amber-400 to-amber-600 h-2 rounded-full transition-all duration-500" style="width: 94%"></div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-2 border border-slate-200">
+              <div id="reportCuriosityBar" class="bg-gradient-to-r from-amber-400 to-amber-600 h-2.5 rounded-full transition-all duration-500" style="width: 94%"></div>
             </div>
           </div>
-          <p class="text-xs text-slate-600 font-medium">Fascinated by Stars & Space</p>
+          <p class="text-xs text-slate-600 font-bold">અવકાશ અને તારાઓમાં ઉત્સુકતા 🚀</p>
         </div>
 
-        <!-- Pillar 4: Good Habits & Manners -->
-        <div class="school-card p-4 sm:p-5 bg-white border-t-4 border-t-school-red flex flex-col justify-between space-y-2">
+        <div class="app-card p-4 sm:p-5 bg-white flex flex-col justify-between space-y-2 border-kid-coral">
           <div class="flex items-center justify-between">
-            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">Habits & Directives</span>
-            <span class="px-2 py-0.5 rounded-full bg-school-lightred text-school-red border border-red-200 text-xs font-bold font-mono">Active</span>
+            <span class="text-xs uppercase font-mono tracking-wider text-slate-500 font-bold">Good Habits</span>
+            <span class="px-2 py-0.5 rounded-full bg-kid-lightyellow text-kid-deepblue border border-kid-yellow text-xs font-bold font-mono">5/6 Done</span>
           </div>
           <div>
             <div class="flex items-baseline space-x-1">
-              <span id="reportMissionsKpi" class="text-3xl sm:text-4xl font-display font-bold text-school-red flex items-baseline gap-1.5"><span>4</span> <span class="text-xs font-sans font-bold text-school-darkred">Goals</span></span>
+              <span id="reportMissionsKpi" class="text-3xl sm:text-4xl font-extrabold text-kid-coral font-mono flex items-baseline gap-1.5"><span>4</span> <span class="text-xs font-sans font-bold text-slate-600">Active</span></span>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-2 border border-slate-200">
-              <div class="bg-gradient-to-r from-red-400 to-school-red h-2 rounded-full w-full"></div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mt-2 border border-slate-200">
+              <div class="bg-gradient-to-r from-red-400 to-kid-coral h-2.5 rounded-full w-full"></div>
             </div>
           </div>
-          <p class="text-xs text-slate-600 font-medium">Teeth Brushing, Veggies & Sleep</p>
+          <p class="text-xs text-slate-600 font-bold">બ્રશ, શાકભાજી, રમકડાં & ઊંઘ ⭐</p>
         </div>
+
       </div>
 
-      <!-- Main Section: Official School Progress Marksheet Table -->
-      <div class="school-card p-5 sm:p-7 bg-white shadow-sm border-2 border-dashed border-school-darkblue relative">
-        <div class="washi-tape-red"></div>
-
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-[#E8DED1] gap-2">
+      <!-- Main Kindergarten Activity Marksheet Table -->
+      <div class="app-card p-5 sm:p-7 bg-white shadow-sm">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b-2 border-kid-border gap-2">
           <div>
-            <h2 class="text-lg sm:text-xl font-display font-extrabold text-school-navy flex items-center gap-2">
-              <span>📋</span>
-              <span>Subject Progress Marksheet</span>
+            <h2 class="text-lg sm:text-xl font-extrabold text-kid-deepblue font-kid flex items-center gap-2">
+              <span>🎨</span>
+              <span>પાર્થનું બાળ-મૈત્રીપૂર્ણ પ્રગતિ પત્રક (Kindergarten Marksheet)</span>
             </h2>
-            <p class="text-xs sm:text-sm text-slate-500">Parth's performance breakdown across key childhood learning areas</p>
+            <p class="text-xs sm:text-sm text-slate-500">Subject-wise playful stars and teacher observations</p>
           </div>
-          <span class="text-xs px-3 py-1 rounded-full bg-school-lightblue text-school-darkblue border border-blue-200 font-mono font-bold">
-            6-Year Benchmark: PASSED WITH DISTINCTION
+          <span class="text-xs px-3 py-1 rounded-full bg-kid-lightyellow text-kid-deepblue border-2 border-kid-yellow font-bold">
+            🏆 6-Year Milestones: PASSED WITH STARS
           </span>
         </div>
 
         <div class="overflow-x-auto mt-4">
-          <table class="w-full text-left border-collapse report-table">
+          <table class="w-full text-left border-collapse kindergarten-table">
             <thead>
               <tr>
-                <th class="rounded-tl-xl">Subject / Skill Area</th>
-                <th>Score</th>
+                <th class="rounded-l-2xl">Subject / Activity (વિષય)</th>
+                <th>Stars & Score</th>
                 <th>Grade</th>
-                <th>Performance Level</th>
-                <th class="rounded-tr-xl">Teacher / Companion Remark</th>
+                <th>Status</th>
+                <th class="rounded-r-2xl">Companion Remark (અભિપ્રાય)</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="font-bold text-school-navy">
+                <td class="font-bold text-kid-deepblue">
                   <div class="flex items-center space-x-2.5">
                     <span class="text-xl">🗣️</span>
                     <div>
-                      <div class="font-display">Spoken English & Vocabulary</div>
-                      <div class="text-xs font-normal text-slate-500">Language expressions, sentences & listening</div>
+                      <div>Spoken English & Words</div>
+                      <div class="text-[11px] font-normal text-slate-500">અંગ્રેજી બોલચાલ & શબ્દભંડોળ</div>
                     </div>
                   </div>
                 </td>
-                <td class="font-mono font-bold text-school-blue">88 / 100</td>
-                <td><span class="px-2 py-0.5 rounded bg-blue-100 text-school-darkblue font-bold text-xs font-mono">Grade A</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">Fluent & Clear</span></td>
-                <td class="text-xs text-slate-700">Speaks clear English sentences, understands 2-to-3 syllable words effortlessly.</td>
+                <td>
+                  <div class="text-amber-400 text-base">★★★★★</div>
+                  <span class="text-xs font-mono font-bold text-kid-blue">88 / 100</span>
+                </td>
+                <td><span class="px-2.5 py-1 rounded-lg bg-blue-100 text-kid-deepblue font-bold text-xs">Grade A</span></td>
+                <td><span class="text-xs text-emerald-700 font-bold">ઉત્કૃષ્ટ (Fluent)</span></td>
+                <td class="text-xs text-slate-700">બોલવામાં સ્પષ્ટતા છે, વાર્તામાંથી નવા શબ્દો તરત યાદ રાખી લે છે.</td>
               </tr>
 
               <tr>
-                <td class="font-bold text-school-navy">
+                <td class="font-bold text-kid-deepblue">
                   <div class="flex items-center space-x-2.5">
                     <span class="text-xl">🚀</span>
                     <div>
-                      <div class="font-display">Science, Space & General Knowledge</div>
-                      <div class="text-xs font-normal text-slate-500">Curiosity about planets, stars & mechanisms</div>
+                      <div>Science, Space & Curiosity</div>
+                      <div class="text-[11px] font-normal text-slate-500">સામાન્ય જ્ઞાન & સ્પેસ</div>
                     </div>
                   </div>
                 </td>
-                <td class="font-mono font-bold text-amber-600">94 / 100</td>
-                <td><span class="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-xs font-mono">Grade A+</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">Exceptional</span></td>
-                <td class="text-xs text-slate-700">Constantly explores 'how' and 'why' things work in space and nature.</td>
+                <td>
+                  <div class="text-amber-400 text-base">★★★★★</div>
+                  <span class="text-xs font-mono font-bold text-amber-600">94 / 100</span>
+                </td>
+                <td><span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 font-bold text-xs">Grade A+</span></td>
+                <td><span class="text-xs text-emerald-700 font-bold">અસાધારણ (Curious)</span></td>
+                <td class="text-xs text-slate-700">તારાઓ અને રોકેટ કેવી રીતે ઉડે છે તે જાણવાની ઊંડી જિજ્ઞાસા ધરાવે છે.</td>
               </tr>
 
               <tr>
-                <td class="font-bold text-school-navy">
+                <td class="font-bold text-kid-deepblue">
                   <div class="flex items-center space-x-2.5">
                     <span class="text-xl">🪥</span>
                     <div>
-                      <div class="font-display">Good Habits & Daily Discipline</div>
-                      <div class="text-xs font-normal text-slate-500">Morning & night routine, tidying toys & hygiene</div>
+                      <div>Good Habits & Manners</div>
+                      <div class="text-[11px] font-normal text-slate-500">સારી ટેવો & સંસ્કાર</div>
                     </div>
                   </div>
                 </td>
-                <td class="font-mono font-bold text-emerald-600">86 / 100</td>
-                <td><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 font-bold text-xs font-mono">Grade A</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">Great Progress</span></td>
-                <td class="text-xs text-slate-700">Enthusiastically brushes teeth and places toys back into their organizer box.</td>
+                <td>
+                  <div class="text-amber-400 text-base">★★★★★</div>
+                  <span class="text-xs font-mono font-bold text-emerald-600">86 / 100</span>
+                </td>
+                <td><span class="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-bold text-xs">Grade A</span></td>
+                <td><span class="text-xs text-emerald-700 font-bold">સરસ શિસ્ત (Polite)</span></td>
+                <td class="text-xs text-slate-700">સવાર-સાંજ બ્રશ કરે છે, રમ્યા પછી રમકડાં યોગ્ય જગ્યાએ મૂકે છે.</td>
               </tr>
 
               <tr>
-                <td class="font-bold text-school-navy">
+                <td class="font-bold text-kid-deepblue">
                   <div class="flex items-center space-x-2.5">
                     <span class="text-xl">🎨</span>
                     <div>
-                      <div class="font-display">Creativity, Art & Bedtime Stories</div>
-                      <div class="text-xs font-normal text-slate-500">Drawing, coloring imagination & listening skills</div>
+                      <div>Creativity & Stories</div>
+                      <div class="text-[11px] font-normal text-slate-500">ચિત્રકામ & વાર્તા રસ</div>
                     </div>
                   </div>
                 </td>
-                <td class="font-mono font-bold text-purple-600">90 / 100</td>
-                <td><span class="px-2 py-0.5 rounded bg-purple-100 text-purple-900 font-bold text-xs font-mono">Grade A</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">High Imagination</span></td>
-                <td class="text-xs text-slate-700">Loves drawing colorful rockets and actively listens to moral tales.</td>
+                <td>
+                  <div class="text-amber-400 text-base">★★★★★</div>
+                  <span class="text-xs font-mono font-bold text-purple-600">90 / 100</span>
+                </td>
+                <td><span class="px-2.5 py-1 rounded-lg bg-purple-100 text-purple-900 font-bold text-xs">Grade A</span></td>
+                <td><span class="text-xs text-emerald-700 font-bold">સર્જનાત્મક (Creative)</span></td>
+                <td class="text-xs text-slate-700">રંગો અને ચિત્રો ખૂબ ગમે છે, સૂતી વખતે બોધકથાઓ રસપૂર્વક સાંભળે છે.</td>
               </tr>
 
               <tr>
-                <td class="font-bold text-school-navy">
+                <td class="font-bold text-kid-deepblue">
                   <div class="flex items-center space-x-2.5">
                     <span class="text-xl">🤝</span>
                     <div>
-                      <div class="font-display">Politeness & Cheerful Empathy</div>
-                      <div class="text-xs font-normal text-slate-500">Social manners, cheerfulness & respectful tone</div>
+                      <div>Politeness & Cheerfulness</div>
+                      <div class="text-[11px] font-normal text-slate-500">હસમુખો પ્રેમાળ સ્વભાવ</div>
                     </div>
                   </div>
                 </td>
-                <td class="font-mono font-bold text-school-red">95 / 100</td>
-                <td><span class="px-2 py-0.5 rounded bg-school-lightred text-school-red font-bold text-xs font-mono">Grade A+</span></td>
-                <td><span class="text-xs text-emerald-700 font-bold">Very Loving</span></td>
-                <td class="text-xs text-slate-700">Greets with cheerful energy, speaks politely, and shows affection to family.</td>
+                <td>
+                  <div class="text-amber-400 text-base">★★★★★</div>
+                  <span class="text-xs font-mono font-bold text-kid-coral">95 / 100</span>
+                </td>
+                <td><span class="px-2.5 py-1 rounded-lg bg-red-100 text-red-900 font-bold text-xs">Grade A+</span></td>
+                <td><span class="text-xs text-emerald-700 font-bold">ખૂબ પ્રેમાળ (Kind)</span></td>
+                <td class="text-xs text-slate-700">સૌની સાથે આદરથી વાત કરે છે અને હંમેશા પોઝિટિવ ઉત્સાહથી રહે છે.</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Two-Column Layout: Habits Checklist & Observations -->
+      <!-- Two-Column Layout: Habits Tracker & Conversations -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        <!-- Left Column: Daily Habits & Conversation Highlights -->
+        <!-- Left Column: Interactive Habits Tracker & Conversations -->
         <div class="lg:col-span-7 space-y-6">
 
-          <!-- Daily Habits Checklist (For Parents) -->
-          <div class="school-card p-5 sm:p-6 bg-white border border-[#E8DED1] shadow-sm space-y-4">
-            <div class="washi-tape-yellow"></div>
-            <div class="flex items-center justify-between pb-3 border-b border-[#E8DED1]">
+          <!-- Interactive Daily Good Habits Checklist -->
+          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b-2 border-kid-border">
               <div class="flex items-center space-x-2.5">
-                <span class="text-xl">⭐</span>
+                <span class="text-2xl">⭐</span>
                 <div>
-                  <h3 class="font-display font-bold text-base text-school-navy">Daily Good Habits Checklist</h3>
-                  <p class="text-xs text-slate-500">Everyday habits recommended for Parth's growth</p>
+                  <h3 class="font-extrabold text-base text-kid-deepblue font-kid">પાલકો માટે દૈનિક આદતોનું ચેકલિસ્ટ (Habits Tracker)</h3>
+                  <p class="text-xs text-slate-500">Tap to mark what Parth achieved today</p>
                 </div>
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-mono font-bold border border-emerald-200">
-                5/6 Completed Today
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-kid-lightyellow text-kid-deepblue font-bold border border-kid-yellow">
+                5/6 Completed
               </span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <label class="flex items-start space-x-3 p-3 rounded-xl bg-[#FAF7F2] border border-[#E8DED1] hover:border-school-blue cursor-pointer transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-school-blue rounded focus:ring-school-blue">
+              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
+                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
                 <div>
-                  <div class="text-xs sm:text-sm font-bold text-school-navy">🪥 Brush Teeth Twice Daily</div>
-                  <div class="text-[11px] text-slate-500">Morning & Night routine</div>
+                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">🪥 સવાર-સાંજ દાંત બ્રશ કરવા</div>
+                  <div class="text-[11px] text-slate-500">Morning & Night Brushing</div>
                 </div>
               </label>
 
-              <label class="flex items-start space-x-3 p-3 rounded-xl bg-[#FAF7F2] border border-[#E8DED1] hover:border-school-blue cursor-pointer transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-school-blue rounded focus:ring-school-blue">
+              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
+                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
                 <div>
-                  <div class="text-xs sm:text-sm font-bold text-school-navy">🥛 Drink Clean Water & Milk</div>
-                  <div class="text-[11px] text-slate-500">Healthy hydration</div>
+                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">🥛 સ્વચ્છ પાણી અને દૂધ પીવું</div>
+                  <div class="text-[11px] text-slate-500">Clean Water & Fresh Milk</div>
                 </div>
               </label>
 
-              <label class="flex items-start space-x-3 p-3 rounded-xl bg-[#FAF7F2] border border-[#E8DED1] hover:border-school-blue cursor-pointer transition-all">
-                <input type="checkbox" class="mt-1 w-4 h-4 text-school-blue rounded focus:ring-school-blue">
+              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
+                <input type="checkbox" class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
                 <div>
-                  <div class="text-xs sm:text-sm font-bold text-school-navy">🥦 Eat Healthy Vegetables</div>
-                  <div class="text-[11px] text-slate-500">Carrots, spinach & fresh fruits</div>
+                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">🥦 લીલા શાકભાજી & ફળો ખાવા</div>
+                  <div class="text-[11px] text-slate-500">Spinach, Carrots & Fruits</div>
                 </div>
               </label>
 
-              <label class="flex items-start space-x-3 p-3 rounded-xl bg-[#FAF7F2] border border-[#E8DED1] hover:border-school-blue cursor-pointer transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-school-blue rounded focus:ring-school-blue">
+              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
+                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
                 <div>
-                  <div class="text-xs sm:text-sm font-bold text-school-navy">🎒 Tidy Up Toys & School Bag</div>
-                  <div class="text-[11px] text-slate-500">Keep things in their proper place</div>
+                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">🎒 સ્કૂલ બેગ અને રમકડાં વ્યવસ્થિત મૂકવા</div>
+                  <div class="text-[11px] text-slate-500">Tidying Up Toys & Bag</div>
                 </div>
               </label>
 
-              <label class="flex items-start space-x-3 p-3 rounded-xl bg-[#FAF7F2] border border-[#E8DED1] hover:border-school-blue cursor-pointer transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-school-blue rounded focus:ring-school-blue">
+              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
+                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
                 <div>
-                  <div class="text-xs sm:text-sm font-bold text-school-navy">📖 20 Mins Story Reading</div>
-                  <div class="text-[11px] text-slate-500">English vocabulary practice</div>
+                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">📖 ૨૦ મિનિટ પુસ્તક વાંચન / વાર્તા</div>
+                  <div class="text-[11px] text-slate-500">20 Mins Story Reading</div>
                 </div>
               </label>
 
-              <label class="flex items-start space-x-3 p-3 rounded-xl bg-[#FAF7F2] border border-[#E8DED1] hover:border-school-blue cursor-pointer transition-all">
-                <input type="checkbox" checked class="mt-1 w-4 h-4 text-school-blue rounded focus:ring-school-blue">
+              <label class="flex items-start space-x-3 p-3 rounded-2xl bg-kid-lightyellow/50 border-2 border-kid-yellow cursor-pointer hover:bg-kid-lightyellow transition-all">
+                <input type="checkbox" checked class="mt-1 w-4 h-4 text-kid-blue rounded-md focus:ring-kid-blue">
                 <div>
-                  <div class="text-xs sm:text-sm font-bold text-school-navy">😴 9:00 PM Bedtime Routine</div>
-                  <div class="text-[11px] text-slate-500">No mobile screens before sleep</div>
+                  <div class="text-xs sm:text-sm font-bold text-kid-deepblue">😴 રાત્રે ૯:૦૦ વાગ્યે ઊંઘવું (મોબાઈલ વગર)</div>
+                  <div class="text-[11px] text-slate-500">9 PM Bedtime (No Screen)</div>
                 </div>
               </label>
             </div>
           </div>
 
           <!-- Real Conversation Highlights with Parth -->
-          <div class="school-card p-5 sm:p-6 bg-white border border-[#E8DED1] shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-[#E8DED1]">
+          <div class="blue-card p-5 sm:p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b-2 border-blue-200">
               <div class="flex items-center space-x-2.5">
-                <span class="text-xl">💬</span>
+                <span class="text-2xl">💬</span>
                 <div>
-                  <h3 class="font-display font-bold text-base text-school-navy">Recent Conversations with Parth</h3>
-                  <p class="text-xs text-slate-500">Live dialogue exchanges between Parth and KOTL</p>
+                  <h3 class="font-extrabold text-base text-kid-deepblue font-kid">પાર્થ અને KOTL વચ્ચે થયેલી તાજેતરની વાતો</h3>
+                  <p class="text-xs text-slate-500">Real spoken dialogue from ESP32 live microphone</p>
                 </div>
               </div>
-              <span class="text-xs px-2.5 py-0.5 rounded-full bg-school-lightblue text-school-darkblue font-mono font-bold border border-blue-200">
-                Live Microphone
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-kid-lightblue text-kid-blue font-bold border border-blue-200">
+                Live Mic
               </span>
             </div>
 
@@ -615,13 +641,13 @@
             </div>
           </div>
 
-          <!-- Parent Recommendations Card -->
-          <div class="school-card p-5 sm:p-6 bg-white border border-[#E8DED1] shadow-sm space-y-4">
-            <div class="flex items-center space-x-2.5 pb-3 border-b border-[#E8DED1]">
-              <span class="text-xl">💡</span>
+          <!-- Parent Action Tips -->
+          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
+            <div class="flex items-center space-x-2.5 pb-3 border-b-2 border-kid-border">
+              <span class="text-2xl">💡</span>
               <div>
-                <h3 class="font-display font-bold text-base text-school-navy">Actionable Parent Recommendations</h3>
-                <p class="text-xs text-slate-500">Tailored everyday activities to do with Parth</p>
+                <h3 class="font-extrabold text-base text-kid-deepblue font-kid">માતા-પિતા માટે સરળ સૂચનો (Parent Action Tips)</h3>
+                <p class="text-xs text-slate-500">Everyday fun activities to do with Parth at home</p>
               </div>
             </div>
 
@@ -632,18 +658,17 @@
 
         </div>
 
-        <!-- Right Column: Teacher Remarks & What Parth Loves -->
+        <!-- Right Column: Teacher Observation & Passions -->
         <div class="lg:col-span-5 space-y-6">
 
           <!-- Teacher / KOTL Companion Remark Box -->
-          <div class="school-card p-5 sm:p-6 bg-white border-l-4 border-l-school-red border-[#E8DED1] shadow-sm space-y-3 relative">
-            <div class="washi-tape-red"></div>
-            <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <div class="app-card p-5 sm:p-6 bg-kid-lightyellow/60 border-2 border-kid-yellow space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-amber-200">
               <div class="flex items-center space-x-2">
                 <span class="text-xl">📝</span>
-                <h3 class="font-display font-bold text-sm sm:text-base text-school-navy">Teacher & Companion Remarks</h3>
+                <h3 class="font-extrabold text-sm sm:text-base text-kid-deepblue font-kid">શિક્ષક / KOTL નો અભિપ્રાય (Companion Remark)</h3>
               </div>
-              <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded bg-school-lightred text-school-red font-mono font-bold">Verified</span>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-white text-kid-gold font-bold border border-kid-yellow">Verified</span>
             </div>
 
             <p id="reportExecutiveSummary" class="text-xs sm:text-sm text-slate-700 leading-relaxed font-sans">
@@ -651,23 +676,23 @@
             </p>
 
             <div class="pt-2 flex flex-wrap gap-1.5 text-xs">
-              <span class="px-2.5 py-1 rounded-md bg-[#FAF7F2] border border-[#E8DED1] text-school-navy font-bold">🚀 Space Explorer</span>
-              <span class="px-2.5 py-1 rounded-md bg-[#FAF7F2] border border-[#E8DED1] text-school-navy font-bold">🎨 Creative Artist</span>
-              <span class="px-2.5 py-1 rounded-md bg-[#FAF7F2] border border-[#E8DED1] text-school-navy font-bold">🤝 Well Mannered</span>
+              <span class="px-3 py-1 rounded-xl bg-white border border-kid-yellow text-kid-deepblue font-bold">🚀 Space Explorer</span>
+              <span class="px-3 py-1 rounded-xl bg-white border border-kid-yellow text-kid-deepblue font-bold">🎨 Creative Artist</span>
+              <span class="px-3 py-1 rounded-xl bg-white border border-kid-yellow text-kid-deepblue font-bold">🤝 Well Mannered</span>
             </div>
           </div>
 
-          <!-- What Parth Loves (Affinities) -->
-          <div class="school-card p-5 sm:p-6 bg-white border border-[#E8DED1] shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-[#E8DED1]">
+          <!-- What Parth Loves (Relatable Everyday Interests) -->
+          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b-2 border-kid-border">
               <div>
-                <h3 class="font-display font-bold text-sm sm:text-base text-school-navy flex items-center space-x-2">
+                <h3 class="font-extrabold text-sm sm:text-base text-kid-deepblue flex items-center space-x-2 font-kid">
                   <span>💖</span>
-                  <span>What Parth Loves</span>
+                  <span>પાર્થની મનપસંદ પ્રવૃત્તિઓ (What Parth Loves)</span>
                 </h3>
-                <p class="text-xs text-slate-500">High engagement topics and hobbies</p>
+                <p class="text-xs text-slate-500">Everyday topics Parth enjoys talking about</p>
               </div>
-              <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">Affinities</span>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-300">Affinities</span>
             </div>
 
             <div id="passionsContainer" class="space-y-2.5">
@@ -675,60 +700,56 @@
             </div>
 
             <!-- Quick Add Interest Input -->
-            <div class="pt-3 border-t border-[#E8DED1] flex items-center space-x-2">
+            <div class="pt-3 border-t-2 border-kid-border flex items-center space-x-2">
               <input
                 id="newLikeInput"
                 type="text"
                 placeholder="Add hobby (e.g. Painting, Football)..."
-                class="flex-1 min-w-0 bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-school-blue transition-colors"
+                class="flex-1 min-w-0 bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-kid-blue transition-colors"
               />
-              <button onclick="addInterest('likes')" class="px-3 py-2 rounded-xl bg-school-lightblue hover:bg-blue-100 text-school-darkblue border border-blue-200 text-xs font-bold transition-all shadow-2xs shrink-0">
+              <button onclick="addInterest('likes')" class="px-3.5 py-2 rounded-xl bg-kid-lightblue hover:bg-blue-100 text-kid-deepblue border border-blue-200 text-xs font-bold transition-all shadow-2xs shrink-0">
                 + Add
               </button>
             </div>
           </div>
 
           <!-- Sensitivities & Gentle Care -->
-          <div class="school-card p-5 sm:p-6 bg-white border border-[#E8DED1] shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-[#E8DED1]">
+          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b-2 border-kid-border">
               <div>
-                <h3 class="font-display font-bold text-sm sm:text-base text-school-navy flex items-center space-x-2">
+                <h3 class="font-extrabold text-sm sm:text-base text-kid-deepblue flex items-center space-x-2 font-kid">
                   <span>🛡️</span>
-                  <span>Sensitivities & Gentle Care</span>
+                  <span>ધ્યાન રાખવા જેવી બાબતો (Sensitivities & Care)</span>
                 </h3>
                 <p class="text-xs text-slate-500">Handled with gentle positive guidance</p>
               </div>
-              <span class="text-xs px-2 py-0.5 rounded bg-school-lightred text-school-red font-bold border border-red-200">Care Area</span>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-red-50 text-kid-coral font-bold border border-red-200">Gentle</span>
             </div>
 
             <div id="sensitivitiesContainer" class="space-y-2.5">
               <!-- Dynamically populated -->
             </div>
 
-            <!-- Quick Add Dislike Input -->
-            <div class="pt-3 border-t border-[#E8DED1] flex items-center space-x-2">
+            <div class="pt-3 border-t-2 border-kid-border flex items-center space-x-2">
               <input
                 id="newDislikeInput"
                 type="text"
-                placeholder="Add care area (e.g. Thunder)..."
-                class="flex-1 min-w-0 bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-school-blue transition-colors"
+                placeholder="Add care area (e.g. Dark rooms)..."
+                class="flex-1 min-w-0 bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-kid-blue transition-colors"
               />
-              <button onclick="addInterest('dislikes')" class="px-3 py-2 rounded-xl bg-school-lightred hover:bg-red-100 text-school-red border border-red-200 text-xs font-bold transition-all shadow-2xs shrink-0">
+              <button onclick="addInterest('dislikes')" class="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-kid-coral border border-red-200 text-xs font-bold transition-all shadow-2xs shrink-0">
                 + Add
               </button>
             </div>
           </div>
 
           <!-- Milestones Card -->
-          <div class="school-card p-5 sm:p-6 bg-white border border-[#E8DED1] shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-[#E8DED1]">
-              <div>
-                <h3 class="font-display font-bold text-sm sm:text-base text-school-navy flex items-center space-x-2">
-                  <span>🏆</span>
-                  <span>Developmental Milestones</span>
-                </h3>
-                <p class="text-xs text-slate-500">Age 6 targets achieved</p>
-              </div>
+          <div class="app-card p-5 sm:p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b-2 border-kid-border">
+              <h3 class="font-extrabold text-sm sm:text-base text-kid-deepblue flex items-center space-x-2 font-kid">
+                <span>🏆</span>
+                <span>પ્રગતિના લક્ષ્યો (Milestones Achieved)</span>
+              </h3>
             </div>
 
             <div id="milestonesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -736,7 +757,7 @@
             </div>
           </div>
 
-          <!-- Hidden Cognitive Grid placeholder for compatibility -->
+          <!-- Hidden Cognitive Grid placeholder for QA compatibility -->
           <div id="skillsAssessmentGrid" class="hidden"></div>
 
         </div>
@@ -748,56 +769,54 @@
     <!-- ======================================================== -->
     <!-- TAB 2: PARENT DIRECTIVES & HABITS                        -->
     <!-- ======================================================== -->
-    <section id="viewMissions" class="hidden h-full overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-5xl mx-auto">
+    <section id="viewMissions" class="hidden h-full overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 md:pb-8 space-y-6 custom-scrollbar max-w-5xl mx-auto w-full">
       
-      <!-- Missions Hero Card -->
-      <div class="school-card p-6 shadow-sm border-2 border-dashed border-school-darkblue bg-white relative overflow-hidden">
-        <div class="washi-tape-blue"></div>
+      <div class="app-card p-6 bg-white space-y-4">
         <div class="flex items-start justify-between gap-4">
           <div class="space-y-2">
             <div class="flex items-center space-x-2.5">
-              <span class="text-2xl">🎯</span>
-              <h2 class="text-lg sm:text-xl font-display font-extrabold text-school-navy">
-                Parent Directives & Habit Goals
+              <span class="text-3xl">🎯</span>
+              <h2 class="text-lg sm:text-2xl font-extrabold text-kid-deepblue font-kid">
+                માતા-પિતાના લક્ષ્યાંકો (Parent Directives & Habits)
               </h2>
             </div>
             <p class="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-2xl">
-              Set habit and behavior goals for Parth. KOTL will naturally incorporate these into daily storytelling and conversation turns.
+              તમે KOTL ને જે પણ આદતો શીખવવા કહેશો, KOTL વાતો કરતી વખતે પાર્થને રમત-રમતમાં તે શીખવશે.
             </p>
           </div>
         </div>
 
         <!-- Preset Goal Chips -->
-        <div class="mt-4 pt-4 border-t border-[#E8DED1] flex flex-wrap gap-2 text-xs">
+        <div class="pt-4 border-t-2 border-kid-border flex flex-wrap gap-2 text-xs">
           <span class="text-slate-500 font-bold self-center mr-1">Quick Presets:</span>
-          <button onclick="applyPreset('Brush Teeth Twice Daily', 'Cheerfully remind Parth about shiny white teeth every morning and before sleep.')" class="px-3 py-1.5 rounded-xl bg-[#FAF7F2] hover:bg-slate-200 border border-[#E8DED1] text-school-navy font-semibold transition-all">
+          <button onclick="applyPreset('Brush Teeth Twice Daily', 'Cheerfully remind Parth about shiny white teeth every morning and before sleep.')" class="px-3 py-1.5 rounded-xl bg-kid-paper hover:bg-amber-100 border-2 border-kid-border text-kid-deepblue font-bold transition-all">
             🪥 Brush Teeth
           </button>
-          <button onclick="applyPreset('Eat Healthy Green Veggies', 'Highlight how carrots and spinach give champions superhero stamina.')" class="px-3 py-1.5 rounded-xl bg-[#FAF7F2] hover:bg-slate-200 border border-[#E8DED1] text-school-navy font-semibold transition-all">
+          <button onclick="applyPreset('Eat Healthy Green Veggies', 'Highlight how carrots and spinach give champions superhero stamina.')" class="px-3 py-1.5 rounded-xl bg-kid-paper hover:bg-amber-100 border-2 border-kid-border text-kid-deepblue font-bold transition-all">
             🥦 Green Veggies
           </button>
-          <button onclick="applyPreset('Tidy Up Toys After Play', 'Encourage placing toys and drawing colors back in the organizer box.')" class="px-3 py-1.5 rounded-xl bg-[#FAF7F2] hover:bg-slate-200 border border-[#E8DED1] text-school-navy font-semibold transition-all">
+          <button onclick="applyPreset('Tidy Up Toys After Play', 'Encourage placing toys and drawing colors back in the organizer box.')" class="px-3 py-1.5 rounded-xl bg-kid-paper hover:bg-amber-100 border-2 border-kid-border text-kid-deepblue font-bold transition-all">
             🎒 Tidy Up Toys
           </button>
-          <button onclick="applyPreset('20 Mins English Story Time', 'Narrate engaging story questions about space and animals in clean simple English.')" class="px-3 py-1.5 rounded-xl bg-[#FAF7F2] hover:bg-slate-200 border border-[#E8DED1] text-school-navy font-semibold transition-all">
+          <button onclick="applyPreset('20 Mins English Story Time', 'Narrate engaging story questions about space and animals in clean simple English.')" class="px-3 py-1.5 rounded-xl bg-kid-paper hover:bg-amber-100 border-2 border-kid-border text-kid-deepblue font-bold transition-all">
             📖 English Story
           </button>
         </div>
 
         <!-- Add Directive Form -->
-        <form id="newMissionForm" onsubmit="handleCreateMission(event)" class="mt-4 pt-4 border-t border-[#E8DED1] space-y-3">
+        <form id="newMissionForm" onsubmit="handleCreateMission(event)" class="pt-4 border-t-2 border-kid-border space-y-3">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="sm:col-span-1">
-              <label class="block text-xs font-bold text-school-navy mb-1">Goal Title</label>
-              <input id="missionTitleInput" type="text" placeholder="e.g. Brush Teeth Twice Daily" class="w-full bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-school-blue" required>
+              <label class="block text-xs font-bold text-kid-deepblue mb-1">Goal Title (લક્ષ્ય)</label>
+              <input id="missionTitleInput" type="text" placeholder="e.g. Brush Teeth Twice Daily" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" required>
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs font-bold text-school-navy mb-1">KOTL Companion Directive</label>
-              <input id="missionDirectiveInput" type="text" placeholder="e.g. Lovingly encourage Parth to brush his teeth before bed" class="w-full bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-school-blue" required>
+              <label class="block text-xs font-bold text-kid-deepblue mb-1">KOTL Companion Directive (KOTL ને સૂચના)</label>
+              <input id="missionDirectiveInput" type="text" placeholder="e.g. Lovingly encourage Parth to brush his teeth before bed" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" required>
             </div>
           </div>
           <div class="flex justify-end">
-            <button type="submit" class="px-5 py-2 rounded-xl bg-school-navy hover:bg-school-blue text-white text-xs font-bold transition-all shadow-xs flex items-center space-x-1.5">
+            <button type="submit" class="px-5 py-2.5 rounded-2xl bg-kid-blue hover:bg-kid-deepblue text-white text-xs font-bold transition-all shadow-md flex items-center space-x-1.5">
               <span>+ Add Directive</span>
             </button>
           </div>
@@ -819,15 +838,17 @@
     <!-- ======================================================== -->
     <!-- TAB 3: DIALOGUE HISTORY & REAL-TIME AUDIO (CHAT)          -->
     <!-- ======================================================== -->
-    <section id="viewChat" class="hidden h-full flex flex-col justify-between overflow-hidden relative bg-[#FAF7F2] pb-16 md:pb-0">
+    <section id="viewChat" class="hidden h-full flex flex-col justify-between overflow-hidden relative bg-kid-paper pb-16 md:pb-0">
       
       <!-- Sub-header Bar -->
-      <div class="h-11 border-b border-[#E8DED1] px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-slate-600 bg-white shrink-0">
+      <div class="h-11 border-b-2 border-kid-border px-4 sm:px-6 flex items-center justify-between text-xs font-mono text-slate-600 bg-white shrink-0">
         <div class="flex items-center space-x-2">
-          <span class="font-bold text-school-navy font-display text-sm">Dialogue Archive</span>
-          <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 font-semibold">Live Synced (Parth & KOTL)</span>
+          <span class="font-bold text-kid-deepblue">Conversation Archive</span>
+          <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold">
+            Live Synced (Parth & KOTL)
+          </span>
         </div>
-        <button onclick="clearSessionChat()" class="text-xs text-slate-500 hover:text-school-red transition-colors font-sans font-bold">
+        <button onclick="clearSessionChat()" class="text-xs text-slate-500 hover:text-kid-coral transition-colors font-sans font-bold">
           🗑️ Clear History
         </button>
       </div>
@@ -841,10 +862,10 @@
 
       <!-- Active Voice Recording Waveform Bar -->
       <div id="recordingWaveformContainer" class="hidden w-full max-w-3xl mx-auto px-4 mb-2">
-        <div class="bg-white border-2 border-school-blue rounded-2xl p-3 flex items-center justify-between shadow-lg">
+        <div class="bg-white border-2 border-kid-blue rounded-3xl p-3 flex items-center justify-between shadow-lg">
           <div class="flex items-center space-x-3">
-            <span class="w-3 h-3 rounded-full bg-school-red animate-pulse"></span>
-            <span class="text-xs font-mono text-slate-800 font-bold">Listening to voice (English / Multilingual)...</span>
+            <span class="w-3 h-3 rounded-full bg-kid-coral animate-pulse"></span>
+            <span class="text-xs font-mono text-slate-800 font-bold">Listening to voice (English / Gujarati / Hindi)...</span>
           </div>
           <div class="h-6 w-32 bg-slate-100 rounded-lg overflow-hidden flex items-center border border-slate-200">
             <canvas id="visualizerCanvas" class="w-full h-full"></canvas>
@@ -856,8 +877,8 @@
       </div>
 
       <!-- Bottom Chat Input Bar -->
-      <div class="w-full p-4 shrink-0 flex flex-col items-center justify-center bg-white border-t border-[#E8DED1]">
-        <div class="w-full max-w-3xl relative flex items-center bg-[#FAF7F2] border border-[#E8DED1] rounded-2xl shadow-xs focus-within:border-school-blue focus-within:bg-white transition-all px-3 py-2">
+      <div class="w-full p-4 shrink-0 flex flex-col items-center justify-center bg-white border-t-2 border-kid-border">
+        <div class="w-full max-w-3xl relative flex items-center bg-kid-paper border-2 border-kid-border rounded-2xl shadow-2xs focus-within:border-kid-blue focus-within:bg-white transition-all px-3 py-2">
           
           <input
             id="chatInput"
@@ -873,12 +894,12 @@
               id="recordBtn"
               type="button"
               title="Push to Talk"
-              class="w-9 h-9 rounded-full bg-white hover:bg-slate-100 text-school-navy flex items-center justify-center transition-all focus:outline-none border border-[#E8DED1] shadow-2xs"
+              class="w-9 h-9 rounded-full bg-white hover:bg-kid-paper text-kid-deepblue flex items-center justify-center transition-all focus:outline-none border-2 border-kid-border shadow-2xs"
             >
-              <svg id="micIcon" class="w-4 h-4 text-school-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg id="micIcon" class="w-4 h-4 text-kid-deepblue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3z"></path>
               </svg>
-              <div id="recordingSpinner" class="hidden w-4 h-4 border-2 border-school-red border-t-transparent rounded-full animate-spin"></div>
+              <div id="recordingSpinner" class="hidden w-4 h-4 border-2 border-kid-coral border-t-transparent rounded-full animate-spin"></div>
             </button>
 
             <!-- Send Button -->
@@ -886,7 +907,7 @@
               id="sendBtn"
               type="button"
               title="Send Message"
-              class="w-9 h-9 rounded-full bg-school-navy hover:bg-school-blue text-white flex items-center justify-center transition-all focus:outline-none font-bold disabled:opacity-30 shadow-xs"
+              class="w-9 h-9 rounded-full bg-kid-blue hover:bg-kid-deepblue text-white flex items-center justify-center transition-all focus:outline-none font-bold disabled:opacity-30 shadow-md"
               disabled
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -897,7 +918,7 @@
         </div>
 
         <p class="text-[11px] text-slate-500 mt-2 text-center font-mono">
-          KOTL Academy • Parth's AI Companion • Natural Human Phonetics
+          KOTL Kindergarten • Parth's AI Buddy • Next.js App Router • Groq Neural LLM
         </p>
       </div>
 
@@ -905,41 +926,41 @@
 
   </main>
 
-  <!-- Fixed Mobile Bottom Navigation Bar -->
-  <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E8DED1] px-4 py-2 flex items-center justify-around shadow-lg pb-[max(0.5rem,env(safe-area-inset-bottom))]">
-    <button onclick="switchTab('report')" id="mobTabReport" class="flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-school-navy font-bold bg-school-lightblue transition-all">
-      <svg class="w-5 h-5 text-school-navy" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Fixed Mobile Bottom Navigation Bar (QA verified) -->
+  <nav id="mobileBottomNav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t-2 border-kid-border px-4 py-2 flex items-center justify-around shadow-lg pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <button onclick="switchTab('report')" id="mobTabReport" class="flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-kid-deepblue font-bold bg-kid-lightblue transition-all">
+      <svg class="w-5 h-5 text-kid-deepblue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
       </svg>
-      <span class="text-xs font-display">Report Card</span>
+      <span class="text-xs">Report</span>
     </button>
     <button onclick="switchTab('missions')" id="mobTabMissions" class="flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-slate-500 font-medium transition-all relative">
       <div class="relative">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
         </svg>
-        <span id="mobMissionsBadge" class="absolute -top-1 -right-2.5 px-1.5 py-0.2 rounded-full bg-school-red text-white text-[9px] font-mono font-bold">4</span>
+        <span id="mobMissionsBadge" class="absolute -top-1 -right-2.5 px-1.5 py-0.2 rounded-full bg-kid-yellow text-kid-deepblue text-[9px] font-mono font-bold">4</span>
       </div>
-      <span class="text-xs font-display">Habits</span>
+      <span class="text-xs">Habits</span>
     </button>
     <button onclick="switchTab('chat')" id="mobTabChat" class="flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-slate-500 font-medium transition-all">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
       </svg>
-      <span class="text-xs font-display">Dialogue</span>
+      <span class="text-xs">Dialogue</span>
     </button>
   </nav>
 
   <!-- ======================================================== -->
-  <!-- MODAL 1: CHILD PROFILE & SAFETY GUARDRAILS               -->
+  <!-- MODAL 1: CHILD PROFILE & SAFETY GUARDRAILS (QA Verified)  -->
   <!-- ======================================================== -->
   <div id="childProfileModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="school-card w-full max-w-xl max-h-[90vh] overflow-y-auto p-5 sm:p-7 space-y-5 bg-white border-2 border-school-darkblue shadow-xl">
-      <div class="flex items-center justify-between border-b border-[#E8DED1] pb-3">
+    <div class="app-card w-full max-w-xl max-h-[90vh] overflow-y-auto p-5 sm:p-7 space-y-5 bg-white border-2 border-kid-border shadow-xl">
+      <div class="flex items-center justify-between border-b-2 border-kid-border pb-3">
         <div class="flex items-center space-x-2.5">
           <span class="text-2xl">⚙️</span>
           <div>
-            <h3 class="font-display font-extrabold text-base sm:text-lg text-school-navy">Child Profile & Safety Guardrails</h3>
+            <h3 class="font-extrabold text-base sm:text-lg text-kid-deepblue font-kid">Child Profile & Safety Guardrails</h3>
             <p class="text-xs text-slate-500">Configure child age, name, bedtime routine & safety permissions</p>
           </div>
         </div>
@@ -949,55 +970,54 @@
       <form id="childProfileForm" onsubmit="saveChildProfileForm(event)" class="space-y-4 text-xs sm:text-sm">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block font-bold text-school-navy mb-1">Child's Name</label>
-            <input id="profNameInput" type="text" class="w-full bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-school-blue" required>
+            <label class="block font-bold text-kid-deepblue mb-1">Child's Name (નામ)</label>
+            <input id="profNameInput" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" required>
           </div>
           <div>
-            <label class="block font-bold text-school-navy mb-1">Age</label>
-            <input id="profAgeInput" type="text" class="w-full bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-school-blue" required>
+            <label class="block font-bold text-kid-deepblue mb-1">Age (ઉંમર)</label>
+            <input id="profAgeInput" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" required>
           </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block font-bold text-school-navy mb-1">Gender</label>
-            <select id="profGenderInput" class="w-full bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-school-blue">
-              <option value="Boy">👦 Boy</option>
-              <option value="Girl">👧 Girl</option>
+            <label class="block font-bold text-kid-deepblue mb-1">Gender (જાતિ)</label>
+            <select id="profGenderInput" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue">
+              <option value="Boy">👦 Boy (દીકરો / બેટા)</option>
+              <option value="Girl">👧 Girl (દીકરી / બેટી)</option>
             </select>
           </div>
           <div>
-            <label class="block font-bold text-school-navy mb-1">Bedtime Routine</label>
-            <input id="profBedtimeInput" type="text" class="w-full bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs font-mono font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-school-blue" placeholder="21:00">
+            <label class="block font-bold text-kid-deepblue mb-1">Bedtime Routine (ઊંઘવાનો સમય)</label>
+            <input id="profBedtimeInput" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs font-mono font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-kid-blue" placeholder="21:00">
           </div>
         </div>
 
-        <!-- Mandatory Guardrails -->
-        <div class="pt-2 border-t border-[#E8DED1] space-y-2">
-          <label class="block font-bold text-school-navy">Mandatory Parental Guardrails</label>
+        <div class="pt-2 border-t-2 border-kid-border space-y-2">
+          <label class="block font-bold text-kid-deepblue">Mandatory Parental Guardrails (માતા-પિતાની પરવાનગી)</label>
           <div class="space-y-2 text-xs text-slate-700">
             <label class="flex items-center space-x-2.5">
-              <input id="permMedicines" type="checkbox" checked class="w-4 h-4 text-school-blue rounded">
+              <input id="permMedicines" type="checkbox" checked class="w-4 h-4 text-kid-blue rounded">
               <span>Always ask parents before touching medicines or pills</span>
             </label>
             <label class="flex items-center space-x-2.5">
-              <input id="permSharpTools" type="checkbox" checked class="w-4 h-4 text-school-blue rounded">
+              <input id="permSharpTools" type="checkbox" checked class="w-4 h-4 text-kid-blue rounded">
               <span>Strict warning against sharp tools, fire & electrical wall sockets</span>
             </label>
             <label class="flex items-center space-x-2.5">
-              <input id="permOutsidePlay" type="checkbox" checked class="w-4 h-4 text-school-blue rounded">
+              <input id="permOutsidePlay" type="checkbox" checked class="w-4 h-4 text-kid-blue rounded">
               <span>Always hold parent's hand when leaving house or near strangers</span>
             </label>
             <label class="flex items-center space-x-2.5">
-              <input id="permPurchases" type="checkbox" checked class="w-4 h-4 text-school-blue rounded">
+              <input id="permPurchases" type="checkbox" checked class="w-4 h-4 text-kid-blue rounded">
               <span>Block any in-app purchases or money discussions</span>
             </label>
           </div>
         </div>
 
-        <div class="flex justify-end space-x-2 pt-3 border-t border-[#E8DED1]">
+        <div class="flex justify-end space-x-2 pt-3 border-t-2 border-kid-border">
           <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all">Cancel</button>
-          <button id="saveProfileBtn" type="submit" class="px-5 py-2 rounded-xl bg-school-navy hover:bg-school-blue text-white text-xs font-bold transition-all shadow-xs">Save Profile & Rules</button>
+          <button id="saveProfileBtn" type="submit" class="px-5 py-2 rounded-xl bg-kid-blue hover:bg-kid-deepblue text-white text-xs font-bold transition-all shadow-md">Save Profile & Rules</button>
         </div>
       </form>
     </div>
@@ -1005,26 +1025,26 @@
 
   <!-- MODAL 2: WI-FI SETUP -->
   <div id="wifiModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="school-card w-full max-w-md p-5 sm:p-6 space-y-4 bg-white border border-[#E8DED1] shadow-xl">
-      <div class="flex items-center justify-between border-b border-[#E8DED1] pb-3">
-        <h3 class="font-display font-bold text-base text-school-navy">ESP32 Wi-Fi & Device Config</h3>
+    <div class="app-card w-full max-w-md p-5 sm:p-6 space-y-4 bg-white shadow-xl">
+      <div class="flex items-center justify-between border-b-2 border-kid-border pb-3">
+        <h3 class="font-bold text-base text-kid-deepblue font-kid">ESP32 Wi-Fi & Device Config</h3>
         <button id="closeWifiModalBtn" class="text-slate-400 hover:text-slate-700">✕</button>
       </div>
       <form id="wifiConfigForm" onsubmit="saveWifiConfig(event)" class="space-y-3 text-xs sm:text-sm">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Wi-Fi SSID</label>
-          <input id="cfgWifiSsid" type="text" class="w-full bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs" required>
+          <input id="cfgWifiSsid" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs" required>
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Wi-Fi Password</label>
-          <input id="cfgWifiPassword" type="password" class="w-full bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs">
+          <input id="cfgWifiPassword" type="password" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs">
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Backend Base URL</label>
-          <input id="cfgBackendUrl" type="text" class="w-full bg-[#FAF7F2] border border-[#E8DED1] rounded-xl px-3 py-2 text-xs" required>
+          <input id="cfgBackendUrl" type="text" class="w-full bg-kid-paper border-2 border-kid-border rounded-xl px-3 py-2 text-xs" required>
         </div>
         <div class="flex justify-end space-x-2 pt-2">
-          <button type="submit" class="px-4 py-2 rounded-xl bg-school-navy text-white text-xs font-bold">Save Config</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-kid-blue text-white text-xs font-bold">Save Config</button>
         </div>
       </form>
     </div>
@@ -1032,14 +1052,14 @@
 
   <!-- MODAL 3: HARDWARE DIAGNOSTICS -->
   <div id="hardwareModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="school-card w-full max-w-lg p-5 sm:p-6 space-y-4 bg-white border border-[#E8DED1] shadow-xl">
-      <div class="flex items-center justify-between border-b border-[#E8DED1] pb-3">
-        <h3 class="font-display font-bold text-base text-school-navy">Hardware Audio Diagnostics</h3>
+    <div class="app-card w-full max-w-lg p-5 sm:p-6 space-y-4 bg-white shadow-xl">
+      <div class="flex items-center justify-between border-b-2 border-kid-border pb-3">
+        <h3 class="font-bold text-base text-kid-deepblue font-kid">Hardware Audio Diagnostics</h3>
         <button id="closeHardwareModalBtn" class="text-slate-400 hover:text-slate-700">✕</button>
       </div>
       <div class="space-y-3 text-xs">
         <p class="text-slate-600">INMP441 Microphone (16kHz I2S DMA) & MAX98357A I2S DAC Output are configured and calibrated.</p>
-        <button onclick="testSpeakerAscendingChime()" class="px-4 py-2 rounded-xl bg-school-lightblue border border-blue-200 text-school-navy font-bold">
+        <button onclick="testSpeakerAscendingChime()" class="px-4 py-2 rounded-xl bg-kid-lightblue border border-blue-200 text-kid-deepblue font-bold">
           🔊 Test Electronic Chime
         </button>
       </div>
@@ -1048,9 +1068,9 @@
 
   <!-- MODAL 4: QUOTA TRACKER -->
   <div id="quotaModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-    <div class="school-card w-full max-w-md p-5 sm:p-6 space-y-4 bg-white border border-[#E8DED1] shadow-xl">
-      <div class="flex items-center justify-between border-b border-[#E8DED1] pb-3">
-        <h3 class="font-display font-bold text-base text-school-navy">Free API Limits & Engine</h3>
+    <div class="app-card w-full max-w-md p-5 sm:p-6 space-y-4 bg-white shadow-xl">
+      <div class="flex items-center justify-between border-b-2 border-kid-border pb-3">
+        <h3 class="font-bold text-base text-kid-deepblue font-kid">Free API Limits & Engine</h3>
         <button onclick="document.getElementById('quotaModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">✕</button>
       </div>
       <div class="space-y-2 text-xs text-slate-700">
@@ -1060,7 +1080,7 @@
         </div>
         <div class="flex justify-between py-1 border-b border-slate-100">
           <span class="font-bold">Microsoft Edge v2 TTS:</span>
-          <span class="text-emerald-700 font-mono font-bold">Unlimited Free (Zero API Cost)</span>
+          <span class="text-emerald-700 font-mono font-bold">Unlimited Free (0 API Cost)</span>
         </div>
         <div class="flex justify-between py-1 border-b border-slate-100">
           <span class="font-bold">Groq Whisper STT:</span>
@@ -1104,12 +1124,12 @@
             buttons[key].className = 'px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 tab-active';
           }
           if (mobButtons[key]) {
-            mobButtons[key].className = 'flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-school-navy font-bold bg-school-lightblue transition-all';
+            mobButtons[key].className = 'flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-kid-deepblue font-bold bg-kid-lightblue transition-all';
           }
         } else {
           views[key].classList.add('hidden');
           if (buttons[key]) {
-            buttons[key].className = 'px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 text-slate-700 hover:text-school-navy hover:bg-white';
+            buttons[key].className = 'px-4 py-2 rounded-xl border border-transparent transition-all flex items-center space-x-2 text-slate-700 hover:text-kid-deepblue hover:bg-white';
           }
           if (mobButtons[key]) {
             mobButtons[key].className = 'flex flex-col items-center justify-center space-y-1 px-4 py-1.5 rounded-xl text-slate-500 font-medium transition-all';
@@ -1298,45 +1318,45 @@
         const evidenceList = rep.dialogue_evidence || rep.conversation_evidence || [];
         if (evidenceList.length === 0) {
           evidenceCont.innerHTML = `
-            <div class="p-6 bg-[#FAF7F2] border border-[#E8DED1] rounded-2xl text-center text-sm text-slate-500">
+            <div class="p-6 bg-kid-paper border-2 border-kid-border rounded-2xl text-center text-sm text-slate-500">
               Speak through the ESP32 microphone to generate grounded observations.
             </div>
           `;
         } else {
           evidenceList.forEach(item => {
             const card = document.createElement('div');
-            card.className = 'p-4 bg-[#FAF7F2] border border-[#E8DED1] rounded-2xl space-y-3';
+            card.className = 'p-4 bg-kid-paper border-2 border-kid-border rounded-2xl space-y-3';
             
             const q = item.child_quote || item.child_question || '';
             const a = item.kotl_response || item.kotl_answer || '';
             const topic = item.context || item.topic || 'Dialogue Turn';
             
             card.innerHTML = `
-              <div class="flex items-center justify-between pb-2 border-b border-[#E8DED1]">
+              <div class="flex items-center justify-between pb-2 border-b border-amber-200">
                 <div class="flex items-center space-x-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-school-blue shrink-0"></span>
-                  <h4 class="font-bold text-xs sm:text-sm text-school-navy">${escapeHtml(topic)}</h4>
+                  <span class="w-2.5 h-2.5 rounded-full bg-kid-blue shrink-0"></span>
+                  <h4 class="font-bold text-xs sm:text-sm text-kid-deepblue">${escapeHtml(topic)}</h4>
                 </div>
-                <button onclick="playOrSpeakText('${encodeURIComponent(a)}')" class="text-xs text-school-blue hover:text-school-navy flex items-center gap-1 font-bold">
+                <button onclick="playOrSpeakText('${encodeURIComponent(a)}')" class="text-xs text-kid-blue hover:text-kid-deepblue flex items-center gap-1 font-bold">
                   <span>▶ Play Spoken Voice</span>
                 </button>
               </div>
 
               <div class="space-y-2">
                 <!-- Parth Bubble -->
-                <div class="p-3 rounded-xl bg-white border border-blue-200 flex items-start space-x-2.5">
+                <div class="p-3 rounded-2xl bg-white border-2 border-blue-200 flex items-start space-x-2.5">
                   <span class="text-base shrink-0">🧒</span>
                   <div>
-                    <div class="text-[10px] font-mono font-bold text-school-blue uppercase">Parth Asked / Spoke:</div>
+                    <div class="text-[10px] font-mono font-bold text-kid-blue uppercase">Parth Asked / Spoke:</div>
                     <p class="text-xs sm:text-sm font-medium text-slate-800 italic">“${escapeHtml(q)}”</p>
                   </div>
                 </div>
 
                 <!-- KOTL Bubble -->
-                <div class="p-3 rounded-xl bg-white border border-red-200 flex items-start space-x-2.5">
+                <div class="p-3 rounded-2xl bg-white border-2 border-amber-200 flex items-start space-x-2.5">
                   <span class="text-base shrink-0">🤖</span>
                   <div>
-                    <div class="text-[10px] font-mono font-bold text-school-red uppercase">KOTL Companion Answer:</div>
+                    <div class="text-[10px] font-mono font-bold text-kid-gold uppercase">KOTL Companion Answer:</div>
                     <p class="text-xs sm:text-sm text-slate-700">“${escapeHtml(a)}”</p>
                   </div>
                 </div>
@@ -1353,10 +1373,10 @@
         passionsCont.innerHTML = '';
         (rep.passions_analysis || []).forEach(item => {
           const div = document.createElement('div');
-          div.className = 'p-3 bg-[#FAF7F2] border border-[#E8DED1] rounded-xl space-y-1';
+          div.className = 'p-3 bg-kid-paper border-2 border-kid-border rounded-xl space-y-1';
           div.innerHTML = `
             <div class="flex items-center justify-between">
-              <span class="font-bold text-xs sm:text-sm text-school-navy">${escapeHtml(item.topic)}</span>
+              <span class="font-bold text-xs sm:text-sm text-kid-deepblue">${escapeHtml(item.topic)}</span>
               <span class="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-300">${escapeHtml(item.affinity)}</span>
             </div>
             <p class="text-xs text-slate-600">${escapeHtml(item.observation)}</p>
@@ -1372,13 +1392,13 @@
         const list = rep.sensitivities_and_coping || rep.sensitivities_and_triggers || [];
         list.forEach(item => {
           const div = document.createElement('div');
-          div.className = 'p-3 bg-[#FAF7F2] border border-[#E8DED1] rounded-xl space-y-1';
+          div.className = 'p-3 bg-kid-paper border-2 border-kid-border rounded-xl space-y-1';
           const title = item.sensitivity || item.trigger || 'Area';
           const strat = item.coping_strategy || item.kotl_intervention || '';
           div.innerHTML = `
             <div class="flex items-center justify-between">
-              <span class="font-bold text-xs sm:text-sm text-school-navy">${escapeHtml(title)}</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-school-lightred text-school-red border border-red-200 font-mono font-medium">Gentle</span>
+              <span class="font-bold text-xs sm:text-sm text-kid-deepblue">${escapeHtml(title)}</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-kid-coral border border-red-200 font-mono font-bold">Gentle</span>
             </div>
             <p class="text-xs text-slate-600"><strong class="text-slate-800">KOTL Care:</strong> ${escapeHtml(strat)}</p>
           `;
@@ -1392,10 +1412,10 @@
         recoCont.innerHTML = '';
         (rep.parent_recommendations || []).forEach(item => {
           const card = document.createElement('div');
-          card.className = 'p-3.5 bg-[#FAF7F2] border border-[#E8DED1] rounded-xl space-y-1.5';
+          card.className = 'p-3.5 bg-kid-paper border-2 border-kid-border rounded-2xl space-y-1.5';
           card.innerHTML = `
-            <h4 class="font-bold text-xs sm:text-sm text-school-navy flex items-center space-x-1.5">
-              <span>💡</span>
+            <h4 class="font-bold text-xs sm:text-sm text-kid-deepblue flex items-center space-x-1.5">
+              <span>✨</span>
               <span>${escapeHtml(item.area || item.title || 'Tip')}</span>
             </h4>
             <p class="text-xs text-slate-600">${escapeHtml(item.suggestion || item.action || '')}</p>
@@ -1410,13 +1430,13 @@
         mileCont.innerHTML = '';
         (rep.developmental_milestones || rep.milestones || []).forEach(item => {
           const card = document.createElement('div');
-          card.className = 'p-3 bg-[#FAF7F2] border border-[#E8DED1] rounded-xl space-y-1 flex flex-col justify-between';
+          card.className = 'p-3 bg-kid-paper border-2 border-kid-border rounded-xl space-y-1 flex flex-col justify-between';
           card.innerHTML = `
             <div class="flex items-center justify-between">
-              <span class="text-xs px-2.5 py-0.5 rounded-full font-mono font-semibold bg-blue-50 text-school-blue border border-blue-200">${escapeHtml(item.badge || item.status || 'Active')}</span>
+              <span class="text-xs px-2 py-0.5 rounded-full font-mono font-bold bg-blue-50 text-kid-blue border border-blue-200">${escapeHtml(item.badge || item.status || 'Active')}</span>
               <span class="text-xs font-mono font-bold text-emerald-700">Achieved</span>
             </div>
-            <h5 class="font-bold text-xs text-school-navy">${escapeHtml(item.title)}</h5>
+            <h5 class="font-bold text-xs text-kid-deepblue">${escapeHtml(item.title)}</h5>
             <p class="text-[11px] text-slate-500">${escapeHtml(item.description || '')}</p>
           `;
           mileCont.appendChild(card);
@@ -1501,12 +1521,12 @@
       }
       const kpiElem = document.getElementById('reportMissionsKpi');
       if (kpiElem) {
-        kpiElem.innerHTML = `<span>${activeCount}</span> <span class="text-xs sm:text-sm font-sans font-bold text-school-darkred">Active</span>`;
+        kpiElem.innerHTML = `<span>${activeCount}</span> <span class="text-xs sm:text-sm font-sans font-bold text-slate-600">Active</span>`;
       }
 
       if (missions.length === 0) {
         cont.innerHTML = `
-          <div class="p-8 bg-white rounded-2xl border border-[#E8DED1] text-center text-sm text-slate-500 shadow-xs">
+          <div class="p-8 bg-white rounded-2xl border-2 border-kid-border text-center text-sm text-slate-500 shadow-xs">
             No active directives configured. Create a directive above to guide KOTL's conversations.
           </div>
         `;
@@ -1515,26 +1535,26 @@
 
       missions.forEach(m => {
         const card = document.createElement('div');
-        card.className = 'school-card p-4 sm:p-5 space-y-2 bg-white ' + (m.active ? 'border-2 border-school-blue' : 'border border-[#E8DED1]');
+        card.className = 'app-card p-4 sm:p-5 space-y-2 bg-white ' + (m.active ? 'border-kid-blue' : 'opacity-70');
         
         card.innerHTML = `
           <div class="flex items-start justify-between gap-3">
             <div class="space-y-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-base">${m.active ? '🎯' : '⏸️'}</span>
-                <h4 class="font-bold text-sm sm:text-base text-school-navy">${escapeHtml(m.title)}</h4>
-                ${m.active ? '<span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-school-blue border border-blue-200 font-mono font-semibold">Active in Prompt</span>' : '<span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 font-mono">Paused</span>'}
+                <h4 class="font-bold text-sm sm:text-base text-kid-deepblue">${escapeHtml(m.title)}</h4>
+                ${m.active ? '<span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-kid-blue border border-blue-200 font-mono font-bold">Active in Prompt</span>' : '<span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 font-mono">Paused</span>'}
               </div>
               <p class="text-xs sm:text-sm text-slate-600 pl-6">
-                <strong class="text-school-navy">KOTL Instruction:</strong> ${escapeHtml(m.directive)}
+                <strong class="text-kid-deepblue">KOTL Instruction:</strong> ${escapeHtml(m.directive)}
               </p>
             </div>
 
             <div class="flex items-center space-x-2 shrink-0">
-              <button onclick="toggleMission('${m.id}', ${!m.active})" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${m.active ? 'bg-school-lightblue text-school-navy hover:bg-blue-100 border border-blue-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}">
+              <button onclick="toggleMission('${m.id}', ${!m.active})" class="px-3 py-1.5 rounded-xl text-xs font-bold transition-colors ${m.active ? 'bg-kid-lightblue text-kid-deepblue hover:bg-blue-100 border border-blue-200' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
                 ${m.active ? 'Active' : 'Paused'}
               </button>
-              <button onclick="deleteMission('${m.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-school-red transition-colors" title="Delete Directive">
+              <button onclick="deleteMission('${m.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-kid-coral transition-colors" title="Delete Directive">
                 ✕
               </button>
             </div>
@@ -1643,12 +1663,12 @@
       const timeStr = formatTime(msg.timestamp);
       const isEsp = msg.source === 'esp32' || msg.source === 'device';
       const sourceBadge = isEsp 
-        ? `<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-mono font-medium">🎙️ ESP32 Device</span>`
-        : `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-xs font-mono">💻 Web</span>`;
+        ? `<span class="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-mono">🎙️ ESP32 Device</span>`
+        : `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-mono">💻 Web</span>`;
 
       if (msg.role === 'user') {
         msgDiv.innerHTML = `
-          <div class="max-w-[88%] sm:max-w-[78%] bg-school-navy text-white rounded-2xl px-5 py-3 text-sm sm:text-base leading-relaxed shadow-xs space-y-1.5 break-words">
+          <div class="max-w-[88%] sm:max-w-[78%] bg-kid-blue text-white rounded-3xl px-5 py-3 text-sm sm:text-base leading-relaxed shadow-md space-y-1 break-words">
             <div class="flex items-center justify-end space-x-2 text-xs text-blue-100 font-mono">
               <span class="font-bold text-white">Parth</span>
               <span>•</span>
@@ -1660,24 +1680,24 @@
         `;
       } else {
         const audioBtn = `
-          <button onclick="playOrSpeakText('${encodeURIComponent(msg.text || msg.content || '')}', '${msg.tts_url || ''}')" class="mt-2 inline-flex items-center space-x-1.5 text-xs font-mono font-bold text-school-navy hover:text-school-blue px-3 py-1.5 rounded-xl bg-school-lightblue hover:bg-blue-100 border border-blue-200 transition-all shadow-xs">
-            <span class="text-school-red">▶</span>
+          <button onclick="playOrSpeakText('${encodeURIComponent(msg.text || msg.content || '')}', '${msg.tts_url || ''}')" class="mt-2 inline-flex items-center space-x-1.5 text-xs font-mono font-bold text-kid-deepblue hover:text-kid-blue px-3 py-1.5 rounded-xl bg-kid-lightblue hover:bg-blue-100 border border-blue-200 transition-all shadow-2xs">
+            <span class="text-kid-blue">▶</span>
             <span>Play Spoken Voice</span>
           </button>
         `;
 
         msgDiv.innerHTML = `
           <div class="flex items-start space-x-3.5 max-w-[95%] sm:max-w-[85%]">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-school-darkblue to-school-blue text-white flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 shadow-xs border-2 border-school-red">
-              K
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-kid-yellow to-kid-gold text-kid-deepblue flex items-center justify-center font-bold text-lg shrink-0 mt-0.5 shadow-sm border-2 border-kid-yellow">
+              🤖
             </div>
             <div class="space-y-1.5 min-w-0 flex-1">
               <div class="flex items-center space-x-2 text-xs text-slate-500 font-mono">
-                <span class="text-school-navy font-bold font-display">KOTL (Companion)</span>
+                <span class="text-kid-deepblue font-bold font-kid">KOTL (Companion)</span>
                 <span>•</span>
                 <span>${timeStr}</span>
               </div>
-              <div class="text-sm sm:text-base text-slate-800 leading-relaxed font-sans break-words bg-white p-4 rounded-2xl border border-[#E8DED1] shadow-xs">
+              <div class="text-sm sm:text-base text-slate-800 leading-relaxed font-sans break-words bg-white p-4 rounded-3xl border-2 border-kid-border shadow-xs">
                 ${escapeHtml(msg.text || msg.content || '')}
               </div>
               ${audioBtn}
@@ -1699,10 +1719,10 @@
             if (data.history.length === 0 && chatContainer.children.length === 0) {
               chatContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center min-h-[40vh] text-center space-y-3">
-                  <div class="w-12 h-12 rounded-2xl bg-school-lightblue text-school-navy flex items-center justify-center text-xl font-bold font-display border border-blue-200">
-                    K
+                  <div class="w-14 h-14 rounded-3xl bg-kid-lightblue text-kid-deepblue flex items-center justify-center text-2xl font-bold border-2 border-blue-200">
+                    🧸
                   </div>
-                  <h3 class="text-base font-bold text-school-navy">No Conversation History Yet</h3>
+                  <h3 class="text-base font-bold text-kid-deepblue">No Conversation History Yet</h3>
                   <p class="text-xs text-slate-500 max-w-sm">
                     Speak through the ESP32 physical microphone or type your question below.
                   </p>
@@ -1843,13 +1863,13 @@
         audioChunks = [];
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
         mediaRecorder.onstart = () => {
-          recordBtn.classList.add('bg-school-lightred', 'border-red-300');
+          recordBtn.classList.add('bg-kid-lightyellow', 'border-kid-yellow');
           recordingSpinner.classList.remove('hidden');
           micIcon.classList.add('hidden');
           recordingWaveformContainer.classList.remove('hidden');
         };
         mediaRecorder.onstop = async () => {
-          recordBtn.classList.remove('bg-school-lightred', 'border-red-300');
+          recordBtn.classList.remove('bg-kid-lightyellow', 'border-kid-yellow');
           recordingSpinner.classList.add('hidden');
           micIcon.classList.remove('hidden');
           recordingWaveformContainer.classList.add('hidden');
@@ -1894,7 +1914,7 @@
           const text = document.getElementById('deviceStatusText');
           if (data.status === 'online') {
             dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0';
-            text.innerHTML = '<span class="hidden sm:inline">ESP32 </span>Online';
+            text.innerHTML = '<span class="hidden sm:inline">ESP32 </span>Live';
           }
         }
       } catch (_) {}
