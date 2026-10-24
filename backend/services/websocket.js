@@ -13,7 +13,7 @@ const { generateSpeech, NORMALIZED_SAMPLE_RATE } = require("./tts");
 const { writePcm16MonoWav } = require("../utils/wav");
 const { execFileSync } = require("child_process");
 const ffmpegBin = require("ffmpeg-static");
-const { EdgeTTS } = require("node-edge-tts");
+const { EdgeTTS } = require("@andresaya/edge-tts");
 const { detectEyeExpression } = require("./eye-animation");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
 const { extractMemoryFromDialogue } = require("./child-memory");
@@ -46,59 +46,29 @@ async function synthesizeSpeechPcm(text) {
     voice = "en-IN-PrabhatNeural";
     lang = "en-IN";
   }
-  const tempMp3 = path.join(
-    os.tmpdir(),
-    `speech-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.mp3`
-  );
 
   const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
   const spokenText = toPhoneticSpokenText(text.trim(), lang);
   const speechRate = process.env.EDGE_TTS_RATE || "-20%";
 
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const tts = new EdgeTTS({
-        voice,
-        lang,
-        rate: speechRate,
-        outputFormat: "audio-24khz-48kbitrate-mono-mp3",
-        timeout: 10000,
-      });
-
-      await tts.ttsPromise(spokenText, tempMp3);
-      if (fs.existsSync(tempMp3)) {
-        const mp3Bytes = fs.readFileSync(tempMp3);
-        const wavBytes = await mp3BufferToWavBuffer(mp3Bytes, 16000);
+      const tts = new EdgeTTS();
+      await tts.synthesize(spokenText, voice, { rate: speechRate });
+      const mp3Buffer = await tts.toBuffer();
+      if (mp3Buffer && mp3Buffer.length > 0) {
+        const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, 16000);
         return wavBytes.subarray(44);
       }
     } catch (edgeErr) {
       console.warn(`[WebSocket TTS] Edge TTS attempt ${attempt + 1} failed (${edgeErr.message}). Retrying...`);
-      if (attempt === 0) {
+      if (attempt < 2) {
         await new Promise((r) => setTimeout(r, 600));
       }
-    } finally {
-      try {
-        if (fs.existsSync(tempMp3)) fs.unlinkSync(tempMp3);
-      } catch (_) {}
     }
   }
 
-  // Fast Google Cloud TTS fallback (~150-250ms latency)
-  try {
-    const langCode = isHindi ? "hi" : (isGujarati ? "gu" : "en");
-    const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(spokenText.slice(0, 200))}&tl=${langCode}&client=tw-ob`;
-    const response = await fetch(googleUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-    });
-    if (response.ok) {
-      const mp3Buffer = Buffer.from(await response.arrayBuffer());
-      const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, 16000);
-      return wavBytes.subarray(44);
-    }
-  } catch (googleErr) {
-    console.error(`[WebSocket TTS] Google TTS fallback failed: ${googleErr.message}`);
-  }
-
+  console.error("[WebSocket TTS] Edge TTS completely failed after 3 attempts.");
   return Buffer.alloc(0);
 }
 
@@ -457,4 +427,5 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
 
 module.exports = {
   initWebSocketServer,
+  synthesizeSpeechPcm,
 };

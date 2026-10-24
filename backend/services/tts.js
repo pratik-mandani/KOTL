@@ -10,7 +10,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { promisify } = require("util");
-const { EdgeTTS } = require("node-edge-tts");
+const { EdgeTTS } = require("@andresaya/edge-tts");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
 
 const execFileAsync = promisify(execFile);
@@ -123,17 +123,17 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
     };
   }
 
-  const isGujarati = /[\u0A80-\u0AFF]/.test(text);
-  const isHindi = /[\u0900-\u097F]/.test(text);
-  let selectedVoice = voice;
+  let selectedVoice = voice || EDGE_VOICE;
   let selectedLang = EDGE_LANG;
-  if (!selectedVoice) {
-    if (isGujarati) {
-      selectedVoice = "gu-IN-NiranjanNeural";
-      selectedLang = "gu-IN";
-    } else if (isHindi) {
+  if (!voice) {
+    const isGujarati = /[\u0A80-\u0AFF]/.test(text);
+    const isHindi = /[\u0900-\u097F]/.test(text);
+    if (isHindi) {
       selectedVoice = "hi-IN-MadhurNeural";
       selectedLang = "hi-IN";
+    } else if (isGujarati) {
+      selectedVoice = "gu-IN-NiranjanNeural";
+      selectedLang = "gu-IN";
     } else {
       selectedVoice = "en-IN-PrabhatNeural";
       selectedLang = "en-IN";
@@ -149,57 +149,53 @@ async function generateEdgeSpeech({ text, sessionId = null, voice = null }) {
   }
   const normalizedFilename = buildTtsFilename();
   const normalizedPath = path.join(TTS_UPLOADS_DIR, normalizedFilename);
-  const tempMp3Path = path.join(os.tmpdir(), `${path.parse(normalizedFilename).name}-edge.mp3`);
 
   ensureTtsUploadsDir();
 
-  try {
-    const speechRate = process.env.EDGE_TTS_RATE || "-20%";
-    const tts = new EdgeTTS({
-      voice: selectedVoice,
-      lang: selectedLang,
-      rate: speechRate,
-      volume: EDGE_VOLUME,
-      outputFormat: "audio-24khz-48kbitrate-mono-mp3",
-      timeout: 10000,
-    });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const speechRate = process.env.EDGE_TTS_RATE || "-20%";
+      const tts = new EdgeTTS();
+      const spokenText = toPhoneticSpokenText(text.trim(), selectedLang);
+      console.log(`[TTS Edge] Synthesizing speech with voice "${selectedVoice}" ("${spokenText}") attempt ${attempt + 1}...`);
+      await tts.synthesize(spokenText, selectedVoice, { rate: speechRate });
+      const mp3Buffer = await tts.toBuffer();
+      if (!mp3Buffer || mp3Buffer.length === 0) {
+        throw new Error("Edge-TTS produced empty audio output");
+      }
 
-    const spokenText = toPhoneticSpokenText(text.trim(), selectedLang);
-    console.log(`[TTS Edge] Synthesizing speech with voice "${selectedVoice}" ("${spokenText}")...`);
-    await tts.ttsPromise(spokenText, tempMp3Path);
+      const { mp3BufferToWavBuffer } = require("../utils/audio-converter");
+      const wavBytes = await mp3BufferToWavBuffer(mp3Buffer, NORMALIZED_SAMPLE_RATE);
+      fs.writeFileSync(normalizedPath, wavBytes);
 
-    if (!fs.existsSync(tempMp3Path)) {
-      throw new Error("Edge-TTS failed to produce audio output");
+      const stats = fs.statSync(normalizedPath);
+      console.log(`[TTS Edge] Success! Generated ${normalizedFilename} (${stats.size} bytes)`);
+
+      return {
+        success: true,
+        filename: normalizedFilename,
+        url: `/tts/${normalizedFilename}`,
+        provider: "edge",
+        voice: selectedVoice,
+        model: "neural",
+        error: null,
+      };
+    } catch (error) {
+      console.warn(`[TTS Edge] Attempt ${attempt + 1} failed: ${error.message}`);
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 600));
+      } else {
+        return {
+          success: false,
+          filename: null,
+          url: null,
+          provider: "edge",
+          voice: selectedVoice,
+          model: "neural",
+          error: error.message,
+        };
+      }
     }
-
-    const { convertMp3FileToWavFile } = require("../utils/audio-converter");
-    await convertMp3FileToWavFile(tempMp3Path, normalizedPath, NORMALIZED_SAMPLE_RATE);
-
-    const stats = fs.statSync(normalizedPath);
-    console.log(`[TTS Edge] Success! Generated ${normalizedFilename} (${stats.size} bytes)`);
-
-    return {
-      success: true,
-      filename: normalizedFilename,
-      url: `/tts/${normalizedFilename}`,
-      provider: "edge",
-      voice: selectedVoice,
-      model: "neural",
-      error: null,
-    };
-  } catch (error) {
-    console.error(`[TTS Edge] Failed: ${error.message}`);
-    return {
-      success: false,
-      filename: null,
-      url: null,
-      provider: "edge",
-      voice: selectedVoice,
-      model: "neural",
-      error: error.message,
-    };
-  } finally {
-    cleanupFile(tempMp3Path);
   }
 }
 
@@ -490,22 +486,14 @@ async function generateGoogleSpeech({ text, sessionId = null }) {
 async function generateSpeech({ text, sessionId = null, voice = null }) {
   const provider = (process.env.TTS_PROVIDER || "edge").trim().toLowerCase();
 
-  let edgeError = null;
-  // 1. Try Edge TTS
+  // 1. Try Edge TTS (Primary - Indian Male Voices: en-IN-PrabhatNeural, gu-IN-NiranjanNeural, hi-IN-MadhurNeural)
   const edgeResult = await generateEdgeSpeech({ text, sessionId, voice });
   if (edgeResult.success) {
     return edgeResult;
   }
-  edgeError = edgeResult.error;
-  console.warn(`[TTS] Edge TTS fallback triggered due to: ${edgeResult.error}`);
+  console.warn(`[TTS] Edge TTS failed (${edgeResult.error}). Checking backup providers...`);
 
-  // 2. Instant Google Cloud TTS Fallback (never blocked on Render / cloud IPs)
-  const googleResult = await generateGoogleSpeech({ text, sessionId });
-  if (googleResult.success) {
-    return googleResult;
-  }
-
-  // 3. Fallback to Piper if configured
+  // 2. Fallback to Piper if configured
   if (provider === "piper") {
     const piperResult = await generatePiperSpeech({ text, sessionId });
     if (piperResult.success) {
@@ -513,7 +501,7 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
     }
   }
 
-  // 4. Fallback to OpenAI if configured
+  // 3. Fallback to OpenAI if configured
   if (process.env.OPENAI_API_KEY) {
     return generateOpenAiSpeech({ text, sessionId });
   }
@@ -522,10 +510,10 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
     success: false,
     filename: null,
     url: null,
-    provider: "google",
+    provider: "edge",
     voice: voice || EDGE_VOICE,
     model: "neural",
-    error: `TTS failed: Edge (${edgeError}), Google (${googleResult.error})`,
+    error: `TTS failed: Edge (${edgeResult.error})`,
   };
 }
 

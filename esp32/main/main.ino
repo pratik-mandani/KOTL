@@ -1066,7 +1066,7 @@ void applyVoiceEyeAnimation(const String &expression)
   else if (expression == "confused")
   {
     roboEyes.setMood(DEFAULT);
-    roboEyes.anim_confused();
+    roboEyes.setPosition(DEFAULT);
   }
   else if (expression == "tired")
   {

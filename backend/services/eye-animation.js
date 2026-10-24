@@ -94,7 +94,7 @@ function detectEyeExpression(transcript, assistantReply) {
   if (/सो जाओ|नींद|sleep|goodnight|शुभ रात्रि|so jao/.test(reply)) {
     return "tired";
   }
-  if (/\?|क्या सच में|really|wonder|सोच/.test(reply)) {
+  if (/क्या सच में|are you sure|wonder|सोच/.test(reply)) {
     return "confused";
   }
 
