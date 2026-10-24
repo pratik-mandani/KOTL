@@ -40,7 +40,11 @@ function saveSessionsToDisk() {
   try {
     const obj = {};
     for (const [key, val] of sessionHistories.entries()) {
-      obj[key] = val;
+      if (Array.isArray(val)) {
+        obj[key] = val.filter(m => m.role === "user" || m.role === "assistant");
+      } else {
+        obj[key] = val;
+      }
     }
     fs.writeFileSync(SESSIONS_FILE, JSON.stringify(obj, null, 2), "utf-8");
   } catch (err) {

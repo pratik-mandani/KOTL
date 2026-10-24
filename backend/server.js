@@ -38,6 +38,8 @@ const {
   updateVaccination,
   addVaccination,
   updateVitals,
+  updateMedicalIdentity,
+  getDayWiseHistory,
 } = require("./services/child-memory");
 
 const app = express();
@@ -248,6 +250,32 @@ app.get("/api/history", (req, res) => {
   res.json({ success: true, sessionId, history });
 });
 
+app.get("/api/history/daywise", (req, res) => {
+  const sessionId = typeof req.query?.sessionId === "string" && req.query.sessionId.trim() 
+    ? req.query.sessionId.trim() 
+    : "default-session";
+  const days = getDayWiseHistory(sessionId);
+  res.json({ success: true, sessionId, days });
+});
+
+app.post("/api/test/chat", async (req, res) => {
+  try {
+    const { message, sessionId = "default-session" } = req.body || {};
+    if (!message || !message.trim()) {
+      return res.status(400).json({ success: false, error: "Empty message" });
+    }
+    const replyResult = await generateAssistantReply({
+      transcript: message.trim(),
+      sessionId,
+      source: "web_dashboard"
+    });
+    const days = getDayWiseHistory(sessionId);
+    res.json({ success: true, reply: replyResult.reply, days });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.post("/api/reset-session", (req, res) => {
   const sessionId = typeof req.body?.sessionId === "string" && req.body.sessionId.trim() 
     ? req.body.sessionId.trim() 
@@ -448,6 +476,16 @@ app.post("/api/medical/vitals", (req, res) => {
     const { height_cm, weight_kg } = req.body || {};
     const vitals = updateVitals({ height_cm, weight_kg });
     res.json({ success: true, vitals });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/medical/identity", (req, res) => {
+  try {
+    const { blood_group, allergies, pediatrician_name, phone, clinic } = req.body || {};
+    const medical = updateMedicalIdentity({ blood_group, allergies, pediatrician_name, phone, clinic });
+    res.json({ success: true, medical });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
