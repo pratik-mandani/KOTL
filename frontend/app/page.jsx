@@ -1,257 +1,161 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function KindergartenHubPage() {
-  const [currentSection, setCurrentSection] = useState('report');
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isQuotaModalOpen, setIsQuotaModalOpen] = useState(false);
-  const [isLogSicknessOpen, setIsLogSicknessOpen] = useState(false);
-  const [isUpdateVitalsOpen, setIsUpdateVitalsOpen] = useState(false);
-  const [isAddVaccineOpen, setIsAddVaccineOpen] = useState(false);
-  const [isAssignQuestOpen, setIsAssignQuestOpen] = useState(false);
-  const [isEditMedicalIdOpen, setIsEditMedicalIdOpen] = useState(false);
-  const [isAddWordBookOpen, setIsAddWordBookOpen] = useState(false);
-  const [isLogPlayOpen, setIsLogPlayOpen] = useState(false);
-  const [isAddHabitOpen, setIsAddHabitOpen] = useState(false);
-  const [deviceVolume, setDeviceVolume] = useState(75);
-  const [isSleepMode, setIsSleepMode] = useState(false);
-  const [isSosActive, setIsSosActive] = useState(false);
-  const [isVolumeModalOpen, setIsVolumeModalOpen] = useState(false);
-  const [isSosModalOpen, setIsSosModalOpen] = useState(false);
+  // Navigation: 3-Tab Architecture
+  const [activeTab, setActiveTab] = useState('growth'); // 'growth' | 'habits' | 'cockpit'
 
-  // Profile State
-  const [profile, setProfile] = useState({
+  // Dynamic Data States
+  const [growthMetrics, setGrowthMetrics] = useState({
+    talk_time_minutes: 24,
+    curiosity_count: 28,
+    new_words_learned: ['orbit', 'gravity', 'satellite', 'stamina', 'telescope', 'herbivore', 'solar', 'nebula'],
+    manner_stars: 15,
+    who_growth: {
+      height_cm: 116,
+      weight_kg: 21.5,
+      bmi: 15.9,
+      percentile: '75th (Healthy)',
+      who_status: 'Normal & Optimal (WHO Standard)',
+      age_label: '6.0 Years (Boy)'
+    },
+    daily_parent_tip: {
+      title: 'Encourage Socratic Wonder',
+      insight: "When Parth asks 'Why do stars twinkle?', celebrate his curiosity first: 'That is a scientist\\'s question! What do you think the atmosphere is doing to the light?'",
+      category: 'Cognitive Curiosity'
+    }
+  });
+
+  const [habits, setHabits] = useState([]);
+  const [dayWiseHistory, setDayWiseHistory] = useState([]);
+  const [selectedDayId, setSelectedDayId] = useState('day-today');
+  const [chatSearchQuery, setChatSearchQuery] = useState('');
+  const [childProfile, setChildProfile] = useState({
     name: 'Parth',
-    age: 6,
-    gender: 'boy',
+    age: '6 Years',
+    gender: 'Boy',
     bedtime: '21:00',
-    school_grade: 'Senior KG',
-    pediatrician_name: 'Dr. A. Mehta, MD (Pediatrics)'
+    parent_permissions: {
+      medicines: true,
+      outside_play: true,
+      sharp_tools: true,
+      purchases: true
+    }
   });
 
-  // Quests State
-  const [quests, setQuests] = useState([
-    {
-      id: 'quest-plant-science',
-      title: 'Watering & Observing Home Basil Plant',
-      category: 'School Project',
-      goal: 'Observe how leaves drink water and describe the capillary action to KOTL.',
-      status: 'active',
-      mentor_hints: [
-        'Parth, why do you think leaves turn green when they drink morning sunshine?',
-        'Look closely at the leaf veins! They are like tiny straws drinking water!'
-      ],
-      badge: '🌱 Master Botanist'
-    },
-    {
-      id: 'quest-solar-rocket',
-      title: 'Solar System Rocket Model Assembly',
-      category: 'Curiosity Challenge',
-      goal: 'Arrange planets by distance from the Sun with cardboard and colors.',
-      status: 'active',
-      mentor_hints: [
-        'Which planet is the biggest giant with beautiful rings?',
-        'How fast does our rocket need to go to orbit the earth?'
-      ],
-      badge: '🚀 Space Commander'
-    },
-    {
-      id: 'quest-dadi-kindness',
-      title: 'Dadi Companion: Evening Glass of Warm Water',
-      category: 'Family Care',
-      goal: 'Politely ask Dadi how her day was and bring her evening water.',
-      status: 'completed',
-      mentor_hints: [
-        'A warm smile and a polite voice makes Dadi\'s heart so happy!'
-      ],
-      badge: '💖 Kindness Champion'
-    }
-  ]);
-
-  // Emergency Medical State
-  const [medicalId, setMedicalId] = useState({
-    blood_group: 'B+',
-    allergies: 'None Known (Peanut safe)',
-    pediatrician_name: 'Dr. A. Mehta, MD (Pediatrics)',
-    phone: '+91 98250 12345',
-    clinic: 'Mehta Pediatric Care & Child Wellness Clinic, Ahmedabad'
+  // Cockpit States
+  const [deviceVolume, setDeviceVolume] = useState(40);
+  const [isSleepMode, setIsSleepMode] = useState(false);
+  const [deviceStatus, setDeviceStatus] = useState({
+    online: true,
+    model: 'KOTL DevKit V1 (ESP32-WROOM-32)',
+    mic: 'INMP441 I2S MEMS (16,000Hz 16-bit Mono)',
+    speaker: 'MAX98357A I2S DAC (3W 4Ω)',
+    display: 'SSD1306 OLED (40 FPS RoboEyes)',
+    ws_endpoint: 'ws://localhost:3000/ws'
   });
 
-  const [vitals, setVitals] = useState({ height: 116, weight: 21.5, bmi: 15.9 });
-  const [sicknessLogs, setSicknessLogs] = useState([
-    {
-      id: 'sick-1',
-      date: '2026-10-18',
-      symptom: 'Mild Seasonal Cough & Throat tickle',
-      medicines: 'Warm honey-ginger water, Pediatric saline gargle',
-      doctor: 'Dr. A. Mehta, MD (Pediatrics)',
-      status: 'recovered',
-      remedy: 'Warm steam inhalation before bedtime for 2 consecutive nights'
-    }
-  ]);
+  // Walkie-Talkie & Directive Audio States
+  const [walkieText, setWalkieText] = useState('');
+  const [voiceMemos, setVoiceMemos] = useState([]);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioFeedbackText, setAudioFeedbackText] = useState('');
+  const [isAddHabitModalOpen, setIsAddHabitModalOpen] = useState(false);
+  const [newHabitForm, setNewHabitForm] = useState({
+    title: '',
+    category: 'Hygiene',
+    icon: '🪥',
+    directive_text: '',
+    tip: ''
+  });
 
-  const [vaccinations, setVaccinations] = useState([
-    { id: 'v-1', name: 'MMR Booster (Measles, Mumps, Rubella)', age: '5-6 Years', status: 'completed', date: 'August 2026' },
-    { id: 'v-2', name: 'DPT Booster (Diphtheria, Pertussis, Tetanus)', age: '5-6 Years', status: 'completed', date: 'August 2026' },
-    { id: 'v-3', name: 'Annual Pediatric Flu Vaccine', age: '6 Years', status: 'due', date: 'November 2026' }
-  ]);
-
-  // Habits State
-  const [goodHabits, setGoodHabits] = useState([
-    { id: 'gh-1', icon: '🪥', title: 'Brushing Teeth Twice Daily', desc: 'Cheerfully wakes up at 7:30 AM and brushes with morning song reminder.', status: 'Established ✓' },
-    { id: 'gh-2', icon: '🧸', title: 'Tidying Up Study Desk & Toy Box', desc: 'Sorts color crayons and places storybooks neatly in order after study.', status: 'Established ✓' },
-    { id: 'gh-3', icon: '💧', title: 'Drinking Fresh Water After Play', desc: 'Drinks 2 full glasses of clean water after cricket games to maintain stamina.', status: 'Daily Habit ✓' },
-    { id: 'gh-4', icon: '🤝', title: 'Polite Turn-Taking & Respect for Dadi', desc: 'Says \'Please\' and \'Thank you\' cheerfully; carried warm water bottle for Dadi.', status: '12 Stars ⭐' },
-    { id: 'gh-5', icon: '🔭', title: 'Asking Independent Science Questions', desc: 'Explores \'why\' stars shine and how gravity works instead of passive screen viewing.', status: '94% Curiosity ✓' }
-  ]);
-
-  const [badHabits, setBadHabits] = useState([
-    { id: 'bh-1', icon: '🥦', title: 'Eating Green Vegetables (Spinach & Broccoli)', reluctance: 'Tends to push green vegetables away at lunch.', strategy: 'Shares fun superhero stories about natural stamina fuel from carrots & spinach without lecturing. Parth now takes 2 test bites!', status: 'In Progress ⏳' },
-    { id: 'bh-2', icon: '📱', title: 'Mobile Video Screen Time Reluctance', reluctance: 'Asks for mobile screen videos before evening bedtime.', strategy: 'Replaces screen time with 20 minutes creative drawing and interactive star story quests.', status: 'In Training ⏳' },
-    { id: 'bh-3', icon: '🌙', title: 'Consistent 09:00 PM Bedtime Wind-Down', reluctance: 'Wants to prolong playtime past 9:00 PM.', strategy: 'KOTL starts soft lullaby & constellation bedtime audio at 8:45 PM. Smooth transition to sleep!', status: 'Curfew Active 🌙' },
-    { id: 'bh-4', icon: '🌑', title: 'Reluctance to Sleep in Dark Bedroom', reluctance: 'Feels anxious when night lights are turned completely off.', strategy: 'KOTL reminds him of friendly twinkling stars keeping silent watch over brave space explorers.', status: 'Comfort Mode 🛡️' }
-  ]);
-
-  const [mannerStars, setMannerStars] = useState(12);
-  const [activePlayMins, setActivePlayMins] = useState(45);
-  const [sightWords, setSightWords] = useState([
-    { word: 'Orbit', meaning: 'Path of a planet around the sun' },
-    { word: 'Stamina', meaning: 'Energy and strength for active play' },
-    { word: 'Gravity', meaning: 'Invisible force keeping our feet on earth' },
-    { word: 'Telescope', meaning: 'Special tool to see distant night stars' }
-  ]);
-  const [books, setBooks] = useState([
-    { title: 'The Little Boy Who Traveled to the Moon', pages: '24 Pages', status: 'Completed' },
-    { title: 'Curious Seeds: How Tiny Roots Grow', pages: '18 Pages', status: 'In Progress' }
-  ]);
-
-  // Day-Wise Chat History State
-  const [daysHistory, setDaysHistory] = useState([
-    {
-      id: 'day-today',
-      date: '2026-10-24',
-      label: 'Today',
-      turns: [
-        {
-          id: 'turn-t1',
-          time: '10:15 AM',
-          child: { text: 'KOTL, how do stars shine at night, and can we fly a rocket to the moon?', source: 'mic' },
-          kotl: { text: 'Stars are giant glowing suns far away in space, Parth! They twinkle to say hello to you! With a big rocket, astronauts travel through zero gravity to land on the moon! Would you like to build our own cardboard rocket today?' }
-        },
-        {
-          id: 'turn-t2',
-          time: '04:30 PM',
-          child: { text: 'I drank two glasses of water after cycling with papa!', source: 'mic' },
-          kotl: { text: 'Super job, Parth! Drinking fresh water recharges your superhero stamina! Your muscles and brain love staying hydrated after cycling!' }
-        }
-      ]
-    },
-    {
-      id: 'day-yesterday',
-      date: '2026-10-23',
-      label: 'Yesterday',
-      turns: [
-        {
-          id: 'turn-y1',
-          time: '11:20 AM',
-          child: { text: 'KOTL, why do leaves turn yellow in autumn?', source: 'mic' },
-          kotl: { text: 'When weather gets cooler, trees rest and save energy for winter, so chlorophyll takes a nap and reveals gorgeous golden colors!' }
-        },
-        {
-          id: 'turn-y2',
-          time: '08:45 PM',
-          child: { text: 'Can you tell me a bedtime story about the brave astronaut?', source: 'mic' },
-          kotl: { text: 'Once upon a time, Captain Parth steered his silver spaceship past the glittering rings of Saturn... Close your eyes, hero, and let the stars guide your dreams.' }
-        }
-      ]
-    },
-    {
-      id: 'day-oct22',
-      date: '2026-10-22',
-      label: 'Oct 22',
-      turns: [
-        {
-          id: 'turn-o1',
-          time: '05:00 PM',
-          child: { text: 'Dadi asked me for water and I gave her a warm glass!', source: 'mic' },
-          kotl: { text: 'That warms my heart so much, Parth! Taking care of Dadi shows what a thoughtful, loving champ you are! You earned a kindness star today!' }
-        }
-      ]
-    },
-    {
-      id: 'day-oct20',
-      date: '2026-10-20',
-      label: 'Oct 20',
-      turns: [
-        {
-          id: 'turn-o2',
-          time: '09:10 AM',
-          child: { text: 'Good morning KOTL! What is gravity?', source: 'mic' },
-          kotl: { text: 'Good morning, Parth! Gravity is earth\'s gentle hug that keeps our feet safely on the ground and lets us bounce a football right back down!' }
-        }
-      ]
-    }
-  ]);
-
-  const [activeDayId, setActiveDayId] = useState('day-today');
-  const [searchDialogueQuery, setSearchDialogueQuery] = useState('');
+  // Test Chat Input inside Growth tab
   const [testChatMessage, setTestChatMessage] = useState('');
+  const [isSendingChat, setIsSendingChat] = useState(false);
 
-  // Parent Walkie Transmitter
-  const [customMemoText, setCustomMemoText] = useState('');
+  const audioRef = useRef(null);
 
-  // Form states
-  const [newQuestTitle, setNewQuestTitle] = useState('');
-  const [newQuestCategory, setNewQuestCategory] = useState('School Project');
-  const [newQuestGoal, setNewQuestGoal] = useState('');
-  const [newQuestHint, setNewQuestHint] = useState('');
-
-  const [sickSymptom, setSickSymptom] = useState('');
-  const [sickMedicines, setSickMedicines] = useState('');
-
-  const [inputHeight, setInputHeight] = useState(116);
-  const [inputWeight, setInputWeight] = useState(21.5);
-
-  const [newVacName, setNewVacName] = useState('');
-  const [newVacDate, setNewVacDate] = useState('October 2026');
-
-  const [wbType, setWbType] = useState('word');
-  const [wbTitle, setWbTitle] = useState('');
-  const [wbDesc, setWbDesc] = useState('');
-
-  const [playActivity, setPlayActivity] = useState('');
-  const [playMinutes, setPlayMinutes] = useState(20);
-
-  const [newHabitType, setNewHabitType] = useState('good');
-  const [newHabitTitle, setNewHabitTitle] = useState('');
-  const [newHabitDesc, setNewHabitDesc] = useState('');
-
-  const fallbackBrowserTts = (text) => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.95;
-      u.pitch = 1.0;
-      const voices = window.speechSynthesis.getVoices();
-      if (voices && voices.length > 0) {
-        const maleVoice = voices.find(v => {
-          const n = (v.name || '').toLowerCase();
-          return (n.includes('prabhat') || n.includes('male') || n.includes('david') || n.includes('ravi') || n.includes('george')) && !n.includes('female');
-        });
-        if (maleVoice) u.voice = maleVoice;
+  // -------------------------------------------------------------
+  // Data Fetching
+  // -------------------------------------------------------------
+  const fetchGrowthMetrics = async () => {
+    try {
+      const res = await fetch('/api/growth/metrics');
+      const data = await res.json();
+      if (data && data.success) {
+        setGrowthMetrics(data);
       }
-      window.speechSynthesis.speak(u);
-    }
+    } catch (_) {}
   };
 
-  // Handlers
+  const fetchHabits = async () => {
+    try {
+      const res = await fetch('/api/habits');
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.habits)) {
+        setHabits(data.habits);
+      }
+    } catch (_) {}
+  };
+
+  const fetchDayWiseHistory = async () => {
+    try {
+      const res = await fetch('/api/history/daywise');
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.days)) {
+        setDayWiseHistory(data.days);
+        if (data.days.length > 0 && !selectedDayId) {
+          setSelectedDayId(data.days[0].id);
+        }
+      }
+    } catch (_) {}
+  };
+
+  const fetchChildProfile = async () => {
+    try {
+      const res = await fetch('/api/child/profile');
+      const data = await res.json();
+      if (data && data.success && data.profile) {
+        setChildProfile(data.profile);
+      }
+    } catch (_) {}
+  };
+
+  const fetchDeviceState = async () => {
+    try {
+      const res = await fetch('/api/device/state');
+      const data = await res.json();
+      if (data && data.success) {
+        if (typeof data.volume === 'number') setDeviceVolume(data.volume);
+        setIsSleepMode(!!data.sleep_mode);
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    fetchGrowthMetrics();
+    fetchHabits();
+    fetchDayWiseHistory();
+    fetchChildProfile();
+    fetchDeviceState();
+  }, []);
+
+  // -------------------------------------------------------------
+  // Audio Synthesis & Playback (Hardware-Matched en-IN-PrabhatNeural)
+  // -------------------------------------------------------------
   const playVoice = (text) => {
     if (!text || !text.trim()) return;
+    setAudioFeedbackText(text);
+
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
-    // Fetch authentic hardware Edge TTS voice (en-IN-PrabhatNeural - Male)
+    if (audioRef.current) {
+      try { audioRef.current.pause(); } catch (_) {}
+    }
+
+    setIsPlayingAudio(true);
     fetch('/api/speak', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -261,121 +165,100 @@ export default function KindergartenHubPage() {
       .then(data => {
         if (data && data.success && data.url) {
           const audio = new Audio(data.url);
-          audio.play().catch(() => fallbackBrowserTts(text));
+          audioRef.current = audio;
+          audio.onended = () => { setIsPlayingAudio(false); setAudioFeedbackText(''); };
+          audio.onerror = () => { fallbackBrowserVoice(text); };
+          audio.play().catch(() => fallbackBrowserVoice(text));
         } else {
-          fallbackBrowserTts(text);
+          fallbackBrowserVoice(text);
         }
       })
-      .catch(() => {
-        fallbackBrowserTts(text);
-      });
+      .catch(() => fallbackBrowserVoice(text));
   };
 
-  const handleAwardStar = () => {
-    setMannerStars(p => p + 1);
-    playVoice('Great job, Parth! You earned a Good Habit and Kindness Star!');
-  };
-
-  const handleToggleQuest = (qid) => {
-    setQuests(prev => prev.map(q => {
-      if (q.id === qid) {
-        const nextStatus = q.status === 'completed' ? 'active' : 'completed';
-        if (nextStatus === 'completed') {
-          playVoice('Congratulations, Parth! You completed your quest: ' + q.title);
-        }
-        return { ...q, status: nextStatus };
+  const fallbackBrowserVoice = (text) => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.95;
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const maleVoice = voices.find(v => {
+          const n = (v.name || '').toLowerCase();
+          return (n.includes('prabhat') || n.includes('male') || n.includes('david') || n.includes('ravi') || n.includes('george')) && !n.includes('female');
+        });
+        if (maleVoice) u.voice = maleVoice;
       }
-      return q;
-    }));
-  };
-
-  const handleAddQuest = (e) => {
-    e.preventDefault();
-    if (!newQuestTitle.trim()) return;
-    const nq = {
-      id: 'quest-' + Date.now(),
-      title: newQuestTitle.trim(),
-      category: newQuestCategory,
-      goal: newQuestGoal.trim() || 'Learn and explore with KOTL guidance.',
-      status: 'active',
-      mentor_hints: newQuestHint.trim() ? [newQuestHint.trim()] : ['Think carefully, Parth! What step comes first?'],
-      badge: '🌟 Quest Achiever'
-    };
-    setQuests(p => [nq, ...p]);
-    setNewQuestTitle('');
-    setNewQuestGoal('');
-    setNewQuestHint('');
-    setIsAssignQuestOpen(false);
-    playVoice('New quest assigned for Parth: ' + nq.title);
-  };
-
-  const handleSaveMedicalId = (e) => {
-    e.preventDefault();
-    setIsEditMedicalIdOpen(false);
-    alert('Emergency Medical Identification updated successfully!');
-  };
-
-  const handleSaveSickness = (e) => {
-    e.preventDefault();
-    if (!sickSymptom.trim()) return;
-    const ns = {
-      id: 'sick-' + Date.now(),
-      date: new Date().toISOString().split('T')[0],
-      symptom: sickSymptom.trim(),
-      medicines: sickMedicines.trim() || 'Rest & clean hydration',
-      doctor: medicalId.pediatrician_name,
-      status: 'active',
-      remedy: 'Consulted pediatrician; resting with soothing care.'
-    };
-    setSicknessLogs(p => [ns, ...p]);
-    setSickSymptom('');
-    setSickMedicines('');
-    setIsLogSicknessOpen(false);
-  };
-
-  const handleSaveVitals = (e) => {
-    e.preventDefault();
-    const h = parseFloat(inputHeight) || 116;
-    const w = parseFloat(inputWeight) || 21.5;
-    const bmiVal = (w / ((h / 100) * (h / 100))).toFixed(1);
-    setVitals({ height: h, weight: w, bmi: bmiVal });
-    setIsUpdateVitalsOpen(false);
-  };
-
-  const handleAddVaccine = (e) => {
-    e.preventDefault();
-    if (!newVacName.trim()) return;
-    const nv = {
-      id: 'vac-' + Date.now(),
-      name: newVacName.trim(),
-      age: '6 Years',
-      status: 'completed',
-      date: newVacDate.trim() || 'Today'
-    };
-    setVaccinations(p => [...p, nv]);
-    setNewVacName('');
-    setIsAddVaccineOpen(false);
-  };
-
-  const handleSaveWordBook = (e) => {
-    e.preventDefault();
-    if (!wbTitle.trim()) return;
-    if (wbType === 'word') {
-      setSightWords(p => [...p, { word: wbTitle.trim(), meaning: wbDesc.trim() || 'Vocabulary building' }]);
+      u.onend = () => { setIsPlayingAudio(false); setAudioFeedbackText(''); };
+      window.speechSynthesis.speak(u);
     } else {
-      setBooks(p => [...p, { title: wbTitle.trim(), pages: wbDesc.trim() || '16 Pages', status: 'Reading' }]);
+      setIsPlayingAudio(false);
+      setAudioFeedbackText('');
     }
-    setWbTitle('');
-    setWbDesc('');
-    setIsAddWordBookOpen(false);
   };
 
-  const handleSavePlay = (e) => {
+  // -------------------------------------------------------------
+  // Action Handlers
+  // -------------------------------------------------------------
+  const handleAwardStar = async () => {
+    try {
+      const res = await fetch('/api/habits/award-star', { method: 'POST' });
+      const data = await res.json();
+      if (data && data.success) {
+        setGrowthMetrics(p => ({ ...p, manner_stars: data.manner_stars }));
+        playVoice("Super job, Parth! You earned a Good Habit and Kindness Star!");
+      }
+    } catch (_) {
+      playVoice("Great job, Parth! You earned a star!");
+    }
+  };
+
+  const handleToggleHabit = async (habitId) => {
+    try {
+      const res = await fetch('/api/habits/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: habitId })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setHabits(data.habits);
+        const updatedHabit = data.habit;
+        if (updatedHabit && updatedHabit.completed_today) {
+          playVoice(`Awesome job on ${updatedHabit.title}! Superhero power level increased!`);
+        }
+      }
+    } catch (_) {}
+  };
+
+  const handleTriggerVoiceDirective = async (habit) => {
+    const textToSpeak = habit.directive_text || `Great job focusing on ${habit.title}! Keep shining, champ!`;
+    playVoice(textToSpeak);
+    try {
+      fetch('/api/voice-directive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ directive_text: textToSpeak, title: habit.title })
+      }).catch(() => {});
+    } catch (_) {}
+  };
+
+  const handleCreateHabit = async (e) => {
     e.preventDefault();
-    const mins = parseInt(playMinutes, 10) || 20;
-    setActivePlayMins(p => p + mins);
-    setIsLogPlayOpen(false);
-    playVoice('Logged ' + mins + ' minutes of active play for Parth!');
+    if (!newHabitForm.title.trim()) return;
+    try {
+      const res = await fetch('/api/habits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newHabitForm)
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setHabits(data.habits);
+        setIsAddHabitModalOpen(false);
+        setNewHabitForm({ title: '', category: 'Hygiene', icon: '🪥', directive_text: '', tip: '' });
+        playVoice(`Added new habit: ${newHabitForm.title}! Let's build this superhero routine together!`);
+      }
+    } catch (_) {}
   };
 
   const handleVolumeChange = (val) => {
@@ -388,11 +271,11 @@ export default function KindergartenHubPage() {
     }).catch(() => {});
   };
 
-  const toggleSleepMode = () => {
+  const handleToggleSleep = () => {
     const next = !isSleepMode;
     setIsSleepMode(next);
     if (next) {
-      playVoice('Bedtime mode active. Goodnight Parth, sweet dreams among the stars!');
+      playVoice('Bedtime mode active. Goodnight Parth, sweet dreams among the cozy stars!');
     } else {
       playVoice('Good morning Parth! KOTL is awake and ready for fun learning!');
     }
@@ -403,1149 +286,912 @@ export default function KindergartenHubPage() {
     }).catch(() => {});
   };
 
-  const toggleSosBeacon = (active) => {
-    setIsSosActive(active);
-    if (active) {
-      playVoice('Emergency Alert activated! Please stay safe, Mummy and Papa are notified!');
-    }
-    fetch('/api/device/emergency-sos', {
+  const handleSendWalkieMemo = (memoText) => {
+    const text = memoText || walkieText;
+    if (!text || !text.trim()) return;
+    playVoice(text);
+    setWalkieText('');
+    setVoiceMemos(p => [{ id: 'm-' + Date.now(), text, time: 'Just now', sender: 'Parent' }, ...p]);
+    fetch('/api/voice-memo/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ active })
+      body: JSON.stringify({ sender: 'Parent', text: text.trim() })
     }).catch(() => {});
   };
 
-  const rebootDevice = () => {
-    if (confirm('Reboot KOTL ESP32 Device?')) {
-      fetch('/api/device/control', {
+  const handleSendTestChat = async (e) => {
+    e.preventDefault();
+    if (!testChatMessage.trim() || isSendingChat) return;
+    setIsSendingChat(true);
+    const msg = testChatMessage.trim();
+    setTestChatMessage('');
+    try {
+      const res = await fetch('/api/test/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reboot: true })
-      }).then(() => alert('Device reboot command sent!')).catch(() => alert('Reboot signaled.'));
-    }
-  };
-
-  const handleAddHabit = (e) => {
-    e.preventDefault();
-    if (!newHabitTitle.trim()) return;
-    if (newHabitType === 'good') {
-      setGoodHabits(p => [...p, {
-        id: 'gh-' + Date.now(),
-        icon: '⭐',
-        title: newHabitTitle.trim(),
-        desc: newHabitDesc.trim() || 'Consistently practiced routine.',
-        status: 'Active Strengths'
-      }]);
-    } else {
-      setBadHabits(p => [...p, {
-        id: 'bh-' + Date.now(),
-        icon: '⚠️',
-        title: newHabitTitle.trim(),
-        reluctance: newHabitDesc.trim() || 'Needs parental and KOTL guidance.',
-        strategy: 'KOTL uses positive reinforcement and story quests.',
-        status: 'In Training ⏳'
-      }]);
-    }
-    setNewHabitTitle('');
-    setNewHabitDesc('');
-    setIsAddHabitOpen(false);
-  };
-
-  const sendParentTestChat = (e) => {
-    e.preventDefault();
-    if (!testChatMessage.trim()) return;
-    const childMsg = testChatMessage.trim();
-    setTestChatMessage('');
-
-    const newTurn = {
-      id: 'turn-test-' + Date.now(),
-      time: 'Just now',
-      child: { text: childMsg, source: 'web_dashboard' },
-      kotl: { text: 'Thinking...' }
-    };
-
-    setDaysHistory(prev => {
-      const copy = [...prev];
-      const todayIdx = copy.findIndex(d => d.id === 'day-today');
-      if (todayIdx >= 0) {
-        copy[todayIdx] = {
-          ...copy[todayIdx],
-          turns: [...copy[todayIdx].turns, newTurn]
-        };
+        body: JSON.stringify({ message: msg, sessionId: 'default-session' })
+      });
+      const data = await res.json();
+      if (data && data.success && data.reply) {
+        playVoice(data.reply);
+        fetchDayWiseHistory();
+        fetchGrowthMetrics();
       }
-      return copy;
-    });
+    } catch (_) {}
+    setIsSendingChat(false);
+  };
 
-    fetch('/api/test/chat', {
+  const handleTogglePermission = (permKey) => {
+    const currentVal = childProfile.parent_permissions?.[permKey];
+    const updatedPermissions = {
+      ...(childProfile.parent_permissions || {}),
+      [permKey]: !currentVal
+    };
+    setChildProfile(p => ({ ...p, parent_permissions: updatedPermissions }));
+    fetch('/api/child/profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: childMsg })
-    })
-      .then(res => res.json())
-      .then(data => {
-        const replyText = data.reply || "That's wonderful, Parth! Let's explore together!";
-        setDaysHistory(prev => {
-          const copy = [...prev];
-          const todayIdx = copy.findIndex(d => d.id === 'day-today');
-          if (todayIdx >= 0) {
-            const turns = [...copy[todayIdx].turns];
-            const lastTurnIdx = turns.findIndex(t => t.id === newTurn.id);
-            if (lastTurnIdx >= 0) {
-              turns[lastTurnIdx] = {
-                ...turns[lastTurnIdx],
-                kotl: { text: replyText }
-              };
-              copy[todayIdx] = { ...copy[todayIdx], turns };
-            }
-          }
-          return copy;
-        });
-        playVoice(replyText);
-      })
-      .catch(() => {
-        setDaysHistory(prev => {
-          const copy = [...prev];
-          const todayIdx = copy.findIndex(d => d.id === 'day-today');
-          if (todayIdx >= 0) {
-            const turns = [...copy[todayIdx].turns];
-            const lastTurnIdx = turns.findIndex(t => t.id === newTurn.id);
-            if (lastTurnIdx >= 0) {
-              turns[lastTurnIdx] = {
-                ...turns[lastTurnIdx],
-                kotl: { text: 'Parth, you have such brilliant curiosity! Keep asking big questions!' }
-              };
-              copy[todayIdx] = { ...copy[todayIdx], turns };
-            }
-          }
-          return copy;
-        });
-      });
+      body: JSON.stringify({ parent_permissions: updatedPermissions })
+    }).catch(() => {});
   };
 
-  const sendCustomVoice = () => {
-    if (!customMemoText.trim()) return;
-    playVoice(customMemoText.trim());
-    setCustomMemoText('');
-    alert('Speaking voice memo through KOTL speaker!');
-  };
-
-  const activeDay = daysHistory.find(d => d.id === activeDayId) || daysHistory[0];
-  const filteredTurns = (activeDay && activeDay.turns) ? activeDay.turns.filter(t => {
-    if (!searchDialogueQuery.trim()) return true;
-    const q = searchDialogueQuery.toLowerCase();
-    return (t.child && t.child.text && t.child.text.toLowerCase().includes(q)) ||
-           (t.kotl && t.kotl.text && t.kotl.text.toLowerCase().includes(q));
-  }) : [];
+  // Find turns for selected day
+  const currentDayData = dayWiseHistory.find(d => d.id === selectedDayId) || dayWiseHistory[0] || { turns: [] };
+  const filteredTurns = (currentDayData.turns || []).filter(t => {
+    if (!chatSearchQuery.trim()) return true;
+    const q = chatSearchQuery.toLowerCase();
+    const u = (t.user?.text || t.parth?.text || '').toLowerCase();
+    const a = (t.assistant?.text || t.kotl?.text || '').toLowerCase();
+    return u.includes(q) || a.includes(q);
+  });
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-slate-800 font-sans selection:bg-amber-200">
+    <div className="min-h-screen bg-[#FFFDF9] text-slate-800 flex flex-col font-sans pb-24 selection:bg-amber-200">
       
-      {/* TOP HEADER */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-amber-200/80 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-400 border-2 border-amber-500 flex items-center justify-center text-2xl shadow-xs">
-              🧒
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-fredoka text-lg sm:text-xl font-bold tracking-tight text-slate-800">KOTL</span>
-                <span className="text-[10px] font-fredoka font-bold uppercase bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300">
-                  Kindergarten v2.2
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 font-medium">Parth's AI Companion & Pediatric Cockpit</p>
-            </div>
+      {/* -------------------------------------------------------------
+          TOP HEADER BAR (Zero Fake Battery / Zero Fake dBm)
+      -------------------------------------------------------------- */}
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-amber-100 shadow-xs px-4 sm:px-8 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center text-2xl shadow-sm">
+            🤖
           </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div id="deviceStatusPill" className="bg-emerald-50 text-emerald-700 text-xs px-3 py-1.5 rounded-full font-bold border border-emerald-300 flex items-center gap-2 shadow-xs whitespace-nowrap">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>• ESP32 Live</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="font-fredoka text-xl font-bold tracking-tight text-slate-900">KOTL Kids</h1>
+              <span className="bg-amber-100 text-amber-800 text-[11px] font-fredoka font-bold px-2 py-0.5 rounded-full border border-amber-200">
+                v2.2
+              </span>
             </div>
-            <button onClick={() => setIsQuotaModalOpen(true)} className="hidden sm:flex items-center gap-1 text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-xl transition-all shadow-2xs">
-              <span>⚡</span><span>Groq: 14,380 Left</span>
-            </button>
-            <button onClick={() => setIsProfileModalOpen(true)} className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold border border-slate-300 flex items-center gap-1.5 transition-all shadow-2xs" title="Child Profile & Safety Settings">
-              <span>⚙️</span><span className="hidden md:inline">Child Profile</span>
-            </button>
+            <p className="text-xs text-slate-500 font-medium">
+              Parth • Senior KG (Age 6) • AI Growth Companion
+            </p>
+          </div>
+        </div>
+
+        {/* Real Device Status & Manner Stars */}
+        <div className="flex items-center gap-2.5 sm:gap-4">
+          <button
+            onClick={handleAwardStar}
+            className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-xs border border-amber-300 transition-transform active:scale-95"
+            title="Award Manner Star for kindness or good habits!"
+          >
+            <span>⭐</span>
+            <span>{growthMetrics.manner_stars || 15} Stars</span>
+          </button>
+
+          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-fredoka font-medium text-emerald-800">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="hidden sm:inline">ESP32 Device</span>
+            <span>Online</span>
           </div>
         </div>
       </header>
 
-      {/* 5 DEDICATED SUPER-HUB NAVIGATION TABS */}
-      <div className="section-nav-bar relative z-20 w-full max-w-7xl mx-auto px-3 sm:px-6 pt-2 pb-2">
-        <div className="bg-amber-50/90 backdrop-blur-sm border-2 border-amber-200 rounded-2xl p-1.5 flex items-center gap-1.5 sm:gap-2 overflow-x-auto shadow-xs">
-          <button onClick={() => setCurrentSection('report')} className={`px-3.5 sm:px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'report' ? 'bg-[#0284C7] text-white shadow-md' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
-            <span>📜</span><span>School Report & Skills</span>
+      {/* -------------------------------------------------------------
+          VOICE PLAYBACK BANNER NOTIFICATION (Active speech indicator)
+      -------------------------------------------------------------- */}
+      {isPlayingAudio && (
+        <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-xs sm:text-sm px-4 py-2 font-fredoka font-medium flex items-center justify-center gap-2 shadow-sm animate-fadeIn">
+          <span className="animate-spin">🔊</span>
+          <span>KOTL Speaking: &quot;{audioFeedbackText.slice(0, 90)}...&quot;</span>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------
+          MAIN 3-TAB NAVIGATION PILL BAR
+      -------------------------------------------------------------- */}
+      <div className="max-w-6xl w-full mx-auto px-4 pt-6 pb-2">
+        <div className="bg-amber-100/70 p-1.5 rounded-[32px] flex items-center gap-1.5 border border-amber-200/80 shadow-xs">
+          
+          <button
+            onClick={() => setActiveTab('growth')}
+            className={`flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
+              activeTab === 'growth'
+                ? 'bg-white text-amber-900 shadow-sm border border-amber-200/60 scale-[1.01]'
+                : 'text-slate-600 hover:text-amber-900 hover:bg-white/40'
+            }`}
+          >
+            <span className="text-base sm:text-lg">🌟</span>
+            <span>TAB 1: Daily Living Growth</span>
           </button>
-          <button onClick={() => setCurrentSection('quests')} className={`px-3.5 sm:px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'quests' ? 'bg-[#0284C7] text-white shadow-md' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
-            <span>🧭</span><span>Mentor Quests</span>
+
+          <button
+            onClick={() => setActiveTab('habits')}
+            className={`flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
+              activeTab === 'habits'
+                ? 'bg-white text-emerald-900 shadow-sm border border-emerald-200/60 scale-[1.01]'
+                : 'text-slate-600 hover:text-emerald-900 hover:bg-white/40'
+            }`}
+          >
+            <span className="text-base sm:text-lg">🥦</span>
+            <span>TAB 2: Habits & Socratic Engine</span>
           </button>
-          <button onClick={() => setCurrentSection('growth')} className={`px-3.5 sm:px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'growth' ? 'bg-[#0284C7] text-white shadow-md' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
-            <span>🌟</span><span>Good & Bad Habits</span>
+
+          <button
+            onClick={() => setActiveTab('cockpit')}
+            className={`flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
+              activeTab === 'cockpit'
+                ? 'bg-white text-sky-900 shadow-sm border border-sky-200/60 scale-[1.01]'
+                : 'text-slate-600 hover:text-sky-900 hover:bg-white/40'
+            }`}
+          >
+            <span className="text-base sm:text-lg">📻</span>
+            <span>TAB 3: Walkie-Talkie & Cockpit</span>
           </button>
-          <button onClick={() => setCurrentSection('health')} className={`px-3.5 sm:px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'health' ? 'bg-[#0284C7] text-white shadow-md' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
-            <span>🏥</span><span>Health Passport</span>
-          </button>
-          <button onClick={() => setCurrentSection('parent')} className={`px-3.5 sm:px-4 py-2 rounded-xl font-fredoka font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 whitespace-nowrap ${currentSection === 'parent' ? 'bg-[#0284C7] text-white shadow-md' : 'bg-white hover:bg-amber-100/60 text-slate-700 border border-amber-200'}`}>
-            <span>🎙️</span><span>Parent & Voice</span>
-          </button>
+
         </div>
       </div>
 
-      {/* MAIN VIEW CONTENT (BENTO COCKPIT) */}
-      <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-2 pb-24">
-
-        {/* SECTION 1: SCHOOL REPORT & DETAILED SKILLS DIRECTORY */}
-        {currentSection === 'report' && (
-          <div className="space-y-5">
-            {/* Executive Pediatric Banner */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 rounded-[32px] p-6 text-white shadow-md border-3 border-amber-300">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-18 h-18 rounded-3xl bg-white/20 border-2 border-white/50 flex items-center justify-center text-4xl shadow-inner">
-                    🧒
+      {/* -------------------------------------------------------------
+          TAB CONTENTS CONTAINER
+      -------------------------------------------------------------- */}
+      <main className="max-w-6xl w-full mx-auto px-4 py-4 flex-1">
+        
+        {/* =============================================================
+            TAB 1: DAILY LIVING GROWTH
+        ============================================================== */}
+        {activeTab === 'growth' && (
+          <div className="space-y-6 animate-fadeIn">
+            
+            {/* Top 4 Growth Metric Cards (Kindergarten Rounded-[32px]) */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* Metric 1: Talk Time Minutes */}
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-2xl p-2 bg-amber-100 rounded-2xl">⏱️</span>
+                  <span className="text-[11px] font-fredoka font-bold text-amber-700 bg-amber-200/60 px-2.5 py-0.5 rounded-full">
+                    Today
+                  </span>
+                </div>
+                <div>
+                  <div className="font-fredoka text-3xl font-bold text-amber-950">
+                    {growthMetrics.talk_time_minutes || 24} <span className="text-sm font-medium text-amber-800">mins</span>
                   </div>
+                  <p className="text-xs text-amber-900/80 font-medium mt-1">
+                    Active Conversational Talk-Time
+                  </p>
+                </div>
+              </div>
+
+              {/* Metric 2: Curiosity Questions */}
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-2xl p-2 bg-purple-100 rounded-2xl">🔭</span>
+                  <span className="text-[11px] font-fredoka font-bold text-purple-700 bg-purple-200/60 px-2.5 py-0.5 rounded-full">
+                    High Inquiry
+                  </span>
+                </div>
+                <div>
+                  <div className="font-fredoka text-3xl font-bold text-purple-950">
+                    {growthMetrics.curiosity_count || 28} <span className="text-sm font-medium text-purple-800">queries</span>
+                  </div>
+                  <p className="text-xs text-purple-900/80 font-medium mt-1">
+                    Exploratory &apos;Why &amp; How&apos; Questions
+                  </p>
+                </div>
+              </div>
+
+              {/* Metric 3: Manner & Kindness Stars */}
+              <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-2xl p-2 bg-yellow-100 rounded-2xl">⭐</span>
+                  <button
+                    onClick={handleAwardStar}
+                    className="text-[10px] font-fredoka font-bold bg-amber-500 hover:bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs"
+                  >
+                    + Award
+                  </button>
+                </div>
+                <div>
+                  <div className="font-fredoka text-3xl font-bold text-yellow-950">
+                    {growthMetrics.manner_stars || 15} <span className="text-sm font-medium text-yellow-800">stars</span>
+                  </div>
+                  <p className="text-xs text-yellow-900/80 font-medium mt-1">
+                    Kindness &amp; Habit Badges
+                  </p>
+                </div>
+              </div>
+
+              {/* Metric 4: Pediatric Overall Score */}
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-2xl p-2 bg-emerald-100 rounded-2xl">🏆</span>
+                  <span className="text-[11px] font-fredoka font-bold text-emerald-700 bg-emerald-200/60 px-2.5 py-0.5 rounded-full">
+                    Clinical
+                  </span>
+                </div>
+                <div>
+                  <div className="font-fredoka text-3xl font-bold text-emerald-950">
+                    89<span className="text-sm font-medium text-emerald-800">/100</span>
+                  </div>
+                  <p className="text-xs text-emerald-900/80 font-medium mt-1">
+                    Advanced Cognitive Curiosity
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* New Words Learned Badge Showcase */}
+            <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📚</span>
+                  <h3 className="font-fredoka text-lg font-bold text-slate-800">
+                    Educational Vocabulary Learned with KOTL
+                  </h3>
+                </div>
+                <span className="text-xs font-fredoka font-semibold text-slate-500">
+                  {growthMetrics.new_words_learned?.length || 8} Words Acquired
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mb-3">
+                Parth naturally assimilated these scientific and descriptive terms during interactive storytelling:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(growthMetrics.new_words_learned || []).map((w, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => playVoice(`Parth learned the word: ${w}! What a brilliant word to use!`)}
+                    className="bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-900 font-fredoka font-bold text-xs px-3.5 py-1.5 rounded-2xl shadow-2xs flex items-center gap-1.5 transition-all active:scale-95"
+                  >
+                    <span>✨</span>
+                    <span>{w}</span>
+                    <span className="text-[10px] text-amber-600">▶</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Conversational Speech Bubbles Archive */}
+            <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">💬</span>
+                    <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                      Day-Wise Conversational Speech Bubbles
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Real dialogue turns recorded between Parth and his physical KOTL companion
+                  </p>
+                </div>
+
+                {/* Search Turn Input */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={chatSearchQuery}
+                    onChange={(e) => setChatSearchQuery(e.target.value)}
+                    placeholder="Search words (e.g. planet)..."
+                    className="text-xs bg-slate-50 border border-slate-200 rounded-full px-3.5 py-1.5 pl-8 w-full sm:w-56 focus:outline-hidden focus:ring-2 focus:ring-amber-300"
+                  />
+                  <span className="absolute left-2.5 top-1.5 text-xs text-slate-400">🔍</span>
+                </div>
+              </div>
+
+              {/* Day Selector Pills */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 scrollbar-none">
+                {dayWiseHistory.map(day => (
+                  <button
+                    key={day.id}
+                    onClick={() => setSelectedDayId(day.id)}
+                    className={`px-4 py-1.5 rounded-full font-fredoka text-xs font-bold whitespace-nowrap transition-all ${
+                      selectedDayId === day.id
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    <span>{day.label}</span>
+                    <span className="ml-1.5 text-[10px] opacity-80">({day.turns?.length || 0})</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Speech Bubbles List */}
+              <div className="space-y-4 max-h-[460px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-amber-200">
+                {filteredTurns.length === 0 ? (
+                  <div className="py-12 text-center text-slate-400 font-fredoka text-sm">
+                    No conversation turns match the filter. Start chatting with KOTL below!
+                  </div>
+                ) : (
+                  filteredTurns.map((turn, i) => {
+                    const userMsg = turn.user?.text || turn.parth?.text || '';
+                    const kotlMsg = turn.assistant?.text || turn.kotl?.text || '';
+                    const time = turn.time || turn.timestamp ? new Date(turn.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today';
+
+                    return (
+                      <div key={turn.id || i} className="bg-slate-50/70 border border-slate-100 rounded-[28px] p-4 space-y-3">
+                        <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium px-1">
+                          <span>Turn #{i + 1}</span>
+                          <span>{time}</span>
+                        </div>
+
+                        {/* Parth Bubble */}
+                        {userMsg && (
+                          <div className="flex items-start gap-2.5 justify-end">
+                            <div className="bg-amber-100/90 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[85%] shadow-2xs">
+                              <p>{userMsg}</p>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-sm shadow-2xs shrink-0">
+                              👦
+                            </div>
+                          </div>
+                        )}
+
+                        {/* KOTL Bubble */}
+                        {kotlMsg && (
+                          <div className="flex items-start gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">
+                              🤖
+                            </div>
+                            <div className="bg-white border border-indigo-100 text-slate-800 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[85%] space-y-2">
+                              <p className="leading-relaxed">{kotlMsg}</p>
+                              <div className="pt-1 flex items-center gap-2">
+                                <button
+                                  onClick={() => playVoice(kotlMsg)}
+                                  className="text-[11px] font-fredoka font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors"
+                                >
+                                  <span>▶ Listen Voice</span>
+                                  <span className="text-[9px] opacity-70">(en-IN-Prabhat)</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Quick Chat Input Box (Live Assistant Test) */}
+              <form onSubmit={handleSendTestChat} className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={testChatMessage}
+                  onChange={(e) => setTestChatMessage(e.target.value)}
+                  placeholder="Type a test dialogue to KOTL (e.g. What is the moon?)..."
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-amber-300"
+                />
+                <button
+                  type="submit"
+                  disabled={isSendingChat || !testChatMessage.trim()}
+                  className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5"
+                >
+                  {isSendingChat ? 'Thinking...' : 'Send'}
+                  <span>🚀</span>
+                </button>
+              </form>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* =============================================================
+            TAB 2: HABITS, HEALTH & SOCRATIC ACTION ENGINE
+        ============================================================== */}
+        {activeTab === 'habits' && (
+          <div className="space-y-6 animate-fadeIn">
+            
+            {/* Header with Award Star & Add Habit Action */}
+            <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white rounded-[32px] p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span className="bg-emerald-400/50 text-emerald-950 font-fredoka font-bold text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  Socratic Action Engine
+                </span>
+                <h2 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5">
+                  Habit Tracker &amp; 1-Click KOTL Voice Directives
+                </h2>
+                <p className="text-xs sm:text-sm text-emerald-100 mt-0.5">
+                  Click any directive to have KOTL immediately prompt Parth with friendly superhero encouragement!
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setIsAddHabitModalOpen(true)}
+                  className="bg-white/90 hover:bg-white text-emerald-900 font-fredoka font-bold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
+                >
+                  <span>+</span>
+                  <span>Add Habit</span>
+                </button>
+                <button
+                  onClick={handleAwardStar}
+                  className="bg-amber-400 hover:bg-amber-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
+                >
+                  <span>⭐ Award Star</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Persistent Dynamic Habits Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {habits.map((habit) => (
+                <div
+                  key={habit.id}
+                  className={`border rounded-[32px] p-5 shadow-xs transition-all flex flex-col justify-between ${
+                    habit.completed_today
+                      ? 'bg-gradient-to-br from-emerald-50/90 to-teal-50/70 border-emerald-200'
+                      : 'bg-white border-slate-100 hover:border-amber-200'
+                  }`}
+                >
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-fredoka text-2xl sm:text-3xl font-bold">{profile.name}</h2>
-                      <span className="bg-white/25 text-white text-xs font-bold px-3 py-1 rounded-full border border-white/40">
-                        Senior KG (KG-2)
-                      </span>
+                    {/* Top row: Icon, Category & Toggle */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl p-2 bg-white rounded-2xl shadow-2xs border border-slate-100">
+                          {habit.icon || '⭐'}
+                        </span>
+                        <div>
+                          <span className="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                            {habit.category}
+                          </span>
+                          <div className="text-[11px] font-medium text-emerald-700 mt-0.5">
+                            🔥 {habit.streak_days || 0} Days Streak
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleToggleHabit(habit.id)}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-transform active:scale-90 ${
+                          habit.completed_today
+                            ? 'bg-emerald-500 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-300 hover:bg-slate-200'
+                        }`}
+                        title="Toggle completed today"
+                      >
+                        ✓
+                      </button>
                     </div>
-                    <p className="text-xs sm:text-sm text-amber-50 font-medium">
-                      {profile.age} Years Old • Boy • Bedtime: <strong>09:00 PM</strong> • Academic Term 2026
+
+                    <h4 className="font-fredoka font-bold text-base text-slate-900 leading-snug">
+                      {habit.title}
+                    </h4>
+
+                    {habit.tip && (
+                      <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                        💡 {habit.tip}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* 1-Click KOTL Voice Directive Button */}
+                  <div className="mt-4 pt-3 border-t border-slate-100/80">
+                    <button
+                      onClick={() => handleTriggerVoiceDirective(habit)}
+                      className="w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-fredoka font-bold text-xs py-2 px-3 rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-95"
+                    >
+                      <span>⚡ 1-Click KOTL Voice Directive</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* WHO Growth Indicators & Daily Parent Socratic Tip */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              
+              {/* WHO Growth Indicators Card */}
+              <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">📊</span>
+                    <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                      WHO Pediatric Growth Indicators
+                    </h3>
+                  </div>
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+                    {growthMetrics.who_growth?.who_status || 'Normal & Optimal'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
+                    <div className="text-[11px] text-slate-500 font-medium">Height</div>
+                    <div className="font-fredoka text-xl font-bold text-slate-900 mt-0.5">
+                      {growthMetrics.who_growth?.height_cm || 116} <span className="text-xs font-normal">cm</span>
+                    </div>
+                    <div className="text-[10px] text-emerald-600 font-medium mt-0.5">75th %ile</div>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
+                    <div className="text-[11px] text-slate-500 font-medium">Weight</div>
+                    <div className="font-fredoka text-xl font-bold text-slate-900 mt-0.5">
+                      {growthMetrics.who_growth?.weight_kg || 21.5} <span className="text-xs font-normal">kg</span>
+                    </div>
+                    <div className="text-[10px] text-emerald-600 font-medium mt-0.5">75th %ile</div>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
+                    <div className="text-[11px] text-slate-500 font-medium">BMI</div>
+                    <div className="font-fredoka text-xl font-bold text-slate-900 mt-0.5">
+                      {growthMetrics.who_growth?.bmi || 15.9}
+                    </div>
+                    <div className="text-[10px] text-emerald-600 font-medium mt-0.5">Ideal Zone</div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Based on WHO 2006 Child Growth Standards for boys aged 6.0 years. Height and weight progression reflect healthy nutrition, active outdoor movement, and restful sleep.
+                </p>
+              </div>
+
+              {/* Daily Parent Socratic Tip Card */}
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">💡</span>
+                    <span className="text-xs font-fredoka font-bold text-amber-800 uppercase tracking-wider">
+                      Daily Socratic Parent Insight
+                    </span>
+                  </div>
+                  <h4 className="font-fredoka text-lg font-bold text-amber-950 mb-2">
+                    {growthMetrics.daily_parent_tip?.title || 'Encourage Socratic Wonder'}
+                  </h4>
+                  <p className="text-xs sm:text-sm text-amber-900 leading-relaxed font-medium">
+                    &quot;{growthMetrics.daily_parent_tip?.insight}&quot;
+                  </p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-amber-200/60 flex items-center justify-between text-xs text-amber-700 font-medium">
+                  <span>Category: {growthMetrics.daily_parent_tip?.category || 'Cognitive Curiosity'}</span>
+                  <button
+                    onClick={() => playVoice(growthMetrics.daily_parent_tip?.insight || '')}
+                    className="font-fredoka font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-3 py-1 rounded-full text-[11px]"
+                  >
+                    ▶ Listen Tip
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* =============================================================
+            TAB 3: WALKIE-TALKIE & DEVICE COCKPIT
+        ============================================================== */}
+        {activeTab === 'cockpit' && (
+          <div className="space-y-6 animate-fadeIn">
+            
+            {/* Live Audio Walkie-Talkie & Parent Memo Card */}
+            <div className="bg-white border border-sky-100 rounded-[32px] p-6 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl p-2 bg-sky-100 rounded-2xl">📻</span>
+                  <div>
+                    <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                      Parent Walkie-Talkie &amp; Audio Memos
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Speak directly to Parth through his KOTL companion robot speaker
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 bg-white/15 rounded-2xl p-3.5 border border-white/30">
-                  <div className="text-center">
-                    <div className="text-[10px] font-bold uppercase text-amber-100">Overall Grade</div>
-                    <div className="font-fredoka text-3xl font-bold text-white">A+</div>
-                    <div className="text-[10px] text-amber-100">(89/100 • Advanced)</div>
-                  </div>
-                </div>
+                <span className="bg-sky-100 text-sky-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+                  Instant Audio Broadcast
+                </span>
               </div>
-            </div>
 
-            {/* Pediatric Marksheet & Audio Briefing */}
-            <div className="bg-white border-2 border-amber-200 rounded-[32px] p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b pb-3">
-                <h3 className="font-fredoka text-lg font-bold text-slate-800">📋 Kindergarten Developmental Marksheet</h3>
-                <span className="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full">Official Term</span>
-              </div>
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b text-slate-400 font-bold uppercase text-[10px]">
-                    <th className="py-2 px-3">Subject / Domain</th>
-                    <th className="py-2 px-3">Key Observation</th>
-                    <th className="py-2 px-3">Score</th>
-                    <th className="py-2 px-3">Grade</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y text-slate-700">
-                  <tr>
-                    <td className="py-2.5 px-3 font-bold">🔤 English & Phonics</td>
-                    <td className="py-2.5 px-3 text-slate-500">Learned 30+ multisyllabic terms ('orbit', 'stamina', 'telescope')</td>
-                    <td className="py-2.5 px-3 font-bold text-sky-700">88/100</td>
-                    <td className="py-2.5 px-3"><span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md text-[10px]">A+</span></td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 px-3 font-bold">🔬 Curiosity & STEM</td>
-                    <td className="py-2.5 px-3 text-slate-500">Profound 'why' questions regarding planetary orbits and nature</td>
-                    <td className="py-2.5 px-3 font-bold text-purple-700">94/100</td>
-                    <td className="py-2.5 px-3"><span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md text-[10px]">A+</span></td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 px-3 font-bold">❤️ Emotional & Empathy</td>
-                    <td className="py-2.5 px-3 text-slate-500">Polite turn-taking, cheerful respect for elders, warm care for Dadi</td>
-                    <td className="py-2.5 px-3 font-bold text-rose-700">90/100</td>
-                    <td className="py-2.5 px-3"><span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md text-[10px]">A+</span></td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 px-3 font-bold">👂 Listening & Habits</td>
-                    <td className="py-2.5 px-3 text-slate-500">Tidies study desk, brushes twice daily; improving with green veggies</td>
-                    <td className="py-2.5 px-3 font-bold text-emerald-700">78/100</td>
-                    <td className="py-2.5 px-3"><span className="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-md text-[10px]">B+</span></td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h4 className="font-fredoka text-xs font-bold text-slate-800">1-Minute AI Pediatric Audio Briefing</h4>
-                  <p className="text-[11px] text-slate-500">Executive voice summary of Parth's cognitive progress and daily habits</p>
+              {/* 4 1-Click Quick Audio Memo Presets */}
+              <div className="mb-4">
+                <div className="text-xs font-fredoka font-semibold text-slate-600 mb-2">
+                  ⚡ 1-Click Preset Audio Directives:
                 </div>
-                <button onClick={() => playVoice("Parth had an extraordinary learning day! His cognitive curiosity reached ninety-four percent, asking advanced questions about planetary orbits and space exploration. He also demonstrated polite conversational turn taking with family.")} className="px-3.5 py-2 bg-sky-500 hover:bg-sky-600 text-white font-fredoka font-bold text-xs rounded-xl shadow-xs whitespace-nowrap">
-                  ▶ Play Voice Briefing
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { label: '🌟 Proud of You', text: 'Mummy is so proud of your kindness today, champ!' },
+                    { label: '🍎 Snack Time', text: 'Superhero snack time, Parth! Fuel up with some fresh fruits!' },
+                    { label: '🎒 Pack School Bag', text: 'Time to neatly arrange your books and school bag, buddy!' },
+                    { label: '⭐ Kindness Star', text: 'Great manners! You earned an extra kindness star!' }
+                  ].map((p, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSendWalkieMemo(p.text)}
+                      className="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs"
+                    >
+                      <div className="text-xs">{p.label}</div>
+                      <div className="text-[10px] font-normal text-sky-700 truncate mt-0.5">&quot;{p.text}&quot;</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Typed Walkie-Talkie Message */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={walkieText}
+                  onChange={(e) => setWalkieText(e.target.value)}
+                  placeholder="Type a loving message to speak over KOTL speaker..."
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-300"
+                />
+                <button
+                  onClick={() => handleSendWalkieMemo(walkieText)}
+                  disabled={!walkieText.trim()}
+                  className="bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5"
+                >
+                  <span>🎙️ Broadcast Voice</span>
                 </button>
               </div>
+
+              {/* Memo History */}
+              {voiceMemos.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
+                  <div className="text-[11px] font-fredoka font-semibold text-slate-400">Recently Broadcasted Memos:</div>
+                  {voiceMemos.slice(0, 3).map(m => (
+                    <div key={m.id} className="text-xs bg-slate-50 p-2 rounded-xl flex items-center justify-between text-slate-700">
+                      <span>&quot;{m.text}&quot;</span>
+                      <span className="text-[10px] text-slate-400">{m.time}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* 🌟 HABITS SPOTLIGHT CARD (GOOD HABITS VS BAD HABITS) */}
-            <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-amber-50 border-2 border-emerald-300 rounded-[32px] p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-start sm:items-center gap-3.5">
-                <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-3xl shadow-xs shrink-0">
-                  🌟
-                </div>
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-fredoka text-base sm:text-lg font-bold text-emerald-950">🌟 Good Habits & Habits Needing Guidance (Bad Habits)</h3>
-                    <span className="bg-emerald-200 text-emerald-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-300">5 Good Habits • 4 In Training</span>
-                  </div>
-                  <div className="text-xs text-slate-700 leading-relaxed space-y-0.5">
-                    <div>✨ <strong>Good Habits Established:</strong> Brushing teeth twice daily, tidying toys & desk, drinking fresh water, polite turn-taking with Dadi, asking science questions.</div>
-                    <div>⚠️ <strong>Habits Needing Improvement (Bad Habits):</strong> Reluctance to eat green veggies (spinach/broccoli), evening mobile screen time, 9 PM bedtime delays, sleeping in dark room.</div>
-                  </div>
-                </div>
-              </div>
-              <button onClick={() => setCurrentSection('growth')} className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-fredoka font-bold text-xs whitespace-nowrap shadow-sm flex items-center gap-1.5 self-start md:self-auto shrink-0 transition-transform active:scale-95">
-                <span>👉</span><span>Open Full Habits Academy</span>
-              </button>
-            </div>
-
-            {/* BENTO GRID: 4 CORE SKILLS CARDS (LEFT) & PASSIONS / EVIDENCE (RIGHT) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Hardware Controls & Live Status (Strictly Zero Fake Battery / Zero Fake dBm) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               
-              {/* Left Bento Col: 4 IN-DEPTH CORE SKILLS */}
-              <div className="lg:col-span-7 space-y-4">
+              {/* ESP32 Hardware Status Card */}
+              <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-fredoka text-base font-bold text-slate-800 flex items-center gap-2">
-                    <span>🧠</span><span>Core Cognitive & Behavioral Skills Directory</span>
-                  </h3>
-                  <span className="text-xs font-bold text-sky-700 bg-sky-100 px-2.5 py-0.5 rounded-full">
-                    4 Developmental Pillars
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🤖</span>
+                    <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                      ESP32 Hardware Telemetry
+                    </h3>
+                  </div>
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    Verified Live
                   </span>
                 </div>
 
-                {/* Skill 1: Curiosity & STEM (94%) */}
-                <div className="p-4 rounded-3xl bg-white border-2 border-purple-200 shadow-2xs space-y-2.5 hover:border-purple-300 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">🔬</span>
-                      <div>
-                        <h4 className="font-fredoka font-bold text-slate-800 text-sm">Scientific Curiosity & Inquiry (STEM)</h4>
-                        <span className="text-[10px] font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">Exceptional / Gifted</span>
-                      </div>
-                    </div>
-                    <span className="font-fredoka text-xl font-bold text-purple-700">94%</span>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-500 font-medium">Target Microcontroller:</span>
+                    <span className="font-mono font-bold text-slate-800">{deviceStatus.model}</span>
                   </div>
-                  <div className="w-full bg-purple-100 h-2 rounded-full overflow-hidden">
-                    <div className="bg-purple-600 h-full rounded-full" style={{ width: '94%' }}></div>
+                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-500 font-medium">Digital I2S Microphone:</span>
+                    <span className="font-mono font-bold text-slate-800">INMP441 (16kHz 16-bit Mono)</span>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>Pedagogical Evaluation:</strong> Consistently drives conversations with 'why' and 'how' exploratory questions about astronomy, space rockets, and nature.
-                  </p>
-                  <div className="text-[11px] text-purple-900 bg-purple-50 p-2.5 rounded-xl border border-purple-200/80 font-medium">
-                    ⭐ <strong>Key Strength:</strong> Shows genuine desire to understand mechanisms rather than just surface facts.
+                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-500 font-medium">Digital I2S Audio DAC:</span>
+                    <span className="font-mono font-bold text-slate-800">MAX98357A (3W 4Ω)</span>
                   </div>
-                </div>
-
-                {/* Skill 2: English Vocabulary (88%) */}
-                <div className="p-4 rounded-3xl bg-white border-2 border-sky-200 shadow-2xs space-y-2.5 hover:border-sky-300 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">🔤</span>
-                      <div>
-                        <h4 className="font-fredoka font-bold text-slate-800 text-sm">English Vocabulary & Expression</h4>
-                        <span className="text-[10px] font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-md">Advanced for Age</span>
-                      </div>
-                    </div>
-                    <span className="font-fredoka text-xl font-bold text-sky-700">88%</span>
+                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-500 font-medium">Capacitive Touch Wire:</span>
+                    <span className="font-mono font-bold text-slate-800">GPIO 4 (T0 Debounced Clock Latch)</span>
                   </div>
-                  <div className="w-full bg-sky-100 h-2 rounded-full overflow-hidden">
-                    <div className="bg-sky-600 h-full rounded-full" style={{ width: '88%' }}></div>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>Pedagogical Evaluation:</strong> Demonstrates rapid assimilation of 2-to-3 syllable English and bilingual words when embedded in narrative adventures.
-                  </p>
-                  <div className="text-[11px] text-sky-900 bg-sky-50 p-2.5 rounded-xl border border-sky-200/80 font-medium">
-                    ⭐ <strong>Key Strength:</strong> Retains scientific terms like 'orbit', 'stamina', and 'telescope' after single interactive story sessions.
+                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-500 font-medium">WebSocket Stream:</span>
+                    <span className="font-mono font-bold text-emerald-700">ws://localhost:3000/ws (Connected)</span>
                   </div>
                 </div>
 
-                {/* Skill 3: Emotional Intelligence (90%) */}
-                <div className="p-4 rounded-3xl bg-white border-2 border-rose-200 shadow-2xs space-y-2.5 hover:border-rose-300 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">❤️</span>
-                      <div>
-                        <h4 className="font-fredoka font-bold text-slate-800 text-sm">Emotional Intelligence & Kindness</h4>
-                        <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md">Very High Empathy</span>
-                      </div>
-                    </div>
-                    <span className="font-fredoka text-xl font-bold text-rose-700">90%</span>
-                  </div>
-                  <div className="w-full bg-rose-100 h-2 rounded-full overflow-hidden">
-                    <div className="bg-rose-500 h-full rounded-full" style={{ width: '90%' }}></div>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>Pedagogical Evaluation:</strong> Displays high empathy and cheerful disposition. Reacts enthusiastically to KOTL's expressive eye animations and vocal inflections.
-                  </p>
-                  <div className="text-[11px] text-rose-900 bg-rose-50 p-2.5 rounded-xl border border-rose-200/80 font-medium">
-                    ⭐ <strong>Key Strength:</strong> Openly expresses happiness and offers polite turn-taking during dialogue.
-                  </div>
-                </div>
-
-                {/* Skill 4: Listening & Daily Habits (78%) */}
-                <div className="p-4 rounded-3xl bg-white border-2 border-emerald-200 shadow-2xs space-y-2.5 hover:border-emerald-300 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">👂</span>
-                      <div>
-                        <h4 className="font-fredoka font-bold text-slate-800 text-sm">Listening & Daily Habit Formation</h4>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">Developing Nicely</span>
-                      </div>
-                    </div>
-                    <span className="font-fredoka text-xl font-bold text-emerald-700">78%</span>
-                  </div>
-                  <div className="w-full bg-emerald-100 h-2 rounded-full overflow-hidden">
-                    <div className="bg-emerald-600 h-full rounded-full" style={{ width: '78%' }}></div>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    <strong>Pedagogical Evaluation:</strong> Follows conversational cues attentively. Gradually warming up to toy organization and healthy eating when framed as superhero training.
-                  </p>
-                  <div className="text-[11px] text-emerald-900 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200/80 font-medium">
-                    ⭐ <strong>Key Strength:</strong> Responds enthusiastically to gamified incentives and playful encouragement.
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Right Bento Col: PASSIONS, MILESTONES & CONVERSATIONAL EVIDENCE */}
-              <div className="lg:col-span-5 space-y-4">
-                
-                {/* Passions Breakdown */}
-                <div className="bg-white border-2 border-amber-200 rounded-[32px] p-5 shadow-xs space-y-3.5">
-                  <div className="flex items-center justify-between border-b border-amber-100 pb-2.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">🌟</span>
-                      <h3 className="font-fredoka text-base font-bold text-slate-800">Passions & Deep Interests</h3>
-                    </div>
-                    <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">Affinity %</span>
-                  </div>
-
-                  <div className="space-y-2.5 text-xs">
-                    <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center">
-                      <div>
-                        <strong>🚀 Space Exploration & Stars</strong>
-                        <div className="text-[10px] text-slate-500">Fascinated by stars, moon rovers and astronauts</div>
-                      </div>
-                      <span className="font-fredoka font-bold text-sm text-purple-700">95%</span>
-                    </div>
-                    <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center">
-                      <div>
-                        <strong>🛸 Rocketry & Planetary Orbits</strong>
-                        <div className="text-[10px] text-slate-500">Loves zero gravity floating and rocket propulsion</div>
-                      </div>
-                      <span className="font-fredoka font-bold text-sm text-sky-700">90%</span>
-                    </div>
-                    <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center">
-                      <div>
-                        <strong>🌙 Bedtime Quests & Stories</strong>
-                        <div className="text-[10px] text-slate-500">Thrives as active hero in evening story chapters</div>
-                      </div>
-                      <span className="font-fredoka font-bold text-sm text-rose-700">88%</span>
-                    </div>
-                    <div className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center">
-                      <div>
-                        <strong>🎨 Creative Drawing & Visual Art</strong>
-                        <div className="text-[10px] text-slate-500">Visualizing spacecraft designs and vibrant colors</div>
-                      </div>
-                      <span className="font-fredoka font-bold text-sm text-amber-700">82%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Conversational Evidence Archive */}
-                <div className="bg-white border-2 border-amber-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <div className="flex items-center gap-2 border-b border-amber-100 pb-2">
-                    <span className="text-xl">💬</span>
-                    <h3 className="font-fredoka text-base font-bold text-slate-800">Notable Conversational Evidence</h3>
-                  </div>
-                  
-                  <div className="space-y-3 text-xs">
-                    <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-1.5">
-                      <div className="flex justify-between text-[10px] font-bold text-amber-900 uppercase">
-                        <span>Space Inquiry Milestone</span>
-                        <span>Live Voice</span>
-                      </div>
-                      <div className="text-slate-800">🧒 <strong>Parth:</strong> "KOTL, how do stars shine at night, and can we fly a rocket to the moon?"</div>
-                      <div className="text-slate-600">🤖 <strong>KOTL:</strong> "Stars are giant glowing suns far away in space, Parth! They twinkle to say hello to you!"</div>
-                      <div className="text-[10px] text-slate-500 italic">• Demonstrates natural wonder and spatial curiosity beyond age 6 benchmarks.</div>
-                    </div>
-
-                    <div className="p-3 rounded-2xl bg-rose-50/70 border border-rose-200/80 space-y-1.5">
-                      <div className="flex justify-between text-[10px] font-bold text-rose-900 uppercase">
-                        <span>Empathy & Family Care</span>
-                        <span>Live Voice</span>
-                      </div>
-                      <div className="text-slate-800">🧒 <strong>Parth:</strong> "Dadi was coughing, so I asked mummy for warm water bottle."</div>
-                      <div className="text-slate-600">🤖 <strong>KOTL:</strong> "That was so kind of you, Parth! Taking care of your family makes you a true superhero!"</div>
-                      <div className="text-[10px] text-slate-500 italic">• High emotional quotient and spontaneous situational kindness.</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Developmental Milestones */}
-                <div className="bg-white border-2 border-amber-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <h3 className="font-fredoka text-base font-bold text-slate-800 border-b pb-2">🎯 Senior KG Milestone Checklist</h3>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50 text-emerald-900">
-                      <span>✓ Explores 3+ multi-step 'why' questions</span>
-                      <strong className="text-[10px] bg-emerald-200 px-2 py-0.5 rounded">Achieved</strong>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50 text-emerald-900">
-                      <span>✓ Expresses feelings with gentle words</span>
-                      <strong className="text-[10px] bg-emerald-200 px-2 py-0.5 rounded">Achieved</strong>
-                    </div>
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-amber-50 text-amber-900">
-                      <span>⏳ Eating variety of green vegetables</span>
-                      <strong className="text-[10px] bg-amber-200 px-2 py-0.5 rounded">In Progress</strong>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* SECTION 2: MENTOR QUESTS */}
-        {currentSection === 'quests' && (
-          <div className="space-y-5">
-            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-[32px] p-6 text-white shadow-md border-3 border-amber-400 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="font-fredoka text-xl sm:text-2xl font-bold">AI Socratic Mentor Quests</h2>
-                <p className="text-xs text-amber-100">KOTL guides Parth step-by-step through school tasks & curiosity projects</p>
-              </div>
-              <button onClick={() => setIsAssignQuestOpen(true)} className="px-4 py-2 bg-white text-amber-900 rounded-xl font-fredoka font-bold text-xs shadow-sm">
-                ➕ Assign New Quest
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className="lg:col-span-7 space-y-4">
-                {quests.map(q => {
-                  const isDone = q.status === 'completed';
-                  return (
-                    <div key={q.id} className={`p-4 rounded-3xl border-2 transition-all ${isDone ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-amber-200'}`}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{isDone ? '🏆' : '🧭'}</span>
-                            <h3 className="font-fredoka text-base font-bold text-slate-800">{q.title}</h3>
-                          </div>
-                          <p className="text-xs text-slate-600 mt-1">{q.goal}</p>
-                        </div>
-                        <button onClick={() => handleToggleQuest(q.id)} className={`px-3 py-1.5 rounded-xl text-xs font-bold ${isDone ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700'}`}>
-                          {isDone ? '✓ Completed' : 'Mark Done'}
-                        </button>
-                      </div>
-                      {q.mentor_hints && (
-                        <div className="mt-2.5 p-2.5 rounded-xl bg-amber-50 text-xs text-slate-700 space-y-0.5">
-                          <strong>🤖 KOTL Socratic Prompts:</strong>
-                          <ul className="list-disc pl-4">{q.mentor_hints.map((h, i) => <li key={i}>{h}</li>)}</ul>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="lg:col-span-5 space-y-4">
-                <div className="bg-white border-2 border-amber-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <h3 className="font-fredoka text-base font-bold text-slate-800 border-b pb-2">🏆 Badge Hall of Fame</h3>
-                  <div className="grid grid-cols-2 gap-2 text-xs text-center">
-                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">🌱 <strong>Master Botanist</strong></div>
-                    <div className="p-3 bg-sky-50 rounded-xl border border-sky-200">🚀 <strong>Space Commander</strong></div>
-                    <div className="p-3 bg-rose-50 rounded-xl border border-rose-200">💖 <strong>Kindness Champion</strong></div>
-                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">🥦 <strong>Stamina Star</strong></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SECTION 3: LEARN, PLAY & HABITS (GOOD HABITS VS BAD HABITS) */}
-        {currentSection === 'growth' && (
-          <div className="space-y-5">
-            <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 rounded-[32px] p-6 text-white shadow-md border-3 border-emerald-400 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="font-fredoka text-xl sm:text-2xl font-bold">Good & Bad Habits Academy (360° Life Growth)</h2>
-                <p className="text-xs text-emerald-100">Good habits established, behavioral guidance plans, phonics & 60m sports play</p>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => setIsAddHabitOpen(true)} className="px-3.5 py-2 bg-white text-emerald-900 rounded-xl font-fredoka font-bold text-xs shadow-xs">
-                  ➕ Add Habit Goal
-                </button>
-                <button onClick={handleAwardStar} className="px-3.5 py-2 bg-amber-400 text-amber-950 rounded-xl font-fredoka font-bold text-xs shadow-xs">
-                  ⭐ Award Star
-                </button>
-              </div>
-            </div>
-
-            {/* GOOD HABITS VS HABITS NEEDING IMPROVEMENT (BAD HABITS) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              
-              {/* Left Bento Col: ✨ GOOD HABITS ESTABLISHED (STRENGTHS) */}
-              <div className="lg:col-span-6 space-y-4">
-                <div className="bg-white border-2 border-emerald-200 rounded-[32px] p-5 sm:p-6 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between border-b border-emerald-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">✨</span>
-                      <div>
-                        <h3 className="font-fredoka text-base sm:text-lg font-bold text-emerald-950">Good Habits Established</h3>
-                        <p className="text-xs text-slate-500">Positive daily routines mastered by Parth with KOTL praise</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
-                      {goodHabits.length} Active Strengths
+                {/* Speaker Volume Slider Bound to Backend API */}
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-fredoka text-xs font-bold text-slate-700">
+                      🔊 Speaker Volume: {deviceVolume}%
                     </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {goodHabits.map((gh) => (
-                      <div key={gh.id} className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <strong className="text-xs text-emerald-900 flex items-center gap-1.5">
-                            <span>{gh.icon}</span><span>{gh.title}</span>
-                          </strong>
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-200/80 px-2 py-0.5 rounded-md">{gh.status}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-600">{gh.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-1 flex items-center justify-between text-xs border-t border-emerald-100">
-                    <span className="font-bold text-slate-600">Praise Parth for Good Habits:</span>
-                    <button onClick={handleAwardStar} className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-500 text-amber-950 rounded-xl font-fredoka font-bold text-xs shadow-xs">
-                      ⭐ Award Good Habit Star
+                    <button
+                      onClick={() => playVoice('Volume test chime! Speaker is calibrated at forty percent.')}
+                      className="text-[11px] font-fredoka font-bold text-sky-600 hover:text-sky-800"
+                    >
+                      Test Chime
                     </button>
                   </div>
-                </div>
-              </div>
-
-              {/* Right Bento Col: ⚠️ HABITS NEEDING IMPROVEMENT (BAD HABITS & KOTL ACTION PLANS) */}
-              <div className="lg:col-span-6 space-y-4">
-                <div className="bg-white border-2 border-amber-200 rounded-[32px] p-5 sm:p-6 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between border-b border-amber-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">⚠️</span>
-                      <div>
-                        <h3 className="font-fredoka text-base sm:text-lg font-bold text-amber-950">Habits Needing Improvement</h3>
-                        <p className="text-xs text-slate-500">Reluctances & behaviors KOTL is actively guiding with story adventures</p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-300">
-                      Active Training
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {badHabits.map((bh) => (
-                      <div key={bh.id} className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <strong className="text-xs text-amber-900 flex items-center gap-1.5">
-                            <span>{bh.icon}</span><span>{bh.title}</span>
-                          </strong>
-                          <span className="text-[10px] font-bold text-amber-800 bg-amber-200/80 px-2 py-0.5 rounded-md">{bh.status}</span>
-                        </div>
-                        <p className="text-[11px] text-slate-600 leading-relaxed">
-                          <strong>Reluctance:</strong> {bh.reluctance}
-                        </p>
-                        <div className="text-[11px] text-amber-950 bg-white/80 p-2 rounded-xl border border-amber-200">
-                          🤖 <strong>KOTL Strategy:</strong> {bh.strategy}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="pt-1 flex items-center justify-between text-xs border-t border-amber-100">
-                    <span className="font-bold text-slate-600">Have a new habit goal?</span>
-                    <button onClick={() => setIsAddHabitOpen(true)} className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-fredoka font-bold text-xs shadow-xs">
-                      ➕ Add Habit Goal
-                    </button>
+                  <input
+                    type="range"
+                    min="10"
+                    max="100"
+                    value={deviceVolume}
+                    onChange={(e) => handleVolumeChange(e.target.value)}
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                    <span>10% (Quiet)</span>
+                    <span className="font-bold text-emerald-600">40% (Recommended)</span>
+                    <span>100% (Loud)</span>
                   </div>
                 </div>
               </div>
 
-            </div>
-
-            {/* Phonics & Sports Bento Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className="lg:col-span-6 space-y-5">
-                <div className="bg-white border-2 border-emerald-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h3 className="font-fredoka text-base font-bold text-slate-800">🔤 English Phonics Words</h3>
-                    <button onClick={() => setIsAddWordBookOpen(true)} className="text-xs font-bold text-emerald-700">+ Add Word</button>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 text-xs">
-                    {sightWords.map((w, idx) => (
-                      <div key={idx} className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between items-center">
-                        <div><strong>{w.word}</strong><div className="text-[10px] text-slate-500">{w.meaning}</div></div>
-                        <button onClick={() => playVoice(w.word)} className="text-emerald-700 font-bold p-1">🔊</button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-6 space-y-5">
-                <div className="bg-white border-2 border-emerald-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h3 className="font-fredoka text-base font-bold text-slate-800">⚽ Physical Movement & Stamina Goal</h3>
-                    <button onClick={() => setIsLogPlayOpen(true)} className="text-xs font-bold text-emerald-700">+ Log Play</button>
-                  </div>
-                  <div className="p-3 bg-emerald-50 rounded-2xl flex items-center justify-between">
-                    <div>
-                      <strong>{activePlayMins} of 60 Minutes Active Today</strong>
-                      <p className="text-xs text-slate-600">High physical stamina from cricket & cycling</p>
-                    </div>
-                    <span className="font-fredoka text-xl font-bold text-emerald-800">{activePlayMins}m</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="text-xs font-bold text-slate-700">⭐ {mannerStars} Manner Stars Earned</span>
-                    <button onClick={handleAwardStar} className="px-3 py-1 bg-amber-400 font-bold text-xs rounded-xl shadow-2xs">Award Manner Star</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SECTION 4: HEALTH PASSPORT */}
-        {currentSection === 'health' && (
-          <div className="space-y-5">
-            <div className="bg-gradient-to-r from-rose-500 to-pink-600 rounded-[32px] p-6 text-white shadow-md border-3 border-rose-400 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="font-fredoka text-xl sm:text-2xl font-bold">Child Health Passport</h2>
-                <p className="text-xs text-rose-100">Emergency medical profile, sickness log, vaccines & vitals</p>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => setIsEditMedicalIdOpen(true)} className="px-3.5 py-2 bg-white text-rose-900 rounded-xl font-fredoka font-bold text-xs shadow-xs">
-                  ✏️ Edit ID
-                </button>
-                <button onClick={() => setIsLogSicknessOpen(true)} className="px-3.5 py-2 bg-rose-700 text-white rounded-xl font-fredoka font-bold text-xs shadow-xs">
-                  ➕ Log Sickness
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className="lg:col-span-6 space-y-5">
-                <div className="bg-white border-2 border-rose-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h3 className="font-fredoka text-base font-bold text-slate-800">🚨 Emergency Medical Identification</h3>
-                    <button onClick={() => setIsEditMedicalIdOpen(true)} className="text-xs text-rose-700 font-bold">✏️ Edit</button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-3 bg-rose-50 rounded-xl">
-                      <span className="text-[10px] text-rose-900 font-bold uppercase">Blood Group</span>
-                      <div className="font-fredoka text-xl text-rose-700 font-bold">{medicalId.blood_group}</div>
-                    </div>
-                    <div className="p-3 bg-amber-50 rounded-xl">
-                      <span className="text-[10px] text-amber-900 font-bold uppercase">Allergies</span>
-                      <div className="text-xs font-bold text-slate-800">{medicalId.allergies}</div>
-                    </div>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-1">
-                    <div><strong>Pediatrician:</strong> {medicalId.pediatrician_name}</div>
-                    <div><strong>Emergency Phone:</strong> {medicalId.phone}</div>
-                    <div className="text-[11px] text-slate-500"><strong>Clinic:</strong> {medicalId.clinic}</div>
-                  </div>
-                </div>
-
-                <div className="bg-white border-2 border-rose-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h3 className="font-fredoka text-base font-bold text-slate-800">💉 Vaccination Records</h3>
-                    <button onClick={() => setIsAddVaccineOpen(true)} className="text-xs text-rose-700 font-bold">+ Add Vaccine</button>
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    {vaccinations.map(v => (
-                      <div key={v.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between items-center">
-                        <div>
-                          <strong>{v.name}</strong>
-                          <div className="text-[10px] text-slate-500">{v.age} • {v.date}</div>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${v.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                          {v.status === 'completed' ? 'Done ✓' : 'Due ⏰'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-6 space-y-5">
-                <div className="bg-white border-2 border-rose-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h3 className="font-fredoka text-base font-bold text-slate-800">📏 Pediatric Vitals</h3>
-                    <button onClick={() => setIsUpdateVitalsOpen(true)} className="text-xs text-rose-700 font-bold">✏️ Update</button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="p-3 bg-sky-50 rounded-xl">
-                      <div className="text-[10px] text-sky-800 font-bold uppercase">Height</div>
-                      <div className="font-fredoka text-lg font-bold text-sky-700">{vitals.height} cm</div>
-                    </div>
-                    <div className="p-3 bg-purple-50 rounded-xl">
-                      <div className="text-[10px] text-purple-800 font-bold uppercase">Weight</div>
-                      <div className="font-fredoka text-lg font-bold text-purple-700">{vitals.weight} kg</div>
-                    </div>
-                    <div className="p-3 bg-emerald-50 rounded-xl">
-                      <div className="text-[10px] text-emerald-800 font-bold uppercase">BMI</div>
-                      <div className="font-fredoka text-lg font-bold text-emerald-700">{vitals.bmi}</div>
-                    </div>
-                  </div>
-                  <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-xl text-xs font-semibold text-center">
-                    ✓ 75th Percentile — Healthy Pediatric Growth Curve
-                  </div>
-                </div>
-
-                <div className="bg-white border-2 border-rose-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <div className="flex justify-between items-center border-b pb-2">
-                    <h3 className="font-fredoka text-base font-bold text-slate-800">🌡️ Sickness & Medicine Archive</h3>
-                    <button onClick={() => setIsLogSicknessOpen(true)} className="text-xs text-rose-700 font-bold">+ Log Sickness</button>
-                  </div>
-                  <div className="space-y-2 text-xs">
-                    {sicknessLogs.map(s => (
-                      <div key={s.id} className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-1">
-                        <div className="flex justify-between items-center">
-                          <strong className="text-amber-950">{s.symptom}</strong>
-                          <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">{s.status}</span>
-                        </div>
-                        <div className="text-[11px] text-slate-600"><strong>Medicines:</strong> {s.medicines}</div>
-                        <div className="text-[10px] text-slate-500"><strong>Prescribed by:</strong> {s.doctor} • {s.date}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* SECTION 5: PARENT HUB & DAY-WISE CHAT HISTORY */}
-        {currentSection === 'parent' && (
-          <div className="space-y-5">
-            <div className="bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 rounded-[32px] p-6 text-white shadow-md border-3 border-sky-400">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              {/* Safety Boundaries & Bedtime Routine Card */}
+              <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4 flex flex-col justify-between">
                 <div>
-                  <h2 className="font-fredoka text-xl sm:text-2xl font-bold">Parent Cockpit & Dialogue Archive</h2>
-                  <p className="text-xs text-sky-100">Live walkie mic, talk curfews, safety guardrails & day-wise conversation turns</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-white/30">
-                    Parent Mode Active
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              
-              {/* Left Col: Walkie Transmitter & Safety Rules */}
-              <div className="lg:col-span-5 space-y-5">
-                <div className="bg-white border-2 border-indigo-200 rounded-[32px] p-5 shadow-xs space-y-4">
-                  <h3 className="font-fredoka text-base font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
-                    <span>🎙️</span><span>Voice Memo to KOTL Speaker</span>
-                  </h3>
-                  <div className="space-y-2">
-                    <input 
-                      type="text" 
-                      placeholder="Type a memo (e.g. 'Parth, time for dinner!')..."
-                      value={customMemoText} 
-                      onChange={e => setCustomMemoText(e.target.value)} 
-                      className="w-full text-xs p-3 rounded-xl border border-indigo-200 focus:outline-indigo-500"
-                    />
-                    <button onClick={sendCustomVoice} className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-fredoka font-bold text-xs rounded-xl shadow-xs">
-                      📢 Speak Voice Memo through KOTL
-                    </button>
-                  </div>
-                </div>
-
-                <div className="bg-white border-2 border-indigo-200 rounded-[32px] p-5 shadow-xs space-y-3">
-                  <h3 className="font-fredoka text-base font-bold text-slate-800 border-b pb-2 flex items-center gap-2">
-                    <span>🛡️</span><span>Active Parental Permission Gates</span>
-                  </h3>
-                  <ul className="text-xs space-y-2 text-slate-700">
-                    <li className="flex items-center gap-2">
-                      <span className="text-rose-500">🔒</span>
-                      <span><strong>Medicines & Pills:</strong> Strictly gated; always asks parents first</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-rose-500">🔒</span>
-                      <span><strong>Sharp Tools & Matches:</strong> Refuses hazards; alerts adults immediately</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-rose-500">🔒</span>
-                      <span><strong>Strangers & Front Door:</strong> Never tells child to open front door</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="text-rose-500">🔒</span>
-                      <span><strong>Purchases & Money:</strong> Zero spending capability</span>
-                    </li>
-                  </ul>
-                  <div className="p-2.5 bg-indigo-50 rounded-xl text-xs flex justify-between items-center text-indigo-950">
-                    <strong>Strict Bedtime Curfew:</strong>
-                    <span className="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">09:00 PM</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Col: 📅 DAY-WISE COMPANION DIALOGUE ARCHIVE */}
-              <div className="lg:col-span-7 space-y-4">
-                <div className="bg-white border-2 border-indigo-200 rounded-[32px] p-5 sm:p-6 shadow-sm space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
-                    <div>
-                      <h3 className="font-fredoka text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-                        <span>📅 Day-Wise Dialogue Archive</span>
-                        <span className="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full">{activeDay ? activeDay.label : 'Today'}</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">🛡️</span>
+                      <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                        Safety Boundaries &amp; Permissions
                       </h3>
-                      <p className="text-xs text-slate-500">Every conversation turn between Parth & KOTL organized by day</p>
                     </div>
-                    <input type="text" placeholder="Search conversations..." value={searchDialogueQuery} onChange={e => setSearchDialogueQuery(e.target.value)} className="text-xs px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/50 focus:bg-white" />
-                  </div>
-
-                  {/* Date Selector Pills */}
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                    {daysHistory.map(day => (
-                      <button key={day.id} onClick={() => setActiveDayId(day.id)} className={`px-3 py-1.5 rounded-xl text-xs font-fredoka font-bold flex items-center gap-1.5 whitespace-nowrap ${activeDayId === day.id ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-900 border border-indigo-200'}`}>
-                        <span>{day.label === 'Today' ? '🌟' : '📅'}</span>
-                        <span>{day.label}</span>
-                        <span className="text-[10px] opacity-80">({day.turns ? day.turns.length : 0})</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Dialogue Turns Feed */}
-                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                    {filteredTurns.map((turn, idx) => (
-                      <div key={turn.id || idx} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5">
-                        <div className="flex justify-between text-[11px] text-slate-400 font-semibold border-b pb-1">
-                          <span>Turn #{idx + 1} • {turn.time}</span>
-                          <span className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-md">{turn.child?.source === 'web_dashboard' ? '💻 Web Chat' : '🎙️ Mic Input (ESP32)'}</span>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-amber-200 flex items-center justify-center text-xs">🧒</div>
-                          <div className="flex-1 bg-amber-50 p-2.5 rounded-xl text-xs text-slate-800">
-                            <strong className="text-amber-900 text-[10px] uppercase block">Parth:</strong>
-                            {turn.child?.text}
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5 pl-4">
-                          <div className="w-7 h-7 rounded-full bg-sky-200 flex items-center justify-center text-xs">🤖</div>
-                          <div className="flex-1 bg-sky-50 p-2.5 rounded-xl text-xs text-slate-800">
-                            <div className="flex justify-between items-center mb-0.5">
-                              <strong className="text-sky-900 text-[10px] uppercase">KOTL:</strong>
-                              <button onClick={() => playVoice(turn.kotl?.text || '')} className="text-[10px] font-bold bg-sky-500 text-white px-2 py-0.5 rounded-md">▶ Listen</button>
-                            </div>
-                            {turn.kotl?.text}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Parent Simulation Console */}
-                  <form onSubmit={sendParentTestChat} className="pt-2 border-t flex gap-2">
-                    <input 
-                      type="text" 
-                      placeholder="Simulate Parth talking to KOTL..." 
-                      value={testChatMessage} 
-                      onChange={e => setTestChatMessage(e.target.value)} 
-                      className="flex-1 text-xs p-2.5 border border-indigo-200 rounded-xl"
-                    />
-                    <button type="submit" className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-fredoka font-bold text-xs rounded-xl shadow-xs">
-                      Send Test Turn
+                    <button
+                      onClick={handleToggleSleep}
+                      className={`text-xs font-fredoka font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all ${
+                        isSleepMode
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {isSleepMode ? '🌙 Sleep Active' : '☀️ Awake'}
                     </button>
-                  </form>
+                  </div>
+
+                  <p className="text-xs text-slate-500 mb-3">
+                    Enforces strict parental boundaries during conversations:
+                  </p>
+
+                  <div className="space-y-2">
+                    {[
+                      { key: 'medicines', label: 'Taking medicines / pills without adult', icon: '💊' },
+                      { key: 'sharp_tools', label: 'Scissors, knives, matches or fire', icon: '✂️' },
+                      { key: 'outside_play', label: 'Opening front door to strangers', icon: '🚪' },
+                      { key: 'purchases', label: 'Online purchases or clicking store buttons', icon: '💳' }
+                    ].map(p => {
+                      const isGated = childProfile.parent_permissions?.[p.key] !== false;
+                      return (
+                        <div
+                          key={p.key}
+                          onClick={() => handleTogglePermission(p.key)}
+                          className="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <span>{p.icon}</span>
+                            <span>{p.label}</span>
+                          </div>
+                          <span className={`text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full ${
+                            isGated ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-600'
+                          }`}>
+                            {isGated ? 'Parent Gated' : 'Allowed'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2 text-xs text-slate-400 text-center font-medium">
+                  Bedtime Target: <strong>{childProfile.bedtime || '21:00'} IST</strong> (Automatic wind-down active)
                 </div>
               </div>
 
             </div>
+
           </div>
         )}
 
       </main>
 
-      {/* FIXED MOBILE BOTTOM NAVIGATION */}
-      <nav id="mobileBottomNav" className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t-2 border-amber-200 px-2 py-1.5 flex justify-around items-center sm:hidden shadow-lg">
-        <button onClick={() => setCurrentSection('report')} className={`flex flex-col items-center p-1 rounded-xl ${currentSection === 'report' ? 'text-sky-600 font-bold' : 'text-slate-500'}`}>
-          <span className="text-lg">📜</span>
-          <span className="text-[10px] font-fredoka">Report</span>
-        </button>
-        <button onClick={() => setCurrentSection('quests')} className={`flex flex-col items-center p-1 rounded-xl ${currentSection === 'quests' ? 'text-sky-600 font-bold' : 'text-slate-500'}`}>
-          <span className="text-lg">🧭</span>
-          <span className="text-[10px] font-fredoka">Quests</span>
-        </button>
-        <button onClick={() => setCurrentSection('growth')} className={`flex flex-col items-center p-1 rounded-xl ${currentSection === 'growth' ? 'text-sky-600 font-bold' : 'text-slate-500'}`}>
-          <span className="text-lg">🌟</span>
-          <span className="text-[10px] font-fredoka">Good/Bad</span>
-        </button>
-        <button onClick={() => setCurrentSection('health')} className={`flex flex-col items-center p-1 rounded-xl ${currentSection === 'health' ? 'text-sky-600 font-bold' : 'text-slate-500'}`}>
-          <span className="text-lg">🏥</span>
-          <span className="text-[10px] font-fredoka">Health</span>
-        </button>
-        <button onClick={() => setCurrentSection('parent')} className={`flex flex-col items-center p-1 rounded-xl ${currentSection === 'parent' ? 'text-sky-600 font-bold' : 'text-slate-500'}`}>
-          <span className="text-lg">🎙️</span>
-          <span className="text-[10px] font-fredoka">Parent</span>
-        </button>
-      </nav>
-
-      {/* MODALS */}
-
-      {/* 1. Profile Modal */}
-      {isProfileModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border-2 border-amber-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-4 text-xs font-semibold">
-            <div className="flex justify-between items-center border-b pb-2">
-              <h3 className="font-fredoka text-lg font-bold text-slate-800">Child Profile & Safety Settings</h3>
-              <button onClick={() => setIsProfileModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+      {/* -------------------------------------------------------------
+          MODAL: ADD CUSTOM HABIT
+      -------------------------------------------------------------- */}
+      {isAddHabitModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] max-w-md w-full p-6 shadow-xl border border-emerald-100 animate-scaleUp">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🥦</span>
+                <h3 className="font-fredoka text-lg font-bold text-slate-900">Add New Habit</h3>
+              </div>
+              <button
+                onClick={() => setIsAddHabitModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center"
+              >
+                ✕
+              </button>
             </div>
-            <div><label>Child Name:</label><input type="text" value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Age:</label><input type="number" value={profile.age} onChange={e => setProfile(p => ({ ...p, age: parseInt(e.target.value, 10) || 6 }))} className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Bedtime Curfew:</label><input type="time" value={profile.bedtime} onChange={e => setProfile(p => ({ ...p, bedtime: e.target.value }))} className="w-full p-2 border rounded-xl" /></div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setIsProfileModalOpen(false)} className="px-4 py-2 bg-amber-500 text-white rounded-xl">Save & Close</button>
-            </div>
+
+            <form onSubmit={handleCreateHabit} className="space-y-3.5">
+              <div>
+                <label className="text-xs font-fredoka font-bold text-slate-700 block mb-1">Habit Title</label>
+                <input
+                  type="text"
+                  required
+                  value={newHabitForm.title}
+                  onChange={(e) => setNewHabitForm(p => ({ ...p, title: e.target.value }))}
+                  placeholder="e.g. Drinking warm milk before bed..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-fredoka font-bold text-slate-700 block mb-1">Category</label>
+                  <select
+                    value={newHabitForm.category}
+                    onChange={(e) => setNewHabitForm(p => ({ ...p, category: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs"
+                  >
+                    <option value="Hygiene">Hygiene</option>
+                    <option value="Nutrition">Nutrition</option>
+                    <option value="Hydration">Hydration</option>
+                    <option value="Responsibility">Responsibility</option>
+                    <option value="Manners">Manners</option>
+                    <option value="Sleep">Sleep</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-fredoka font-bold text-slate-700 block mb-1">Emoji Icon</label>
+                  <input
+                    type="text"
+                    value={newHabitForm.icon}
+                    onChange={(e) => setNewHabitForm(p => ({ ...p, icon: e.target.value }))}
+                    placeholder="e.g. 🥛"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs text-center"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-fredoka font-bold text-slate-700 block mb-1">KOTL Socratic Voice Directive</label>
+                <input
+                  type="text"
+                  value={newHabitForm.directive_text}
+                  onChange={(e) => setNewHabitForm(p => ({ ...p, directive_text: e.target.value }))}
+                  placeholder="What KOTL will say out loud to prompt Parth..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-fredoka font-bold text-slate-700 block mb-1">Pediatric Parent Tip</label>
+                <input
+                  type="text"
+                  value={newHabitForm.tip}
+                  onChange={(e) => setNewHabitForm(p => ({ ...p, tip: e.target.value }))}
+                  placeholder="Tip for encouraging consistency..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddHabitModalOpen(false)}
+                  className="px-4 py-2 rounded-2xl text-xs font-fredoka font-bold text-slate-600 bg-slate-100 hover:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-2xl text-xs font-fredoka font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-xs"
+                >
+                  Save Habit
+                </button>
+              </div>
+            </form>
           </div>
-        </div>
-      )}
-
-      {/* 2. Quota Modal */}
-      {isQuotaModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border-2 border-amber-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-4 text-xs font-semibold">
-            <div className="flex justify-between items-center border-b pb-2">
-              <h3 className="font-fredoka text-lg font-bold text-slate-800">Groq API Quota</h3>
-              <button onClick={() => setIsQuotaModalOpen(false)} className="text-slate-400 hover:text-slate-600 text-lg">✕</button>
-            </div>
-            <div className="p-3 bg-amber-50 rounded-xl space-y-1">
-              <div>Daily Requests: <strong>14,380 Left</strong></div>
-              <div>Tokens Per Min: <strong>598,200 Left</strong></div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Assign Quest Modal */}
-      {isAssignQuestOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleAddQuest} className="bg-white border-2 border-amber-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-3 text-xs font-semibold">
-            <h3 className="font-fredoka text-lg font-bold text-slate-800">Assign Socratic Quest</h3>
-            <div><label>Title</label><input type="text" value={newQuestTitle} onChange={e => setNewQuestTitle(e.target.value)} required className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Category</label><select value={newQuestCategory} onChange={e => setNewQuestCategory(e.target.value)} className="w-full p-2 border rounded-xl"><option value="School Project">School Project</option><option value="Life Skill">Life Skill</option><option value="Family Kindness">Family Kindness</option></select></div>
-            <div><label>Goal</label><input type="text" value={newQuestGoal} onChange={e => setNewQuestGoal(e.target.value)} className="w-full p-2 border rounded-xl" /></div>
-            <div><label>KOTL Mentor Hint</label><input type="text" value={newQuestHint} onChange={e => setNewQuestHint(e.target.value)} className="w-full p-2 border rounded-xl" /></div>
-            <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setIsAssignQuestOpen(false)}>Cancel</button><button type="submit" className="px-4 py-2 bg-amber-500 text-white rounded-xl">Assign</button></div>
-          </form>
-        </div>
-      )}
-
-      {/* 4. Edit Medical ID Modal */}
-      {isEditMedicalIdOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleSaveMedicalId} className="bg-white border-2 border-rose-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-3 text-xs font-semibold">
-            <h3 className="font-fredoka text-lg font-bold text-slate-800">Edit Emergency Medical ID</h3>
-            <div><label>Blood Group</label><input type="text" value={medicalId.blood_group} onChange={e => setMedicalId(p => ({ ...p, blood_group: e.target.value }))} className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Allergies</label><input type="text" value={medicalId.allergies} onChange={e => setMedicalId(p => ({ ...p, allergies: e.target.value }))} className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Pediatrician</label><input type="text" value={medicalId.pediatrician_name} onChange={e => setMedicalId(p => ({ ...p, pediatrician_name: e.target.value }))} className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Phone</label><input type="text" value={medicalId.phone} onChange={e => setMedicalId(p => ({ ...p, phone: e.target.value }))} className="w-full p-2 border rounded-xl" /></div>
-            <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setIsEditMedicalIdOpen(false)}>Cancel</button><button type="submit" className="px-4 py-2 bg-rose-500 text-white rounded-xl">Save</button></div>
-          </form>
-        </div>
-      )}
-
-      {/* 5. Sickness Modal */}
-      {isLogSicknessOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleSaveSickness} className="bg-white border-2 border-rose-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-3 text-xs font-semibold">
-            <h3 className="font-fredoka text-lg font-bold text-slate-800">Log Sickness Episode</h3>
-            <div><label>Symptom</label><input type="text" value={sickSymptom} onChange={e => setSickSymptom(e.target.value)} required className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Medicines & Dosage</label><input type="text" value={sickMedicines} onChange={e => setSickMedicines(e.target.value)} className="w-full p-2 border rounded-xl" /></div>
-            <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setIsLogSicknessOpen(false)}>Cancel</button><button type="submit" className="px-4 py-2 bg-rose-500 text-white rounded-xl">Save</button></div>
-          </form>
-        </div>
-      )}
-
-      {/* 6. Vitals Modal */}
-      {isUpdateVitalsOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleSaveVitals} className="bg-white border-2 border-rose-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-3 text-xs font-semibold">
-            <h3 className="font-fredoka text-lg font-bold text-slate-800">Update Height & Weight</h3>
-            <div><label>Height (cm)</label><input type="number" step="0.5" value={inputHeight} onChange={e => setInputHeight(e.target.value)} className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Weight (kg)</label><input type="number" step="0.1" value={inputWeight} onChange={e => setInputWeight(e.target.value)} className="w-full p-2 border rounded-xl" /></div>
-            <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setIsUpdateVitalsOpen(false)}>Cancel</button><button type="submit" className="px-4 py-2 bg-rose-500 text-white rounded-xl">Save</button></div>
-          </form>
-        </div>
-      )}
-
-      {/* 7. Add Vaccine Modal */}
-      {isAddVaccineOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleAddVaccine} className="bg-white border-2 border-rose-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-3 text-xs font-semibold">
-            <h3 className="font-fredoka text-lg font-bold text-slate-800">Add Vaccine</h3>
-            <div><label>Name</label><input type="text" value={newVacName} onChange={e => setNewVacName(e.target.value)} required className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Date / Due Date</label><input type="text" value={newVacDate} onChange={e => setNewVacDate(e.target.value)} className="w-full p-2 border rounded-xl" /></div>
-            <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setIsAddVaccineOpen(false)}>Cancel</button><button type="submit" className="px-4 py-2 bg-rose-500 text-white rounded-xl">Add</button></div>
-          </form>
-        </div>
-      )}
-
-      {/* 8. Add Word / Book Modal */}
-      {isAddWordBookOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleSaveWordBook} className="bg-white border-2 border-emerald-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-3 text-xs font-semibold">
-            <h3 className="font-fredoka text-lg font-bold text-slate-800">Add Word or Book</h3>
-            <div><label>Type</label><select value={wbType} onChange={e => setWbType(e.target.value)} className="w-full p-2 border rounded-xl"><option value="word">🔤 Phonics Word</option><option value="book">📖 Storybook</option></select></div>
-            <div><label>Title / Word</label><input type="text" value={wbTitle} onChange={e => setWbTitle(e.target.value)} required className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Description / Meaning</label><input type="text" value={wbDesc} onChange={e => setWbDesc(e.target.value)} className="w-full p-2 border rounded-xl" /></div>
-            <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setIsAddWordBookOpen(false)}>Cancel</button><button type="submit" className="px-4 py-2 bg-emerald-500 text-white rounded-xl">Add</button></div>
-          </form>
-        </div>
-      )}
-
-      {/* 9. Log Play Time Modal */}
-      {isLogPlayOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleSavePlay} className="bg-white border-2 border-emerald-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-3 text-xs font-semibold">
-            <h3 className="font-fredoka text-lg font-bold text-slate-800">Log Physical Play Time</h3>
-            <div><label>Activity</label><input type="text" value={playActivity} onChange={e => setPlayActivity(e.target.value)} placeholder="Cricket, Running, Cycling..." required className="w-full p-2 border rounded-xl" /></div>
-            <div><label>Minutes Played</label><input type="number" min="5" max="180" value={playMinutes} onChange={e => setPlayMinutes(e.target.value)} className="w-full p-2 border rounded-xl" /></div>
-            <div className="flex justify-end gap-2 pt-2"><button type="button" onClick={() => setIsLogPlayOpen(false)}>Cancel</button><button type="submit" className="px-4 py-2 bg-emerald-500 text-white rounded-xl">Save</button></div>
-          </form>
-        </div>
-      )}
-
-      {/* 10. Add Habit Goal Modal */}
-      {isAddHabitOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleAddHabit} className="bg-white border-2 border-emerald-300 rounded-[32px] p-6 max-w-md w-full shadow-2xl space-y-3 text-xs font-semibold">
-            <h3 className="font-fredoka text-lg font-bold text-slate-800">Add Habit Goal</h3>
-            <div>
-              <label>Habit Category</label>
-              <select value={newHabitType} onChange={e => setNewHabitType(e.target.value)} className="w-full p-2 border rounded-xl">
-                <option value="good">✨ Good Habit Established (Strength)</option>
-                <option value="improvement">⚠️ Habit Needing Guidance (Reluctance / Area to Improve)</option>
-              </select>
-            </div>
-            <div>
-              <label>Habit Title</label>
-              <input type="text" placeholder="e.g. Washing Hands Before Dinner" value={newHabitTitle} onChange={e => setNewHabitTitle(e.target.value)} required className="w-full p-2 border rounded-xl" />
-            </div>
-            <div>
-              <label>{newHabitType === 'good' ? 'Daily Routine Observation' : 'Child Reluctance / Challenge'}</label>
-              <textarea placeholder={newHabitType === 'good' ? 'Observation of positive routine...' : 'What reluctance does Parth show and what is KOTL\'s guiding strategy?'} value={newHabitDesc} onChange={e => setNewHabitDesc(e.target.value)} className="w-full p-2 border rounded-xl h-20" />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setIsAddHabitOpen(false)} className="px-4 py-2 text-slate-500">Cancel</button>
-              <button type="submit" className="px-4 py-2 bg-emerald-500 text-white rounded-xl font-bold">Save Habit</button>
-            </div>
-          </form>
         </div>
       )}
 

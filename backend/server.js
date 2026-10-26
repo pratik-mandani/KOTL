@@ -19,6 +19,12 @@ const http = require("http");
 const { initWebSocketServer } = require("./services/websocket");
 const { detectEyeExpression } = require("./services/eye-animation");
 const {
+  getHabits,
+  toggleHabit,
+  addHabit,
+  deleteHabit,
+  awardMannerStar,
+  getGrowthMetrics,
   getChildProfile,
   updateChildProfile,
   getParentMissions,
@@ -318,6 +324,99 @@ app.post("/api/child/report/generate", (_req, res) => {
 });
 
 // --- Parent Missions & Directives ---
+
+// --- Habits, Health & Socratic Action Engine Routes ---
+app.get("/api/habits", (_req, res) => {
+  try {
+    res.json({ success: true, habits: getHabits() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/habits", (req, res) => {
+  try {
+    const { title, category, icon, directive_text, tip } = req.body || {};
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, error: "Habit title is required" });
+    }
+    const newHabit = addHabit({ title, category, icon, directive_text, tip });
+    res.json({ success: true, habit: newHabit, habits: getHabits() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/habits/toggle", (req, res) => {
+  try {
+    const { id } = req.body || {};
+    if (!id) {
+      return res.status(400).json({ success: false, error: "Habit ID is required" });
+    }
+    const updated = toggleHabit(id);
+    if (!updated) {
+      return res.status(404).json({ success: false, error: "Habit not found" });
+    }
+    res.json({ success: true, habit: updated, habits: getHabits() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete("/api/habits/:id", (req, res) => {
+  try {
+    const habits = deleteHabit(req.params.id);
+    res.json({ success: true, habits });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/habits/award-star", (_req, res) => {
+  try {
+    const result = awardMannerStar();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get("/api/growth/metrics", (_req, res) => {
+  try {
+    res.json(getGrowthMetrics());
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/voice-directive", async (req, res) => {
+  try {
+    const { text, directive_text, title } = req.body || {};
+    const textToSpeak = directive_text || text;
+    if (!textToSpeak || !textToSpeak.trim()) {
+      return res.status(400).json({ success: false, error: "directive text required" });
+    }
+    const ttsResult = await generateSpeech({ text: textToSpeak.trim() });
+    if (ttsResult.success && ttsResult.url) {
+      latestWebTtsBroadcast = {
+        id: "directive-" + Date.now(),
+        url: ttsResult.url,
+        created_at: Date.now()
+      };
+      console.log(`[Broadcast] Queued voice directive audio for ESP32 speaker: ${ttsResult.url}`);
+    }
+    res.json({
+      success: true,
+      title: title || "Voice Directive",
+      directive_text: textToSpeak,
+      audio_url: ttsResult.url,
+      tts: ttsResult
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get("/api/parent/missions", (_req, res) => {
   res.json({ success: true, missions: getParentMissions() });
 });
@@ -600,8 +699,8 @@ app.get("/api/device/state", (_req, res) => {
     sleep_mode: !!config.sleep_mode,
     mic_muted: !!config.mic_muted,
     night_light: !!config.night_light,
-    battery_pct: typeof config.battery_pct === "number" ? config.battery_pct : 88,
-    battery_charging: config.battery_charging !== false,
+    battery_pct: null, // Removed fake mock battery per architecture audit
+    battery_charging: null, // Removed fake mock charging per architecture audit
     emergency_sos: !!config.emergency_sos,
     emergency_sos_time: config.emergency_sos_time || null,
     device_status: config.device_status || {}
