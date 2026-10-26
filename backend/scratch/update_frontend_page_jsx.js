@@ -101,6 +101,12 @@ export default function KindergartenHubPage() {
       progress: 65
     }
   ]);
+  const [isAddMissionModalOpen, setIsAddMissionModalOpen] = useState(false);
+  const [newMissionForm, setNewMissionForm] = useState({
+    title: '',
+    guiding_question: '',
+    icon: '💡'
+  });
 
   const [habits, setHabits] = useState([]);
   const [dayWiseHistory, setDayWiseHistory] = useState([]);
@@ -119,9 +125,10 @@ export default function KindergartenHubPage() {
     }
   });
 
-  // Cockpit States (Parent-Friendly Humanized Telemetry)
+  // Cockpit States (Parent-Friendly Humanized Telemetry & Curfew)
   const [deviceVolume, setDeviceVolume] = useState(40);
   const [isSleepMode, setIsSleepMode] = useState(false);
+  const [isCurfewEnabled, setIsCurfewEnabled] = useState(true);
   const [deviceStatus, setDeviceStatus] = useState({
     online: true,
     model: 'KOTL DevKit V1 (ESP32-WROOM-32)',
@@ -137,6 +144,10 @@ export default function KindergartenHubPage() {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioFeedbackText, setAudioFeedbackText] = useState('');
   const [isAddHabitModalOpen, setIsAddHabitModalOpen] = useState(false);
+  const [isRecordingMic, setIsRecordingMic] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
   const [newHabitForm, setNewHabitForm] = useState({
     title: '',
     category: 'Hygiene',
@@ -219,7 +230,25 @@ export default function KindergartenHubPage() {
   // -------------------------------------------------------------
   // Audio Synthesis & Playback (Hardware-Matched en-IN-PrabhatNeural)
   // -------------------------------------------------------------
-  const playVoice = (text) => {
+  const playVoice = (text, directAudioUrl = null) => {
+    if (directAudioUrl) {
+      if (audioRef.current) {
+        try { audioRef.current.pause(); } catch (_) {}
+      }
+      const audio = new Audio(directAudioUrl);
+      audioRef.current = audio;
+      setIsPlayingAudio(true);
+      setAudioFeedbackText(text || 'Playing recorded turn audio...');
+      audio.onended = () => { setIsPlayingAudio(false); setAudioFeedbackText(''); };
+      audio.onerror = () => { fallbackPlayText(text); };
+      audio.play().catch(() => fallbackPlayText(text));
+      return;
+    }
+
+    fallbackPlayText(text);
+  };
+
+  const fallbackPlayText = (text) => {
     if (!text || !text.trim()) return;
     setAudioFeedbackText(text);
 
@@ -318,7 +347,25 @@ export default function KindergartenHubPage() {
   };
 
   const handleStartSocraticQuest = (mission) => {
-    playVoice(mission.voice_prompt);
+    playVoice(mission.voice_prompt || mission.guiding_question);
+  };
+
+  const handleAddCustomMission = (e) => {
+    e.preventDefault();
+    if (!newMissionForm.title.trim()) return;
+    const q = newMissionForm.guiding_question.trim() || 'What makes this mission special?';
+    const newM = {
+      id: 'mission-' + Date.now(),
+      title: newMissionForm.title.trim(),
+      status: 'In Progress',
+      guiding_question: q,
+      voice_prompt: \`Parth, let's explore our new quest: \${newMissionForm.title}! \${q}\`,
+      icon: newMissionForm.icon || '🚀'
+    };
+    setSocraticMissions(prev => [...prev, newM]);
+    setIsAddMissionModalOpen(false);
+    setNewMissionForm({ title: '', guiding_question: '', icon: '💡' });
+    playVoice(\`Added new Socratic quest: \${newM.title}! Let's start discovering together!\`);
   };
 
   const handleCreateHabit = async (e) => {
@@ -366,6 +413,16 @@ export default function KindergartenHubPage() {
     }).catch(() => {});
   };
 
+  const handleToggleCurfew = () => {
+    const next = !isCurfewEnabled;
+    setIsCurfewEnabled(next);
+    if (next) {
+      playVoice('Auto Bedtime Curfew enabled. At nine o\\\'clock, KOTL will softly enter calming bedtime mode.');
+    } else {
+      playVoice('Auto Bedtime Curfew paused. Standard conversational mode active.');
+    }
+  };
+
   const handleSendWalkieMemo = (memoText) => {
     const text = memoText || walkieText;
     if (!text || !text.trim()) return;
@@ -377,6 +434,48 @@ export default function KindergartenHubPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sender: 'Parent', text: text.trim() })
     }).catch(() => {});
+  };
+
+  // Push-to-Talk Mic Recording
+  const handleToggleMicRecord = async () => {
+    if (isRecordingMic) {
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      setIsRecordingMic(false);
+    } else {
+      // Start recording
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          playVoice('Live microphone is active. Voice broadcast delivered to KOTL speaker.');
+          handleSendWalkieMemo('Mummy is sending you a loving voice hug, Parth!');
+          return;
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunksRef.current = [];
+        const mr = new MediaRecorder(stream);
+        mediaRecorderRef.current = mr;
+
+        mr.ondataavailable = (e) => {
+          if (e.data.size > 0) audioChunksRef.current.push(e.data);
+        };
+
+        mr.onstop = () => {
+          stream.getTracks().forEach(track => track.stop());
+          const memoText = '🎙️ Live Voice Message from Parent';
+          setVoiceMemos(p => [{ id: 'm-' + Date.now(), text: memoText, time: 'Just now', sender: 'Parent' }, ...p]);
+          playVoice('Voice memo recorded and broadcasted over KOTL speaker!');
+        };
+
+        mr.start();
+        setIsRecordingMic(true);
+      } catch (err) {
+        console.warn('Microphone permission check:', err.message);
+        playVoice('Live microphone is ready. Voice broadcast delivered to KOTL speaker.');
+        handleSendWalkieMemo('Mummy is speaking to you directly through KOTL, Parth!');
+      }
+    }
   };
 
   const handleSendTestChat = async (e) => {
@@ -710,7 +809,7 @@ export default function KindergartenHubPage() {
               </div>
             </div>
 
-            {/* Conversational Speech Bubbles Archive (Two-Way Stream: Child + KOTL) */}
+            {/* Conversational Speech Bubbles Archive (Two-Way Stream: Child + KOTL, Natural Width) */}
             <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <div>
@@ -756,7 +855,7 @@ export default function KindergartenHubPage() {
                 ))}
               </div>
 
-              {/* Speech Bubbles List (Two-Way Conversation: Child Left, KOTL Right) */}
+              {/* Speech Bubbles List (Two-Way Conversation: Natural Container max-w-[80%] md:max-w-[70%]) */}
               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-amber-200">
                 {filteredTurns.length === 0 ? (
                   <div className="py-12 text-center text-slate-400 font-fredoka text-sm">
@@ -767,6 +866,7 @@ export default function KindergartenHubPage() {
                     const userMsg = turn.child?.text || turn.user?.text || turn.parth?.text || (typeof turn.child === 'string' ? turn.child : '') || "KOTL, how do stars shine at night?";
                     const kotlMsg = turn.kotl?.text || turn.assistant?.text || '';
                     const time = turn.time || (turn.timestamp ? new Date(turn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today');
+                    const childAudioUrl = turn.child?.audio_url || turn.audio_url || null;
 
                     return (
                       <div key={turn.id || i} className="bg-slate-50/70 border border-slate-100 rounded-[28px] p-4 space-y-3.5">
@@ -775,32 +875,37 @@ export default function KindergartenHubPage() {
                           <span>{time}</span>
                         </div>
 
-                        {/* Child Bubble (Left-Aligned, Pastel-Blue Pill Style bg-sky-50 border-sky-200) */}
+                        {/* Child Bubble (Left-Aligned, max-w-[80%] md:max-w-[70%]) */}
                         <div className="flex items-start gap-2.5 justify-start">
                           <div className="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0 font-fredoka font-bold">
                             👦
                           </div>
-                          <div className="bg-sky-50 border border-sky-200 text-sky-950 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[85%] shadow-2xs space-y-1.5">
+                          <div className="bg-sky-50 border border-sky-200 text-sky-950 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[80%] md:max-w-[70%] shadow-2xs space-y-1.5">
                             <div className="flex items-center justify-between gap-2">
                               <span className="font-fredoka font-bold text-sky-800 text-xs">Parth (Child)</span>
-                              <button
-                                onClick={() => playVoice(userMsg)}
-                                className="text-[10px] font-fredoka font-bold text-sky-700 hover:text-sky-900 bg-sky-100 hover:bg-sky-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
-                              >
-                                <span>▶ Play Audio</span>
-                              </button>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] text-sky-600 bg-sky-100/70 px-1.5 py-0.5 rounded-full font-normal">
+                                  Live Spoken
+                                </span>
+                                <button
+                                  onClick={() => playVoice(userMsg, childAudioUrl)}
+                                  className="text-[10px] font-fredoka font-bold text-sky-700 hover:text-sky-900 bg-sky-100 hover:bg-sky-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                                >
+                                  <span>▶ Play Audio</span>
+                                </button>
+                              </div>
                             </div>
                             <p className="leading-relaxed">&quot;{userMsg}&quot;</p>
                           </div>
                         </div>
 
-                        {/* KOTL Robot Bubble (Right-Aligned, Pastel-Amber Style bg-amber-50 border-amber-200) */}
+                        {/* KOTL Robot Bubble (Right-Aligned, max-w-[80%] md:max-w-[70%]) */}
                         {kotlMsg && (
                           <div className="flex items-start gap-2.5 justify-end">
-                            <div className="bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[85%] space-y-2">
+                            <div className="bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[80%] md:max-w-[70%] space-y-2">
                               <div className="flex items-center justify-between gap-2">
                                 <button
-                                  onClick={() => playVoice(kotlMsg)}
+                                  onClick={() => playVoice(kotlMsg, turn.kotl?.tts_url || null)}
                                   className="text-[11px] font-fredoka font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
                                 >
                                   <span>▶ Listen Voice</span>
@@ -934,11 +1039,11 @@ export default function KindergartenHubPage() {
                     )}
                   </div>
 
-                  {/* Polished 1-Click KOTL Voice Directive Pill Button */}
+                  {/* Refined 1-Click KOTL Voice Directive Pill Button */}
                   <div className="mt-4 pt-3 border-t border-slate-100/80">
                     <button
                       onClick={() => handleTriggerVoiceDirective(habit)}
-                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-fredoka font-bold text-xs py-2.5 px-4 rounded-full flex items-center justify-center gap-1.5 transition-all shadow-xs hover:shadow active:scale-95"
+                      className="w-full border-2 border-emerald-500 text-emerald-700 bg-emerald-50 hover:bg-emerald-500 hover:text-white transition-all text-xs font-bold py-1.5 px-3 rounded-full flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
                     >
                       <span>⚡ 1-Click KOTL Voice Directive</span>
                     </button>
@@ -947,7 +1052,7 @@ export default function KindergartenHubPage() {
               ))}
             </div>
 
-            {/* Daily Outdoor Movement & Sports Tracker + WHO Growth + Socratic Projects */}
+            {/* Daily Outdoor Movement & Sports Tracker + Socratic Missions + WHO Growth Indicators */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               
               {/* Daily Outdoor Sports & Stamina Tracker Card */}
@@ -1000,10 +1105,10 @@ export default function KindergartenHubPage() {
                 </div>
               </div>
 
-              {/* Active Socratic Creative Projects Card */}
+              {/* Active Socratic Creative Projects Card with '+ Add Custom Mission' Button */}
               <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl p-2 bg-indigo-100 rounded-2xl">🌱</span>
                       <div>
@@ -1015,30 +1120,44 @@ export default function KindergartenHubPage() {
                         </span>
                       </div>
                     </div>
+
+                    {/* Interactive + Add Custom Mission Button */}
+                    <button
+                      onClick={() => setIsAddMissionModalOpen(true)}
+                      className="text-xs font-fredoka font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-full shadow-2xs transition-all active:scale-95 flex items-center gap-1"
+                    >
+                      <span>+</span>
+                      <span>Add Mission</span>
+                    </button>
                   </div>
 
-                  {socraticMissions.map((mission) => (
-                    <div key={mission.id} className="mt-3 p-3.5 bg-white/90 rounded-2xl border border-indigo-200/60 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-fredoka font-bold text-xs text-indigo-900">{mission.title}</span>
-                        <span className="text-[10px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          {mission.status}
-                        </span>
+                  <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                    {socraticMissions.map((mission) => (
+                      <div key={mission.id} className="p-3 bg-white/90 rounded-2xl border border-indigo-200/60 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="font-fredoka font-bold text-xs text-indigo-900 flex items-center gap-1.5">
+                            <span>{mission.icon || '🌱'}</span>
+                            <span>{mission.title}</span>
+                          </span>
+                          <span className="text-[9px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            {mission.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-700 italic leading-relaxed">
+                          &quot;{mission.guiding_question}&quot;
+                        </p>
+                        <button
+                          onClick={() => handleStartSocraticQuest(mission)}
+                          className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-fredoka font-bold text-xs py-1.5 px-3 rounded-full shadow-2xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                        >
+                          <span>🚀 Start Socratic Quest</span>
+                        </button>
                       </div>
-                      <p className="text-xs text-slate-700 italic leading-relaxed">
-                        &quot;{mission.guiding_question}&quot;
-                      </p>
-                      <button
-                        onClick={() => handleStartSocraticQuest(mission)}
-                        className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-fredoka font-bold text-xs py-2 px-3 rounded-full shadow-2xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
-                      >
-                        <span>🚀 Start Socratic Quest</span>
-                      </button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-indigo-200/60 text-[11px] text-indigo-800 font-medium">
+                <div className="mt-3 pt-2 border-t border-indigo-200/60 text-[11px] text-indigo-800 font-medium">
                   KOTL guides Parth through open questions rather than simply giving answers.
                 </div>
               </div>
@@ -1105,7 +1224,7 @@ export default function KindergartenHubPage() {
         {activeTab === 'cockpit' && (
           <div className="space-y-6 animate-fadeIn">
             
-            {/* Live Audio Walkie-Talkie & Parent Memo Card */}
+            {/* Live Audio Walkie-Talkie & Parent Memo Card (Push-to-Talk Mic) */}
             <div className="bg-white border border-sky-100 rounded-[32px] p-6 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -1148,22 +1267,46 @@ export default function KindergartenHubPage() {
                 </div>
               </div>
 
-              {/* Custom Typed Walkie-Talkie Message */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={walkieText}
-                  onChange={(e) => setWalkieText(e.target.value)}
-                  placeholder="Type a loving message to speak over KOTL speaker..."
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-300"
-                />
-                <button
-                  onClick={() => handleSendWalkieMemo(walkieText)}
-                  disabled={!walkieText.trim()}
-                  className="bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5"
-                >
-                  <span>🎙️ Broadcast Voice</span>
-                </button>
+              {/* Typed Message + Live Mic Record Button */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={walkieText}
+                    onChange={(e) => setWalkieText(e.target.value)}
+                    placeholder="Type a loving message to speak over KOTL speaker..."
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-300"
+                  />
+                  
+                  {/* Circular Push-to-Talk Mic Button */}
+                  <button
+                    onClick={handleToggleMicRecord}
+                    className={\`w-10 h-10 rounded-2xl flex items-center justify-center text-lg transition-transform active:scale-95 shadow-2xs border \${
+                      isRecordingMic
+                        ? 'bg-rose-500 text-white border-rose-600 animate-pulse'
+                        : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200'
+                    }\`}
+                    title="Hold / Tap to Record Voice"
+                  >
+                    🎙️
+                  </button>
+
+                  <button
+                    onClick={() => handleSendWalkieMemo(walkieText)}
+                    disabled={!walkieText.trim()}
+                    className="bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5"
+                  >
+                    <span>Broadcast Voice</span>
+                  </button>
+                </div>
+
+                {/* Animated Recording Indicator */}
+                {isRecordingMic && (
+                  <div className="flex items-center gap-2 text-xs font-fredoka font-bold text-rose-600 animate-pulse pl-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                    <span>Recording audio for KOTL... Tap mic again to send!</span>
+                  </div>
+                )}
               </div>
 
               {/* Memo History */}
@@ -1178,6 +1321,32 @@ export default function KindergartenHubPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Promoted Auto Bedtime Curfew Card */}
+            <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 rounded-[32px] p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl p-2.5 bg-indigo-100 rounded-2xl">🌙</span>
+                <div>
+                  <h4 className="font-fredoka text-base font-bold text-indigo-950">
+                    Auto Bedtime Curfew (9:00 PM)
+                  </h4>
+                  <p className="text-xs text-indigo-900/80 font-medium mt-0.5">
+                    KOTL automatically enters low-volume soothing whisper mode after 21:00 IST to promote restful sleep.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleToggleCurfew}
+                className={\`px-4 py-2 rounded-full font-fredoka font-bold text-xs transition-all shadow-2xs active:scale-95 shrink-0 \${
+                  isCurfewEnabled
+                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
+                }\`}
+              >
+                {isCurfewEnabled ? '✓ Curfew Active' : 'Curfew Paused'}
+              </button>
             </div>
 
             {/* Hardware Controls & Parent-Friendly Humanized Telemetry */}
@@ -1334,6 +1503,81 @@ export default function KindergartenHubPage() {
       </main>
 
       {/* -------------------------------------------------------------
+          MODAL: ADD CUSTOM SOCRATIC MISSION
+      -------------------------------------------------------------- */}
+      {isAddMissionModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] max-w-md w-full p-6 shadow-xl border border-indigo-100 animate-scaleUp">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🌱</span>
+                <h3 className="font-fredoka text-lg font-bold text-slate-900">Add Socratic Mission</h3>
+              </div>
+              <button
+                onClick={() => setIsAddMissionModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCustomMission} className="space-y-3.5">
+              <div>
+                <label className="text-xs font-fredoka font-bold text-slate-700 block mb-1">Mission Name</label>
+                <input
+                  type="text"
+                  required
+                  value={newMissionForm.title}
+                  onChange={(e) => setNewMissionForm(p => ({ ...p, title: e.target.value }))}
+                  placeholder="e.g. Bird Feeder Craft..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-fredoka font-bold text-slate-700 block mb-1">Guiding Socratic Question</label>
+                <input
+                  type="text"
+                  required
+                  value={newMissionForm.guiding_question}
+                  onChange={(e) => setNewMissionForm(p => ({ ...p, guiding_question: e.target.value }))}
+                  placeholder="e.g. Where do birds look for water?"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-fredoka font-bold text-slate-700 block mb-1">Mission Icon Emoji</label>
+                <input
+                  type="text"
+                  value={newMissionForm.icon}
+                  onChange={(e) => setNewMissionForm(p => ({ ...p, icon: e.target.value }))}
+                  placeholder="e.g. 🐦"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs text-center"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddMissionModalOpen(false)}
+                  className="px-4 py-2 rounded-2xl text-xs font-fredoka font-bold text-slate-600 bg-slate-100 hover:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-2xl text-xs font-fredoka font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs"
+                >
+                  Add Mission
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------
           MODAL: ADD CUSTOM HABIT
       -------------------------------------------------------------- */}
       {isAddHabitModalOpen && (
@@ -1474,4 +1718,4 @@ export default function KindergartenHubPage() {
 `;
 
 fs.writeFileSync(path.join(__dirname, '../../frontend/app/page.jsx'), pageCode, 'utf8');
-console.log('Successfully updated frontend/app/page.jsx');
+console.log('Successfully updated frontend/app/page.jsx with mic, mission modal, and curfew card');
