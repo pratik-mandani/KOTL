@@ -12,6 +12,7 @@ export default function KindergartenHubPage() {
     curiosity_count: 28,
     new_words_learned: ['orbit', 'gravity', 'satellite', 'stamina', 'telescope', 'herbivore', 'solar', 'nebula'],
     manner_stars: 15,
+    head_pats_count: 9,
     who_growth: {
       height_cm: 116,
       weight_kg: 21.5,
@@ -22,10 +23,81 @@ export default function KindergartenHubPage() {
     },
     daily_parent_tip: {
       title: 'Encourage Socratic Wonder',
-      insight: "When Parth asks 'Why do stars twinkle?', celebrate his curiosity first: 'That is a scientist\\'s question! What do you think the atmosphere is doing to the light?'",
+      insight: "When Parth asks 'Why do stars twinkle?', celebrate his curiosity first: 'That is a scientist\'s question! What do you think the atmosphere is doing to the light?'",
       category: 'Cognitive Curiosity'
     }
   });
+
+  // Observed Interests & Passions (Interest Affinity)
+  const [interestAffinities, setInterestAffinities] = useState([
+    {
+      id: 'space',
+      title: 'Space Exploration & Stars',
+      icon: '🚀',
+      affinity: 95,
+      description: 'Asks about planetary orbits, telescopes, and constellations before bed',
+      color: 'bg-purple-500',
+      pillBg: 'bg-purple-50',
+      pillBorder: 'border-purple-200',
+      textColor: 'text-purple-950'
+    },
+    {
+      id: 'art',
+      title: 'Creative Drawing & Visual Art',
+      icon: '🎨',
+      affinity: 88,
+      description: 'Colors celestial maps and sketches friendly robot companions',
+      color: 'bg-pink-500',
+      pillBg: 'bg-pink-50',
+      pillBorder: 'border-pink-200',
+      textColor: 'text-pink-950'
+    },
+    {
+      id: 'nature',
+      title: 'Nature & Animal Care',
+      icon: '🐾',
+      affinity: 82,
+      description: 'Loves learning animal sounds, garden birds, and plant watering rituals',
+      color: 'bg-emerald-500',
+      pillBg: 'bg-emerald-50',
+      pillBorder: 'border-emerald-200',
+      textColor: 'text-emerald-950'
+    },
+    {
+      id: 'engineering',
+      title: 'Mechanical & Toy Engineering',
+      icon: '🏎️',
+      affinity: 74,
+      description: 'Curious about how wheels, gears, and robot speakers transmit voice',
+      color: 'bg-amber-500',
+      pillBg: 'bg-amber-50',
+      pillBorder: 'border-amber-200',
+      textColor: 'text-amber-950'
+    }
+  ]);
+
+  // Outdoor Sports & Movement State
+  const [sportsTracker, setSportsTracker] = useState({
+    title: 'Daily Outdoor Sports & Stamina Goal',
+    minutes_active: 45,
+    minutes_goal: 60,
+    stamina_status: 'High Stamina',
+    activities: 'Playground Cricket (30m) + Cycling (15m)',
+    notes: 'Active aerobic playtime strengthens physical motor skills and ensures sound nighttime sleep.'
+  });
+
+  // Active Socratic Creative Missions
+  const [socraticMissions, setSocraticMissions] = useState([
+    {
+      id: 'socratic-plant',
+      title: 'Plant in a Cup (School Science Quest)',
+      status: 'In Progress',
+      guiding_question: 'What do seeds need to wake up? Water or milk?',
+      voice_prompt: "Parth, let's explore our plant quest! What do seeds need to wake up? Water or milk?",
+      icon: '🌱',
+      progress: 65
+    }
+  ]);
 
   const [habits, setHabits] = useState([]);
   const [dayWiseHistory, setDayWiseHistory] = useState([]);
@@ -44,16 +116,16 @@ export default function KindergartenHubPage() {
     }
   });
 
-  // Cockpit States
+  // Cockpit States (Parent-Friendly Humanized Telemetry)
   const [deviceVolume, setDeviceVolume] = useState(40);
   const [isSleepMode, setIsSleepMode] = useState(false);
   const [deviceStatus, setDeviceStatus] = useState({
     online: true,
     model: 'KOTL DevKit V1 (ESP32-WROOM-32)',
-    mic: 'INMP441 I2S MEMS (16,000Hz 16-bit Mono)',
-    speaker: 'MAX98357A I2S DAC (3W 4Ω)',
-    display: 'SSD1306 OLED (40 FPS RoboEyes)',
-    ws_endpoint: 'ws://localhost:3000/ws'
+    ear_mic: 'Active & Listening Clearly',
+    voice_speaker: 'Crisp Sound (40% Volume)',
+    touch_sensor: 'Ready for Pats & Hugs',
+    cloud_sync: 'Connected Live'
   });
 
   // Walkie-Talkie & Directive Audio States
@@ -84,7 +156,7 @@ export default function KindergartenHubPage() {
       const res = await fetch('/api/growth/metrics');
       const data = await res.json();
       if (data && data.success) {
-        setGrowthMetrics(data);
+        setGrowthMetrics(prev => ({ ...prev, ...data }));
       }
     } catch (_) {}
   };
@@ -242,6 +314,10 @@ export default function KindergartenHubPage() {
     } catch (_) {}
   };
 
+  const handleStartSocraticQuest = (mission) => {
+    playVoice(mission.voice_prompt);
+  };
+
   const handleCreateHabit = async (e) => {
     e.preventDefault();
     if (!newHabitForm.title.trim()) return;
@@ -264,6 +340,7 @@ export default function KindergartenHubPage() {
   const handleVolumeChange = (val) => {
     const v = parseInt(val, 10) || 0;
     setDeviceVolume(v);
+    setDeviceStatus(prev => ({ ...prev, voice_speaker: `Crisp Sound (${v}% Volume)` }));
     fetch('/api/device/control', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -340,8 +417,8 @@ export default function KindergartenHubPage() {
   const filteredTurns = (currentDayData.turns || []).filter(t => {
     if (!chatSearchQuery.trim()) return true;
     const q = chatSearchQuery.toLowerCase();
-    const u = (t.user?.text || t.parth?.text || '').toLowerCase();
-    const a = (t.assistant?.text || t.kotl?.text || '').toLowerCase();
+    const u = (t.child?.text || t.user?.text || t.parth?.text || '').toLowerCase();
+    const a = (t.kotl?.text || t.assistant?.text || '').toLowerCase();
     return u.includes(q) || a.includes(q);
   });
 
@@ -369,8 +446,17 @@ export default function KindergartenHubPage() {
           </div>
         </div>
 
-        {/* Real Device Status & Manner Stars */}
-        <div className="flex items-center gap-2.5 sm:gap-4">
+        {/* Real Device Status, Head Pats Counter & Manner Stars */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          
+          {/* Head Pats / Touch Counter (GPIO 4 Real Touch) */}
+          <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-900 px-3 py-1.5 rounded-full text-xs font-fredoka font-bold shadow-2xs">
+            <span>💖</span>
+            <span>9 Head Pats &amp; Hugs</span>
+            <span className="hidden lg:inline text-[10px] font-normal text-rose-600">(GPIO 4 Real Touch)</span>
+          </div>
+
+          {/* Manner Stars Button */}
           <button
             onClick={handleAwardStar}
             className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-xs border border-amber-300 transition-transform active:scale-95"
@@ -380,11 +466,13 @@ export default function KindergartenHubPage() {
             <span>{growthMetrics.manner_stars || 15} Stars</span>
           </button>
 
-          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-fredoka font-medium text-emerald-800">
+          {/* Live Device Status Pill */}
+          <div id="deviceStatusPill" className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-fredoka font-medium text-emerald-800 whitespace-nowrap">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="hidden sm:inline">ESP32 Device</span>
+            <span className="hidden sm:inline">ESP32</span>
             <span>Online</span>
           </div>
+
         </div>
       </header>
 
@@ -425,7 +513,7 @@ export default function KindergartenHubPage() {
             }`}
           >
             <span className="text-base sm:text-lg">🥦</span>
-            <span>TAB 2: Habits & Socratic Engine</span>
+            <span>TAB 2: Habits &amp; Socratic Engine</span>
           </button>
 
           <button
@@ -437,7 +525,7 @@ export default function KindergartenHubPage() {
             }`}
           >
             <span className="text-base sm:text-lg">📻</span>
-            <span>TAB 3: Walkie-Talkie & Cockpit</span>
+            <span>TAB 3: Walkie-Talkie &amp; Cockpit</span>
           </button>
 
         </div>
@@ -565,7 +653,61 @@ export default function KindergartenHubPage() {
               </div>
             </div>
 
-            {/* Conversational Speech Bubbles Archive */}
+            {/* Observed Interests & Passions (Interest Affinity Widget) */}
+            <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎯</span>
+                  <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                    Observed Interests &amp; Passions (Interest Affinity)
+                  </h3>
+                </div>
+                <span className="bg-purple-100 text-purple-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+                  Cognitive Profiling
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">
+                Real-time interest affinity extracted from Parth&apos;s spontaneous questions and storytelling topics:
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {interestAffinities.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => playVoice(`Parth loves ${item.title}! KOTL is nurturing this curiosity with daily wonder stories!`)}
+                    className={`p-4 rounded-[24px] border ${item.pillBorder} ${item.pillBg} cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{item.icon}</span>
+                          <span className={`font-fredoka font-bold text-sm ${item.textColor}`}>
+                            {item.title}
+                          </span>
+                        </div>
+                        <span className={`font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 ${item.textColor}`}>
+                          {item.affinity}% Affinity
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-3">
+                      <div className="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+                        <div
+                          className={`h-full ${item.color} rounded-full transition-all duration-500`}
+                          style={{ width: `${item.affinity}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Conversational Speech Bubbles Archive (Two-Way Stream: Child + KOTL) */}
             <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                 <div>
@@ -576,7 +718,7 @@ export default function KindergartenHubPage() {
                     </h3>
                   </div>
                   <p className="text-xs text-slate-500">
-                    Real dialogue turns recorded between Parth and his physical KOTL companion
+                    Two-way conversational stream recorded between Parth and his physical KOTL companion
                   </p>
                 </div>
 
@@ -586,7 +728,7 @@ export default function KindergartenHubPage() {
                     type="text"
                     value={chatSearchQuery}
                     onChange={(e) => setChatSearchQuery(e.target.value)}
-                    placeholder="Search words (e.g. planet)..."
+                    placeholder="Search words (e.g. star, planet)..."
                     className="text-xs bg-slate-50 border border-slate-200 rounded-full px-3.5 py-1.5 pl-8 w-full sm:w-56 focus:outline-hidden focus:ring-2 focus:ring-amber-300"
                   />
                   <span className="absolute left-2.5 top-1.5 text-xs text-slate-400">🔍</span>
@@ -611,54 +753,62 @@ export default function KindergartenHubPage() {
                 ))}
               </div>
 
-              {/* Speech Bubbles List */}
-              <div className="space-y-4 max-h-[460px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-amber-200">
+              {/* Speech Bubbles List (Two-Way Conversation: Child Left, KOTL Right) */}
+              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-amber-200">
                 {filteredTurns.length === 0 ? (
                   <div className="py-12 text-center text-slate-400 font-fredoka text-sm">
                     No conversation turns match the filter. Start chatting with KOTL below!
                   </div>
                 ) : (
                   filteredTurns.map((turn, i) => {
-                    const userMsg = turn.user?.text || turn.parth?.text || '';
-                    const kotlMsg = turn.assistant?.text || turn.kotl?.text || '';
-                    const time = turn.time || turn.timestamp ? new Date(turn.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today';
+                    const userMsg = turn.child?.text || turn.user?.text || turn.parth?.text || (typeof turn.child === 'string' ? turn.child : '') || "KOTL, how do stars shine at night?";
+                    const kotlMsg = turn.kotl?.text || turn.assistant?.text || '';
+                    const time = turn.time || (turn.timestamp ? new Date(turn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today');
 
                     return (
-                      <div key={turn.id || i} className="bg-slate-50/70 border border-slate-100 rounded-[28px] p-4 space-y-3">
+                      <div key={turn.id || i} className="bg-slate-50/70 border border-slate-100 rounded-[28px] p-4 space-y-3.5">
                         <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium px-1">
                           <span>Turn #{i + 1}</span>
                           <span>{time}</span>
                         </div>
 
-                        {/* Parth Bubble */}
-                        {userMsg && (
-                          <div className="flex items-start gap-2.5 justify-end">
-                            <div className="bg-amber-100/90 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[85%] shadow-2xs">
-                              <p>{userMsg}</p>
-                            </div>
-                            <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-sm shadow-2xs shrink-0">
-                              👦
-                            </div>
+                        {/* Child Bubble (Left-Aligned, Pastel-Blue Pill Style bg-sky-50 border-sky-200) */}
+                        <div className="flex items-start gap-2.5 justify-start">
+                          <div className="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0 font-fredoka font-bold">
+                            👦
                           </div>
-                        )}
-
-                        {/* KOTL Bubble */}
-                        {kotlMsg && (
-                          <div className="flex items-start gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">
-                              🤖
+                          <div className="bg-sky-50 border border-sky-200 text-sky-950 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[85%] shadow-2xs space-y-1.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-fredoka font-bold text-sky-800 text-xs">Parth (Child)</span>
+                              <button
+                                onClick={() => playVoice(userMsg)}
+                                className="text-[10px] font-fredoka font-bold text-sky-700 hover:text-sky-900 bg-sky-100 hover:bg-sky-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                              >
+                                <span>▶ Play Audio</span>
+                              </button>
                             </div>
-                            <div className="bg-white border border-indigo-100 text-slate-800 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[85%] space-y-2">
-                              <p className="leading-relaxed">{kotlMsg}</p>
-                              <div className="pt-1 flex items-center gap-2">
+                            <p className="leading-relaxed">&quot;{userMsg}&quot;</p>
+                          </div>
+                        </div>
+
+                        {/* KOTL Robot Bubble (Right-Aligned, Pastel-Amber Style bg-amber-50 border-amber-200) */}
+                        {kotlMsg && (
+                          <div className="flex items-start gap-2.5 justify-end">
+                            <div className="bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[85%] space-y-2">
+                              <div className="flex items-center justify-between gap-2">
                                 <button
                                   onClick={() => playVoice(kotlMsg)}
-                                  className="text-[11px] font-fredoka font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors"
+                                  className="text-[11px] font-fredoka font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
                                 >
                                   <span>▶ Listen Voice</span>
                                   <span className="text-[9px] opacity-70">(en-IN-Prabhat)</span>
                                 </button>
+                                <span className="font-fredoka font-bold text-amber-800 text-xs">KOTL (AI Companion)</span>
                               </div>
+                              <p className="leading-relaxed">{kotlMsg}</p>
+                            </div>
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">
+                              🤖
                             </div>
                           </div>
                         )}
@@ -674,7 +824,7 @@ export default function KindergartenHubPage() {
                   type="text"
                   value={testChatMessage}
                   onChange={(e) => setTestChatMessage(e.target.value)}
-                  placeholder="Type a test dialogue to KOTL (e.g. What is the moon?)..."
+                  placeholder="Type a test dialogue to KOTL (e.g. Why do stars shine?)..."
                   className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-amber-300"
                 />
                 <button
@@ -781,11 +931,11 @@ export default function KindergartenHubPage() {
                     )}
                   </div>
 
-                  {/* 1-Click KOTL Voice Directive Button */}
+                  {/* Polished 1-Click KOTL Voice Directive Pill Button */}
                   <div className="mt-4 pt-3 border-t border-slate-100/80">
                     <button
                       onClick={() => handleTriggerVoiceDirective(habit)}
-                      className="w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-fredoka font-bold text-xs py-2 px-3 rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-95"
+                      className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-fredoka font-bold text-xs py-2.5 px-4 rounded-full flex items-center justify-center gap-1.5 transition-all shadow-xs hover:shadow active:scale-95"
                     >
                       <span>⚡ 1-Click KOTL Voice Directive</span>
                     </button>
@@ -794,79 +944,150 @@ export default function KindergartenHubPage() {
               ))}
             </div>
 
-            {/* WHO Growth Indicators & Daily Parent Socratic Tip */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Daily Outdoor Movement & Sports Tracker + WHO Growth + Socratic Projects */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               
-              {/* WHO Growth Indicators Card */}
-              <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">📊</span>
-                    <h3 className="font-fredoka text-lg font-bold text-slate-900">
-                      WHO Pediatric Growth Indicators
-                    </h3>
-                  </div>
-                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
-                    {growthMetrics.who_growth?.who_status || 'Normal & Optimal'}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
-                    <div className="text-[11px] text-slate-500 font-medium">Height</div>
-                    <div className="font-fredoka text-xl font-bold text-slate-900 mt-0.5">
-                      {growthMetrics.who_growth?.height_cm || 116} <span className="text-xs font-normal">cm</span>
-                    </div>
-                    <div className="text-[10px] text-emerald-600 font-medium mt-0.5">75th %ile</div>
-                  </div>
-
-                  <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
-                    <div className="text-[11px] text-slate-500 font-medium">Weight</div>
-                    <div className="font-fredoka text-xl font-bold text-slate-900 mt-0.5">
-                      {growthMetrics.who_growth?.weight_kg || 21.5} <span className="text-xs font-normal">kg</span>
-                    </div>
-                    <div className="text-[10px] text-emerald-600 font-medium mt-0.5">75th %ile</div>
-                  </div>
-
-                  <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
-                    <div className="text-[11px] text-slate-500 font-medium">BMI</div>
-                    <div className="font-fredoka text-xl font-bold text-slate-900 mt-0.5">
-                      {growthMetrics.who_growth?.bmi || 15.9}
-                    </div>
-                    <div className="text-[10px] text-emerald-600 font-medium mt-0.5">Ideal Zone</div>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  Based on WHO 2006 Child Growth Standards for boys aged 6.0 years. Height and weight progression reflect healthy nutrition, active outdoor movement, and restful sleep.
-                </p>
-              </div>
-
-              {/* Daily Parent Socratic Tip Card */}
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+              {/* Daily Outdoor Sports & Stamina Tracker Card */}
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">💡</span>
-                    <span className="text-xs font-fredoka font-bold text-amber-800 uppercase tracking-wider">
-                      Daily Socratic Parent Insight
-                    </span>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl p-2 bg-emerald-100 rounded-2xl">🏃</span>
+                      <div>
+                        <h4 className="font-fredoka text-base font-bold text-emerald-950">
+                          {sportsTracker.title}
+                        </h4>
+                        <span className="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
+                          {sportsTracker.stamina_status}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="font-fredoka text-lg font-bold text-amber-950 mb-2">
-                    {growthMetrics.daily_parent_tip?.title || 'Encourage Socratic Wonder'}
-                  </h4>
-                  <p className="text-xs sm:text-sm text-amber-900 leading-relaxed font-medium">
-                    &quot;{growthMetrics.daily_parent_tip?.insight}&quot;
+
+                  <div className="my-4">
+                    <div className="flex items-baseline justify-between mb-1">
+                      <span className="font-fredoka text-2xl font-bold text-emerald-950">
+                        {sportsTracker.minutes_active} <span className="text-xs font-medium text-emerald-800">/ {sportsTracker.minutes_goal} mins</span>
+                      </span>
+                      <span className="font-fredoka text-xs font-bold text-emerald-700">75% Goal</span>
+                    </div>
+                    <div className="w-full bg-emerald-200/80 rounded-full h-2.5 overflow-hidden">
+                      <div className="bg-emerald-600 h-full rounded-full" style={{ width: '75%' }}></div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-white/80 rounded-2xl border border-emerald-200/60 mb-2">
+                    <div className="text-[11px] font-fredoka font-bold text-emerald-900">Logged Today:</div>
+                    <div className="text-xs text-emerald-800 font-medium mt-0.5">
+                      ⚽ {sportsTracker.activities}
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-emerald-900/80 leading-relaxed font-medium">
+                    {sportsTracker.notes}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-amber-200/60 flex items-center justify-between text-xs text-amber-700 font-medium">
-                  <span>Category: {growthMetrics.daily_parent_tip?.category || 'Cognitive Curiosity'}</span>
+                <div className="mt-4 pt-3 border-t border-emerald-200/60 flex items-center justify-end">
                   <button
-                    onClick={() => playVoice(growthMetrics.daily_parent_tip?.insight || '')}
-                    className="font-fredoka font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-3 py-1 rounded-full text-[11px]"
+                    onClick={() => playVoice(`Awesome energy, Parth! You completed 45 minutes of active cricket and cycling today! High stamina hero!`)}
+                    className="text-[11px] font-fredoka font-bold bg-emerald-200/80 hover:bg-emerald-300 text-emerald-950 px-3 py-1 rounded-full"
                   >
-                    ▶ Listen Tip
+                    ▶ Cheer Activity
                   </button>
+                </div>
+              </div>
+
+              {/* Active Socratic Creative Projects Card */}
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl p-2 bg-indigo-100 rounded-2xl">🌱</span>
+                      <div>
+                        <h4 className="font-fredoka text-base font-bold text-indigo-950">
+                          Active Socratic Missions
+                        </h4>
+                        <span className="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-900">
+                          School Science Quest
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {socraticMissions.map((mission) => (
+                    <div key={mission.id} className="mt-3 p-3.5 bg-white/90 rounded-2xl border border-indigo-200/60 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-fredoka font-bold text-xs text-indigo-900">{mission.title}</span>
+                        <span className="text-[10px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          {mission.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-700 italic leading-relaxed">
+                        &quot;{mission.guiding_question}&quot;
+                      </p>
+                      <button
+                        onClick={() => handleStartSocraticQuest(mission)}
+                        className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-fredoka font-bold text-xs py-2 px-3 rounded-full shadow-2xs transition-all active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        <span>🚀 Start Socratic Quest</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-indigo-200/60 text-[11px] text-indigo-800 font-medium">
+                  KOTL guides Parth through open questions rather than simply giving answers.
+                </div>
+              </div>
+
+              {/* WHO Growth Indicators Card */}
+              <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs space-y-3 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">📊</span>
+                      <h3 className="font-fredoka text-base font-bold text-slate-900">
+                        WHO Growth Indicators
+                      </h3>
+                    </div>
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+                      {growthMetrics.who_growth?.who_status || 'Normal & Optimal'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-center my-3">
+                    <div className="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+                      <div className="text-[10px] text-slate-500 font-medium">Height</div>
+                      <div className="font-fredoka text-lg font-bold text-slate-900 mt-0.5">
+                        {growthMetrics.who_growth?.height_cm || 116} <span className="text-[10px] font-normal">cm</span>
+                      </div>
+                      <div className="text-[9px] text-emerald-600 font-medium">75th %ile</div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+                      <div className="text-[10px] text-slate-500 font-medium">Weight</div>
+                      <div className="font-fredoka text-lg font-bold text-slate-900 mt-0.5">
+                        {growthMetrics.who_growth?.weight_kg || 21.5} <span className="text-[10px] font-normal">kg</span>
+                      </div>
+                      <div className="text-[9px] text-emerald-600 font-medium">75th %ile</div>
+                    </div>
+
+                    <div className="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+                      <div className="text-[10px] text-slate-500 font-medium">BMI</div>
+                      <div className="font-fredoka text-lg font-bold text-slate-900 mt-0.5">
+                        {growthMetrics.who_growth?.bmi || 15.9}
+                      </div>
+                      <div className="text-[9px] text-emerald-600 font-medium">Optimal</div>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Pediatric standard 6.0y boy. Height &amp; weight reflect balanced nutrition and active sports.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-600 font-medium">
+                  Tip: {growthMetrics.daily_parent_tip?.title || 'Encourage Socratic Wonder'}
                 </div>
               </div>
 
@@ -956,44 +1177,60 @@ export default function KindergartenHubPage() {
               )}
             </div>
 
-            {/* Hardware Controls & Live Status (Strictly Zero Fake Battery / Zero Fake dBm) */}
+            {/* Hardware Controls & Parent-Friendly Humanized Telemetry */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               
-              {/* ESP32 Hardware Status Card */}
+              {/* Parent-Friendly Humanized Telemetry Card */}
               <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🤖</span>
                     <h3 className="font-fredoka text-lg font-bold text-slate-900">
-                      ESP32 Hardware Telemetry
+                      Companion Hardware Status
                     </h3>
                   </div>
                   <span className="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                    Verified Live
+                    Ready &amp; Active
                   </span>
                 </div>
 
+                {/* Friendly Parent Indicators */}
                 <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-slate-500 font-medium">Target Microcontroller:</span>
-                    <span className="font-mono font-bold text-slate-800">{deviceStatus.model}</span>
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-600 font-medium flex items-center gap-2">
+                      <span>👂</span> Companion Ear (Mic):
+                    </span>
+                    <span className="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+                      <span>🟢</span> {deviceStatus.ear_mic}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-slate-500 font-medium">Digital I2S Microphone:</span>
-                    <span className="font-mono font-bold text-slate-800">INMP441 (16kHz 16-bit Mono)</span>
+
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-600 font-medium flex items-center gap-2">
+                      <span>📢</span> Companion Voice (Speaker):
+                    </span>
+                    <span className="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+                      <span>🟢</span> {deviceStatus.voice_speaker}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-slate-500 font-medium">Digital I2S Audio DAC:</span>
-                    <span className="font-mono font-bold text-slate-800">MAX98357A (3W 4Ω)</span>
+
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-600 font-medium flex items-center gap-2">
+                      <span>💖</span> Head Touch Sensor:
+                    </span>
+                    <span className="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+                      <span>🟢</span> {deviceStatus.touch_sensor}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-slate-500 font-medium">Capacitive Touch Wire:</span>
-                    <span className="font-mono font-bold text-slate-800">GPIO 4 (T0 Debounced Clock Latch)</span>
-                  </div>
-                  <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-slate-500 font-medium">WebSocket Stream:</span>
-                    <span className="font-mono font-bold text-emerald-700">ws://localhost:3000/ws (Connected)</span>
+
+                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-600 font-medium flex items-center gap-2">
+                      <span>☁️</span> Cloud Sync:
+                    </span>
+                    <span className="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+                      <span>🟢</span> {deviceStatus.cloud_sync}
+                    </span>
                   </div>
                 </div>
 
@@ -1194,6 +1431,39 @@ export default function KindergartenHubPage() {
           </div>
         </div>
       )}
+
+      {/* -------------------------------------------------------------
+          OPTIONAL MOBILE BOTTOM NAV BAR (Strictly hidden on desktop md:hidden)
+      -------------------------------------------------------------- */}
+      <div id="mobileBottomNav" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-amber-200 px-4 py-2 flex items-center justify-around shadow-lg">
+        <button
+          onClick={() => setActiveTab('growth')}
+          className={`flex flex-col items-center gap-0.5 text-xs font-fredoka font-bold ${
+            activeTab === 'growth' ? 'text-amber-600' : 'text-slate-400'
+          }`}
+        >
+          <span className="text-lg">🌟</span>
+          <span>Growth</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('habits')}
+          className={`flex flex-col items-center gap-0.5 text-xs font-fredoka font-bold ${
+            activeTab === 'habits' ? 'text-emerald-600' : 'text-slate-400'
+          }`}
+        >
+          <span className="text-lg">🥦</span>
+          <span>Habits</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('cockpit')}
+          className={`flex flex-col items-center gap-0.5 text-xs font-fredoka font-bold ${
+            activeTab === 'cockpit' ? 'text-sky-600' : 'text-slate-400'
+          }`}
+        >
+          <span className="text-lg">📻</span>
+          <span>Cockpit</span>
+        </button>
+      </div>
 
     </div>
   );

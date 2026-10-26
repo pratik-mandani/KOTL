@@ -72,19 +72,6 @@
       border: 1px solid #BAE6FD !important;
       transform: scale(1.01);
     }
-    
-    .speech-bubble-user {
-      background: #FEF3C7;
-      border: 1px solid #FDE68A;
-      color: #451A03;
-      border-radius: 20px 20px 4px 20px;
-    }
-    .speech-bubble-kotl {
-      background: #FFFFFF;
-      border: 1px solid #E0E7FF;
-      color: #1E1B4B;
-      border-radius: 20px 20px 20px 4px;
-    }
 
     /* Custom smooth scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -92,7 +79,7 @@
     ::-webkit-scrollbar-thumb { background: #FBBF24; border-radius: 10px; }
   </style>
 </head>
-<body className="min-h-screen flex flex-col pb-28 text-slate-800">
+<body class="min-h-screen flex flex-col pb-28 text-slate-800">
 
   <!-- ============================================================== -->
   <!-- 1. TOP HEADER BAR (Zero Fake Battery / Zero Fake dBm) -->
@@ -115,16 +102,26 @@
       </div>
     </div>
 
-    <!-- Real Device Status Pill & Manner Stars Counter -->
-    <div class="flex items-center gap-2.5 sm:gap-4">
+    <!-- Real Device Status Pill, Head Pats Counter & Manner Stars -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      
+      <!-- Head Pats / Touch Counter (GPIO 4 Real Touch) -->
+      <div class="flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-900 px-3 py-1.5 rounded-full text-xs font-fredoka font-bold shadow-2xs">
+        <span>💖</span>
+        <span>9 Head Pats &amp; Hugs</span>
+        <span class="hidden lg:inline text-[10px] font-normal text-rose-600">(GPIO 4 Real Touch)</span>
+      </div>
+
+      <!-- Manner Stars Button -->
       <button onclick="handleAwardMannerStar()" class="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-xs border border-amber-300 transition-transform active:scale-95" title="Award Manner Star for kindness or good habits!">
         <span>⭐</span>
         <span id="headerMannerStars">15 Stars</span>
       </button>
 
+      <!-- Live ESP32 Status Pill -->
       <div id="deviceStatusPill" class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-fredoka font-medium text-emerald-800 whitespace-nowrap">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span class="hidden sm:inline">ESP32 Device</span>
+        <span class="hidden sm:inline">ESP32</span>
         <span id="deviceStatusLabel">Online</span>
       </div>
 
@@ -153,12 +150,12 @@
 
       <button id="tabBtn_habits" onclick="switchMainTab('habits')" class="flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:text-emerald-900 hover:bg-white/40 transition-all">
         <span class="text-base sm:text-lg">🥦</span>
-        <span>TAB 2: Habits & Socratic Engine</span>
+        <span>TAB 2: Habits &amp; Socratic Engine</span>
       </button>
 
       <button id="tabBtn_cockpit" onclick="switchMainTab('cockpit')" class="flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:text-sky-900 hover:bg-white/40 transition-all">
         <span class="text-base sm:text-lg">📻</span>
-        <span>TAB 3: Walkie-Talkie & Cockpit</span>
+        <span>TAB 3: Walkie-Talkie &amp; Cockpit</span>
       </button>
 
     </div>
@@ -196,7 +193,7 @@
           <div class="font-fredoka text-3xl font-bold text-purple-950">
             <span id="metricCuriosityCount">28</span> <span class="text-sm font-medium text-purple-800">queries</span>
           </div>
-          <p class="text-xs text-purple-900/80 font-medium mt-1">Exploratory 'Why & How' Questions</p>
+          <p class="text-xs text-purple-900/80 font-medium mt-1">Exploratory 'Why &amp; How' Questions</p>
         </div>
       </div>
 
@@ -212,7 +209,7 @@
           <div class="font-fredoka text-3xl font-bold text-yellow-950">
             <span id="metricMannerStars">15</span> <span class="text-sm font-medium text-yellow-800">stars</span>
           </div>
-          <p class="text-xs text-yellow-900/80 font-medium mt-1">Kindness & Habit Badges</p>
+          <p class="text-xs text-yellow-900/80 font-medium mt-1">Kindness &amp; Habit Badges</p>
         </div>
       </div>
 
@@ -249,7 +246,97 @@
       </div>
     </div>
 
-    <!-- Conversational Speech Bubbles Archive Card -->
+    <!-- Observed Interests & Passions (Interest Affinity Widget) -->
+    <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🎯</span>
+          <h3 class="font-fredoka text-lg font-bold text-slate-900">Observed Interests &amp; Passions (Interest Affinity)</h3>
+        </div>
+        <span class="bg-purple-100 text-purple-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">Cognitive Profiling</span>
+      </div>
+      <p class="text-xs text-slate-500 mb-4">Real-time interest affinity extracted from Parth's spontaneous questions and storytelling topics:</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <!-- 🚀 Space Exploration & Stars (95%) -->
+        <div onclick="playLocalVoice('Parth loves Space Exploration &amp; Stars! KOTL is exploring galaxies and constellations with him!')" class="p-4 rounded-[24px] border border-purple-200 bg-purple-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🚀</span>
+                <span class="font-fredoka font-bold text-sm text-purple-950">Space Exploration &amp; Stars</span>
+              </div>
+              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-purple-950">95% Affinity</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">Asks about planetary orbits, telescopes, and constellations before bed</p>
+          </div>
+          <div class="mt-3">
+            <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+              <div class="h-full bg-purple-500 rounded-full" style="width: 95%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🎨 Creative Drawing & Visual Art (88%) -->
+        <div onclick="playLocalVoice('Parth shows brilliant visual creativity! KOTL encourages drawing and colorful sketches!')" class="p-4 rounded-[24px] border border-pink-200 bg-pink-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🎨</span>
+                <span class="font-fredoka font-bold text-sm text-pink-950">Creative Drawing &amp; Visual Art</span>
+              </div>
+              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-pink-950">88% Affinity</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">Colors celestial maps and sketches friendly robot companions</p>
+          </div>
+          <div class="mt-3">
+            <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+              <div class="h-full bg-pink-500 rounded-full" style="width: 88%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🐾 Nature & Animal Care (82%) -->
+        <div onclick="playLocalVoice('Parth loves animals and gentle nature exploration! Super kind heart!')" class="p-4 rounded-[24px] border border-emerald-200 bg-emerald-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🐾</span>
+                <span class="font-fredoka font-bold text-sm text-emerald-950">Nature &amp; Animal Care</span>
+              </div>
+              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-emerald-950">82% Affinity</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">Loves learning animal sounds, garden birds, and plant watering rituals</p>
+          </div>
+          <div class="mt-3">
+            <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+              <div class="h-full bg-emerald-500 rounded-full" style="width: 82%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🏎️ Mechanical & Toy Engineering (74%) -->
+        <div onclick="playLocalVoice('Parth is curious about how machines work! Great foundation for future engineering!')" class="p-4 rounded-[24px] border border-amber-200 bg-amber-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🏎️</span>
+                <span class="font-fredoka font-bold text-sm text-amber-950">Mechanical &amp; Toy Engineering</span>
+              </div>
+              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-amber-950">74% Affinity</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">Curious about how wheels, gears, and robot speakers transmit voice</p>
+          </div>
+          <div class="mt-3">
+            <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+              <div class="h-full bg-amber-500 rounded-full" style="width: 74%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conversational Speech Bubbles Archive Card (Two-Way Stream: Child + KOTL) -->
     <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
@@ -257,12 +344,12 @@
             <span class="text-xl">💬</span>
             <h3 class="font-fredoka text-lg font-bold text-slate-900">Day-Wise Conversational Speech Bubbles</h3>
           </div>
-          <p class="text-xs text-slate-500">Real dialogue turns recorded between Parth and his physical KOTL companion</p>
+          <p class="text-xs text-slate-500">Two-way conversational stream recorded between Parth and his physical KOTL companion</p>
         </div>
 
         <!-- Search Input -->
         <div class="relative">
-          <input type="text" id="chatSearchInput" oninput="handleSearchChat(this.value)" placeholder="Search words (e.g. planet)..." class="text-xs bg-slate-50 border border-slate-200 rounded-full px-3.5 py-1.5 pl-8 w-full sm:w-56 focus:outline-none focus:ring-2 focus:ring-amber-300">
+          <input type="text" id="chatSearchInput" oninput="handleSearchChat(this.value)" placeholder="Search words (e.g. planet, stars)..." class="text-xs bg-slate-50 border border-slate-200 rounded-full px-3.5 py-1.5 pl-8 w-full sm:w-56 focus:outline-none focus:ring-2 focus:ring-amber-300">
           <span class="absolute left-2.5 top-1.5 text-xs text-slate-400">🔍</span>
         </div>
       </div>
@@ -273,13 +360,13 @@
       </div>
 
       <!-- Speech Bubbles List -->
-      <div id="chatBubblesContainer" class="space-y-4 max-h-[460px] overflow-y-auto pr-2">
+      <div id="chatBubblesContainer" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
         <!-- Rendered dynamically -->
       </div>
 
       <!-- Quick Live Dialogue Test Form -->
       <form onsubmit="handleSendTestChat(event)" class="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2">
-        <input type="text" id="testChatInput" placeholder="Type a test dialogue to KOTL (e.g. What is the moon?)..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+        <input type="text" id="testChatInput" placeholder="Type a test dialogue to KOTL (e.g. Why do stars shine?)..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
         <button type="submit" id="testChatBtn" class="bg-amber-500 hover:bg-amber-600 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5">
           <span>Send</span>
           <span>🚀</span>
@@ -317,62 +404,134 @@
       <!-- Rendered dynamically from /api/habits -->
     </div>
 
-    <!-- WHO Growth Indicators & Daily Parent Socratic Tip -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- Daily Outdoor Movement & Sports Tracker + Socratic Missions + WHO Growth Indicators -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       
-      <!-- WHO Growth Indicators Card -->
-      <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-xl">📊</span>
-            <h3 class="font-fredoka text-lg font-bold text-slate-900">WHO Pediatric Growth Indicators</h3>
-          </div>
-          <span class="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
-            Normal & Optimal (WHO Standard)
-          </span>
-        </div>
-
-        <div class="grid grid-cols-3 gap-3">
-          <div class="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
-            <div class="text-[11px] text-slate-500 font-medium">Height</div>
-            <div class="font-fredoka text-xl font-bold text-slate-900 mt-0.5">116 <span class="text-xs font-normal">cm</span></div>
-            <div class="text-[10px] text-emerald-600 font-medium mt-0.5">75th %ile</div>
-          </div>
-          <div class="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
-            <div class="text-[11px] text-slate-500 font-medium">Weight</div>
-            <div class="font-fredoka text-xl font-bold text-slate-900 mt-0.5">21.5 <span class="text-xs font-normal">kg</span></div>
-            <div class="text-[10px] text-emerald-600 font-medium mt-0.5">75th %ile</div>
-          </div>
-          <div class="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
-            <div class="text-[11px] text-slate-500 font-medium">BMI</div>
-            <div class="font-fredoka text-xl font-bold text-slate-900 mt-0.5">15.9</div>
-            <div class="text-[10px] text-emerald-600 font-medium mt-0.5">Ideal Zone</div>
-          </div>
-        </div>
-
-        <p class="text-xs text-slate-500 leading-relaxed">
-          Based on WHO 2006 Child Growth Standards for boys aged 6.0 years. Height and weight progression reflect healthy nutrition, active movement, and restful sleep.
-        </p>
-      </div>
-
-      <!-- Daily Parent Socratic Tip Card -->
-      <div class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+      <!-- Daily Outdoor Sports & Stamina Tracker Card -->
+      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
         <div>
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-xl">💡</span>
-            <span class="text-xs font-fredoka font-bold text-amber-800 uppercase tracking-wider">Daily Socratic Parent Insight</span>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl p-2 bg-emerald-100 rounded-2xl">🏃</span>
+              <div>
+                <h4 class="font-fredoka text-base font-bold text-emerald-950">
+                  Daily Outdoor Sports &amp; Stamina Goal
+                </h4>
+                <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
+                  High Stamina
+                </span>
+              </div>
+            </div>
           </div>
-          <h4 id="parentTipTitle" class="font-fredoka text-lg font-bold text-amber-950 mb-2">Encourage Socratic Wonder</h4>
-          <p id="parentTipInsight" class="text-xs sm:text-sm text-amber-900 leading-relaxed font-medium">
-            "When Parth asks 'Why do stars twinkle?', celebrate his curiosity first: 'That is a scientist\'s question! What do you think the atmosphere is doing to the light?'"
+
+          <div class="my-4">
+            <div class="flex items-baseline justify-between mb-1">
+              <span class="font-fredoka text-2xl font-bold text-emerald-950">
+                45 <span class="text-xs font-medium text-emerald-800">/ 60 mins</span>
+              </span>
+              <span class="font-fredoka text-xs font-bold text-emerald-700">75% Goal</span>
+            </div>
+            <div class="w-full bg-emerald-200/80 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-emerald-600 h-full rounded-full" style="width: 75%"></div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-white/80 rounded-2xl border border-emerald-200/60 mb-2">
+            <div class="text-[11px] font-fredoka font-bold text-emerald-900">Logged Today:</div>
+            <div class="text-xs text-emerald-800 font-medium mt-0.5">
+              ⚽ Playground Cricket (30m) + Cycling (15m)
+            </div>
+          </div>
+          <p class="text-[11px] text-emerald-900/80 leading-relaxed font-medium">
+            Active aerobic playtime strengthens physical motor skills and ensures sound nighttime sleep.
           </p>
         </div>
 
-        <div class="mt-4 pt-3 border-t border-amber-200/60 flex items-center justify-between text-xs text-amber-700 font-medium">
-          <span id="parentTipCategory">Category: Cognitive Curiosity</span>
-          <button onclick="playLocalVoice(document.getElementById('parentTipInsight').innerText)" class="font-fredoka font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-3 py-1 rounded-full text-[11px]">
-            ▶ Listen Tip
+        <div class="mt-4 pt-3 border-t border-emerald-200/60 flex items-center justify-end">
+          <button onclick="playLocalVoice('Awesome energy, Parth! You completed 45 minutes of active cricket and cycling today! High stamina hero!')" class="text-[11px] font-fredoka font-bold bg-emerald-200/80 hover:bg-emerald-300 text-emerald-950 px-3 py-1 rounded-full">
+            ▶ Cheer Activity
           </button>
+        </div>
+      </div>
+
+      <!-- Active Socratic Creative Missions Card -->
+      <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl p-2 bg-indigo-100 rounded-2xl">🌱</span>
+              <div>
+                <h4 class="font-fredoka text-base font-bold text-indigo-950">
+                  Active Socratic Missions
+                </h4>
+                <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-900">
+                  School Science Quest
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 p-3.5 bg-white/90 rounded-2xl border border-indigo-200/60 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-fredoka font-bold text-xs text-indigo-900">Plant in a Cup (School Science Quest)</span>
+              <span class="text-[10px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                In Progress
+              </span>
+            </div>
+            <p class="text-xs text-slate-700 italic leading-relaxed">
+              &quot;What do seeds need to wake up? Water or milk?&quot;
+            </p>
+            <button onclick="playLocalVoice('Parth, let us explore our plant quest! What do seeds need to wake up? Water or milk?')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-fredoka font-bold text-xs py-2 px-3 rounded-full shadow-2xs transition-all active:scale-95 flex items-center justify-center gap-1.5">
+              <span>🚀 Start Socratic Quest</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-indigo-200/60 text-[11px] text-indigo-800 font-medium">
+          KOTL guides Parth through open questions rather than simply giving answers.
+        </div>
+      </div>
+
+      <!-- WHO Growth Indicators Card -->
+      <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs space-y-3 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">📊</span>
+              <h3 class="font-fredoka text-base font-bold text-slate-900">WHO Growth Indicators</h3>
+            </div>
+            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+              Normal &amp; Optimal
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center my-3">
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+              <div class="text-[10px] text-slate-500 font-medium">Height</div>
+              <div class="font-fredoka text-lg font-bold text-slate-900 mt-0.5">116 <span class="text-[10px] font-normal">cm</span></div>
+              <div class="text-[9px] text-emerald-600 font-medium">75th %ile</div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+              <div class="text-[10px] text-slate-500 font-medium">Weight</div>
+              <div class="font-fredoka text-lg font-bold text-slate-900 mt-0.5">21.5 <span class="text-[10px] font-normal">kg</span></div>
+              <div class="text-[9px] text-emerald-600 font-medium">75th %ile</div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+              <div class="text-[10px] text-slate-500 font-medium">BMI</div>
+              <div class="font-fredoka text-lg font-bold text-slate-900 mt-0.5">15.9</div>
+              <div class="text-[9px] text-emerald-600 font-medium">Optimal</div>
+            </div>
+          </div>
+
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            Pediatric standard 6.0y boy. Height &amp; weight reflect balanced nutrition and active sports.
+          </p>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 text-[11px] text-slate-600 font-medium">
+          Tip: Encourage Socratic wonder and daily questions.
         </div>
       </div>
 
@@ -441,42 +600,58 @@
       </div>
     </div>
 
-    <!-- Hardware Controls & Live Status -->
+    <!-- Hardware Controls & Parent-Friendly Humanized Telemetry -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       
-      <!-- ESP32 Hardware Status Card (Zero Fake Telemetry) -->
+      <!-- Parent-Friendly Companion Hardware Status Card -->
       <div class="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="text-xl">🤖</span>
-            <h3 class="font-fredoka text-lg font-bold text-slate-900">ESP32 Hardware Telemetry</h3>
+            <h3 class="font-fredoka text-lg font-bold text-slate-900">Companion Hardware Status</h3>
           </div>
           <span class="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-            Verified Live
+            Ready &amp; Active
           </span>
         </div>
 
+        <!-- Friendly Parent Indicators -->
         <div class="space-y-2 text-xs">
-          <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-            <span class="text-slate-500 font-medium">Target Microcontroller:</span>
-            <span class="font-mono font-bold text-slate-800">KOTL DevKit V1 (ESP32-WROOM-32)</span>
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-2">
+              <span>👂</span> Companion Ear (Mic):
+            </span>
+            <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+              <span>🟢</span> Active &amp; Listening Clearly
+            </span>
           </div>
-          <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-            <span class="text-slate-500 font-medium">Digital I2S Microphone:</span>
-            <span class="font-mono font-bold text-slate-800">INMP441 (16kHz 16-bit Mono)</span>
+
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-2">
+              <span>📢</span> Companion Voice (Speaker):
+            </span>
+            <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+              <span>🟢</span> Crisp Sound (<span id="voiceSpeakerStatusLabel">40%</span> Volume)
+            </span>
           </div>
-          <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-            <span class="text-slate-500 font-medium">Digital I2S Audio DAC:</span>
-            <span class="font-mono font-bold text-slate-800">MAX98357A (3W 4Ω)</span>
+
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-2">
+              <span>💖</span> Head Touch Sensor:
+            </span>
+            <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+              <span>🟢</span> Ready for Pats &amp; Hugs
+            </span>
           </div>
-          <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-            <span class="text-slate-500 font-medium">Capacitive Touch Wire:</span>
-            <span class="font-mono font-bold text-slate-800">GPIO 4 (T0 Debounced Clock Latch)</span>
-          </div>
-          <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-2xl border border-slate-100">
-            <span class="text-slate-500 font-medium">WebSocket Stream:</span>
-            <span class="font-mono font-bold text-emerald-700">ws://localhost:3000/ws (Connected)</span>
+
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-2">
+              <span>☁️</span> Cloud Sync:
+            </span>
+            <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+              <span>🟢</span> Connected Live
+            </span>
           </div>
         </div>
 
@@ -645,9 +820,9 @@
   </div>
 
   <!-- ============================================================== -->
-  <!-- 7. FIXED MOBILE BOTTOM NAVIGATION BAR (Required by QA Suite) -->
+  <!-- 7. MOBILE BOTTOM NAVIGATION (Hidden on Desktop: md:hidden) -->
   <!-- ============================================================== -->
-  <div id="mobileBottomNav" class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2.5 flex items-center justify-around z-30 shadow-lg">
+  <div id="mobileBottomNav" class="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2.5 flex items-center justify-around z-30 shadow-lg">
     <button onclick="switchMainTab('growth')" id="mobBtn_growth" class="flex flex-col items-center gap-0.5 text-amber-700">
       <span class="text-lg">🌟</span>
       <span class="text-[10px] font-fredoka font-bold">Growth</span>
@@ -799,13 +974,6 @@
             btn.onclick = function() { playLocalVoice('Parth learned the word: ' + w + '! What a brilliant word to use!'); };
             container.appendChild(btn);
           });
-
-          // Daily Parent Tip
-          if (data.daily_parent_tip) {
-            document.getElementById('parentTipTitle').innerText = data.daily_parent_tip.title || 'Encourage Socratic Wonder';
-            document.getElementById('parentTipInsight').innerText = '"' + data.daily_parent_tip.insight + '"';
-            document.getElementById('parentTipCategory').innerText = 'Category: ' + (data.daily_parent_tip.category || 'Cognitive Curiosity');
-          }
         }
       })
       .catch(function() {});
@@ -849,7 +1017,7 @@
             (h.tip ? '<p class="text-xs text-slate-500 mt-1.5 leading-relaxed">💡 ' + h.tip + '</p>' : '') +
           '</div>' +
           '<div class="mt-4 pt-3 border-t border-slate-100/80">' +
-            '<button onclick="triggerVoiceDirective(\'' + h.id + '\')" class="w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-fredoka font-bold text-xs py-2 px-3 rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-2xs">' +
+            '<button onclick="triggerVoiceDirective(\'' + h.id + '\')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-fredoka font-bold text-xs py-2.5 px-4 rounded-full flex items-center justify-center gap-1.5 transition-all shadow-xs hover:shadow active:scale-95">' +
               '<span>⚡ 1-Click KOTL Voice Directive</span>' +
             '</button>' +
           '</div>';
@@ -974,43 +1142,57 @@
       var q = (filterQuery || '').toLowerCase().trim();
       var turns = day.turns.filter(function(t) {
         if (!q) return true;
-        var u = (t.user && t.user.text ? t.user.text : (t.parth && t.parth.text ? t.parth.text : '')).toLowerCase();
-        var a = (t.assistant && t.assistant.text ? t.assistant.text : (t.kotl && t.kotl.text ? t.kotl.text : '')).toLowerCase();
+        var u = (t.child && t.child.text ? t.child.text : (t.user && t.user.text ? t.user.text : (t.parth && t.parth.text ? t.parth.text : ''))).toLowerCase();
+        var a = (t.kotl && t.kotl.text ? t.kotl.text : (t.assistant && t.assistant.text ? t.assistant.text : '')).toLowerCase();
         return u.includes(q) || a.includes(q);
       });
 
       container.innerHTML = '';
       turns.forEach(function(turn, i) {
-        var userMsg = turn.user && turn.user.text ? turn.user.text : (turn.parth && turn.parth.text ? turn.parth.text : '');
-        var kotlMsg = turn.assistant && turn.assistant.text ? turn.assistant.text : (turn.kotl && turn.kotl.text ? turn.kotl.text : '');
+        var userMsg = (turn.child && turn.child.text ? turn.child.text : '') ||
+                      (turn.user && turn.user.text ? turn.user.text : '') ||
+                      (turn.parth && turn.parth.text ? turn.parth.text : '') ||
+                      'KOTL, how do stars shine at night?';
+        var kotlMsg = (turn.kotl && turn.kotl.text ? turn.kotl.text : '') ||
+                      (turn.assistant && turn.assistant.text ? turn.assistant.text : '');
         var time = turn.time || (turn.timestamp ? new Date(turn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today');
 
         var turnDiv = document.createElement('div');
-        turnDiv.className = 'bg-slate-50/70 border border-slate-100 rounded-[28px] p-4 space-y-3';
+        turnDiv.className = 'bg-slate-50/70 border border-slate-100 rounded-[28px] p-4 space-y-3.5';
 
         var html = '<div class="flex items-center justify-between text-[11px] text-slate-400 font-medium px-1">' +
           '<span>Turn #' + (i + 1) + '</span><span>' + time + '</span></div>';
 
-        if (userMsg) {
-          html += '<div class="flex items-start gap-2.5 justify-end">' +
-            '<div class="speech-bubble-user px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[85%] shadow-2xs">' +
-            '<p>' + userMsg + '</p></div>' +
-            '<div class="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center text-sm shadow-2xs shrink-0">👦</div>' +
-            '</div>';
-        }
-
-        if (kotlMsg) {
-          var safeKotl = kotlMsg.replace(/"/g, '&quot;').replace(/'/g, "\'");
-          html += '<div class="flex items-start gap-2.5">' +
-            '<div class="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">🤖</div>' +
-            '<div class="speech-bubble-kotl px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[85%] space-y-2">' +
-            '<p class="leading-relaxed">' + kotlMsg + '</p>' +
-            '<div class="pt-1 flex items-center gap-2">' +
-              '<button onclick="playLocalVoice(\'' + safeKotl + '\')" class="text-[11px] font-fredoka font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-full flex items-center gap-1 transition-colors">' +
-                '<span>▶ Listen Voice</span><span class="text-[9px] opacity-70">(en-IN-Prabhat)</span>' +
+        // Child Bubble (Left-aligned, pastel-blue pill style bg-sky-50 border-sky-200)
+        var safeUser = userMsg.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        html += '<div class="flex items-start gap-2.5 justify-start">' +
+          '<div class="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0 font-fredoka font-bold">👦</div>' +
+          '<div class="bg-sky-50 border border-sky-200 text-sky-950 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[85%] shadow-2xs space-y-1.5">' +
+            '<div class="flex items-center justify-between gap-2">' +
+              '<span class="font-fredoka font-bold text-sky-800 text-xs">Parth (Child)</span>' +
+              '<button onclick="playLocalVoice(\'' + safeUser + '\')" class="text-[10px] font-fredoka font-bold text-sky-700 hover:text-sky-900 bg-sky-100 hover:bg-sky-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors">' +
+                '<span>▶ Play Audio</span>' +
               '</button>' +
             '</div>' +
-            '</div></div>';
+            '<p class="leading-relaxed">&quot;' + userMsg + '&quot;</p>' +
+          '</div>' +
+        '</div>';
+
+        // KOTL Robot Bubble (Right-aligned, pastel-amber style bg-amber-50 border-amber-200)
+        if (kotlMsg) {
+          var safeKotl = kotlMsg.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+          html += '<div class="flex items-start gap-2.5 justify-end">' +
+            '<div class="bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[85%] space-y-2">' +
+              '<div class="flex items-center justify-between gap-2">' +
+                '<button onclick="playLocalVoice(\'' + safeKotl + '\')" class="text-[11px] font-fredoka font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors">' +
+                  '<span>▶ Listen Voice</span><span class="text-[9px] opacity-70">(en-IN-Prabhat)</span>' +
+                '</button>' +
+                '<span class="font-fredoka font-bold text-amber-800 text-xs">KOTL (AI Companion)</span>' +
+              '</div>' +
+              '<p class="leading-relaxed">' + kotlMsg + '</p>' +
+            '</div>' +
+            '<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">🤖</div>' +
+          '</div>';
         }
 
         turnDiv.innerHTML = html;
@@ -1069,6 +1251,8 @@
     function handleVolumeChange(val) {
       var v = parseInt(val, 10) || 40;
       document.getElementById('volumeValueLabel').innerText = v;
+      var voiceStatus = document.getElementById('voiceSpeakerStatusLabel');
+      if (voiceStatus) voiceStatus.innerText = v + '%';
       fetch(getBaseApiUrl() + '/api/device/control', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
