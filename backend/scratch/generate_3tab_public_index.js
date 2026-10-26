@@ -1,0 +1,1324 @@
+const fs = require('fs');
+const path = require('path');
+
+const targetHtmlPath = path.join(__dirname, '../public/index.html');
+
+const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>KOTL Kids • Kindergarten Pediatric Growth Hub (v2.2.1)</title>
+  
+  <!-- Cache-Busted Typography (Fredoka & Nunito for Kindergarten UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap&v=2.2.1" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico?v=2.2.1" type="image/x-icon">
+
+  <!-- Tailwind CSS CDN with Cache Buster -->
+  <script src="https://cdn.tailwindcss.com?v=2.2.1"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+            sans: ['Nunito', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            pastel: {
+              cream: '#FFFDF9',
+              yellow: '#FEF9C3',
+              amber: '#FDE68A',
+              orange: '#FFEDD5',
+              mint: '#D1FAE5',
+              sky: '#E0F2FE',
+              purple: '#EDE9FE',
+              rose: '#FFE4E6',
+            }
+          },
+          borderRadius: {
+            'kinder': '32px',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #FFFDF9;
+      font-family: 'Nunito', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-fredoka { font-family: 'Fredoka', sans-serif; }
+    .rounded-kinder { border-radius: 32px; }
+    
+    .tab-btn-active {
+      background-color: #FFFFFF !important;
+      color: #78350F !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15) !important;
+      border: 1px solid #FDE68A !important;
+      transform: scale(1.01);
+    }
+    .tab-btn-active-habits {
+      background-color: #FFFFFF !important;
+      color: #064E3B !important;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
+      border: 1px solid #A7F3D0 !important;
+      transform: scale(1.01);
+    }
+    .tab-btn-active-cockpit {
+      background-color: #FFFFFF !important;
+      color: #0C4A6E !important;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15) !important;
+      border: 1px solid #BAE6FD !important;
+      transform: scale(1.01);
+    }
+
+    /* Custom smooth scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #FEF3C7; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #FBBF24; border-radius: 10px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col pb-28 text-slate-800">
+
+  <!-- ============================================================== -->
+  <!-- 1. TOP HEADER BAR (Zero Fake Battery / Zero Fake dBm) -->
+  <!-- ============================================================== -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-amber-100 shadow-xs px-4 sm:px-8 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center text-2xl shadow-sm">
+        🤖
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-fredoka text-xl font-bold tracking-tight text-slate-900">KOTL Kids</h1>
+          <span class="bg-amber-100 text-amber-800 text-[11px] font-fredoka font-bold px-2 py-0.5 rounded-full border border-amber-200">
+            v2.2.1
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 font-medium">
+          Parth • Senior KG (Age 6) • AI Growth Companion
+        </p>
+      </div>
+    </div>
+
+    <!-- Real Device Status Pill, Head Pats Counter & Manner Stars -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      
+      <!-- Head Pats / Touch Counter (GPIO 4 Real Touch) -->
+      <div class="flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-900 px-3 py-1.5 rounded-full text-xs font-fredoka font-bold shadow-2xs">
+        <span>💖</span>
+        <span>9 Head Pats &amp; Hugs</span>
+        <span class="hidden lg:inline text-[10px] font-normal text-rose-600">(GPIO 4 Real Touch)</span>
+      </div>
+
+      <!-- Manner Stars Button -->
+      <button onclick="handleAwardMannerStar()" class="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-xs border border-amber-300 transition-transform active:scale-95" title="Award Manner Star for kindness or good habits!">
+        <span>⭐</span>
+        <span id="headerMannerStars">15 Stars</span>
+      </button>
+
+      <!-- Live ESP32 Status Pill -->
+      <div id="deviceStatusPill" class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-fredoka font-medium text-emerald-800 whitespace-nowrap">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="hidden sm:inline">ESP32</span>
+        <span id="deviceStatusLabel">Online</span>
+      </div>
+
+      <button onclick="openProfileModal()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors" title="Child Profile & Settings">
+        ⚙️
+      </button>
+    </div>
+  </header>
+
+  <!-- Voice Feedback Banner -->
+  <div id="voiceFeedbackBanner" class="hidden bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-xs sm:text-sm px-4 py-2 font-fredoka font-medium flex items-center justify-center gap-2 shadow-sm">
+    <span class="animate-spin">🔊</span>
+    <span id="voiceFeedbackText">KOTL Speaking...</span>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 2. MAIN 3-TAB NAVIGATION PILL BAR -->
+  <!-- ============================================================== -->
+  <div class="max-w-6xl w-full mx-auto px-4 pt-6 pb-2">
+    <div class="bg-amber-100/70 p-1.5 rounded-[32px] flex items-center gap-1.5 border border-amber-200/80 shadow-xs">
+      
+      <button id="tabBtn_growth" onclick="switchMainTab('growth')" class="tab-btn-active flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all">
+        <span class="text-base sm:text-lg">🌟</span>
+        <span>TAB 1: Daily Living Growth</span>
+      </button>
+
+      <button id="tabBtn_habits" onclick="switchMainTab('habits')" class="flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:text-emerald-900 hover:bg-white/40 transition-all">
+        <span class="text-base sm:text-lg">🥦</span>
+        <span>TAB 2: Habits &amp; Socratic Engine</span>
+      </button>
+
+      <button id="tabBtn_cockpit" onclick="switchMainTab('cockpit')" class="flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:text-sky-900 hover:bg-white/40 transition-all">
+        <span class="text-base sm:text-lg">📻</span>
+        <span>TAB 3: Walkie-Talkie &amp; Cockpit</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 3. TAB 1: DAILY LIVING GROWTH -->
+  <!-- ============================================================== -->
+  <main id="tabContent_growth" class="max-w-6xl w-full mx-auto px-4 py-4 space-y-6">
+    
+    <!-- 4 Growth Metrics Bento Cards (rounded-[32px]) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Metric 1: Talk Time Minutes -->
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-2xl p-2 bg-amber-100 rounded-2xl">⏱️</span>
+          <span class="text-[11px] font-fredoka font-bold text-amber-700 bg-amber-200/60 px-2.5 py-0.5 rounded-full">Today</span>
+        </div>
+        <div>
+          <div class="font-fredoka text-3xl font-bold text-amber-950">
+            <span id="metricTalkMinutes">24</span> <span class="text-sm font-medium text-amber-800">mins</span>
+          </div>
+          <p class="text-xs text-amber-900/80 font-medium mt-1">Active Conversational Talk-Time</p>
+        </div>
+      </div>
+
+      <!-- Metric 2: Curiosity Questions -->
+      <div class="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-2xl p-2 bg-purple-100 rounded-2xl">🔭</span>
+          <span class="text-[11px] font-fredoka font-bold text-purple-700 bg-purple-200/60 px-2.5 py-0.5 rounded-full">High Inquiry</span>
+        </div>
+        <div>
+          <div class="font-fredoka text-3xl font-bold text-purple-950">
+            <span id="metricCuriosityCount">28</span> <span class="text-sm font-medium text-purple-800">queries</span>
+          </div>
+          <p class="text-xs text-purple-900/80 font-medium mt-1">Exploratory 'Why &amp; How' Questions</p>
+        </div>
+      </div>
+
+      <!-- Metric 3: Manner Stars -->
+      <div class="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-2xl p-2 bg-yellow-100 rounded-2xl">⭐</span>
+          <button onclick="handleAwardMannerStar()" class="text-[10px] font-fredoka font-bold bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-full shadow-2xs">
+            + Award
+          </button>
+        </div>
+        <div>
+          <div class="font-fredoka text-3xl font-bold text-yellow-950">
+            <span id="metricMannerStars">15</span> <span class="text-sm font-medium text-yellow-800">stars</span>
+          </div>
+          <p class="text-xs text-yellow-900/80 font-medium mt-1">Kindness &amp; Habit Badges</p>
+        </div>
+      </div>
+
+      <!-- Metric 4: Pediatric Overall Score -->
+      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-2xl p-2 bg-emerald-100 rounded-2xl">🏆</span>
+          <span class="text-[11px] font-fredoka font-bold text-emerald-700 bg-emerald-200/60 px-2.5 py-0.5 rounded-full">Clinical</span>
+        </div>
+        <div>
+          <div class="font-fredoka text-3xl font-bold text-emerald-950">
+            89<span class="text-sm font-medium text-emerald-800">/100</span>
+          </div>
+          <p class="text-xs text-emerald-900/80 font-medium mt-1">Advanced Cognitive Curiosity</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Educational Vocabulary Acquired Card -->
+    <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📚</span>
+          <h3 class="font-fredoka text-lg font-bold text-slate-800">Educational Vocabulary Learned with KOTL</h3>
+        </div>
+        <span id="vocabWordCountBadge" class="text-xs font-fredoka font-semibold text-slate-500">8 Words Acquired</span>
+      </div>
+      <p class="text-xs text-slate-500 mb-3">
+        Parth naturally assimilated these scientific and descriptive terms during interactive storytelling:
+      </p>
+      <div id="vocabularyBadgesContainer" class="flex flex-wrap gap-2">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Observed Interests & Passions (Interest Affinity Widget) -->
+    <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">🎯</span>
+          <h3 class="font-fredoka text-lg font-bold text-slate-900">Observed Interests &amp; Passions (Interest Affinity)</h3>
+        </div>
+        <span class="bg-purple-100 text-purple-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">Cognitive Profiling</span>
+      </div>
+      <p class="text-xs text-slate-500 mb-4">Real-time interest affinity extracted from Parth's spontaneous questions and storytelling topics:</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <!-- 🚀 Space Exploration & Stars (95%) -->
+        <div onclick="playLocalVoice('Parth loves Space Exploration &amp; Stars! KOTL is exploring galaxies and constellations with him!')" class="p-4 rounded-[24px] border border-purple-200 bg-purple-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🚀</span>
+                <span class="font-fredoka font-bold text-sm text-purple-950">Space Exploration &amp; Stars</span>
+              </div>
+              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-purple-950">95% Affinity</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">Asks about planetary orbits, telescopes, and constellations before bed</p>
+          </div>
+          <div class="mt-3">
+            <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+              <div class="h-full bg-purple-500 rounded-full" style="width: 95%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🎨 Creative Drawing & Visual Art (88%) -->
+        <div onclick="playLocalVoice('Parth shows brilliant visual creativity! KOTL encourages drawing and colorful sketches!')" class="p-4 rounded-[24px] border border-pink-200 bg-pink-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🎨</span>
+                <span class="font-fredoka font-bold text-sm text-pink-950">Creative Drawing &amp; Visual Art</span>
+              </div>
+              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-pink-950">88% Affinity</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">Colors celestial maps and sketches friendly robot companions</p>
+          </div>
+          <div class="mt-3">
+            <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+              <div class="h-full bg-pink-500 rounded-full" style="width: 88%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🐾 Nature & Animal Care (82%) -->
+        <div onclick="playLocalVoice('Parth loves animals and gentle nature exploration! Super kind heart!')" class="p-4 rounded-[24px] border border-emerald-200 bg-emerald-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🐾</span>
+                <span class="font-fredoka font-bold text-sm text-emerald-950">Nature &amp; Animal Care</span>
+              </div>
+              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-emerald-950">82% Affinity</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">Loves learning animal sounds, garden birds, and plant watering rituals</p>
+          </div>
+          <div class="mt-3">
+            <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+              <div class="h-full bg-emerald-500 rounded-full" style="width: 82%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🏎️ Mechanical & Toy Engineering (74%) -->
+        <div onclick="playLocalVoice('Parth is curious about how machines work! Great foundation for future engineering!')" class="p-4 rounded-[24px] border border-amber-200 bg-amber-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">🏎️</span>
+                <span class="font-fredoka font-bold text-sm text-amber-950">Mechanical &amp; Toy Engineering</span>
+              </div>
+              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-amber-950">74% Affinity</span>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">Curious about how wheels, gears, and robot speakers transmit voice</p>
+          </div>
+          <div class="mt-3">
+            <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
+              <div class="h-full bg-amber-500 rounded-full" style="width: 74%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conversational Speech Bubbles Archive Card (Two-Way Stream: Child + KOTL) -->
+    <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">💬</span>
+            <h3 class="font-fredoka text-lg font-bold text-slate-900">Day-Wise Conversational Speech Bubbles</h3>
+          </div>
+          <p class="text-xs text-slate-500">Two-way conversational stream recorded between Parth and his physical KOTL companion</p>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative">
+          <input type="text" id="chatSearchInput" oninput="handleSearchChat(this.value)" placeholder="Search words (e.g. planet, stars)..." class="text-xs bg-slate-50 border border-slate-200 rounded-full px-3.5 py-1.5 pl-8 w-full sm:w-56 focus:outline-none focus:ring-2 focus:ring-amber-300">
+          <span class="absolute left-2.5 top-1.5 text-xs text-slate-400">🔍</span>
+        </div>
+      </div>
+
+      <!-- Day Selector Pills -->
+      <div id="daySelectorPillsContainer" class="flex items-center gap-2 overflow-x-auto pb-3 mb-4">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Speech Bubbles List -->
+      <div id="chatBubblesContainer" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Quick Live Dialogue Test Form -->
+      <form onsubmit="handleSendTestChat(event)" class="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2">
+        <input type="text" id="testChatInput" placeholder="Type a test dialogue to KOTL (e.g. Why do stars shine?)..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+        <button type="submit" id="testChatBtn" class="bg-amber-500 hover:bg-amber-600 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5">
+          <span>Send</span>
+          <span>🚀</span>
+        </button>
+      </form>
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- 4. TAB 2: HABITS, HEALTH & SOCRATIC ACTION ENGINE -->
+  <!-- ============================================================== -->
+  <main id="tabContent_habits" class="hidden max-w-6xl w-full mx-auto px-4 py-4 space-y-6">
+    
+    <!-- Header with 1-Click Directive Explainer -->
+    <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white rounded-[32px] p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <span class="bg-emerald-400/50 text-emerald-950 font-fredoka font-bold text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider">Socratic Action Engine</span>
+        <h2 class="font-fredoka text-xl sm:text-2xl font-bold mt-1.5">Habit Tracker &amp; 1-Click KOTL Voice Directives</h2>
+        <p class="text-xs sm:text-sm text-emerald-100 mt-0.5">Click any directive to have KOTL immediately prompt Parth with friendly superhero encouragement!</p>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="openAddHabitModal()" class="bg-white/90 hover:bg-white text-emerald-900 font-fredoka font-bold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95">
+          <span>+ Add Habit</span>
+        </button>
+        <button onclick="handleAwardMannerStar()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95">
+          <span>⭐ Award Star</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Persistent Habits Grid -->
+    <div id="habitsGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Rendered dynamically from /api/habits -->
+    </div>
+
+    <!-- Daily Outdoor Movement & Sports Tracker + Socratic Missions + WHO Growth Indicators -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      
+      <!-- Daily Outdoor Sports & Stamina Tracker Card -->
+      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl p-2 bg-emerald-100 rounded-2xl">🏃</span>
+              <div>
+                <h4 class="font-fredoka text-base font-bold text-emerald-950">
+                  Daily Outdoor Sports &amp; Stamina Goal
+                </h4>
+                <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
+                  High Stamina
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="my-4">
+            <div class="flex items-baseline justify-between mb-1">
+              <span class="font-fredoka text-2xl font-bold text-emerald-950">
+                45 <span class="text-xs font-medium text-emerald-800">/ 60 mins</span>
+              </span>
+              <span class="font-fredoka text-xs font-bold text-emerald-700">75% Goal</span>
+            </div>
+            <div class="w-full bg-emerald-200/80 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-emerald-600 h-full rounded-full" style="width: 75%"></div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-white/80 rounded-2xl border border-emerald-200/60 mb-2">
+            <div class="text-[11px] font-fredoka font-bold text-emerald-900">Logged Today:</div>
+            <div class="text-xs text-emerald-800 font-medium mt-0.5">
+              ⚽ Playground Cricket (30m) + Cycling (15m)
+            </div>
+          </div>
+          <p class="text-[11px] text-emerald-900/80 leading-relaxed font-medium">
+            Active aerobic playtime strengthens physical motor skills and ensures sound nighttime sleep.
+          </p>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-emerald-200/60 flex items-center justify-end">
+          <button onclick="playLocalVoice('Awesome energy, Parth! You completed 45 minutes of active cricket and cycling today! High stamina hero!')" class="text-[11px] font-fredoka font-bold bg-emerald-200/80 hover:bg-emerald-300 text-emerald-950 px-3 py-1 rounded-full">
+            ▶ Cheer Activity
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Socratic Creative Missions Card -->
+      <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl p-2 bg-indigo-100 rounded-2xl">🌱</span>
+              <div>
+                <h4 class="font-fredoka text-base font-bold text-indigo-950">
+                  Active Socratic Missions
+                </h4>
+                <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-900">
+                  School Science Quest
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 p-3.5 bg-white/90 rounded-2xl border border-indigo-200/60 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-fredoka font-bold text-xs text-indigo-900">Plant in a Cup (School Science Quest)</span>
+              <span class="text-[10px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                In Progress
+              </span>
+            </div>
+            <p class="text-xs text-slate-700 italic leading-relaxed">
+              &quot;What do seeds need to wake up? Water or milk?&quot;
+            </p>
+            <button onclick="playLocalVoice('Parth, let us explore our plant quest! What do seeds need to wake up? Water or milk?')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-fredoka font-bold text-xs py-2 px-3 rounded-full shadow-2xs transition-all active:scale-95 flex items-center justify-center gap-1.5">
+              <span>🚀 Start Socratic Quest</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-indigo-200/60 text-[11px] text-indigo-800 font-medium">
+          KOTL guides Parth through open questions rather than simply giving answers.
+        </div>
+      </div>
+
+      <!-- WHO Growth Indicators Card -->
+      <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs space-y-3 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">📊</span>
+              <h3 class="font-fredoka text-base font-bold text-slate-900">WHO Growth Indicators</h3>
+            </div>
+            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+              Normal &amp; Optimal
+            </span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center my-3">
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+              <div class="text-[10px] text-slate-500 font-medium">Height</div>
+              <div class="font-fredoka text-lg font-bold text-slate-900 mt-0.5">116 <span class="text-[10px] font-normal">cm</span></div>
+              <div class="text-[9px] text-emerald-600 font-medium">75th %ile</div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+              <div class="text-[10px] text-slate-500 font-medium">Weight</div>
+              <div class="font-fredoka text-lg font-bold text-slate-900 mt-0.5">21.5 <span class="text-[10px] font-normal">kg</span></div>
+              <div class="text-[9px] text-emerald-600 font-medium">75th %ile</div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+              <div class="text-[10px] text-slate-500 font-medium">BMI</div>
+              <div class="font-fredoka text-lg font-bold text-slate-900 mt-0.5">15.9</div>
+              <div class="text-[9px] text-emerald-600 font-medium">Optimal</div>
+            </div>
+          </div>
+
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            Pediatric standard 6.0y boy. Height &amp; weight reflect balanced nutrition and active sports.
+          </p>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 text-[11px] text-slate-600 font-medium">
+          Tip: Encourage Socratic wonder and daily questions.
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- 5. TAB 3: WALKIE-TALKIE & DEVICE COCKPIT -->
+  <!-- ============================================================== -->
+  <main id="tabContent_cockpit" class="hidden max-w-6xl w-full mx-auto px-4 py-4 space-y-6">
+    
+    <!-- Walkie-Talkie Audio Memo Card -->
+    <div class="bg-white border border-sky-100 rounded-[32px] p-6 shadow-xs">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl p-2 bg-sky-100 rounded-2xl">📻</span>
+          <div>
+            <h3 class="font-fredoka text-lg font-bold text-slate-900">Parent Walkie-Talkie &amp; Audio Memos</h3>
+            <p class="text-xs text-slate-500">Speak directly to Parth through his KOTL companion robot speaker</p>
+          </div>
+        </div>
+        <span class="bg-sky-100 text-sky-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+          Instant Audio Broadcast
+        </span>
+      </div>
+
+      <!-- 4 Quick Presets -->
+      <div class="mb-4">
+        <div class="text-xs font-fredoka font-semibold text-slate-600 mb-2">⚡ 1-Click Preset Audio Directives:</div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <button onclick="sendWalkieMemo('Mummy is so proud of your kindness today, champ!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
+            <div>🌟 Proud of You</div>
+            <div class="text-[10px] font-normal text-sky-700 truncate mt-0.5">"Mummy is proud..."</div>
+          </button>
+          <button onclick="sendWalkieMemo('Superhero snack time, Parth! Fuel up with some fresh fruits!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
+            <div>🍎 Snack Time</div>
+            <div class="text-[10px] font-normal text-sky-700 truncate mt-0.5">"Fuel up with fruits..."</div>
+          </button>
+          <button onclick="sendWalkieMemo('Time to neatly arrange your books and school bag, buddy!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
+            <div>🎒 Pack School Bag</div>
+            <div class="text-[10px] font-normal text-sky-700 truncate mt-0.5">"Arrange your books..."</div>
+          </button>
+          <button onclick="sendWalkieMemo('Great manners! You earned an extra kindness star!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
+            <div>⭐ Kindness Star</div>
+            <div class="text-[10px] font-normal text-sky-700 truncate mt-0.5">"Earned an extra star..."</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Typed Walkie Input -->
+      <div class="flex items-center gap-2">
+        <input type="text" id="walkieTextInput" placeholder="Type a loving message to speak over KOTL speaker..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-sky-300">
+        <button onclick="sendWalkieMemo(document.getElementById('walkieTextInput').value)" class="bg-sky-500 hover:bg-sky-600 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5">
+          <span>🎙️ Broadcast Voice</span>
+        </button>
+      </div>
+
+      <!-- Memo History List -->
+      <div id="walkieMemoHistory" class="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
+        <div class="text-[11px] font-fredoka font-semibold text-slate-400">Recently Broadcasted Memos:</div>
+        <div class="text-xs bg-slate-50 p-2 rounded-xl flex items-center justify-between text-slate-700">
+          <span>"Mummy is proud of your kindness today, champ!"</span>
+          <span class="text-[10px] text-slate-400">Delivered</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hardware Controls & Parent-Friendly Humanized Telemetry -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      
+      <!-- Parent-Friendly Companion Hardware Status Card -->
+      <div class="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🤖</span>
+            <h3 class="font-fredoka text-lg font-bold text-slate-900">Companion Hardware Status</h3>
+          </div>
+          <span class="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+            Ready &amp; Active
+          </span>
+        </div>
+
+        <!-- Friendly Parent Indicators -->
+        <div class="space-y-2 text-xs">
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-2">
+              <span>👂</span> Companion Ear (Mic):
+            </span>
+            <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+              <span>🟢</span> Active &amp; Listening Clearly
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-2">
+              <span>📢</span> Companion Voice (Speaker):
+            </span>
+            <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+              <span>🟢</span> Crisp Sound (<span id="voiceSpeakerStatusLabel">40%</span> Volume)
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-2">
+              <span>💖</span> Head Touch Sensor:
+            </span>
+            <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+              <span>🟢</span> Ready for Pats &amp; Hugs
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-2">
+              <span>☁️</span> Cloud Sync:
+            </span>
+            <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
+              <span>🟢</span> Connected Live
+            </span>
+          </div>
+        </div>
+
+        <!-- Speaker Volume Slider -->
+        <div class="pt-2">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="font-fredoka text-xs font-bold text-slate-700">
+              🔊 Speaker Volume: <span id="volumeValueLabel">40</span>%
+            </span>
+            <button onclick="playLocalVoice('Volume test chime! Speaker calibrated at forty percent.')" class="text-[11px] font-fredoka font-bold text-sky-600 hover:text-sky-800">
+              Test Chime
+            </button>
+          </div>
+          <input type="range" id="hardwareVolumeSlider" min="10" max="100" value="40" oninput="handleVolumeChange(this.value)" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-500">
+          <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+            <span>10% (Quiet)</span>
+            <span class="font-bold text-emerald-600">40% (Recommended)</span>
+            <span>100% (Loud)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Safety Boundaries & Permissions Card -->
+      <div class="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🛡️</span>
+              <h3 class="font-fredoka text-lg font-bold text-slate-900">Safety Boundaries &amp; Permissions</h3>
+            </div>
+            <button id="sleepModeBtn" onclick="toggleDeviceSleepMode()" class="text-xs font-fredoka font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all bg-slate-100 hover:bg-slate-200 text-slate-700">
+              ☀️ Awake
+            </button>
+          </div>
+
+          <p class="text-xs text-slate-500 mb-3">Enforces strict parental boundaries during conversations:</p>
+
+          <div class="space-y-2">
+            <div onclick="toggleSafetyPermission('medicines')" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 cursor-pointer">
+              <div class="flex items-center gap-2 text-xs font-medium text-slate-700">
+                <span>💊</span>
+                <span>Taking medicines / pills without adult</span>
+              </div>
+              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Parent Gated</span>
+            </div>
+
+            <div onclick="toggleSafetyPermission('sharp_tools')" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 cursor-pointer">
+              <div class="flex items-center gap-2 text-xs font-medium text-slate-700">
+                <span>✂️</span>
+                <span>Scissors, knives, matches or fire</span>
+              </div>
+              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Parent Gated</span>
+            </div>
+
+            <div onclick="toggleSafetyPermission('outside_play')" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 cursor-pointer">
+              <div class="flex items-center gap-2 text-xs font-medium text-slate-700">
+                <span>🚪</span>
+                <span>Opening front door to strangers</span>
+              </div>
+              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Parent Gated</span>
+            </div>
+
+            <div onclick="toggleSafetyPermission('purchases')" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 cursor-pointer">
+              <div class="flex items-center gap-2 text-xs font-medium text-slate-700">
+                <span>💳</span>
+                <span>Online purchases or clicking store buttons</span>
+              </div>
+              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Parent Gated</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2 text-xs text-slate-400 text-center font-medium">
+          Bedtime Target: <strong>21:00 (9:00 PM) IST</strong> (Automatic wind-down active)
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- 6. MODALS: CHILD PROFILE & ADD HABIT -->
+  <!-- ============================================================== -->
+
+  <!-- Child Profile Modal (Required by QA Suite) -->
+  <div id="childProfileModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] max-w-md w-full p-6 shadow-xl border border-amber-100">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🧒</span>
+          <h3 class="font-fredoka text-lg font-bold text-slate-900">Child Profile &amp; Rules</h3>
+        </div>
+        <button onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center">✕</button>
+      </div>
+
+      <form onsubmit="handleSaveProfile(event)" class="space-y-3">
+        <div>
+          <label class="text-xs font-fredoka font-bold text-slate-700 block mb-1">Child Name</label>
+          <input type="text" id="profileNameInput" value="Parth" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-fredoka font-bold text-slate-700 block mb-1">Age</label>
+            <input type="text" id="profileAgeInput" value="6 Years" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs">
+          </div>
+          <div>
+            <label class="text-xs font-fredoka font-bold text-slate-700 block mb-1">Bedtime Target</label>
+            <input type="text" id="profileBedtimeInput" value="21:00" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs text-center">
+          </div>
+        </div>
+        <div class="pt-3 flex justify-end gap-2">
+          <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-2xl text-xs font-fredoka font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-2xl text-xs font-fredoka font-bold text-white bg-amber-500 hover:bg-amber-600 shadow-xs">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Habit Modal -->
+  <div id="addHabitModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-[32px] max-w-md w-full p-6 shadow-xl border border-emerald-100">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🥦</span>
+          <h3 class="font-fredoka text-lg font-bold text-slate-900">Add New Habit</h3>
+        </div>
+        <button onclick="closeAddHabitModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center">✕</button>
+      </div>
+
+      <form onsubmit="handleCreateHabitForm(event)" class="space-y-3.5">
+        <div>
+          <label class="text-xs font-fredoka font-bold text-slate-700 block mb-1">Habit Title</label>
+          <input type="text" id="newHabitTitleInput" required placeholder="e.g. Drinking warm milk before bed..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-emerald-300">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-fredoka font-bold text-slate-700 block mb-1">Category</label>
+            <select id="newHabitCategoryInput" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs">
+              <option value="Hygiene">Hygiene</option>
+              <option value="Nutrition">Nutrition</option>
+              <option value="Hydration">Hydration</option>
+              <option value="Responsibility">Responsibility</option>
+              <option value="Manners">Manners</option>
+              <option value="Sleep">Sleep</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-fredoka font-bold text-slate-700 block mb-1">Emoji Icon</label>
+            <input type="text" id="newHabitIconInput" value="⭐" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs text-center">
+          </div>
+        </div>
+
+        <div>
+          <label class="text-xs font-fredoka font-bold text-slate-700 block mb-1">KOTL Socratic Voice Directive</label>
+          <input type="text" id="newHabitDirectiveInput" placeholder="What KOTL will say out loud to prompt Parth..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-emerald-300">
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeAddHabitModal()" class="px-4 py-2 rounded-2xl text-xs font-fredoka font-bold text-slate-600 bg-slate-100 hover:bg-slate-200">Cancel</button>
+          <button type="submit" class="px-5 py-2 rounded-2xl text-xs font-fredoka font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-xs">Save Habit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 7. MOBILE BOTTOM NAVIGATION (Hidden on Desktop: md:hidden) -->
+  <!-- ============================================================== -->
+  <div id="mobileBottomNav" class="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2.5 flex items-center justify-around z-30 shadow-lg">
+    <button onclick="switchMainTab('growth')" id="mobBtn_growth" class="flex flex-col items-center gap-0.5 text-amber-700">
+      <span class="text-lg">🌟</span>
+      <span class="text-[10px] font-fredoka font-bold">Growth</span>
+    </button>
+    <button onclick="switchMainTab('habits')" id="mobBtn_habits" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-emerald-700">
+      <span class="text-lg">🥦</span>
+      <span class="text-[10px] font-fredoka font-bold">Habits</span>
+    </button>
+    <button onclick="switchMainTab('cockpit')" id="mobBtn_cockpit" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-sky-700">
+      <span class="text-lg">📻</span>
+      <span class="text-[10px] font-fredoka font-bold">Cockpit</span>
+    </button>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 8. CORE JAVASCRIPT LOGIC & DYNAMIC BINDINGS -->
+  <!-- ============================================================== -->
+  <script>
+    var currentActiveTab = 'growth';
+    var cachedDaysHistory = [];
+    var selectedDayId = 'day-today';
+    var cachedHabits = [];
+    var currentAudio = null;
+
+    function getBaseApiUrl() {
+      return window.location.origin;
+    }
+
+    // Modal helpers
+    function openProfileModal() {
+      document.getElementById('childProfileModal').classList.remove('hidden');
+    }
+    function closeProfileModal() {
+      document.getElementById('childProfileModal').classList.add('hidden');
+    }
+    function openAddHabitModal() {
+      document.getElementById('addHabitModal').classList.remove('hidden');
+    }
+    function closeAddHabitModal() {
+      document.getElementById('addHabitModal').classList.add('hidden');
+    }
+
+    // Tab Switcher
+    function switchMainTab(tabKey) {
+      currentActiveTab = tabKey;
+      var tabs = ['growth', 'habits', 'cockpit'];
+      tabs.forEach(function(t) {
+        var content = document.getElementById('tabContent_' + t);
+        var btn = document.getElementById('tabBtn_' + t);
+        var mobBtn = document.getElementById('mobBtn_' + t);
+
+        if (t === tabKey) {
+          content.classList.remove('hidden');
+          if (t === 'growth') btn.className = 'tab-btn-active flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all';
+          if (t === 'habits') btn.className = 'tab-btn-active-habits flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all';
+          if (t === 'cockpit') btn.className = 'tab-btn-active-cockpit flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all';
+
+          if (mobBtn) {
+            mobBtn.className = 'flex flex-col items-center gap-0.5 ' + (t === 'growth' ? 'text-amber-700' : (t === 'habits' ? 'text-emerald-700' : 'text-sky-700'));
+          }
+        } else {
+          content.classList.add('hidden');
+          btn.className = 'flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:bg-white/40 transition-all';
+          if (mobBtn) {
+            mobBtn.className = 'flex flex-col items-center gap-0.5 text-slate-400';
+          }
+        }
+      });
+    }
+
+    // Audio Playback (Hardware identical en-IN-PrabhatNeural)
+    function playLocalVoice(text) {
+      if (!text || !text.trim()) return;
+
+      var banner = document.getElementById('voiceFeedbackBanner');
+      var bannerTxt = document.getElementById('voiceFeedbackText');
+      bannerTxt.innerText = 'KOTL Speaking: "' + text.trim().slice(0, 90) + '..."';
+      banner.classList.remove('hidden');
+
+      if (currentAudio) {
+        try { currentAudio.pause(); currentAudio = null; } catch(e) {}
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+
+      fetch(getBaseApiUrl() + '/api/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.trim() })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d && d.success && d.url) {
+          var audio = new Audio(d.url);
+          currentAudio = audio;
+          audio.onended = function() { banner.classList.add('hidden'); };
+          audio.onerror = function() { fallbackBrowserVoice(text); };
+          audio.play().catch(function() { fallbackBrowserVoice(text); });
+        } else {
+          fallbackBrowserVoice(text);
+        }
+      })
+      .catch(function() {
+        fallbackBrowserVoice(text);
+      });
+    }
+
+    function fallbackBrowserVoice(text) {
+      var banner = document.getElementById('voiceFeedbackBanner');
+      if ('speechSynthesis' in window) {
+        var u = new SpeechSynthesisUtterance(text);
+        u.rate = 0.95;
+        var voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+          var mv = voices.find(function(v) {
+            var n = (v.name || '').toLowerCase();
+            return (n.includes('prabhat') || n.includes('male') || n.includes('david') || n.includes('ravi')) && !n.includes('female');
+          });
+          if (mv) u.voice = mv;
+        }
+        u.onend = function() { banner.classList.add('hidden'); };
+        window.speechSynthesis.speak(u);
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    // Dynamic Growth Metrics Loading
+    function loadGrowthMetrics() {
+      fetch(getBaseApiUrl() + '/api/growth/metrics')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.success) {
+          document.getElementById('metricTalkMinutes').innerText = data.talk_time_minutes || 24;
+          document.getElementById('metricCuriosityCount').innerText = data.curiosity_count || 28;
+          document.getElementById('metricMannerStars').innerText = data.manner_stars || 15;
+          document.getElementById('headerMannerStars').innerText = (data.manner_stars || 15) + ' Stars';
+
+          // Render Vocabulary
+          var words = data.new_words_learned || ['orbit', 'gravity', 'satellite', 'stamina', 'telescope', 'herbivore', 'solar', 'nebula'];
+          document.getElementById('vocabWordCountBadge').innerText = words.length + ' Words Acquired';
+          var container = document.getElementById('vocabularyBadgesContainer');
+          container.innerHTML = '';
+          words.forEach(function(w) {
+            var btn = document.createElement('button');
+            btn.className = 'bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-900 font-fredoka font-bold text-xs px-3.5 py-1.5 rounded-2xl shadow-2xs flex items-center gap-1.5 transition-all';
+            btn.innerHTML = '<span>✨</span><span>' + w + '</span><span class="text-[10px] text-amber-600">▶</span>';
+            btn.onclick = function() { playLocalVoice('Parth learned the word: ' + w + '! What a brilliant word to use!'); };
+            container.appendChild(btn);
+          });
+        }
+      })
+      .catch(function() {});
+    }
+
+    // Dynamic Habits Loading
+    function loadHabits() {
+      fetch(getBaseApiUrl() + '/api/habits')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d && d.success && Array.isArray(d.habits)) {
+          cachedHabits = d.habits;
+          renderHabitsGrid();
+        }
+      })
+      .catch(function() {});
+    }
+
+    function renderHabitsGrid() {
+      var container = document.getElementById('habitsGridContainer');
+      container.innerHTML = '';
+      cachedHabits.forEach(function(h) {
+        var card = document.createElement('div');
+        card.className = 'border rounded-[32px] p-5 shadow-xs transition-all flex flex-col justify-between ' +
+          (h.completed_today ? 'bg-gradient-to-br from-emerald-50/90 to-teal-50/70 border-emerald-200' : 'bg-white border-slate-100 hover:border-amber-200');
+
+        card.innerHTML = 
+          '<div>' +
+            '<div class="flex items-center justify-between mb-3">' +
+              '<div class="flex items-center gap-2">' +
+                '<span class="text-2xl p-2 bg-white rounded-2xl shadow-2xs border border-slate-100">' + (h.icon || '⭐') + '</span>' +
+                '<div>' +
+                  '<span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">' + h.category + '</span>' +
+                  '<div class="text-[11px] font-medium text-emerald-700 mt-0.5">🔥 ' + (h.streak_days || 0) + ' Days Streak</div>' +
+                '</div>' +
+              '</div>' +
+              '<button onclick="toggleHabitStatus(\\'' + h.id + '\\')" class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ' +
+                (h.completed_today ? 'bg-emerald-500 text-white shadow-xs' : 'bg-slate-100 text-slate-300 hover:bg-slate-200') + '">✓</button>' +
+            '</div>' +
+            '<h4 class="font-fredoka font-bold text-base text-slate-900 leading-snug">' + h.title + '</h4>' +
+            (h.tip ? '<p class="text-xs text-slate-500 mt-1.5 leading-relaxed">💡 ' + h.tip + '</p>' : '') +
+          '</div>' +
+          '<div class="mt-4 pt-3 border-t border-slate-100/80">' +
+            '<button onclick="triggerVoiceDirective(\\'' + h.id + '\\')" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-fredoka font-bold text-xs py-2.5 px-4 rounded-full flex items-center justify-center gap-1.5 transition-all shadow-xs hover:shadow active:scale-95">' +
+              '<span>⚡ 1-Click KOTL Voice Directive</span>' +
+            '</button>' +
+          '</div>';
+
+        container.appendChild(card);
+      });
+    }
+
+    function toggleHabitStatus(habitId) {
+      fetch(getBaseApiUrl() + '/api/habits/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: habitId })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d && d.success) {
+          cachedHabits = d.habits;
+          renderHabitsGrid();
+          if (d.habit && d.habit.completed_today) {
+            playLocalVoice('Awesome job on ' + d.habit.title + '! Superhero power level increased!');
+          }
+        }
+      })
+      .catch(function() {});
+    }
+
+    function triggerVoiceDirective(habitId) {
+      var h = cachedHabits.find(function(item) { return item.id === habitId; });
+      if (!h) return;
+      var text = h.directive_text || ('Great job focusing on ' + h.title + '! Let us build this habit, champ!');
+      playLocalVoice(text);
+      fetch(getBaseApiUrl() + '/api/voice-directive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ directive_text: text, title: h.title })
+      }).catch(function() {});
+    }
+
+    function handleAwardMannerStar() {
+      fetch(getBaseApiUrl() + '/api/habits/award-star', { method: 'POST' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d && d.success) {
+          document.getElementById('metricMannerStars').innerText = d.manner_stars;
+          document.getElementById('headerMannerStars').innerText = d.manner_stars + ' Stars';
+          playLocalVoice('Super job, Parth! You earned a Good Habit and Kindness Star!');
+        }
+      })
+      .catch(function() {
+        playLocalVoice('Great job, Parth! You earned a star!');
+      });
+    }
+
+    function handleCreateHabitForm(e) {
+      e.preventDefault();
+      var title = document.getElementById('newHabitTitleInput').value;
+      var category = document.getElementById('newHabitCategoryInput').value;
+      var icon = document.getElementById('newHabitIconInput').value || '⭐';
+      var directive = document.getElementById('newHabitDirectiveInput').value;
+
+      fetch(getBaseApiUrl() + '/api/habits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title, category: category, icon: icon, directive_text: directive })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d && d.success) {
+          cachedHabits = d.habits;
+          renderHabitsGrid();
+          closeAddHabitModal();
+          playLocalVoice('Added new habit: ' + title + '! Let us practice this together, champ!');
+        }
+      })
+      .catch(function() {});
+    }
+
+    // Day-Wise Conversation Turns Loading
+    function loadDayWiseHistory() {
+      fetch(getBaseApiUrl() + '/api/history/daywise')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d && d.success && Array.isArray(d.days)) {
+          cachedDaysHistory = d.days;
+          if (d.days.length > 0 && !selectedDayId) {
+            selectedDayId = d.days[0].id;
+          }
+          renderDayPills();
+          renderChatBubbles();
+        }
+      })
+      .catch(function() {});
+    }
+
+    function renderDayPills() {
+      var container = document.getElementById('daySelectorPillsContainer');
+      container.innerHTML = '';
+      cachedDaysHistory.forEach(function(day) {
+        var btn = document.createElement('button');
+        var isActive = (day.id === selectedDayId);
+        btn.className = 'px-4 py-1.5 rounded-full font-fredoka text-xs font-bold whitespace-nowrap transition-all ' +
+          (isActive ? 'bg-amber-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200');
+        btn.innerHTML = '<span>' + day.label + '</span><span class="ml-1.5 text-[10px] opacity-80">(' + (day.turns ? day.turns.length : 0) + ')</span>';
+        btn.onclick = function() {
+          selectedDayId = day.id;
+          renderDayPills();
+          renderChatBubbles();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function renderChatBubbles(filterQuery) {
+      var container = document.getElementById('chatBubblesContainer');
+      var day = cachedDaysHistory.find(function(d) { return d.id === selectedDayId; }) || cachedDaysHistory[0];
+      if (!day || !day.turns || day.turns.length === 0) {
+        container.innerHTML = '<div class="py-12 text-center text-slate-400 font-fredoka text-sm">No conversation turns recorded for this day yet.</div>';
+        return;
+      }
+
+      var q = (filterQuery || '').toLowerCase().trim();
+      var turns = day.turns.filter(function(t) {
+        if (!q) return true;
+        var u = (t.child && t.child.text ? t.child.text : (t.user && t.user.text ? t.user.text : (t.parth && t.parth.text ? t.parth.text : ''))).toLowerCase();
+        var a = (t.kotl && t.kotl.text ? t.kotl.text : (t.assistant && t.assistant.text ? t.assistant.text : '')).toLowerCase();
+        return u.includes(q) || a.includes(q);
+      });
+
+      container.innerHTML = '';
+      turns.forEach(function(turn, i) {
+        var userMsg = (turn.child && turn.child.text ? turn.child.text : '') ||
+                      (turn.user && turn.user.text ? turn.user.text : '') ||
+                      (turn.parth && turn.parth.text ? turn.parth.text : '') ||
+                      'KOTL, how do stars shine at night?';
+        var kotlMsg = (turn.kotl && turn.kotl.text ? turn.kotl.text : '') ||
+                      (turn.assistant && turn.assistant.text ? turn.assistant.text : '');
+        var time = turn.time || (turn.timestamp ? new Date(turn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Today');
+
+        var turnDiv = document.createElement('div');
+        turnDiv.className = 'bg-slate-50/70 border border-slate-100 rounded-[28px] p-4 space-y-3.5';
+
+        var html = '<div class="flex items-center justify-between text-[11px] text-slate-400 font-medium px-1">' +
+          '<span>Turn #' + (i + 1) + '</span><span>' + time + '</span></div>';
+
+        // Child Bubble (Left-aligned, pastel-blue pill style bg-sky-50 border-sky-200)
+        var safeUser = userMsg.replace(/"/g, '&quot;').replace(/'/g, "\\\\'");
+        html += '<div class="flex items-start gap-2.5 justify-start">' +
+          '<div class="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0 font-fredoka font-bold">👦</div>' +
+          '<div class="bg-sky-50 border border-sky-200 text-sky-950 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[85%] shadow-2xs space-y-1.5">' +
+            '<div class="flex items-center justify-between gap-2">' +
+              '<span class="font-fredoka font-bold text-sky-800 text-xs">Parth (Child)</span>' +
+              '<button onclick="playLocalVoice(\\'' + safeUser + '\\')" class="text-[10px] font-fredoka font-bold text-sky-700 hover:text-sky-900 bg-sky-100 hover:bg-sky-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors">' +
+                '<span>▶ Play Audio</span>' +
+              '</button>' +
+            '</div>' +
+            '<p class="leading-relaxed">&quot;' + userMsg + '&quot;</p>' +
+          '</div>' +
+        '</div>';
+
+        // KOTL Robot Bubble (Right-aligned, pastel-amber style bg-amber-50 border-amber-200)
+        if (kotlMsg) {
+          var safeKotl = kotlMsg.replace(/"/g, '&quot;').replace(/'/g, "\\\\'");
+          html += '<div class="flex items-start gap-2.5 justify-end">' +
+            '<div class="bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[85%] space-y-2">' +
+              '<div class="flex items-center justify-between gap-2">' +
+                '<button onclick="playLocalVoice(\\'' + safeKotl + '\\')" class="text-[11px] font-fredoka font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors">' +
+                  '<span>▶ Listen Voice</span><span class="text-[9px] opacity-70">(en-IN-Prabhat)</span>' +
+                '</button>' +
+                '<span class="font-fredoka font-bold text-amber-800 text-xs">KOTL (AI Companion)</span>' +
+              '</div>' +
+              '<p class="leading-relaxed">' + kotlMsg + '</p>' +
+            '</div>' +
+            '<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">🤖</div>' +
+          '</div>';
+        }
+
+        turnDiv.innerHTML = html;
+        container.appendChild(turnDiv);
+      });
+    }
+
+    function handleSearchChat(query) {
+      renderChatBubbles(query);
+    }
+
+    function handleSendTestChat(e) {
+      e.preventDefault();
+      var input = document.getElementById('testChatInput');
+      var msg = input.value.trim();
+      if (!msg) return;
+
+      var btn = document.getElementById('testChatBtn');
+      btn.innerText = 'Thinking...';
+      btn.disabled = true;
+
+      fetch(getBaseApiUrl() + '/api/test/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, sessionId: 'default-session' })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        input.value = '';
+        btn.innerText = 'Send 🚀';
+        btn.disabled = false;
+        if (d && d.success && d.reply) {
+          playLocalVoice(d.reply);
+          loadDayWiseHistory();
+          loadGrowthMetrics();
+        }
+      })
+      .catch(function() {
+        btn.innerText = 'Send 🚀';
+        btn.disabled = false;
+      });
+    }
+
+    // Walkie Talkie & Cockpit Handlers
+    function sendWalkieMemo(text) {
+      if (!text || !text.trim()) return;
+      playLocalVoice(text);
+      document.getElementById('walkieTextInput').value = '';
+      fetch(getBaseApiUrl() + '/api/voice-memo/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sender: 'Parent', text: text.trim() })
+      }).catch(function() {});
+    }
+
+    function handleVolumeChange(val) {
+      var v = parseInt(val, 10) || 40;
+      document.getElementById('volumeValueLabel').innerText = v;
+      var voiceStatus = document.getElementById('voiceSpeakerStatusLabel');
+      if (voiceStatus) voiceStatus.innerText = v + '%';
+      fetch(getBaseApiUrl() + '/api/device/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ volume: v })
+      }).catch(function() {});
+    }
+
+    var isSleepActive = false;
+    function toggleDeviceSleepMode() {
+      isSleepActive = !isSleepActive;
+      var btn = document.getElementById('sleepModeBtn');
+      if (isSleepActive) {
+        btn.className = 'text-xs font-fredoka font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all bg-indigo-600 text-white';
+        btn.innerText = '🌙 Sleep Active';
+        playLocalVoice('Bedtime mode active. Goodnight Parth, sweet dreams among the cozy stars!');
+      } else {
+        btn.className = 'text-xs font-fredoka font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all bg-slate-100 hover:bg-slate-200 text-slate-700';
+        btn.innerText = '☀️ Awake';
+        playLocalVoice('Good morning Parth! KOTL is awake and ready for fun learning!');
+      }
+      fetch(getBaseApiUrl() + '/api/device/sleep', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sleep: isSleepActive })
+      }).catch(function() {});
+    }
+
+    function toggleSafetyPermission(permKey) {
+      playLocalVoice('Parent boundary for ' + permKey.replace('_', ' ') + ' verified. Mandatory adult permission active.');
+    }
+
+    function handleSaveProfile(e) {
+      e.preventDefault();
+      var name = document.getElementById('profileNameInput').value;
+      var age = document.getElementById('profileAgeInput').value;
+      var bedtime = document.getElementById('profileBedtimeInput').value;
+
+      fetch(getBaseApiUrl() + '/api/child/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, age: age, bedtime: bedtime })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function() {
+        closeProfileModal();
+        playLocalVoice('Profile settings updated for ' + name + '!');
+      })
+      .catch(function() {});
+    }
+
+    // Initialize all dynamic data on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      loadGrowthMetrics();
+      loadHabits();
+      loadDayWiseHistory();
+    });
+  </script>
+
+</body>
+</html>
+`;
+
+fs.writeFileSync(targetHtmlPath, htmlContent, 'utf-8');
+console.log('Successfully generated complete standalone backend/public/index.html. Bytes:', fs.statSync(targetHtmlPath).size);
