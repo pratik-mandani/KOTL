@@ -82,7 +82,13 @@ async function synthesizeSpeechPcm(text) {
 // Backward compatibility alias
 const synthesizeSentencePcm = synthesizeSpeechPcm;
 
-function initWebSocketServer(httpServer) {
+function initWebSocketServer(httpServer, options = {}) {
+  const {
+    touchDeviceHeartbeat = () => {},
+    markDeviceOffline = () => {},
+    getDeviceConfig = null,
+  } = options;
+
   const wss = new WebSocket.Server({ noServer: true });
 
   // Handle upgrade on both '/ws' and root '/'
@@ -103,11 +109,28 @@ function initWebSocketServer(httpServer) {
 
     // Session state for this connection
     ws.isAlive = true;
-    ws.deviceId = `ESP32-${Date.now().toString(36)}`;
+    ws.isPhysicalRobot = false;
+    ws.deviceId = null;
     ws.sessionId = "default-session";
     ws.state = "IDLE"; // IDLE, LISTENING, THINKING, SPEAKING
     ws.audioChunks = [];
     ws.totalAudioBytes = 0;
+    ws.clientIp = clientIp;
+    ws.lastHeartbeatTouch = 0;
+
+    // Helper: Safely touch heartbeat for verified physical robot with rate-limiting (min 10s interval unless forced)
+    const touchRobotHeartbeat = (force = false, rssi = null) => {
+      if (!ws.isPhysicalRobot) return;
+      const now = Date.now();
+      if (force || now - ws.lastHeartbeatTouch >= 10000) {
+        ws.lastHeartbeatTouch = now;
+        try {
+          touchDeviceHeartbeat(ws.clientIp, rssi);
+        } catch (err) {
+          console.warn(`[WebSocket ${ws.deviceId}] Heartbeat touch failed:`, err.message);
+        }
+      }
+    };
 
     // Helper: Send JSON message
     const sendJson = (obj) => {
@@ -140,12 +163,14 @@ function initWebSocketServer(httpServer) {
     // Pong handler for heartbeat
     ws.on("pong", () => {
       ws.isAlive = true;
+      touchRobotHeartbeat(false);
     });
 
     // Main message handler
     ws.on("message", async (data, isBinary) => {
       try {
         if (isBinary) {
+          touchRobotHeartbeat(false);
           // --- BINARY AUDIO CHUNK RECEIVED ---
           if (ws.state === "LISTENING") {
             const chunk = Buffer.isBuffer(data) ? data : Buffer.from(data);
@@ -167,35 +192,48 @@ function initWebSocketServer(httpServer) {
         switch (msg.type) {
           case "ping":
             sendJson({ type: "pong", timestamp: Date.now() });
+            touchRobotHeartbeat(false);
             break;
 
           case "register":
           case "hello":
-            if (msg.device_id) ws.deviceId = msg.device_id;
-            console.log(`[WebSocket] Client registered: ${ws.deviceId}`);
+            if (msg.device_id) ws.deviceId = String(msg.device_id);
+            // Strict physical hardware identity check: device_id === "KOTL-ESP32" or starts with "KOTL-ESP32"
+            const isEsp32 = typeof ws.deviceId === "string" && (ws.deviceId === "KOTL-ESP32" || ws.deviceId.startsWith("KOTL-ESP32"));
+            if (isEsp32) {
+              ws.isPhysicalRobot = true;
+              console.log(`[WebSocket] Physical robot registered: ${ws.deviceId} (IP: ${ws.clientIp})`);
+              const rssi = typeof msg.rssi === "number" ? msg.rssi : null;
+              touchRobotHeartbeat(true, rssi);
+            } else {
+              ws.isPhysicalRobot = false;
+              console.log(`[WebSocket] Generic client registered: ${ws.deviceId || "anonymous"}`);
+            }
             sendJson({ type: "registered", device_id: ws.deviceId, status: "ok" });
             break;
 
           case "start_listen":
+            touchRobotHeartbeat(false);
             ws.sampleRate = (msg.sample_rate && Number(msg.sample_rate)) || 16000;
             ws.turnSource = (msg.source && String(msg.source)) || "voice";
-            console.log(`[WebSocket ${ws.deviceId}] Listening started (sample rate: ${ws.sampleRate} Hz)...`);
+            console.log(`[WebSocket ${ws.deviceId || "client"}] Listening started (sample rate: ${ws.sampleRate} Hz)...`);
             ws.audioChunks = [];
             ws.totalAudioBytes = 0;
             setState("LISTENING");
             break;
 
           case "stop_listen":
+            touchRobotHeartbeat(false);
             const audioRate = ws.sampleRate || 16000;
             console.log(
-              `[WebSocket ${ws.deviceId}] Listening stopped. Received ${ws.totalAudioBytes} bytes (${(
+              `[WebSocket ${ws.deviceId || "client"}] Listening stopped. Received ${ws.totalAudioBytes} bytes (${(
                 ws.totalAudioBytes / (audioRate * 2)
               ).toFixed(2)}s)`
             );
             setState("THINKING");
 
             if (ws.audioChunks.length === 0 || ws.totalAudioBytes < 1600) {
-              console.log(`[WebSocket ${ws.deviceId}] Audio too short, ignoring.`);
+              console.log(`[WebSocket ${ws.deviceId || "client"}] Audio too short, ignoring.`);
               setState("IDLE");
               sendJson({ type: "warning", message: "Audio too short or empty" });
               return;
@@ -211,7 +249,7 @@ function initWebSocketServer(httpServer) {
             break;
 
           case "cancel":
-            console.log(`[WebSocket ${ws.deviceId}] Turn canceled by client`);
+            console.log(`[WebSocket ${ws.deviceId || "client"}] Turn canceled by client`);
             ws.audioChunks = [];
             ws.totalAudioBytes = 0;
             setState("IDLE");
@@ -228,12 +266,33 @@ function initWebSocketServer(httpServer) {
     });
 
     ws.on("close", (code, reason) => {
-      console.log(`[WebSocket] Client disconnected (${ws.deviceId}): code ${code}, reason ${reason}`);
+      console.log(`[WebSocket] Client disconnected (${ws.deviceId || "anonymous"}): code ${code}, reason ${reason}`);
       ws.audioChunks = [];
+
+      if (ws.isPhysicalRobot) {
+        // Count remaining active physical robot clients
+        let remainingRobots = 0;
+        wss.clients.forEach((client) => {
+          if (client !== ws && client.readyState === WebSocket.OPEN && client.isPhysicalRobot) {
+            remainingRobots++;
+          }
+        });
+
+        if (remainingRobots === 0) {
+          console.log(`[WebSocket] No active physical robot connections remaining. Marking offline.`);
+          try {
+            markDeviceOffline();
+          } catch (err) {
+            console.warn("[WebSocket] Error marking device offline on close:", err.message);
+          }
+        } else {
+          console.log(`[WebSocket] Physical robot disconnected, but ${remainingRobots} robot connection(s) still active.`);
+        }
+      }
     });
 
     ws.on("error", (err) => {
-      console.error(`[WebSocket Error ${ws.deviceId}]:`, err.message);
+      console.error(`[WebSocket Error ${ws.deviceId || "anonymous"}]:`, err.message);
     });
   });
 

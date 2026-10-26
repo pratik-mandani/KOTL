@@ -141,6 +141,7 @@ const backendFiles = [
   'backend/services/groq.js',
   'backend/services/stt.js',
   'backend/services/tts.js',
+  'backend/services/websocket.js',
   'backend/utils/audio-converter.js',
   'backend/utils/phonetic.js'
 ];
@@ -154,6 +155,14 @@ backendFiles.forEach(file => {
     assertTest(`Syntax valid: ${file}`, false, err.message);
   }
 });
+
+try {
+  const wsTestScript = path.join(__dirname, 'test-websocket-heartbeat.js');
+  execSync(`node "${wsTestScript}"`, { stdio: 'pipe' });
+  assertTest('WebSocket Heartbeat & Identity Gating (15/15 checks)', true, 'Physical robot registration, rate-limiting, and offline transition verified');
+} catch (err) {
+  assertTest('WebSocket Heartbeat & Identity Gating (15/15 checks)', false, err.message);
+}
 
 // ----------------------------------------------------
 // TEST GROUP 3: Child Profile, Age, Gender & Safety Guardrails QA
@@ -238,6 +247,17 @@ const report = generateChildDevelopmentReport({ refresh: true });
 assertTest('Developmental report generates successfully', !!report && report.overall_development_score > 0, `Score: ${report.overall_development_score}/100, Status: ${report.pediatric_status}`);
 assertTest('Report adapts pronouns to gender (He/His vs She/Her)', report.executive_summary.includes('He shows') || report.executive_summary.includes('She shows'), 'Pronouns matched to gender profile');
 
+// Verify 8 Dimensions & Non-Clinical Observational Transparency
+const requiredDims = ['linguistic_vocabulary', 'cognitive_curiosity', 'emotional_expression', 'routine_habits', 'physical_motor', 'socratic_reasoning', 'social_manners', 'bedtime_readiness'];
+const hasAll8Dims = requiredDims.every(d => report.dimensions && report.dimensions[d]);
+assertTest('Report contains all 8 Observational Dimensions', hasAll8Dims, `${requiredDims.length} dimensions verified`);
+
+const hasEvidenceTrace = Array.isArray(report.conversation_evidence) && report.conversation_evidence.every(ev => ev.child_question && ev.kotl_answer);
+assertTest('Evidence Traceability: Dialogue quotes linked to real turns', hasEvidenceTrace, `${report.conversation_evidence.length} evidence quote(s) verified`);
+
+const hasDisclaimer = typeof report.disclaimer === 'string' && report.disclaimer.includes('NOT a clinical');
+assertTest('Non-Clinical Transparency Notice included in report', hasDisclaimer, 'Disclaims medical/clinical diagnosis');
+
 // ----------------------------------------------------
 // TEST GROUP 4: Frontend HTML/JS Syntax & Responsive UI QA
 // ----------------------------------------------------
@@ -273,6 +293,16 @@ const hasBottomNav = htmlContent.includes('id="mobileBottomNav"');
 assertTest('Child Profile & Guardrails Modal integrated in web UI', hasProfileModal && hasProfileButton, 'Settings button and modal inputs present');
 assertTest('Mobile Status Pill uses single-element whitespace-nowrap', hasStatusPillNoWrap, 'Prevents double-text wrap on mobile screens');
 assertTest('Fixed Mobile Bottom Navigation present', hasBottomNav, 'Native mobile one-thumb navigation bar verified');
+
+// Verify 8-Dimension Report Modal in HTML
+const hasReportModal = htmlContent.includes('id="childReportModal"');
+const hasReportButton = htmlContent.includes('openReportModal()');
+const hasRepContainers = htmlContent.includes('id="repDimensionsGrid"') && htmlContent.includes('id="repEvidenceList"');
+const hasMetric4Report = htmlContent.includes('onclick="openReportModal()"') && htmlContent.includes('8 Dimensions');
+
+assertTest('Development Observation Report Modal integrated in web UI', hasReportModal && hasReportButton, 'Interactive report modal and trigger present');
+assertTest('8-Dimension Indicators & Evidence Grid present in HTML', hasRepContainers, 'repDimensionsGrid and repEvidenceList present');
+assertTest('Bento Metric 4 Card triggers Development Report', hasMetric4Report, 'Metric 4 linked to openReportModal()');
 
 // ----------------------------------------------------
 // SUMMARY REPORT

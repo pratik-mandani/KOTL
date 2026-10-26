@@ -17,6 +17,7 @@ const { writePcm16MonoWav } = require("./utils/wav");
 const { getLocalIPv4Address } = require("./utils/network");
 const http = require("http");
 const { initWebSocketServer } = require("./services/websocket");
+let wss = null;
 const { detectEyeExpression } = require("./services/eye-animation");
 const {
   getHabits,
@@ -305,9 +306,10 @@ app.post("/api/child/profile", (req, res) => {
 });
 
 // --- Child AI Developmental Assessment Report ---
-app.get("/api/child/report", (_req, res) => {
+app.get("/api/child/report", (req, res) => {
   try {
-    const report = getChildDevelopmentReport();
+    const refresh = req.query.refresh === "true" || req.query.force === "true";
+    const report = getChildDevelopmentReport({ refresh });
     res.json({ success: true, report });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -459,14 +461,16 @@ app.post("/api/voice-memo/send", async (req, res) => {
     const memo = addVoiceMemo({ sender, text, preset });
     
     // Broadcast notification to WebSocket clients if open
-    wss.clients.forEach(client => {
-      if (client.readyState === 1) { // OPEN
-        client.send(JSON.stringify({
-          type: "voice_memo_notification",
-          memo
-        }));
-      }
-    });
+    if (wss && wss.clients) {
+      wss.clients.forEach(client => {
+        if (client.readyState === 1) { // OPEN
+          client.send(JSON.stringify({
+            type: "voice_memo_notification",
+            memo
+          }));
+        }
+      });
+    }
 
     res.json({ success: true, memo, memos: getVoiceMemos() });
   } catch (err) {
@@ -630,11 +634,13 @@ function getDeviceConfig() {
     console.warn("[Device Config] Error reading config file:", e.message);
   }
 
-  // Dynamic live check: If last_seen is within last 45 seconds, mark online, else offline
+  // Dynamic live check: If marked online, ensure last_seen is within last 45 seconds
   if (cfg.device_status?.last_seen) {
     const elapsedSec = (Date.now() - new Date(cfg.device_status.last_seen).getTime()) / 1000;
-    cfg.device_status.online = elapsedSec < 45;
     cfg.device_status.last_seen_seconds_ago = Math.floor(elapsedSec);
+    if (cfg.device_status.online !== false) {
+      cfg.device_status.online = elapsedSec < 45;
+    }
   } else {
     if (!cfg.device_status) cfg.device_status = {};
     cfg.device_status.online = false;
@@ -654,7 +660,9 @@ function saveDeviceConfig(config) {
 function touchDeviceHeartbeat(ip = null, rssi = null) {
   try {
     const current = getDeviceConfig();
+    if (!current.device_status) current.device_status = {};
     current.device_status = {
+      ...current.device_status,
       ip: ip || current.device_status?.ip,
       rssi: rssi !== null ? rssi : current.device_status?.rssi,
       online: true,
@@ -662,7 +670,20 @@ function touchDeviceHeartbeat(ip = null, rssi = null) {
       last_seen_seconds_ago: 0
     };
     saveDeviceConfig(current);
-  } catch (e) {}
+  } catch (e) {
+    console.warn("[Device Config] Error touching device heartbeat:", e.message);
+  }
+}
+
+function markDeviceOffline() {
+  try {
+    const current = getDeviceConfig();
+    if (!current.device_status) current.device_status = {};
+    current.device_status.online = false;
+    saveDeviceConfig(current);
+  } catch (e) {
+    console.warn("[Device Config] Error marking device offline:", e.message);
+  }
 }
 
 app.get("/api/device/config", (_req, res) => {
@@ -1524,11 +1545,26 @@ app.post(
 );
 
 const server = http.createServer(app);
-initWebSocketServer(server);
-
-server.listen(PORT, "0.0.0.0", () => {
-  const localIP = getLocalIPv4Address();
-  console.log(`KOTL backend listening on http://localhost:${PORT}`);
-  console.log(`KOTL WebSocket live at ws://localhost:${PORT}/ws`);
-  console.log(`KOTL API live at: http://${localIP}:${PORT}`);
+wss = initWebSocketServer(server, {
+  touchDeviceHeartbeat,
+  markDeviceOffline,
+  getDeviceConfig
 });
+
+if (require.main === module) {
+  server.listen(PORT, "0.0.0.0", () => {
+    const localIP = getLocalIPv4Address();
+    console.log(`KOTL backend listening on http://localhost:${PORT}`);
+    console.log(`KOTL WebSocket live at ws://localhost:${PORT}/ws`);
+    console.log(`KOTL API live at: http://${localIP}:${PORT}`);
+  });
+}
+
+module.exports = {
+  app,
+  server,
+  getDeviceConfig,
+  saveDeviceConfig,
+  touchDeviceHeartbeat,
+  markDeviceOffline
+};
