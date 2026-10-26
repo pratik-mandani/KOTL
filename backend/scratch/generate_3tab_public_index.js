@@ -52,6 +52,7 @@ const htmlContent = `<!DOCTYPE html>
       background-color: #FFFDF9;
       font-family: 'Nunito', sans-serif;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
     .font-fredoka { font-family: 'Fredoka', sans-serif; }
     .rounded-kinder { border-radius: 32px; }
@@ -84,53 +85,57 @@ const htmlContent = `<!DOCTYPE html>
     ::-webkit-scrollbar-thumb { background: #FBBF24; border-radius: 10px; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col pb-28 text-slate-800">
+<body class="min-h-screen flex flex-col pb-28 text-slate-800 overflow-x-hidden">
 
   <!-- ============================================================== -->
-  <!-- 1. TOP HEADER BAR (Zero Fake Battery / Zero Fake dBm) -->
+  <!-- 1. TOP HEADER BAR (Mobile-Optimized Single Row: Zero Cutoff) -->
   <!-- ============================================================== -->
-  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-amber-100 shadow-xs px-4 sm:px-8 py-3.5 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center text-2xl shadow-sm">
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-amber-100 shadow-xs px-3 sm:px-8 py-2.5 sm:py-3.5 flex items-center justify-between">
+    
+    <!-- Brand & Child Identity -->
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center text-xl sm:text-2xl shadow-sm shrink-0">
         🤖
       </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="font-fredoka text-xl font-bold tracking-tight text-slate-900">KOTL Kids</h1>
-          <span class="bg-amber-100 text-amber-800 text-[11px] font-fredoka font-bold px-2 py-0.5 rounded-full border border-amber-200">
+      <div class="min-w-0">
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <h1 class="font-fredoka text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-none">
+            KOTL Kids
+          </h1>
+          <span class="bg-amber-100 text-amber-800 text-[10px] sm:text-[11px] font-fredoka font-bold px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-200 shrink-0">
             v2.2.1
           </span>
         </div>
-        <p class="text-xs text-slate-500 font-medium">
+        <p class="text-[10px] sm:text-xs text-slate-500 font-medium truncate max-w-[125px] sm:max-w-none mt-0.5">
           Parth • Senior KG (Age 6) • AI Growth Companion
         </p>
       </div>
     </div>
 
     <!-- Real Device Status Pill, Head Pats Counter & Manner Stars -->
-    <div class="flex items-center gap-2 sm:gap-3">
+    <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
       
-      <!-- Head Pats / Touch Counter (GPIO 4 Real Touch) -->
-      <div class="flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-900 px-3 py-1.5 rounded-full text-xs font-fredoka font-bold shadow-2xs">
+      <!-- Head Pats Counter -->
+      <div class="flex items-center gap-1 bg-rose-50 border border-rose-200 text-rose-900 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-fredoka font-bold shadow-2xs whitespace-nowrap" title="9 Head Pats &amp; Hugs (GPIO 4 Real Touch)">
         <span>💖</span>
-        <span>9 Head Pats &amp; Hugs</span>
+        <span>9<span class="hidden sm:inline"> Head Pats &amp; Hugs</span></span>
         <span class="hidden lg:inline text-[10px] font-normal text-rose-600">(GPIO 4 Real Touch)</span>
       </div>
 
       <!-- Manner Stars Button -->
-      <button onclick="handleAwardMannerStar()" class="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-xs border border-amber-300 transition-transform active:scale-95" title="Award Manner Star for kindness or good habits!">
+      <button onclick="handleAwardMannerStar()" class="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-fredoka font-bold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full shadow-xs border border-amber-300 transition-transform active:scale-95 whitespace-nowrap" title="Award Manner Star for kindness or good habits!">
         <span>⭐</span>
-        <span id="headerMannerStars">15 Stars</span>
+        <span id="headerMannerStars">15<span class="hidden sm:inline"> Stars</span></span>
       </button>
 
       <!-- Live ESP32 Status Pill -->
-      <div id="deviceStatusPill" class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-fredoka font-medium text-emerald-800 whitespace-nowrap">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span class="hidden sm:inline">ESP32</span>
+      <div id="deviceStatusPill" class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-fredoka font-medium text-emerald-800 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="hidden md:inline">ESP32 </span>
         <span id="deviceStatusLabel">Online</span>
       </div>
 
-      <button onclick="openProfileModal()" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors" title="Child Profile & Settings">
+      <button onclick="openProfileModal()" class="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 text-xs sm:text-sm shrink-0 transition-colors" title="Child Profile &amp; Settings">
         ⚙️
       </button>
     </div>
@@ -139,28 +144,31 @@ const htmlContent = `<!DOCTYPE html>
   <!-- Voice Feedback Banner -->
   <div id="voiceFeedbackBanner" class="hidden bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-xs sm:text-sm px-4 py-2 font-fredoka font-medium flex items-center justify-center gap-2 shadow-sm">
     <span class="animate-spin">🔊</span>
-    <span id="voiceFeedbackText">KOTL Speaking...</span>
+    <span id="voiceFeedbackText" class="truncate max-w-[90%]">KOTL Speaking...</span>
   </div>
 
   <!-- ============================================================== -->
-  <!-- 2. MAIN 3-TAB NAVIGATION PILL BAR -->
+  <!-- 2. MAIN 3-TAB NAVIGATION PILL BAR (Single Line Mobile Clean) -->
   <!-- ============================================================== -->
-  <div class="max-w-6xl w-full mx-auto px-4 pt-6 pb-2">
-    <div class="bg-amber-100/70 p-1.5 rounded-[32px] flex items-center gap-1.5 border border-amber-200/80 shadow-xs">
+  <div class="max-w-6xl w-full mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-2">
+    <div class="bg-amber-100/70 p-1 sm:p-1.5 rounded-[26px] sm:rounded-[32px] flex items-center gap-1 sm:gap-1.5 border border-amber-200/80 shadow-xs">
       
-      <button id="tabBtn_growth" onclick="switchMainTab('growth')" class="tab-btn-active flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all">
-        <span class="text-base sm:text-lg">🌟</span>
-        <span>TAB 1: Daily Living Growth</span>
+      <button id="tabBtn_growth" onclick="switchMainTab('growth')" class="tab-btn-active flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all">
+        <span class="text-base sm:text-lg shrink-0">🌟</span>
+        <span class="sm:hidden text-xs">Growth</span>
+        <span class="hidden sm:inline">TAB 1: Daily Living Growth</span>
       </button>
 
-      <button id="tabBtn_habits" onclick="switchMainTab('habits')" class="flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:text-emerald-900 hover:bg-white/40 transition-all">
-        <span class="text-base sm:text-lg">🥦</span>
-        <span>TAB 2: Habits &amp; Socratic Engine</span>
+      <button id="tabBtn_habits" onclick="switchMainTab('habits')" class="flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 text-slate-600 hover:text-emerald-900 hover:bg-white/40 transition-all">
+        <span class="text-base sm:text-lg shrink-0">🥦</span>
+        <span class="sm:hidden text-xs">Habits</span>
+        <span class="hidden sm:inline">TAB 2: Habits &amp; Socratic Engine</span>
       </button>
 
-      <button id="tabBtn_cockpit" onclick="switchMainTab('cockpit')" class="flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:text-sky-900 hover:bg-white/40 transition-all">
-        <span class="text-base sm:text-lg">📻</span>
-        <span>TAB 3: Walkie-Talkie &amp; Cockpit</span>
+      <button id="tabBtn_cockpit" onclick="switchMainTab('cockpit')" class="flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 text-slate-600 hover:text-sky-900 hover:bg-white/40 transition-all">
+        <span class="text-base sm:text-lg shrink-0">📻</span>
+        <span class="sm:hidden text-xs">Cockpit</span>
+        <span class="hidden sm:inline">TAB 3: Walkie-Talkie &amp; Cockpit</span>
       </button>
 
     </div>
@@ -169,113 +177,113 @@ const htmlContent = `<!DOCTYPE html>
   <!-- ============================================================== -->
   <!-- 3. TAB 1: DAILY LIVING GROWTH -->
   <!-- ============================================================== -->
-  <main id="tabContent_growth" class="max-w-6xl w-full mx-auto px-4 py-4 space-y-6">
+  <main id="tabContent_growth" class="max-w-6xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-4 space-y-4 sm:space-y-6">
     
-    <!-- 4 Growth Metrics Bento Cards (rounded-[32px]) -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- 4 Growth Metrics Bento Cards (rounded-[24px] sm:rounded-[32px]) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
       
       <!-- Metric 1: Talk Time Minutes -->
-      <div class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-2xl p-2 bg-amber-100 rounded-2xl">⏱️</span>
-          <span class="text-[11px] font-fredoka font-bold text-amber-700 bg-amber-200/60 px-2.5 py-0.5 rounded-full">Today</span>
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-1.5 sm:mb-2">
+          <span class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-amber-100 rounded-xl sm:rounded-2xl">⏱️</span>
+          <span class="text-[10px] sm:text-[11px] font-fredoka font-bold text-amber-700 bg-amber-200/60 px-2 sm:px-2.5 py-0.5 rounded-full">Today</span>
         </div>
         <div>
-          <div class="font-fredoka text-3xl font-bold text-amber-950">
-            <span id="metricTalkMinutes">24</span> <span class="text-sm font-medium text-amber-800">mins</span>
+          <div class="font-fredoka text-2xl sm:text-3xl font-bold text-amber-950">
+            <span id="metricTalkMinutes">24</span> <span class="text-xs sm:text-sm font-medium text-amber-800">mins</span>
           </div>
-          <p class="text-xs text-amber-900/80 font-medium mt-1">Active Conversational Talk-Time</p>
+          <p class="text-[11px] sm:text-xs text-amber-900/80 font-medium mt-0.5 sm:mt-1 leading-tight">Active Talk-Time</p>
         </div>
       </div>
 
       <!-- Metric 2: Curiosity Questions -->
-      <div class="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-2xl p-2 bg-purple-100 rounded-2xl">🔭</span>
-          <span class="text-[11px] font-fredoka font-bold text-purple-700 bg-purple-200/60 px-2.5 py-0.5 rounded-full">High Inquiry</span>
+      <div class="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200/80 rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-1.5 sm:mb-2">
+          <span class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-purple-100 rounded-xl sm:rounded-2xl">🔭</span>
+          <span class="text-[10px] sm:text-[11px] font-fredoka font-bold text-purple-700 bg-purple-200/60 px-2 sm:px-2.5 py-0.5 rounded-full">High Inquiry</span>
         </div>
         <div>
-          <div class="font-fredoka text-3xl font-bold text-purple-950">
-            <span id="metricCuriosityCount">28</span> <span class="text-sm font-medium text-purple-800">queries</span>
+          <div class="font-fredoka text-2xl sm:text-3xl font-bold text-purple-950">
+            <span id="metricCuriosityCount">28</span> <span class="text-xs sm:text-sm font-medium text-purple-800">queries</span>
           </div>
-          <p class="text-xs text-purple-900/80 font-medium mt-1">Exploratory 'Why &amp; How' Questions</p>
+          <p class="text-[11px] sm:text-xs text-purple-900/80 font-medium mt-0.5 sm:mt-1 leading-tight">&apos;Why &amp; How&apos; Questions</p>
         </div>
       </div>
 
       <!-- Metric 3: Manner Stars -->
-      <div class="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-2xl p-2 bg-yellow-100 rounded-2xl">⭐</span>
-          <button onclick="handleAwardMannerStar()" class="text-[10px] font-fredoka font-bold bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-full shadow-2xs">
+      <div class="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200/80 rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-1.5 sm:mb-2">
+          <span class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-yellow-100 rounded-xl sm:rounded-2xl">⭐</span>
+          <button onclick="handleAwardMannerStar()" class="text-[9px] sm:text-[10px] font-fredoka font-bold bg-amber-500 hover:bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs">
             + Award
           </button>
         </div>
         <div>
-          <div class="font-fredoka text-3xl font-bold text-yellow-950">
-            <span id="metricMannerStars">15</span> <span class="text-sm font-medium text-yellow-800">stars</span>
+          <div class="font-fredoka text-2xl sm:text-3xl font-bold text-yellow-950">
+            <span id="metricMannerStars">15</span> <span class="text-xs sm:text-sm font-medium text-yellow-800">stars</span>
           </div>
-          <p class="text-xs text-yellow-900/80 font-medium mt-1">Kindness &amp; Habit Badges</p>
+          <p class="text-[11px] sm:text-xs text-yellow-900/80 font-medium mt-0.5 sm:mt-1 leading-tight">Kindness Badges</p>
         </div>
       </div>
 
       <!-- Metric 4: Pediatric Overall Score -->
-      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-2xl p-2 bg-emerald-100 rounded-2xl">🏆</span>
-          <span class="text-[11px] font-fredoka font-bold text-emerald-700 bg-emerald-200/60 px-2.5 py-0.5 rounded-full">Clinical</span>
+      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-1.5 sm:mb-2">
+          <span class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-emerald-100 rounded-xl sm:rounded-2xl">🏆</span>
+          <span class="text-[10px] sm:text-[11px] font-fredoka font-bold text-emerald-700 bg-emerald-200/60 px-2 sm:px-2.5 py-0.5 rounded-full">Clinical</span>
         </div>
         <div>
-          <div class="font-fredoka text-3xl font-bold text-emerald-950">
-            89<span class="text-sm font-medium text-emerald-800">/100</span>
+          <div class="font-fredoka text-2xl sm:text-3xl font-bold text-emerald-950">
+            89<span class="text-xs sm:text-sm font-medium text-emerald-800">/100</span>
           </div>
-          <p class="text-xs text-emerald-900/80 font-medium mt-1">Advanced Cognitive Curiosity</p>
+          <p class="text-[11px] sm:text-xs text-emerald-900/80 font-medium mt-0.5 sm:mt-1 leading-tight">Cognitive Curiosity</p>
         </div>
       </div>
 
     </div>
 
     <!-- Educational Vocabulary Acquired Card -->
-    <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
-      <div class="flex items-center justify-between mb-3">
+    <div class="bg-white border border-amber-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs">
+      <div class="flex items-center justify-between mb-2 sm:mb-3">
         <div class="flex items-center gap-2">
-          <span class="text-xl">📚</span>
-          <h3 class="font-fredoka text-lg font-bold text-slate-800">Educational Vocabulary Learned with KOTL</h3>
+          <span class="text-lg sm:text-xl">📚</span>
+          <h3 class="font-fredoka text-base sm:text-lg font-bold text-slate-800">Educational Vocabulary Learned with KOTL</h3>
         </div>
-        <span id="vocabWordCountBadge" class="text-xs font-fredoka font-semibold text-slate-500">8 Words Acquired</span>
+        <span id="vocabWordCountBadge" class="text-[11px] sm:text-xs font-fredoka font-semibold text-slate-500 whitespace-nowrap">8 Words Acquired</span>
       </div>
       <p class="text-xs text-slate-500 mb-3">
         Parth naturally assimilated these scientific and descriptive terms during interactive storytelling:
       </p>
-      <div id="vocabularyBadgesContainer" class="flex flex-wrap gap-2">
+      <div id="vocabularyBadgesContainer" class="flex flex-wrap gap-1.5 sm:gap-2">
         <!-- Rendered dynamically -->
       </div>
     </div>
 
     <!-- Observed Interests & Passions (Interest Affinity Widget) -->
-    <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
+    <div class="bg-white border border-amber-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs">
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center gap-2">
-          <span class="text-xl">🎯</span>
-          <h3 class="font-fredoka text-lg font-bold text-slate-900">Observed Interests &amp; Passions (Interest Affinity)</h3>
+          <span class="text-lg sm:text-xl">🎯</span>
+          <h3 class="font-fredoka text-base sm:text-lg font-bold text-slate-900">Observed Interests &amp; Passions (Interest Affinity)</h3>
         </div>
-        <span class="bg-purple-100 text-purple-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">Cognitive Profiling</span>
+        <span class="bg-purple-100 text-purple-800 text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full shrink-0">Cognitive Profiling</span>
       </div>
-      <p class="text-xs text-slate-500 mb-4">Real-time interest affinity extracted from Parth's spontaneous questions and storytelling topics:</p>
+      <p class="text-xs text-slate-500 mb-3 sm:mb-4">Real-time interest affinity extracted from Parth's spontaneous questions and storytelling topics:</p>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
         <!-- 🚀 Space Exploration & Stars (95%) -->
-        <div onclick="playLocalVoice('Parth loves Space Exploration &amp; Stars! KOTL is exploring galaxies and constellations with him!')" class="p-4 rounded-[24px] border border-purple-200 bg-purple-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+        <div onclick="playLocalVoice('Parth loves Space Exploration &amp; Stars! KOTL is exploring galaxies and constellations with him!')" class="p-3.5 sm:p-4 rounded-[20px] sm:rounded-[24px] border border-purple-200 bg-purple-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">🚀</span>
-                <span class="font-fredoka font-bold text-sm text-purple-950">Space Exploration &amp; Stars</span>
+                <span class="text-xl sm:text-2xl">🚀</span>
+                <span class="font-fredoka font-bold text-xs sm:text-sm text-purple-950">Space Exploration &amp; Stars</span>
               </div>
-              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-purple-950">95% Affinity</span>
+              <span class="font-fredoka font-bold text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-white/80 text-purple-950">95% Affinity</span>
             </div>
-            <p class="text-xs text-slate-600 leading-relaxed">Asks about planetary orbits, telescopes, and constellations before bed</p>
+            <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">Asks about planetary orbits, telescopes, and constellations before bed</p>
           </div>
-          <div class="mt-3">
+          <div class="mt-2.5 sm:mt-3">
             <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
               <div class="h-full bg-purple-500 rounded-full" style="width: 95%"></div>
             </div>
@@ -283,18 +291,18 @@ const htmlContent = `<!DOCTYPE html>
         </div>
 
         <!-- 🎨 Creative Drawing & Visual Art (88%) -->
-        <div onclick="playLocalVoice('Parth shows brilliant visual creativity! KOTL encourages drawing and colorful sketches!')" class="p-4 rounded-[24px] border border-pink-200 bg-pink-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+        <div onclick="playLocalVoice('Parth shows brilliant visual creativity! KOTL encourages drawing and colorful sketches!')" class="p-3.5 sm:p-4 rounded-[20px] sm:rounded-[24px] border border-pink-200 bg-pink-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">🎨</span>
-                <span class="font-fredoka font-bold text-sm text-pink-950">Creative Drawing &amp; Visual Art</span>
+                <span class="text-xl sm:text-2xl">🎨</span>
+                <span class="font-fredoka font-bold text-xs sm:text-sm text-pink-950">Creative Drawing &amp; Visual Art</span>
               </div>
-              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-pink-950">88% Affinity</span>
+              <span class="font-fredoka font-bold text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-white/80 text-pink-950">88% Affinity</span>
             </div>
-            <p class="text-xs text-slate-600 leading-relaxed">Colors celestial maps and sketches friendly robot companions</p>
+            <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">Colors celestial maps and sketches friendly robot companions</p>
           </div>
-          <div class="mt-3">
+          <div class="mt-2.5 sm:mt-3">
             <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
               <div class="h-full bg-pink-500 rounded-full" style="width: 88%"></div>
             </div>
@@ -302,18 +310,18 @@ const htmlContent = `<!DOCTYPE html>
         </div>
 
         <!-- 🐾 Nature & Animal Care (82%) -->
-        <div onclick="playLocalVoice('Parth loves animals and gentle nature exploration! Super kind heart!')" class="p-4 rounded-[24px] border border-emerald-200 bg-emerald-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+        <div onclick="playLocalVoice('Parth loves animals and gentle nature exploration! Super kind heart!')" class="p-3.5 sm:p-4 rounded-[20px] sm:rounded-[24px] border border-emerald-200 bg-emerald-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">🐾</span>
-                <span class="font-fredoka font-bold text-sm text-emerald-950">Nature &amp; Animal Care</span>
+                <span class="text-xl sm:text-2xl">🐾</span>
+                <span class="font-fredoka font-bold text-xs sm:text-sm text-emerald-950">Nature &amp; Animal Care</span>
               </div>
-              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-emerald-950">82% Affinity</span>
+              <span class="font-fredoka font-bold text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-white/80 text-emerald-950">82% Affinity</span>
             </div>
-            <p class="text-xs text-slate-600 leading-relaxed">Loves learning animal sounds, garden birds, and plant watering rituals</p>
+            <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">Loves learning animal sounds, garden birds, and plant watering rituals</p>
           </div>
-          <div class="mt-3">
+          <div class="mt-2.5 sm:mt-3">
             <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
               <div class="h-full bg-emerald-500 rounded-full" style="width: 82%"></div>
             </div>
@@ -321,18 +329,18 @@ const htmlContent = `<!DOCTYPE html>
         </div>
 
         <!-- 🏎️ Mechanical & Toy Engineering (74%) -->
-        <div onclick="playLocalVoice('Parth is curious about how machines work! Great foundation for future engineering!')" class="p-4 rounded-[24px] border border-amber-200 bg-amber-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
+        <div onclick="playLocalVoice('Parth is curious about how machines work! Great foundation for future engineering!')" class="p-3.5 sm:p-4 rounded-[20px] sm:rounded-[24px] border border-amber-200 bg-amber-50 cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-2">
-                <span class="text-2xl">🏎️</span>
-                <span class="font-fredoka font-bold text-sm text-amber-950">Mechanical &amp; Toy Engineering</span>
+                <span class="text-xl sm:text-2xl">🏎️</span>
+                <span class="font-fredoka font-bold text-xs sm:text-sm text-amber-950">Mechanical &amp; Toy Engineering</span>
               </div>
-              <span class="font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 text-amber-950">74% Affinity</span>
+              <span class="font-fredoka font-bold text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-white/80 text-amber-950">74% Affinity</span>
             </div>
-            <p class="text-xs text-slate-600 leading-relaxed">Curious about how wheels, gears, and robot speakers transmit voice</p>
+            <p class="text-[11px] sm:text-xs text-slate-600 leading-relaxed">Curious about how wheels, gears, and robot speakers transmit voice</p>
           </div>
-          <div class="mt-3">
+          <div class="mt-2.5 sm:mt-3">
             <div class="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
               <div class="h-full bg-amber-500 rounded-full" style="width: 74%"></div>
             </div>
@@ -341,38 +349,38 @@ const htmlContent = `<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- Conversational Speech Bubbles Archive Card (Two-Way Stream: Natural Container max-w-[80%] md:max-w-[70%]) -->
-    <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+    <!-- Conversational Speech Bubbles Archive Card (Responsive Width Container) -->
+    <div class="bg-white border border-amber-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 sm:mb-5">
         <div>
           <div class="flex items-center gap-2">
-            <span class="text-xl">💬</span>
-            <h3 class="font-fredoka text-lg font-bold text-slate-900">Day-Wise Conversational Speech Bubbles</h3>
+            <span class="text-lg sm:text-xl">💬</span>
+            <h3 class="font-fredoka text-base sm:text-lg font-bold text-slate-900">Day-Wise Conversational Speech Bubbles</h3>
           </div>
-          <p class="text-xs text-slate-500">Two-way conversational stream recorded between Parth and his physical KOTL companion</p>
+          <p class="text-[11px] sm:text-xs text-slate-500">Two-way conversational stream recorded between Parth and his physical KOTL companion</p>
         </div>
 
         <!-- Search Input -->
-        <div class="relative">
+        <div class="relative w-full sm:w-auto">
           <input type="text" id="chatSearchInput" oninput="handleSearchChat(this.value)" placeholder="Search words (e.g. planet, stars)..." class="text-xs bg-slate-50 border border-slate-200 rounded-full px-3.5 py-1.5 pl-8 w-full sm:w-56 focus:outline-none focus:ring-2 focus:ring-amber-300">
           <span class="absolute left-2.5 top-1.5 text-xs text-slate-400">🔍</span>
         </div>
       </div>
 
       <!-- Day Selector Pills -->
-      <div id="daySelectorPillsContainer" class="flex items-center gap-2 overflow-x-auto pb-3 mb-4">
+      <div id="daySelectorPillsContainer" class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2.5 mb-3 sm:mb-4 scrollbar-none">
         <!-- Rendered dynamically -->
       </div>
 
       <!-- Speech Bubbles List -->
-      <div id="chatBubblesContainer" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+      <div id="chatBubblesContainer" class="space-y-3.5 max-h-[480px] overflow-y-auto pr-1 sm:pr-2">
         <!-- Rendered dynamically -->
       </div>
 
       <!-- Quick Live Dialogue Test Form -->
-      <form onsubmit="handleSendTestChat(event)" class="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2">
-        <input type="text" id="testChatInput" placeholder="Type a test dialogue to KOTL (e.g. Why do stars shine?)..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
-        <button type="submit" id="testChatBtn" class="bg-amber-500 hover:bg-amber-600 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5">
+      <form onsubmit="handleSendTestChat(event)" class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 sm:gap-2">
+        <input type="text" id="testChatInput" placeholder="Type a test dialogue to KOTL (e.g. Why do stars shine?)..." class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-300">
+        <button type="submit" id="testChatBtn" class="bg-amber-500 hover:bg-amber-600 text-white font-fredoka font-bold text-xs sm:text-sm px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1 shrink-0">
           <span>Send</span>
           <span>🚀</span>
         </button>
@@ -384,42 +392,43 @@ const htmlContent = `<!DOCTYPE html>
   <!-- ============================================================== -->
   <!-- 4. TAB 2: HABITS, HEALTH & SOCRATIC ACTION ENGINE -->
   <!-- ============================================================== -->
-  <main id="tabContent_habits" class="hidden max-w-6xl w-full mx-auto px-4 py-4 space-y-6">
+  <main id="tabContent_habits" class="hidden max-w-6xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-4 space-y-4 sm:space-y-6">
     
     <!-- Header with 1-Click Directive Explainer -->
-    <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white rounded-[32px] p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
       <div>
         <span class="bg-emerald-400/50 text-emerald-950 font-fredoka font-bold text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider">Socratic Action Engine</span>
-        <h2 class="font-fredoka text-xl sm:text-2xl font-bold mt-1.5">Habit Tracker &amp; 1-Click KOTL Voice Directives</h2>
-        <p class="text-xs sm:text-sm text-emerald-100 mt-0.5">Click any directive to have KOTL immediately prompt Parth with friendly superhero encouragement!</p>
+        <h2 class="font-fredoka text-lg sm:text-2xl font-bold mt-1.5 leading-snug">Habit Tracker &amp; 1-Click KOTL Voice Directives</h2>
+        <p class="text-xs sm:text-sm text-emerald-100 mt-0.5">Click any directive to have KOTL immediately prompt Parth with friendly encouragement!</p>
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
-        <button onclick="openAddHabitModal()" class="bg-white/90 hover:bg-white text-emerald-900 font-fredoka font-bold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95">
-          <span>+ Add Habit</span>
+        <button onclick="openAddHabitModal()" class="bg-white/90 hover:bg-white text-emerald-900 font-fredoka font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1 active:scale-95">
+          <span>+</span>
+          <span>Add Habit</span>
         </button>
-        <button onclick="handleAwardMannerStar()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95">
+        <button onclick="handleAwardMannerStar()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1 active:scale-95">
           <span>⭐ Award Star</span>
         </button>
       </div>
     </div>
 
     <!-- Persistent Habits Grid -->
-    <div id="habitsGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div id="habitsGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
       <!-- Rendered dynamically from /api/habits -->
     </div>
 
     <!-- Daily Outdoor Movement & Sports Tracker + Socratic Missions + WHO Growth Indicators -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4">
       
       <!-- Daily Outdoor Sports & Stamina Tracker Card -->
-      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+      <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
-              <span class="text-2xl p-2 bg-emerald-100 rounded-2xl">🏃</span>
+              <span class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-emerald-100 rounded-2xl">🏃</span>
               <div>
-                <h4 class="font-fredoka text-base font-bold text-emerald-950">
+                <h4 class="font-fredoka text-sm sm:text-base font-bold text-emerald-950">
                   Daily Outdoor Sports &amp; Stamina Goal
                 </h4>
                 <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
@@ -429,9 +438,9 @@ const htmlContent = `<!DOCTYPE html>
             </div>
           </div>
 
-          <div class="my-4">
+          <div class="my-3 sm:my-4">
             <div class="flex items-baseline justify-between mb-1">
-              <span class="font-fredoka text-2xl font-bold text-emerald-950">
+              <span class="font-fredoka text-xl sm:text-2xl font-bold text-emerald-950">
                 45 <span class="text-xs font-medium text-emerald-800">/ 60 mins</span>
               </span>
               <span class="font-fredoka text-xs font-bold text-emerald-700">75% Goal</span>
@@ -441,18 +450,18 @@ const htmlContent = `<!DOCTYPE html>
             </div>
           </div>
 
-          <div class="p-3 bg-white/80 rounded-2xl border border-emerald-200/60 mb-2">
-            <div class="text-[11px] font-fredoka font-bold text-emerald-900">Logged Today:</div>
-            <div class="text-xs text-emerald-800 font-medium mt-0.5">
+          <div class="p-2.5 sm:p-3 bg-white/80 rounded-2xl border border-emerald-200/60 mb-2">
+            <div class="text-[10px] sm:text-[11px] font-fredoka font-bold text-emerald-900">Logged Today:</div>
+            <div class="text-[11px] sm:text-xs text-emerald-800 font-medium mt-0.5">
               ⚽ Playground Cricket (30m) + Cycling (15m)
             </div>
           </div>
-          <p class="text-[11px] text-emerald-900/80 leading-relaxed font-medium">
+          <p class="text-[10px] sm:text-[11px] text-emerald-900/80 leading-relaxed font-medium">
             Active aerobic playtime strengthens physical motor skills and ensures sound nighttime sleep.
           </p>
         </div>
 
-        <div class="mt-4 pt-3 border-t border-emerald-200/60 flex items-center justify-end">
+        <div class="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-emerald-200/60 flex items-center justify-end">
           <button onclick="playLocalVoice('Awesome energy, Parth! You completed 45 minutes of active cricket and cycling today! High stamina hero!')" class="text-[11px] font-fredoka font-bold bg-emerald-200/80 hover:bg-emerald-300 text-emerald-950 px-3 py-1 rounded-full">
             ▶ Cheer Activity
           </button>
@@ -460,36 +469,37 @@ const htmlContent = `<!DOCTYPE html>
       </div>
 
       <!-- Active Socratic Creative Projects Card with '+ Add Custom Mission' Button -->
-      <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+      <div class="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200/80 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs flex flex-col justify-between">
         <div>
-          <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center justify-between mb-2.5 sm:mb-3">
             <div class="flex items-center gap-2">
-              <span class="text-2xl p-2 bg-indigo-100 rounded-2xl">🌱</span>
+              <span class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-indigo-100 rounded-2xl">🌱</span>
               <div>
-                <h4 class="font-fredoka text-base font-bold text-indigo-950">
+                <h4 class="font-fredoka text-sm sm:text-base font-bold text-indigo-950">
                   Active Socratic Missions
                 </h4>
                 <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-900">
-                  School Science Quest
+                  Science Quest
                 </span>
               </div>
             </div>
 
             <!-- + Add Custom Mission Button -->
-            <button onclick="openAddMissionModal()" class="text-xs font-fredoka font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-full shadow-2xs transition-all active:scale-95 flex items-center gap-1">
+            <button onclick="openAddMissionModal()" class="text-xs font-fredoka font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-2xs transition-all active:scale-95 flex items-center gap-1 shrink-0">
               <span>+</span>
-              <span>Add Custom Mission</span>
+              <span class="sm:hidden">Add</span>
+              <span class="hidden sm:inline">Add Custom Mission</span>
             </button>
           </div>
 
-          <div id="socraticMissionsListContainer" class="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+          <div id="socraticMissionsListContainer" class="space-y-2 sm:space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
             <div class="p-3 bg-white/90 rounded-2xl border border-indigo-200/60 space-y-1.5">
               <div class="flex items-center justify-between">
                 <span class="font-fredoka font-bold text-xs text-indigo-900 flex items-center gap-1.5">
                   <span>🌱</span>
-                  <span>Plant in a Cup (School Science Quest)</span>
+                  <span class="truncate max-w-[170px] sm:max-w-none">Plant in a Cup (School Science Quest)</span>
                 </span>
-                <span class="text-[9px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span class="text-[9px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
                   In Progress
                 </span>
               </div>
@@ -503,50 +513,52 @@ const htmlContent = `<!DOCTYPE html>
           </div>
         </div>
 
-        <div class="mt-3 pt-2 border-t border-indigo-200/60 text-[11px] text-indigo-800 font-medium">
+        <div class="mt-2.5 sm:mt-3 pt-2 border-t border-indigo-200/60 text-[10px] sm:text-[11px] text-indigo-800 font-medium">
           KOTL guides Parth through open questions rather than simply giving answers.
         </div>
       </div>
 
       <!-- WHO Growth Indicators Card -->
-      <div class="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs space-y-3 flex flex-col justify-between">
+      <div class="bg-white border border-amber-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs space-y-3 flex flex-col justify-between">
         <div>
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
-              <span class="text-xl">📊</span>
-              <h3 class="font-fredoka text-base font-bold text-slate-900">WHO Growth Indicators</h3>
+              <span class="text-lg sm:text-xl">📊</span>
+              <h3 class="font-fredoka text-sm sm:text-base font-bold text-slate-900">
+                WHO Growth Indicators
+              </h3>
             </div>
-            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full">
               Normal &amp; Optimal
             </span>
           </div>
 
-          <div class="grid grid-cols-3 gap-2 text-center my-3">
-            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+          <div class="grid grid-cols-3 gap-2 text-center my-2.5 sm:my-3">
+            <div class="bg-slate-50 rounded-2xl p-2 sm:p-2.5 border border-slate-100">
               <div class="text-[10px] text-slate-500 font-medium">Height</div>
-              <div class="font-fredoka text-lg font-bold text-slate-900 mt-0.5">116 <span class="text-[10px] font-normal">cm</span></div>
+              <div class="font-fredoka text-base sm:text-lg font-bold text-slate-900 mt-0.5">116 <span class="text-[10px] font-normal">cm</span></div>
               <div class="text-[9px] text-emerald-600 font-medium">75th %ile</div>
             </div>
 
-            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+            <div class="bg-slate-50 rounded-2xl p-2 sm:p-2.5 border border-slate-100">
               <div class="text-[10px] text-slate-500 font-medium">Weight</div>
-              <div class="font-fredoka text-lg font-bold text-slate-900 mt-0.5">21.5 <span class="text-[10px] font-normal">kg</span></div>
+              <div class="font-fredoka text-base sm:text-lg font-bold text-slate-900 mt-0.5">21.5 <span class="text-[10px] font-normal">kg</span></div>
               <div class="text-[9px] text-emerald-600 font-medium">75th %ile</div>
             </div>
 
-            <div class="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+            <div class="bg-slate-50 rounded-2xl p-2 sm:p-2.5 border border-slate-100">
               <div class="text-[10px] text-slate-500 font-medium">BMI</div>
-              <div class="font-fredoka text-lg font-bold text-slate-900 mt-0.5">15.9</div>
+              <div class="font-fredoka text-base sm:text-lg font-bold text-slate-900 mt-0.5">15.9</div>
               <div class="text-[9px] text-emerald-600 font-medium">Optimal</div>
             </div>
           </div>
 
-          <p class="text-[11px] text-slate-500 leading-relaxed">
+          <p class="text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
             Pediatric standard 6.0y boy. Height &amp; weight reflect balanced nutrition and active sports.
           </p>
         </div>
 
-        <div class="pt-2 border-t border-slate-100 text-[11px] text-slate-600 font-medium">
+        <div class="pt-2 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-600 font-medium">
           Tip: Encourage Socratic wonder and daily questions.
         </div>
       </div>
@@ -558,58 +570,59 @@ const htmlContent = `<!DOCTYPE html>
   <!-- ============================================================== -->
   <!-- 5. TAB 3: WALKIE-TALKIE & DEVICE COCKPIT -->
   <!-- ============================================================== -->
-  <main id="tabContent_cockpit" class="hidden max-w-6xl w-full mx-auto px-4 py-4 space-y-6">
+  <main id="tabContent_cockpit" class="hidden max-w-6xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-4 space-y-4 sm:space-y-6">
     
     <!-- Walkie-Talkie Audio Memo Card (Push-to-Talk Mic) -->
-    <div class="bg-white border border-sky-100 rounded-[32px] p-6 shadow-xs">
-      <div class="flex items-center justify-between mb-4">
+    <div class="bg-white border border-sky-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs">
+      <div class="flex items-center justify-between mb-3 sm:mb-4">
         <div class="flex items-center gap-2">
-          <span class="text-2xl p-2 bg-sky-100 rounded-2xl">📻</span>
+          <span class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-sky-100 rounded-2xl">📻</span>
           <div>
-            <h3 class="font-fredoka text-lg font-bold text-slate-900">Parent Walkie-Talkie &amp; Audio Memos</h3>
-            <p class="text-xs text-slate-500">Speak directly to Parth through his KOTL companion robot speaker</p>
+            <h3 class="font-fredoka text-base sm:text-lg font-bold text-slate-900">Parent Walkie-Talkie &amp; Audio Memos</h3>
+            <p class="text-[11px] sm:text-xs text-slate-500">Speak directly to Parth through his KOTL companion robot speaker</p>
           </div>
         </div>
-        <span class="bg-sky-100 text-sky-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
-          Instant Audio Broadcast
+        <span class="bg-sky-100 text-sky-800 text-[10px] font-fredoka font-bold px-2 sm:px-2.5 py-0.5 rounded-full shrink-0">
+          Instant Audio
         </span>
       </div>
 
       <!-- 4 Quick Presets -->
-      <div class="mb-4">
-        <div class="text-xs font-fredoka font-semibold text-slate-600 mb-2">⚡ 1-Click Preset Audio Directives:</div>
+      <div class="mb-3 sm:mb-4">
+        <div class="text-xs font-fredoka font-semibold text-slate-600 mb-1.5 sm:mb-2">⚡ 1-Click Preset Audio Directives:</div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <button onclick="sendWalkieMemo('Mummy is so proud of your kindness today, champ!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
-            <div>🌟 Proud of You</div>
-            <div class="text-[10px] font-normal text-sky-700 truncate mt-0.5">"Mummy is proud..."</div>
+          <button onclick="sendWalkieMemo('Mummy is so proud of your kindness today, champ!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2 sm:p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
+            <div class="text-[11px] sm:text-xs">🌟 Proud of You</div>
+            <div class="text-[9px] sm:text-[10px] font-normal text-sky-700 truncate mt-0.5">"Mummy is proud..."</div>
           </button>
-          <button onclick="sendWalkieMemo('Superhero snack time, Parth! Fuel up with some fresh fruits!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
-            <div>🍎 Snack Time</div>
-            <div class="text-[10px] font-normal text-sky-700 truncate mt-0.5">"Fuel up with fruits..."</div>
+          <button onclick="sendWalkieMemo('Superhero snack time, Parth! Fuel up with some fresh fruits!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2 sm:p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
+            <div class="text-[11px] sm:text-xs">🍎 Snack Time</div>
+            <div class="text-[9px] sm:text-[10px] font-normal text-sky-700 truncate mt-0.5">"Fuel up with fruits..."</div>
           </button>
-          <button onclick="sendWalkieMemo('Time to neatly arrange your books and school bag, buddy!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
-            <div>🎒 Pack School Bag</div>
-            <div class="text-[10px] font-normal text-sky-700 truncate mt-0.5">"Arrange your books..."</div>
+          <button onclick="sendWalkieMemo('Time to neatly arrange your books and school bag, buddy!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2 sm:p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
+            <div class="text-[11px] sm:text-xs">🎒 Pack School Bag</div>
+            <div class="text-[9px] sm:text-[10px] font-normal text-sky-700 truncate mt-0.5">"Arrange your books..."</div>
           </button>
-          <button onclick="sendWalkieMemo('Great manners! You earned an extra kindness star!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
-            <div>⭐ Kindness Star</div>
-            <div class="text-[10px] font-normal text-sky-700 truncate mt-0.5">"Earned an extra star..."</div>
+          <button onclick="sendWalkieMemo('Great manners! You earned an extra kindness star!')" class="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2 sm:p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs">
+            <div class="text-[11px] sm:text-xs">⭐ Kindness Star</div>
+            <div class="text-[9px] sm:text-[10px] font-normal text-sky-700 truncate mt-0.5">"Earned an extra star..."</div>
           </button>
         </div>
       </div>
 
       <!-- Typed Walkie Input + Push-to-Talk Mic -->
       <div class="space-y-2">
-        <div class="flex items-center gap-2">
-          <input type="text" id="walkieTextInput" placeholder="Type a loving message to speak over KOTL speaker..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-sky-300">
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <input type="text" id="walkieTextInput" placeholder="Type a loving message to speak over KOTL speaker..." class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-sky-300">
           
           <!-- Circular Push-to-Talk Mic Button -->
-          <button id="walkieMicBtn" onclick="toggleWalkieMicRecording()" class="w-10 h-10 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center text-lg transition-transform active:scale-95 shadow-2xs" title="Hold / Tap to Record Voice">
+          <button id="walkieMicBtn" onclick="toggleWalkieMicRecording()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center text-base sm:text-lg transition-transform active:scale-95 shadow-2xs shrink-0" title="Hold / Tap to Record Voice">
             🎙️
           </button>
 
-          <button onclick="sendWalkieMemo(document.getElementById('walkieTextInput').value)" class="bg-sky-500 hover:bg-sky-600 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5">
-            <span>Broadcast Voice</span>
+          <button onclick="sendWalkieMemo(document.getElementById('walkieTextInput').value)" class="bg-sky-500 hover:bg-sky-600 text-white font-fredoka font-bold text-xs sm:text-sm px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1 shrink-0 whitespace-nowrap">
+            <span class="sm:hidden">Send</span>
+            <span class="hidden sm:inline">Broadcast Voice</span>
           </button>
         </div>
 
@@ -621,54 +634,54 @@ const htmlContent = `<!DOCTYPE html>
       </div>
 
       <!-- Memo History List -->
-      <div id="walkieMemoHistory" class="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
-        <div class="text-[11px] font-fredoka font-semibold text-slate-400">Recently Broadcasted Memos:</div>
+      <div id="walkieMemoHistory" class="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-slate-100 space-y-1 sm:space-y-1.5">
+        <div class="text-[10px] sm:text-[11px] font-fredoka font-semibold text-slate-400">Recently Broadcasted:</div>
         <div class="text-xs bg-slate-50 p-2 rounded-xl flex items-center justify-between text-slate-700">
-          <span>"Mummy is proud of your kindness today, champ!"</span>
-          <span class="text-[10px] text-slate-400">Delivered</span>
+          <span class="truncate max-w-[80%]">&quot;Mummy is proud of your kindness today, champ!&quot;</span>
+          <span class="text-[10px] text-slate-400 shrink-0">Delivered</span>
         </div>
       </div>
     </div>
 
     <!-- Promoted Bedtime Curfew Card -->
-    <div class="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 rounded-[32px] p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <span class="text-3xl p-2.5 bg-indigo-100 rounded-2xl">🌙</span>
+    <div class="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 rounded-[24px] sm:rounded-[32px] p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5 sm:gap-3">
+        <span class="text-2xl sm:text-3xl p-2 sm:p-2.5 bg-indigo-100 rounded-xl sm:rounded-2xl shrink-0">🌙</span>
         <div>
-          <h4 class="font-fredoka text-base font-bold text-indigo-950">
+          <h4 class="font-fredoka text-sm sm:text-base font-bold text-indigo-950">
             Auto Bedtime Curfew (9:00 PM)
           </h4>
-          <p class="text-xs text-indigo-900/80 font-medium mt-0.5">
-            KOTL automatically enters low-volume soothing whisper mode after 21:00 IST to promote restful sleep.
+          <p class="text-[11px] sm:text-xs text-indigo-900/80 font-medium mt-0.5">
+            KOTL automatically enters soothing whisper mode after 21:00 IST to promote restful sleep.
           </p>
         </div>
       </div>
 
-      <button id="curfewToggleBtn" onclick="toggleBedtimeCurfew()" class="px-4 py-2 rounded-full font-fredoka font-bold text-xs transition-all shadow-2xs active:scale-95 shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white">
+      <button id="curfewToggleBtn" onclick="toggleBedtimeCurfew()" class="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-fredoka font-bold text-xs transition-all shadow-2xs active:scale-95 shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white">
         ✓ Curfew Active
       </button>
     </div>
 
     <!-- Hardware Controls & Parent-Friendly Humanized Telemetry -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4">
       
       <!-- Parent-Friendly Companion Hardware Status Card -->
-      <div class="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4">
+      <div class="bg-white border border-slate-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="text-xl">🤖</span>
-            <h3 class="font-fredoka text-lg font-bold text-slate-900">Companion Hardware Status</h3>
+            <span class="text-lg sm:text-xl">🤖</span>
+            <h3 class="font-fredoka text-base sm:text-lg font-bold text-slate-900">Companion Hardware Status</h3>
           </div>
-          <span class="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+          <span class="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
             Ready &amp; Active
           </span>
         </div>
 
         <!-- Friendly Parent Indicators -->
-        <div class="space-y-2 text-xs">
-          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-            <span class="text-slate-600 font-medium flex items-center gap-2">
+        <div class="space-y-1.5 sm:space-y-2 text-xs">
+          <div class="flex items-center justify-between p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-1.5">
               <span>👂</span> Companion Ear (Mic):
             </span>
             <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
@@ -676,17 +689,17 @@ const htmlContent = `<!DOCTYPE html>
             </span>
           </div>
 
-          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-            <span class="text-slate-600 font-medium flex items-center gap-2">
-              <span>📢</span> Companion Voice (Speaker):
+          <div class="flex items-center justify-between p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-1.5">
+              <span>📢</span> Voice (Speaker):
             </span>
             <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
               <span>🟢</span> Crisp Sound (<span id="voiceSpeakerStatusLabel">40%</span> Volume)
             </span>
           </div>
 
-          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-            <span class="text-slate-600 font-medium flex items-center gap-2">
+          <div class="flex items-center justify-between p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-1.5">
               <span>💖</span> Head Touch Sensor:
             </span>
             <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
@@ -694,8 +707,8 @@ const htmlContent = `<!DOCTYPE html>
             </span>
           </div>
 
-          <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-            <span class="text-slate-600 font-medium flex items-center gap-2">
+          <div class="flex items-center justify-between p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <span class="text-slate-600 font-medium flex items-center gap-1.5">
               <span>☁️</span> Cloud Sync:
             </span>
             <span class="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
@@ -705,7 +718,7 @@ const htmlContent = `<!DOCTYPE html>
         </div>
 
         <!-- Speaker Volume Slider -->
-        <div class="pt-2">
+        <div class="pt-1.5 sm:pt-2">
           <div class="flex items-center justify-between mb-1.5">
             <span class="font-fredoka text-xs font-bold text-slate-700">
               🔊 Speaker Volume: <span id="volumeValueLabel">40</span>%
@@ -724,51 +737,51 @@ const htmlContent = `<!DOCTYPE html>
       </div>
 
       <!-- Safety Boundaries & Permissions Card -->
-      <div class="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4 flex flex-col justify-between">
+      <div class="bg-white border border-slate-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4 flex flex-col justify-between">
         <div>
-          <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center justify-between mb-2.5 sm:mb-3">
             <div class="flex items-center gap-2">
-              <span class="text-xl">🛡️</span>
-              <h3 class="font-fredoka text-lg font-bold text-slate-900">Safety Boundaries &amp; Permissions</h3>
+              <span class="text-lg sm:text-xl">🛡️</span>
+              <h3 class="font-fredoka text-base sm:text-lg font-bold text-slate-900">Safety Boundaries</h3>
             </div>
             <button id="sleepModeBtn" onclick="toggleDeviceSleepMode()" class="text-xs font-fredoka font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all bg-slate-100 hover:bg-slate-200 text-slate-700">
               ☀️ Awake
             </button>
           </div>
 
-          <p class="text-xs text-slate-500 mb-3">Enforces strict parental boundaries during conversations:</p>
+          <p class="text-[11px] sm:text-xs text-slate-500 mb-2.5 sm:mb-3">Enforces strict parental boundaries during conversations:</p>
 
-          <div class="space-y-2">
+          <div class="space-y-1.5 sm:space-y-2">
             <div onclick="toggleSafetyPermission('medicines')" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 cursor-pointer">
               <div class="flex items-center gap-2 text-xs font-medium text-slate-700">
                 <span>💊</span>
-                <span>Taking medicines / pills without adult</span>
+                <span class="truncate max-w-[190px] sm:max-w-none">Taking medicines / pills without adult</span>
               </div>
-              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Parent Gated</span>
+              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 shrink-0">Gated</span>
             </div>
 
             <div onclick="toggleSafetyPermission('sharp_tools')" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 cursor-pointer">
               <div class="flex items-center gap-2 text-xs font-medium text-slate-700">
                 <span>✂️</span>
-                <span>Scissors, knives, matches or fire</span>
+                <span class="truncate max-w-[190px] sm:max-w-none">Scissors, knives, matches or fire</span>
               </div>
-              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Parent Gated</span>
+              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 shrink-0">Gated</span>
             </div>
 
             <div onclick="toggleSafetyPermission('outside_play')" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 cursor-pointer">
               <div class="flex items-center gap-2 text-xs font-medium text-slate-700">
                 <span>🚪</span>
-                <span>Opening front door to strangers</span>
+                <span class="truncate max-w-[190px] sm:max-w-none">Opening front door to strangers</span>
               </div>
-              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Parent Gated</span>
+              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 shrink-0">Gated</span>
             </div>
 
             <div onclick="toggleSafetyPermission('purchases')" class="flex items-center justify-between p-2.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 cursor-pointer">
               <div class="flex items-center gap-2 text-xs font-medium text-slate-700">
                 <span>💳</span>
-                <span>Online purchases or clicking store buttons</span>
+                <span class="truncate max-w-[190px] sm:max-w-none">Online purchases or store clicks</span>
               </div>
-              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">Parent Gated</span>
+              <span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 shrink-0">Gated</span>
             </div>
           </div>
         </div>
@@ -788,7 +801,7 @@ const htmlContent = `<!DOCTYPE html>
 
   <!-- Add Custom Socratic Mission Modal -->
   <div id="addMissionModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-[32px] max-w-md w-full p-6 shadow-xl border border-indigo-100">
+    <div class="bg-white rounded-[32px] max-w-md w-full p-5 sm:p-6 shadow-xl border border-indigo-100">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
           <span class="text-2xl">🌱</span>
@@ -810,7 +823,7 @@ const htmlContent = `<!DOCTYPE html>
 
         <div>
           <label class="text-xs font-fredoka font-bold text-slate-700 block mb-1">Mission Icon Emoji</label>
-          <input type="text" id="newMissionIconInput" value="🐦" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2 text-xs text-center">
+          <input type="text" id="newMissionIconInput" value="🐦" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3.5 py-2 text-xs text-center">
         </div>
 
         <div class="pt-2 flex justify-end gap-2">
@@ -823,7 +836,7 @@ const htmlContent = `<!DOCTYPE html>
 
   <!-- Child Profile Modal (Required by QA Suite) -->
   <div id="childProfileModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-[32px] max-w-md w-full p-6 shadow-xl border border-amber-100">
+    <div class="bg-white rounded-[32px] max-w-md w-full p-5 sm:p-6 shadow-xl border border-amber-100">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
           <span class="text-2xl">🧒</span>
@@ -857,7 +870,7 @@ const htmlContent = `<!DOCTYPE html>
 
   <!-- Add Habit Modal -->
   <div id="addHabitModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-[32px] max-w-md w-full p-6 shadow-xl border border-emerald-100">
+    <div class="bg-white rounded-[32px] max-w-md w-full p-5 sm:p-6 shadow-xl border border-emerald-100">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
           <span class="text-2xl">🥦</span>
@@ -907,15 +920,15 @@ const htmlContent = `<!DOCTYPE html>
   <!-- 7. MOBILE BOTTOM NAVIGATION (Hidden on Desktop: md:hidden) -->
   <!-- ============================================================== -->
   <div id="mobileBottomNav" class="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-6 py-2.5 flex items-center justify-around z-30 shadow-lg">
-    <button onclick="switchMainTab('growth')" id="mobBtn_growth" class="flex flex-col items-center gap-0.5 text-amber-700">
+    <button onclick="switchMainTab('growth')" id="mobBtn_growth" class="flex flex-col items-center gap-0.5 text-amber-700 transition-transform active:scale-95">
       <span class="text-lg">🌟</span>
       <span class="text-[10px] font-fredoka font-bold">Growth</span>
     </button>
-    <button onclick="switchMainTab('habits')" id="mobBtn_habits" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-emerald-700">
+    <button onclick="switchMainTab('habits')" id="mobBtn_habits" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-emerald-700 transition-transform active:scale-95">
       <span class="text-lg">🥦</span>
       <span class="text-[10px] font-fredoka font-bold">Habits</span>
     </button>
-    <button onclick="switchMainTab('cockpit')" id="mobBtn_cockpit" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-sky-700">
+    <button onclick="switchMainTab('cockpit')" id="mobBtn_cockpit" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-sky-700 transition-transform active:scale-95">
       <span class="text-lg">📻</span>
       <span class="text-[10px] font-fredoka font-bold">Cockpit</span>
     </button>
@@ -970,16 +983,16 @@ const htmlContent = `<!DOCTYPE html>
 
         if (t === tabKey) {
           content.classList.remove('hidden');
-          if (t === 'growth') btn.className = 'tab-btn-active flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all';
-          if (t === 'habits') btn.className = 'tab-btn-active-habits flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all';
-          if (t === 'cockpit') btn.className = 'tab-btn-active-cockpit flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all';
+          if (t === 'growth') btn.className = 'tab-btn-active flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all';
+          if (t === 'habits') btn.className = 'tab-btn-active-habits flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all';
+          if (t === 'cockpit') btn.className = 'tab-btn-active-cockpit flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all';
 
           if (mobBtn) {
             mobBtn.className = 'flex flex-col items-center gap-0.5 ' + (t === 'growth' ? 'text-amber-700' : (t === 'habits' ? 'text-emerald-700' : 'text-sky-700'));
           }
         } else {
           content.classList.add('hidden');
-          btn.className = 'flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 text-slate-600 hover:bg-white/40 transition-all';
+          btn.className = 'flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 text-slate-600 hover:bg-white/40 transition-all';
           if (mobBtn) {
             mobBtn.className = 'flex flex-col items-center gap-0.5 text-slate-400';
           }
@@ -1076,7 +1089,7 @@ const htmlContent = `<!DOCTYPE html>
           container.innerHTML = '';
           words.forEach(function(w) {
             var btn = document.createElement('button');
-            btn.className = 'bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-900 font-fredoka font-bold text-xs px-3.5 py-1.5 rounded-2xl shadow-2xs flex items-center gap-1.5 transition-all';
+            btn.className = 'bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-900 font-fredoka font-bold text-xs px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl shadow-2xs flex items-center gap-1.5 transition-all';
             btn.innerHTML = '<span>✨</span><span>' + w + '</span><span class="text-[10px] text-amber-600">▶</span>';
             btn.onclick = function() { playLocalVoice('Parth learned the word: ' + w + '! What a brilliant word to use!'); };
             container.appendChild(btn);
@@ -1104,14 +1117,14 @@ const htmlContent = `<!DOCTYPE html>
       container.innerHTML = '';
       cachedHabits.forEach(function(h) {
         var card = document.createElement('div');
-        card.className = 'border rounded-[32px] p-5 shadow-xs transition-all flex flex-col justify-between ' +
+        card.className = 'border rounded-[24px] sm:rounded-[32px] p-4 sm:p-5 shadow-xs transition-all flex flex-col justify-between ' +
           (h.completed_today ? 'bg-gradient-to-br from-emerald-50/90 to-teal-50/70 border-emerald-200' : 'bg-white border-slate-100 hover:border-amber-200');
 
         card.innerHTML = 
           '<div>' +
-            '<div class="flex items-center justify-between mb-3">' +
+            '<div class="flex items-center justify-between mb-2.5 sm:mb-3">' +
               '<div class="flex items-center gap-2">' +
-                '<span class="text-2xl p-2 bg-white rounded-2xl shadow-2xs border border-slate-100">' + (h.icon || '⭐') + '</span>' +
+                '<span class="text-xl sm:text-2xl p-1.5 sm:p-2 bg-white rounded-2xl shadow-2xs border border-slate-100">' + (h.icon || '⭐') + '</span>' +
                 '<div>' +
                   '<span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">' + h.category + '</span>' +
                   '<div class="text-[11px] font-medium text-emerald-700 mt-0.5">🔥 ' + (h.streak_days || 0) + ' Days Streak</div>' +
@@ -1120,10 +1133,10 @@ const htmlContent = `<!DOCTYPE html>
               '<button onclick="toggleHabitStatus(\\'' + h.id + '\\')" class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ' +
                 (h.completed_today ? 'bg-emerald-500 text-white shadow-xs' : 'bg-slate-100 text-slate-300 hover:bg-slate-200') + '">✓</button>' +
             '</div>' +
-            '<h4 class="font-fredoka font-bold text-base text-slate-900 leading-snug">' + h.title + '</h4>' +
-            (h.tip ? '<p class="text-xs text-slate-500 mt-1.5 leading-relaxed">💡 ' + h.tip + '</p>' : '') +
+            '<h4 class="font-fredoka font-bold text-sm sm:text-base text-slate-900 leading-snug">' + h.title + '</h4>' +
+            (h.tip ? '<p class="text-[11px] sm:text-xs text-slate-500 mt-1 sm:mt-1.5 leading-relaxed">💡 ' + h.tip + '</p>' : '') +
           '</div>' +
-          '<div class="mt-4 pt-3 border-t border-slate-100/80">' +
+          '<div class="mt-3.5 sm:mt-4 pt-2.5 sm:pt-3 border-t border-slate-100/80">' +
             '<button onclick="triggerVoiceDirective(\\'' + h.id + '\\')" class="w-full border-2 border-emerald-500 text-emerald-700 bg-emerald-50 hover:bg-emerald-500 hover:text-white transition-all text-xs font-bold py-1.5 px-3 rounded-full flex items-center justify-center gap-1.5 shadow-2xs active:scale-95">' +
               '<span>⚡ 1-Click KOTL Voice Directive</span>' +
             '</button>' +
@@ -1221,9 +1234,9 @@ const htmlContent = `<!DOCTYPE html>
         '<div class="flex items-center justify-between">' +
           '<span class="font-fredoka font-bold text-xs text-indigo-900 flex items-center gap-1.5">' +
             '<span>' + icon + '</span>' +
-            '<span>' + title + '</span>' +
+            '<span class="truncate max-w-[170px] sm:max-w-none">' + title + '</span>' +
           '</span>' +
-          '<span class="text-[9px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">In Progress</span>' +
+          '<span class="text-[9px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">In Progress</span>' +
         '</div>' +
         '<p class="text-xs text-slate-700 italic leading-relaxed">&quot;' + question + '&quot;</p>' +
         '<button onclick="playLocalVoice(\\'' + safeQuestion + '\\')" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-fredoka font-bold text-xs py-1.5 px-3 rounded-full shadow-2xs transition-all active:scale-95 flex items-center justify-center gap-1.5">' +
@@ -1258,9 +1271,9 @@ const htmlContent = `<!DOCTYPE html>
       cachedDaysHistory.forEach(function(day) {
         var btn = document.createElement('button');
         var isActive = (day.id === selectedDayId);
-        btn.className = 'px-4 py-1.5 rounded-full font-fredoka text-xs font-bold whitespace-nowrap transition-all ' +
+        btn.className = 'px-3.5 sm:px-4 py-1.5 rounded-full font-fredoka text-xs font-bold whitespace-nowrap transition-all ' +
           (isActive ? 'bg-amber-500 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200');
-        btn.innerHTML = '<span>' + day.label + '</span><span class="ml-1.5 text-[10px] opacity-80">(' + (day.turns ? day.turns.length : 0) + ')</span>';
+        btn.innerHTML = '<span>' + day.label + '</span><span class="ml-1 text-[10px] opacity-80">(' + (day.turns ? day.turns.length : 0) + ')</span>';
         btn.onclick = function() {
           selectedDayId = day.id;
           renderDayPills();
@@ -1274,7 +1287,7 @@ const htmlContent = `<!DOCTYPE html>
       var container = document.getElementById('chatBubblesContainer');
       var day = cachedDaysHistory.find(function(d) { return d.id === selectedDayId; }) || cachedDaysHistory[0];
       if (!day || !day.turns || day.turns.length === 0) {
-        container.innerHTML = '<div class="py-12 text-center text-slate-400 font-fredoka text-sm">No conversation turns recorded for this day yet.</div>';
+        container.innerHTML = '<div class="py-10 text-center text-slate-400 font-fredoka text-xs sm:text-sm">No conversation turns recorded for this day yet.</div>';
         return;
       }
 
@@ -1298,44 +1311,44 @@ const htmlContent = `<!DOCTYPE html>
         var childAudioUrl = (turn.child && turn.child.audio_url) || turn.audio_url || '';
 
         var turnDiv = document.createElement('div');
-        turnDiv.className = 'bg-slate-50/70 border border-slate-100 rounded-[28px] p-4 space-y-3.5';
+        turnDiv.className = 'bg-slate-50/70 border border-slate-100 rounded-[20px] sm:rounded-[28px] p-3 sm:p-4 space-y-2.5 sm:space-y-3';
 
-        var html = '<div class="flex items-center justify-between text-[11px] text-slate-400 font-medium px-1">' +
+        var html = '<div class="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 font-medium px-1">' +
           '<span>Turn #' + (i + 1) + '</span><span>' + time + '</span></div>';
 
-        // Child Bubble (Left-aligned, natural width max-w-[80%] md:max-w-[70%], pastel-blue pill style)
+        // Child Bubble (Left-aligned, natural width max-w-[85%] sm:max-w-[75%] md:max-w-[70%], pastel-blue pill style)
         var safeUser = userMsg.replace(/"/g, '&quot;').replace(/'/g, "\\\\'");
-        html += '<div class="flex items-start gap-2.5 justify-start">' +
-          '<div class="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0 font-fredoka font-bold">👦</div>' +
-          '<div class="bg-sky-50 border border-sky-200 text-sky-950 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[80%] md:max-w-[70%] shadow-2xs space-y-1.5">' +
-            '<div class="flex items-center justify-between gap-2">' +
-              '<span class="font-fredoka font-bold text-sky-800 text-xs">Parth (Child)</span>' +
-              '<div class="flex items-center gap-1.5">' +
+        html += '<div class="flex items-start gap-2 justify-start">' +
+          '<div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-400 text-white flex items-center justify-center text-xs sm:text-sm shadow-2xs shrink-0 font-fredoka font-bold">👦</div>' +
+          '<div class="bg-sky-50 border border-sky-200 text-sky-950 rounded-2xl rounded-tl-xs px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium max-w-[85%] sm:max-w-[75%] md:max-w-[70%] shadow-2xs space-y-1">' +
+            '<div class="flex items-center justify-between gap-1.5 flex-wrap">' +
+              '<span class="font-fredoka font-bold text-sky-800 text-[11px] sm:text-xs">Parth (Child)</span>' +
+              '<div class="flex items-center gap-1">' +
                 '<span class="text-[9px] text-sky-600 bg-sky-100/70 px-1.5 py-0.5 rounded-full font-normal">Live Spoken</span>' +
-                '<button onclick="playLocalVoice(\\'' + safeUser + '\\', \\'' + childAudioUrl + '\\')" class="text-[10px] font-fredoka font-bold text-sky-700 hover:text-sky-900 bg-sky-100 hover:bg-sky-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors">' +
-                  '<span>▶ Play Audio</span>' +
+                '<button onclick="playLocalVoice(\\'' + safeUser + '\\', \\'' + childAudioUrl + '\\')" class="text-[10px] font-fredoka font-bold text-sky-700 hover:text-sky-900 bg-sky-100 hover:bg-sky-200 px-2 py-0.5 rounded-full flex items-center gap-1 transition-colors">' +
+                  '<span>▶ Play</span>' +
                 '</button>' +
               '</div>' +
             '</div>' +
-            '<p class="leading-relaxed">&quot;' + userMsg + '&quot;</p>' +
+            '<p class="leading-relaxed text-xs sm:text-sm">&quot;' + userMsg + '&quot;</p>' +
           '</div>' +
         '</div>';
 
-        // KOTL Robot Bubble (Right-aligned, natural width max-w-[80%] md:max-w-[70%], pastel-amber style)
+        // KOTL Robot Bubble (Right-aligned, natural width max-w-[85%] sm:max-w-[75%] md:max-w-[70%], pastel-amber style)
         if (kotlMsg) {
           var safeKotl = kotlMsg.replace(/"/g, '&quot;').replace(/'/g, "\\\\'");
           var kotlAudioUrl = (turn.kotl && turn.kotl.tts_url) || '';
-          html += '<div class="flex items-start gap-2.5 justify-end">' +
-            '<div class="bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[80%] md:max-w-[70%] space-y-2">' +
-              '<div class="flex items-center justify-between gap-2">' +
-                '<button onclick="playLocalVoice(\\'' + safeKotl + '\\', \\'' + kotlAudioUrl + '\\')" class="text-[11px] font-fredoka font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors">' +
-                  '<span>▶ Listen Voice</span><span class="text-[9px] opacity-70">(en-IN-Prabhat)</span>' +
+          html += '<div class="flex items-start gap-2 justify-end">' +
+            '<div class="bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm shadow-2xs max-w-[85%] sm:max-w-[75%] md:max-w-[70%] space-y-1.5">' +
+              '<div class="flex items-center justify-between gap-1.5 flex-wrap">' +
+                '<button onclick="playLocalVoice(\\'' + safeKotl + '\\', \\'' + kotlAudioUrl + '\\')" class="text-[10px] sm:text-[11px] font-fredoka font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-2 sm:px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors">' +
+                  '<span>▶ Listen Voice</span>' +
                 '</button>' +
-                '<span class="font-fredoka font-bold text-amber-800 text-xs">KOTL (AI Companion)</span>' +
+                '<span class="font-fredoka font-bold text-amber-800 text-[11px] sm:text-xs">KOTL (AI)</span>' +
               '</div>' +
-              '<p class="leading-relaxed">' + kotlMsg + '</p>' +
+              '<p class="leading-relaxed text-xs sm:text-sm">' + kotlMsg + '</p>' +
             '</div>' +
-            '<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">🤖</div>' +
+            '<div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 text-white flex items-center justify-center text-xs sm:text-sm shadow-2xs shrink-0">🤖</div>' +
           '</div>';
         }
 
@@ -1401,7 +1414,7 @@ const htmlContent = `<!DOCTYPE html>
         isRecordingWalkie = false;
         if (ind) ind.classList.add('hidden');
         if (micBtn) {
-          micBtn.className = 'w-10 h-10 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center text-lg transition-transform active:scale-95 shadow-2xs';
+          micBtn.className = 'w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center text-base sm:text-lg transition-transform active:scale-95 shadow-2xs shrink-0';
         }
         if (walkieMediaRecorder && walkieMediaRecorder.state === 'recording') {
           walkieMediaRecorder.stop();
@@ -1419,7 +1432,7 @@ const htmlContent = `<!DOCTYPE html>
           isRecordingWalkie = true;
           if (ind) ind.classList.remove('hidden');
           if (micBtn) {
-            micBtn.className = 'w-10 h-10 rounded-2xl bg-rose-500 text-white border border-rose-600 flex items-center justify-center text-lg transition-transform active:scale-95 shadow-2xs animate-pulse';
+            micBtn.className = 'w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-500 text-white border border-rose-600 flex items-center justify-center text-base sm:text-lg transition-transform active:scale-95 shadow-2xs animate-pulse shrink-0';
           }
           walkieAudioChunks = [];
           walkieMediaRecorder = new MediaRecorder(stream);
@@ -1433,7 +1446,7 @@ const htmlContent = `<!DOCTYPE html>
             if (hist) {
               var row = document.createElement('div');
               row.className = 'text-xs bg-slate-50 p-2 rounded-xl flex items-center justify-between text-slate-700 animate-fadeIn';
-              row.innerHTML = '<span>"' + memoText + '"</span><span class="text-[10px] text-slate-400">Just now</span>';
+              row.innerHTML = '<span class="truncate max-w-[80%]">"' + memoText + '"</span><span class="text-[10px] text-slate-400 shrink-0">Just now</span>';
               hist.insertBefore(row, hist.children[1] || null);
             }
           };
@@ -1452,11 +1465,11 @@ const htmlContent = `<!DOCTYPE html>
       isCurfewActive = !isCurfewActive;
       var btn = document.getElementById('curfewToggleBtn');
       if (isCurfewActive) {
-        btn.className = 'px-4 py-2 rounded-full font-fredoka font-bold text-xs transition-all shadow-2xs active:scale-95 shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white';
+        btn.className = 'px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-fredoka font-bold text-xs transition-all shadow-2xs active:scale-95 shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white';
         btn.innerText = '✓ Curfew Active';
         playLocalVoice('Auto Bedtime Curfew enabled. At nine o\\\'clock, KOTL will softly enter calming bedtime mode.');
       } else {
-        btn.className = 'px-4 py-2 rounded-full font-fredoka font-bold text-xs transition-all shadow-2xs active:scale-95 shrink-0 bg-slate-200 hover:bg-slate-300 text-slate-700';
+        btn.className = 'px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-fredoka font-bold text-xs transition-all shadow-2xs active:scale-95 shrink-0 bg-slate-200 hover:bg-slate-300 text-slate-700';
         btn.innerText = 'Curfew Paused';
         playLocalVoice('Auto Bedtime Curfew paused. Standard conversational mode active.');
       }
@@ -1530,4 +1543,4 @@ const htmlContent = `<!DOCTYPE html>
 `;
 
 fs.writeFileSync(targetHtmlPath, htmlContent, 'utf-8');
-console.log('Successfully generated complete standalone backend/public/index.html with mic, mission modal, and curfew card. Bytes:', fs.statSync(targetHtmlPath).size);
+console.log('Successfully generated complete standalone backend/public/index.html with mobile responsive UI. Bytes:', fs.statSync(targetHtmlPath).size);

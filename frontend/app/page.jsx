@@ -436,13 +436,11 @@ export default function KindergartenHubPage() {
   // Push-to-Talk Mic Recording
   const handleToggleMicRecord = async () => {
     if (isRecordingMic) {
-      // Stop recording
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
       }
       setIsRecordingMic(false);
     } else {
-      // Start recording
       try {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
           playVoice('Live microphone is active. Voice broadcast delivered to KOTL speaker.');
@@ -522,53 +520,60 @@ export default function KindergartenHubPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-slate-800 flex flex-col font-sans pb-24 selection:bg-amber-200">
+    <div className="min-h-screen bg-[#FFFDF9] text-slate-800 flex flex-col font-sans pb-28 overflow-x-hidden selection:bg-amber-200">
       
       {/* -------------------------------------------------------------
-          TOP HEADER BAR (Zero Fake Battery / Zero Fake dBm)
+          TOP HEADER BAR (Mobile Optimized: Clean, Single-Line, Zero Cutoff)
       -------------------------------------------------------------- */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-amber-100 shadow-xs px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center text-2xl shadow-sm">
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-amber-100 shadow-xs px-3 sm:px-8 py-2.5 sm:py-3.5 flex items-center justify-between">
+        
+        {/* Brand & Child Identity */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center text-xl sm:text-2xl shadow-sm shrink-0">
             🤖
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-fredoka text-xl font-bold tracking-tight text-slate-900">KOTL Kids</h1>
-              <span className="bg-amber-100 text-amber-800 text-[11px] font-fredoka font-bold px-2 py-0.5 rounded-full border border-amber-200">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h1 className="font-fredoka text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-none">
+                KOTL Kids
+              </h1>
+              <span className="bg-amber-100 text-amber-800 text-[10px] sm:text-[11px] font-fredoka font-bold px-1.5 sm:px-2 py-0.5 rounded-full border border-amber-200 shrink-0">
                 v2.2
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium">
-              Parth • Senior KG (Age 6) • AI Growth Companion
+            <p className="text-[10px] sm:text-xs text-slate-500 font-medium truncate max-w-[125px] sm:max-w-none mt-0.5">
+              Parth • Senior KG (Age 6) • AI Companion
             </p>
           </div>
         </div>
 
-        {/* Real Device Status, Head Pats Counter & Manner Stars */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* Real Device Status, Head Pats Counter & Manner Stars (Compact on Mobile) */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           
-          {/* Head Pats / Touch Counter (GPIO 4 Real Touch) */}
-          <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 text-rose-900 px-3 py-1.5 rounded-full text-xs font-fredoka font-bold shadow-2xs">
+          {/* Head Pats Counter */}
+          <div
+            className="flex items-center gap-1 bg-rose-50 border border-rose-200 text-rose-900 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-fredoka font-bold shadow-2xs whitespace-nowrap"
+            title="9 Head Pats & Hugs (GPIO 4 Real Touch)"
+          >
             <span>💖</span>
-            <span>9 Head Pats &amp; Hugs</span>
+            <span>9<span className="hidden sm:inline"> Head Pats &amp; Hugs</span></span>
             <span className="hidden lg:inline text-[10px] font-normal text-rose-600">(GPIO 4 Real Touch)</span>
           </div>
 
           {/* Manner Stars Button */}
           <button
             onClick={handleAwardStar}
-            className="flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-3.5 py-1.5 rounded-full shadow-xs border border-amber-300 transition-transform active:scale-95"
+            className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-fredoka font-bold text-[11px] sm:text-xs px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full shadow-xs border border-amber-300 transition-transform active:scale-95 whitespace-nowrap"
             title="Award Manner Star for kindness or good habits!"
           >
             <span>⭐</span>
-            <span>{growthMetrics.manner_stars || 15} Stars</span>
+            <span>{growthMetrics.manner_stars || 15}<span className="hidden sm:inline"> Stars</span></span>
           </button>
 
           {/* Live Device Status Pill */}
-          <div id="deviceStatusPill" className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full text-xs font-fredoka font-medium text-emerald-800 whitespace-nowrap">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="hidden sm:inline">ESP32</span>
+          <div id="deviceStatusPill" className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-fredoka font-medium text-emerald-800 whitespace-nowrap">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="hidden md:inline">ESP32 </span>
             <span>Online</span>
           </div>
 
@@ -581,50 +586,53 @@ export default function KindergartenHubPage() {
       {isPlayingAudio && (
         <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white text-xs sm:text-sm px-4 py-2 font-fredoka font-medium flex items-center justify-center gap-2 shadow-sm animate-fadeIn">
           <span className="animate-spin">🔊</span>
-          <span>KOTL Speaking: &quot;{audioFeedbackText.slice(0, 90)}...&quot;</span>
+          <span className="truncate max-w-[90%]">KOTL Speaking: &quot;{audioFeedbackText.slice(0, 90)}...&quot;</span>
         </div>
       )}
 
       {/* -------------------------------------------------------------
-          MAIN 3-TAB NAVIGATION PILL BAR
+          MAIN 3-TAB NAVIGATION PILL BAR (Single-Line Mobile Clean)
       -------------------------------------------------------------- */}
-      <div className="max-w-6xl w-full mx-auto px-4 pt-6 pb-2">
-        <div className="bg-amber-100/70 p-1.5 rounded-[32px] flex items-center gap-1.5 border border-amber-200/80 shadow-xs">
+      <div className="max-w-6xl w-full mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-2">
+        <div className="bg-amber-100/70 p-1 sm:p-1.5 rounded-[26px] sm:rounded-[32px] flex items-center gap-1 sm:gap-1.5 border border-amber-200/80 shadow-xs">
           
           <button
             onClick={() => setActiveTab('growth')}
-            className={`flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
               activeTab === 'growth'
                 ? 'bg-white text-amber-900 shadow-sm border border-amber-200/60 scale-[1.01]'
                 : 'text-slate-600 hover:text-amber-900 hover:bg-white/40'
             }`}
           >
-            <span className="text-base sm:text-lg">🌟</span>
-            <span>TAB 1: Daily Living Growth</span>
+            <span className="text-base sm:text-lg shrink-0">🌟</span>
+            <span className="sm:hidden text-xs">Growth</span>
+            <span className="hidden sm:inline">TAB 1: Daily Living Growth</span>
           </button>
 
           <button
             onClick={() => setActiveTab('habits')}
-            className={`flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
               activeTab === 'habits'
                 ? 'bg-white text-emerald-900 shadow-sm border border-emerald-200/60 scale-[1.01]'
                 : 'text-slate-600 hover:text-emerald-900 hover:bg-white/40'
             }`}
           >
-            <span className="text-base sm:text-lg">🥦</span>
-            <span>TAB 2: Habits &amp; Socratic Engine</span>
+            <span className="text-base sm:text-lg shrink-0">🥦</span>
+            <span className="sm:hidden text-xs">Habits</span>
+            <span className="hidden sm:inline">TAB 2: Habits &amp; Socratic Engine</span>
           </button>
 
           <button
             onClick={() => setActiveTab('cockpit')}
-            className={`flex-1 py-3 px-3 sm:px-5 rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
+            className={`flex-1 py-2.5 sm:py-3 px-2 sm:px-5 rounded-[22px] sm:rounded-[26px] font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
               activeTab === 'cockpit'
                 ? 'bg-white text-sky-900 shadow-sm border border-sky-200/60 scale-[1.01]'
                 : 'text-slate-600 hover:text-sky-900 hover:bg-white/40'
             }`}
           >
-            <span className="text-base sm:text-lg">📻</span>
-            <span>TAB 3: Walkie-Talkie &amp; Cockpit</span>
+            <span className="text-base sm:text-lg shrink-0">📻</span>
+            <span className="sm:hidden text-xs">Cockpit</span>
+            <span className="hidden sm:inline">TAB 3: Walkie-Talkie &amp; Cockpit</span>
           </button>
 
         </div>
@@ -633,116 +641,116 @@ export default function KindergartenHubPage() {
       {/* -------------------------------------------------------------
           TAB CONTENTS CONTAINER
       -------------------------------------------------------------- */}
-      <main className="max-w-6xl w-full mx-auto px-4 py-4 flex-1">
+      <main className="max-w-6xl w-full mx-auto px-3 sm:px-4 py-3 sm:py-4 flex-1">
         
         {/* =============================================================
             TAB 1: DAILY LIVING GROWTH
         ============================================================== */}
         {activeTab === 'growth' && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className="space-y-4 sm:space-y-6 animate-fadeIn">
             
-            {/* Top 4 Growth Metric Cards (Kindergarten Rounded-[32px]) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Top 4 Growth Metric Bento Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               
               {/* Metric 1: Talk Time Minutes */}
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl p-2 bg-amber-100 rounded-2xl">⏱️</span>
-                  <span className="text-[11px] font-fredoka font-bold text-amber-700 bg-amber-200/60 px-2.5 py-0.5 rounded-full">
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/80 rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-amber-100 rounded-xl sm:rounded-2xl">⏱️</span>
+                  <span className="text-[10px] sm:text-[11px] font-fredoka font-bold text-amber-700 bg-amber-200/60 px-2 sm:px-2.5 py-0.5 rounded-full">
                     Today
                   </span>
                 </div>
                 <div>
-                  <div className="font-fredoka text-3xl font-bold text-amber-950">
-                    {growthMetrics.talk_time_minutes || 24} <span className="text-sm font-medium text-amber-800">mins</span>
+                  <div className="font-fredoka text-2xl sm:text-3xl font-bold text-amber-950">
+                    {growthMetrics.talk_time_minutes || 24} <span className="text-xs sm:text-sm font-medium text-amber-800">mins</span>
                   </div>
-                  <p className="text-xs text-amber-900/80 font-medium mt-1">
-                    Active Conversational Talk-Time
+                  <p className="text-[11px] sm:text-xs text-amber-900/80 font-medium mt-0.5 sm:mt-1 leading-tight">
+                    Active Talk-Time
                   </p>
                 </div>
               </div>
 
               {/* Metric 2: Curiosity Questions */}
-              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl p-2 bg-purple-100 rounded-2xl">🔭</span>
-                  <span className="text-[11px] font-fredoka font-bold text-purple-700 bg-purple-200/60 px-2.5 py-0.5 rounded-full">
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200/80 rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-purple-100 rounded-xl sm:rounded-2xl">🔭</span>
+                  <span className="text-[10px] sm:text-[11px] font-fredoka font-bold text-purple-700 bg-purple-200/60 px-2 sm:px-2.5 py-0.5 rounded-full">
                     High Inquiry
                   </span>
                 </div>
                 <div>
-                  <div className="font-fredoka text-3xl font-bold text-purple-950">
-                    {growthMetrics.curiosity_count || 28} <span className="text-sm font-medium text-purple-800">queries</span>
+                  <div className="font-fredoka text-2xl sm:text-3xl font-bold text-purple-950">
+                    {growthMetrics.curiosity_count || 28} <span className="text-xs sm:text-sm font-medium text-purple-800">queries</span>
                   </div>
-                  <p className="text-xs text-purple-900/80 font-medium mt-1">
-                    Exploratory &apos;Why &amp; How&apos; Questions
+                  <p className="text-[11px] sm:text-xs text-purple-900/80 font-medium mt-0.5 sm:mt-1 leading-tight">
+                    &apos;Why &amp; How&apos; Questions
                   </p>
                 </div>
               </div>
 
-              {/* Metric 3: Manner & Kindness Stars */}
-              <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl p-2 bg-yellow-100 rounded-2xl">⭐</span>
+              {/* Metric 3: Manner Stars */}
+              <div className="bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200/80 rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-yellow-100 rounded-xl sm:rounded-2xl">⭐</span>
                   <button
                     onClick={handleAwardStar}
-                    className="text-[10px] font-fredoka font-bold bg-amber-500 hover:bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs"
+                    className="text-[9px] sm:text-[10px] font-fredoka font-bold bg-amber-500 hover:bg-amber-600 text-white px-2 py-0.5 rounded-full shadow-2xs"
                   >
                     + Award
                   </button>
                 </div>
                 <div>
-                  <div className="font-fredoka text-3xl font-bold text-yellow-950">
-                    {growthMetrics.manner_stars || 15} <span className="text-sm font-medium text-yellow-800">stars</span>
+                  <div className="font-fredoka text-2xl sm:text-3xl font-bold text-yellow-950">
+                    {growthMetrics.manner_stars || 15} <span className="text-xs sm:text-sm font-medium text-yellow-800">stars</span>
                   </div>
-                  <p className="text-xs text-yellow-900/80 font-medium mt-1">
-                    Kindness &amp; Habit Badges
+                  <p className="text-[11px] sm:text-xs text-yellow-900/80 font-medium mt-0.5 sm:mt-1 leading-tight">
+                    Kindness Badges
                   </p>
                 </div>
               </div>
 
               {/* Metric 4: Pediatric Overall Score */}
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[32px] p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl p-2 bg-emerald-100 rounded-2xl">🏆</span>
-                  <span className="text-[11px] font-fredoka font-bold text-emerald-700 bg-emerald-200/60 px-2.5 py-0.5 rounded-full">
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-emerald-100 rounded-xl sm:rounded-2xl">🏆</span>
+                  <span className="text-[10px] sm:text-[11px] font-fredoka font-bold text-emerald-700 bg-emerald-200/60 px-2 sm:px-2.5 py-0.5 rounded-full">
                     Clinical
                   </span>
                 </div>
                 <div>
-                  <div className="font-fredoka text-3xl font-bold text-emerald-950">
-                    89<span className="text-sm font-medium text-emerald-800">/100</span>
+                  <div className="font-fredoka text-2xl sm:text-3xl font-bold text-emerald-950">
+                    89<span className="text-xs sm:text-sm font-medium text-emerald-800">/100</span>
                   </div>
-                  <p className="text-xs text-emerald-900/80 font-medium mt-1">
-                    Advanced Cognitive Curiosity
+                  <p className="text-[11px] sm:text-xs text-emerald-900/80 font-medium mt-0.5 sm:mt-1 leading-tight">
+                    Cognitive Curiosity
                   </p>
                 </div>
               </div>
 
             </div>
 
-            {/* New Words Learned Badge Showcase */}
-            <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
-              <div className="flex items-center justify-between mb-3">
+            {/* Educational Vocabulary Learned Badge Showcase */}
+            <div className="bg-white border border-amber-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">📚</span>
-                  <h3 className="font-fredoka text-lg font-bold text-slate-800">
+                  <span className="text-lg sm:text-xl">📚</span>
+                  <h3 className="font-fredoka text-base sm:text-lg font-bold text-slate-800">
                     Educational Vocabulary Learned with KOTL
                   </h3>
                 </div>
-                <span className="text-xs font-fredoka font-semibold text-slate-500">
-                  {growthMetrics.new_words_learned?.length || 8} Words Acquired
+                <span className="text-[11px] sm:text-xs font-fredoka font-semibold text-slate-500 whitespace-nowrap">
+                  {growthMetrics.new_words_learned?.length || 8} Words
                 </span>
               </div>
               <p className="text-xs text-slate-500 mb-3">
                 Parth naturally assimilated these scientific and descriptive terms during interactive storytelling:
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {(growthMetrics.new_words_learned || []).map((w, idx) => (
                   <button
                     key={idx}
                     onClick={() => playVoice(`Parth learned the word: ${w}! What a brilliant word to use!`)}
-                    className="bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-900 font-fredoka font-bold text-xs px-3.5 py-1.5 rounded-2xl shadow-2xs flex items-center gap-1.5 transition-all active:scale-95"
+                    className="bg-amber-50 hover:bg-amber-100 border border-amber-200/80 text-amber-900 font-fredoka font-bold text-xs px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-2xl shadow-2xs flex items-center gap-1.5 transition-all active:scale-95"
                   >
                     <span>✨</span>
                     <span>{w}</span>
@@ -753,47 +761,47 @@ export default function KindergartenHubPage() {
             </div>
 
             {/* Observed Interests & Passions (Interest Affinity Widget) */}
-            <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
+            <div className="bg-white border border-amber-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🎯</span>
-                  <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                  <span className="text-lg sm:text-xl">🎯</span>
+                  <h3 className="font-fredoka text-base sm:text-lg font-bold text-slate-900">
                     Observed Interests &amp; Passions (Interest Affinity)
                   </h3>
                 </div>
-                <span className="bg-purple-100 text-purple-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+                <span className="bg-purple-100 text-purple-800 text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full shrink-0">
                   Cognitive Profiling
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-slate-500 mb-3 sm:mb-4">
                 Real-time interest affinity extracted from Parth&apos;s spontaneous questions and storytelling topics:
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-3.5">
                 {interestAffinities.map((item) => (
                   <div
                     key={item.id}
                     onClick={() => playVoice(`Parth loves ${item.title}! KOTL is nurturing this curiosity with daily wonder stories!`)}
-                    className={`p-4 rounded-[24px] border ${item.pillBorder} ${item.pillBg} cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between`}
+                    className={`p-3.5 sm:p-4 rounded-[20px] sm:rounded-[24px] border ${item.pillBorder} ${item.pillBg} cursor-pointer hover:shadow-2xs transition-all active:scale-[0.99] flex flex-col justify-between`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl">{item.icon}</span>
-                          <span className={`font-fredoka font-bold text-sm ${item.textColor}`}>
+                          <span className="text-xl sm:text-2xl">{item.icon}</span>
+                          <span className={`font-fredoka font-bold text-xs sm:text-sm ${item.textColor}`}>
                             {item.title}
                           </span>
                         </div>
-                        <span className={`font-fredoka font-bold text-xs px-2 py-0.5 rounded-full bg-white/80 ${item.textColor}`}>
+                        <span className={`font-fredoka font-bold text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-white/80 ${item.textColor}`}>
                           {item.affinity}% Affinity
                         </span>
                       </div>
-                      <p className="text-xs text-slate-600 leading-relaxed">
+                      <p className="text-[11px] sm:text-xs text-slate-600 leading-relaxed">
                         {item.description}
                       </p>
                     </div>
 
-                    <div className="mt-3">
+                    <div className="mt-2.5 sm:mt-3">
                       <div className="w-full bg-white/80 rounded-full h-2 overflow-hidden border border-slate-200/60">
                         <div
                           className={`h-full ${item.color} rounded-full transition-all duration-500`}
@@ -806,23 +814,23 @@ export default function KindergartenHubPage() {
               </div>
             </div>
 
-            {/* Conversational Speech Bubbles Archive (Two-Way Stream: Child + KOTL, Natural Width) */}
-            <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+            {/* Conversational Speech Bubbles Archive (Responsive Natural Container) */}
+            <div className="bg-white border border-amber-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 sm:mb-5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">💬</span>
-                    <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                    <span className="text-lg sm:text-xl">💬</span>
+                    <h3 className="font-fredoka text-base sm:text-lg font-bold text-slate-900">
                       Day-Wise Conversational Speech Bubbles
                     </h3>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[11px] sm:text-xs text-slate-500">
                     Two-way conversational stream recorded between Parth and his physical KOTL companion
                   </p>
                 </div>
 
                 {/* Search Turn Input */}
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                   <input
                     type="text"
                     value={chatSearchQuery}
@@ -835,27 +843,27 @@ export default function KindergartenHubPage() {
               </div>
 
               {/* Day Selector Pills */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 scrollbar-none">
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-2.5 mb-3 sm:mb-4 scrollbar-none">
                 {dayWiseHistory.map(day => (
                   <button
                     key={day.id}
                     onClick={() => setSelectedDayId(day.id)}
-                    className={`px-4 py-1.5 rounded-full font-fredoka text-xs font-bold whitespace-nowrap transition-all ${
+                    className={`px-3.5 sm:px-4 py-1.5 rounded-full font-fredoka text-xs font-bold whitespace-nowrap transition-all ${
                       selectedDayId === day.id
                         ? 'bg-amber-500 text-white shadow-xs'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
                     <span>{day.label}</span>
-                    <span className="ml-1.5 text-[10px] opacity-80">({day.turns?.length || 0})</span>
+                    <span className="ml-1 text-[10px] opacity-80">({day.turns?.length || 0})</span>
                   </button>
                 ))}
               </div>
 
-              {/* Speech Bubbles List (Two-Way Conversation: Natural Container max-w-[80%] md:max-w-[70%]) */}
-              <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-amber-200">
+              {/* Speech Bubbles List (Responsive Width max-w-[85%] sm:max-w-[75%] md:max-w-[70%]) */}
+              <div className="space-y-3.5 max-h-[480px] overflow-y-auto pr-1 sm:pr-2 scrollbar-thin scrollbar-thumb-amber-200">
                 {filteredTurns.length === 0 ? (
-                  <div className="py-12 text-center text-slate-400 font-fredoka text-sm">
+                  <div className="py-10 text-center text-slate-400 font-fredoka text-xs sm:text-sm">
                     No conversation turns match the filter. Start chatting with KOTL below!
                   </div>
                 ) : (
@@ -866,53 +874,53 @@ export default function KindergartenHubPage() {
                     const childAudioUrl = turn.child?.audio_url || turn.audio_url || null;
 
                     return (
-                      <div key={turn.id || i} className="bg-slate-50/70 border border-slate-100 rounded-[28px] p-4 space-y-3.5">
-                        <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium px-1">
+                      <div key={turn.id || i} className="bg-slate-50/70 border border-slate-100 rounded-[20px] sm:rounded-[28px] p-3 sm:p-4 space-y-2.5 sm:space-y-3">
+                        <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 font-medium px-1">
                           <span>Turn #{i + 1}</span>
                           <span>{time}</span>
                         </div>
 
-                        {/* Child Bubble (Left-Aligned, max-w-[80%] md:max-w-[70%]) */}
-                        <div className="flex items-start gap-2.5 justify-start">
-                          <div className="w-8 h-8 rounded-full bg-sky-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0 font-fredoka font-bold">
+                        {/* Child Bubble (Left-Aligned, max-w-[85%] sm:max-w-[75%] md:max-w-[70%]) */}
+                        <div className="flex items-start gap-2 justify-start">
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-sky-400 text-white flex items-center justify-center text-xs sm:text-sm shadow-2xs shrink-0 font-fredoka font-bold">
                             👦
                           </div>
-                          <div className="bg-sky-50 border border-sky-200 text-sky-950 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs sm:text-sm font-medium max-w-[80%] md:max-w-[70%] shadow-2xs space-y-1.5">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="font-fredoka font-bold text-sky-800 text-xs">Parth (Child)</span>
-                              <div className="flex items-center gap-1.5">
+                          <div className="bg-sky-50 border border-sky-200 text-sky-950 rounded-2xl rounded-tl-xs px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium max-w-[85%] sm:max-w-[75%] md:max-w-[70%] shadow-2xs space-y-1">
+                            <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                              <span className="font-fredoka font-bold text-sky-800 text-[11px] sm:text-xs">Parth (Child)</span>
+                              <div className="flex items-center gap-1">
                                 <span className="text-[9px] text-sky-600 bg-sky-100/70 px-1.5 py-0.5 rounded-full font-normal">
                                   Live Spoken
                                 </span>
                                 <button
                                   onClick={() => playVoice(userMsg, childAudioUrl)}
-                                  className="text-[10px] font-fredoka font-bold text-sky-700 hover:text-sky-900 bg-sky-100 hover:bg-sky-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                                  className="text-[10px] font-fredoka font-bold text-sky-700 hover:text-sky-900 bg-sky-100 hover:bg-sky-200 px-2 py-0.5 rounded-full flex items-center gap-1 transition-colors"
                                 >
-                                  <span>▶ Play Audio</span>
+                                  <span>▶ Play</span>
                                 </button>
                               </div>
                             </div>
-                            <p className="leading-relaxed">&quot;{userMsg}&quot;</p>
+                            <p className="leading-relaxed text-xs sm:text-sm">&quot;{userMsg}&quot;</p>
                           </div>
                         </div>
 
-                        {/* KOTL Robot Bubble (Right-Aligned, max-w-[80%] md:max-w-[70%]) */}
+                        {/* KOTL Robot Bubble (Right-Aligned, max-w-[85%] sm:max-w-[75%] md:max-w-[70%]) */}
                         {kotlMsg && (
-                          <div className="flex items-start gap-2.5 justify-end">
-                            <div className="bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs sm:text-sm shadow-2xs max-w-[80%] md:max-w-[70%] space-y-2">
-                              <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-start gap-2 justify-end">
+                            <div className="bg-amber-50 border border-amber-200 text-amber-950 rounded-2xl rounded-tr-xs px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm shadow-2xs max-w-[85%] sm:max-w-[75%] md:max-w-[70%] space-y-1.5">
+                              <div className="flex items-center justify-between gap-1.5 flex-wrap">
                                 <button
                                   onClick={() => playVoice(kotlMsg, turn.kotl?.tts_url || null)}
-                                  className="text-[11px] font-fredoka font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
+                                  className="text-[10px] sm:text-[11px] font-fredoka font-bold text-amber-900 hover:text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-2 sm:px-2.5 py-0.5 rounded-full flex items-center gap-1 transition-colors"
                                 >
                                   <span>▶ Listen Voice</span>
-                                  <span className="text-[9px] opacity-70">(en-IN-Prabhat)</span>
+                                  <span className="text-[9px] opacity-70 hidden sm:inline">(en-IN-Prabhat)</span>
                                 </button>
-                                <span className="font-fredoka font-bold text-amber-800 text-xs">KOTL (AI Companion)</span>
+                                <span className="font-fredoka font-bold text-amber-800 text-[11px] sm:text-xs">KOTL (AI)</span>
                               </div>
-                              <p className="leading-relaxed">{kotlMsg}</p>
+                              <p className="leading-relaxed text-xs sm:text-sm">{kotlMsg}</p>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 text-white flex items-center justify-center text-xs sm:text-sm shadow-2xs shrink-0">
                               🤖
                             </div>
                           </div>
@@ -924,20 +932,20 @@ export default function KindergartenHubPage() {
               </div>
 
               {/* Quick Chat Input Box (Live Assistant Test) */}
-              <form onSubmit={handleSendTestChat} className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2">
+              <form onSubmit={handleSendTestChat} className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1.5 sm:gap-2">
                 <input
                   type="text"
                   value={testChatMessage}
                   onChange={(e) => setTestChatMessage(e.target.value)}
                   placeholder="Type a test dialogue to KOTL (e.g. Why do stars shine?)..."
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-amber-300"
+                  className="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-amber-300"
                 />
                 <button
                   type="submit"
                   disabled={isSendingChat || !testChatMessage.trim()}
-                  className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5"
+                  className="bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-fredoka font-bold text-xs sm:text-sm px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1 shrink-0"
                 >
-                  {isSendingChat ? 'Thinking...' : 'Send'}
+                  <span>{isSendingChat ? '...' : 'Send'}</span>
                   <span>🚀</span>
                 </button>
               </form>
@@ -951,33 +959,33 @@ export default function KindergartenHubPage() {
             TAB 2: HABITS, HEALTH & SOCRATIC ACTION ENGINE
         ============================================================== */}
         {activeTab === 'habits' && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className="space-y-4 sm:space-y-6 animate-fadeIn">
             
             {/* Header with Award Star & Add Habit Action */}
-            <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white rounded-[32px] p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div>
                 <span className="bg-emerald-400/50 text-emerald-950 font-fredoka font-bold text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider">
                   Socratic Action Engine
                 </span>
-                <h2 className="font-fredoka text-xl sm:text-2xl font-bold mt-1.5">
+                <h2 className="font-fredoka text-lg sm:text-2xl font-bold mt-1.5 leading-snug">
                   Habit Tracker &amp; 1-Click KOTL Voice Directives
                 </h2>
                 <p className="text-xs sm:text-sm text-emerald-100 mt-0.5">
-                  Click any directive to have KOTL immediately prompt Parth with friendly superhero encouragement!
+                  Click any directive to have KOTL immediately prompt Parth with friendly encouragement!
                 </p>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => setIsAddHabitModalOpen(true)}
-                  className="bg-white/90 hover:bg-white text-emerald-900 font-fredoka font-bold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
+                  className="bg-white/90 hover:bg-white text-emerald-900 font-fredoka font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1 active:scale-95"
                 >
                   <span>+</span>
                   <span>Add Habit</span>
                 </button>
                 <button
                   onClick={handleAwardStar}
-                  className="bg-amber-400 hover:bg-amber-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-4 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95"
+                  className="bg-amber-400 hover:bg-amber-500 text-amber-950 font-fredoka font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1 active:scale-95"
                 >
                   <span>⭐ Award Star</span>
                 </button>
@@ -985,11 +993,11 @@ export default function KindergartenHubPage() {
             </div>
 
             {/* Persistent Dynamic Habits Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
               {habits.map((habit) => (
                 <div
                   key={habit.id}
-                  className={`border rounded-[32px] p-5 shadow-xs transition-all flex flex-col justify-between ${
+                  className={`border rounded-[24px] sm:rounded-[32px] p-4 sm:p-5 shadow-xs transition-all flex flex-col justify-between ${
                     habit.completed_today
                       ? 'bg-gradient-to-br from-emerald-50/90 to-teal-50/70 border-emerald-200'
                       : 'bg-white border-slate-100 hover:border-amber-200'
@@ -997,9 +1005,9 @@ export default function KindergartenHubPage() {
                 >
                   <div>
                     {/* Top row: Icon, Category & Toggle */}
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-2xl p-2 bg-white rounded-2xl shadow-2xs border border-slate-100">
+                        <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-white rounded-2xl shadow-2xs border border-slate-100">
                           {habit.icon || '⭐'}
                         </span>
                         <div>
@@ -1025,19 +1033,19 @@ export default function KindergartenHubPage() {
                       </button>
                     </div>
 
-                    <h4 className="font-fredoka font-bold text-base text-slate-900 leading-snug">
+                    <h4 className="font-fredoka font-bold text-sm sm:text-base text-slate-900 leading-snug">
                       {habit.title}
                     </h4>
 
                     {habit.tip && (
-                      <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                      <p className="text-[11px] sm:text-xs text-slate-500 mt-1 sm:mt-1.5 leading-relaxed">
                         💡 {habit.tip}
                       </p>
                     )}
                   </div>
 
                   {/* Refined 1-Click KOTL Voice Directive Pill Button */}
-                  <div className="mt-4 pt-3 border-t border-slate-100/80">
+                  <div className="mt-3.5 sm:mt-4 pt-2.5 sm:pt-3 border-t border-slate-100/80">
                     <button
                       onClick={() => handleTriggerVoiceDirective(habit)}
                       className="w-full border-2 border-emerald-500 text-emerald-700 bg-emerald-50 hover:bg-emerald-500 hover:text-white transition-all text-xs font-bold py-1.5 px-3 rounded-full flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
@@ -1049,17 +1057,17 @@ export default function KindergartenHubPage() {
               ))}
             </div>
 
-            {/* Daily Outdoor Movement & Sports Tracker + Socratic Missions + WHO Growth Indicators */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Daily Outdoor Movement + Socratic Missions + WHO Growth */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4">
               
               {/* Daily Outdoor Sports & Stamina Tracker Card */}
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl p-2 bg-emerald-100 rounded-2xl">🏃</span>
+                      <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-emerald-100 rounded-2xl">🏃</span>
                       <div>
-                        <h4 className="font-fredoka text-base font-bold text-emerald-950">
+                        <h4 className="font-fredoka text-sm sm:text-base font-bold text-emerald-950">
                           {sportsTracker.title}
                         </h4>
                         <span className="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
@@ -1069,9 +1077,9 @@ export default function KindergartenHubPage() {
                     </div>
                   </div>
 
-                  <div className="my-4">
+                  <div className="my-3 sm:my-4">
                     <div className="flex items-baseline justify-between mb-1">
-                      <span className="font-fredoka text-2xl font-bold text-emerald-950">
+                      <span className="font-fredoka text-xl sm:text-2xl font-bold text-emerald-950">
                         {sportsTracker.minutes_active} <span className="text-xs font-medium text-emerald-800">/ {sportsTracker.minutes_goal} mins</span>
                       </span>
                       <span className="font-fredoka text-xs font-bold text-emerald-700">75% Goal</span>
@@ -1081,18 +1089,18 @@ export default function KindergartenHubPage() {
                     </div>
                   </div>
 
-                  <div className="p-3 bg-white/80 rounded-2xl border border-emerald-200/60 mb-2">
-                    <div className="text-[11px] font-fredoka font-bold text-emerald-900">Logged Today:</div>
-                    <div className="text-xs text-emerald-800 font-medium mt-0.5">
+                  <div className="p-2.5 sm:p-3 bg-white/80 rounded-2xl border border-emerald-200/60 mb-2">
+                    <div className="text-[10px] sm:text-[11px] font-fredoka font-bold text-emerald-900">Logged Today:</div>
+                    <div className="text-[11px] sm:text-xs text-emerald-800 font-medium mt-0.5">
                       ⚽ {sportsTracker.activities}
                     </div>
                   </div>
-                  <p className="text-[11px] text-emerald-900/80 leading-relaxed font-medium">
+                  <p className="text-[10px] sm:text-[11px] text-emerald-900/80 leading-relaxed font-medium">
                     {sportsTracker.notes}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-emerald-200/60 flex items-center justify-end">
+                <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-emerald-200/60 flex items-center justify-end">
                   <button
                     onClick={() => playVoice(`Awesome energy, Parth! You completed 45 minutes of active cricket and cycling today! High stamina hero!`)}
                     className="text-[11px] font-fredoka font-bold bg-emerald-200/80 hover:bg-emerald-300 text-emerald-950 px-3 py-1 rounded-full"
@@ -1103,17 +1111,17 @@ export default function KindergartenHubPage() {
               </div>
 
               {/* Active Socratic Creative Projects Card with '+ Add Custom Mission' Button */}
-              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200/80 rounded-[32px] p-6 shadow-xs flex flex-col justify-between">
+              <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200/80 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl p-2 bg-indigo-100 rounded-2xl">🌱</span>
+                      <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-indigo-100 rounded-2xl">🌱</span>
                       <div>
-                        <h4 className="font-fredoka text-base font-bold text-indigo-950">
+                        <h4 className="font-fredoka text-sm sm:text-base font-bold text-indigo-950">
                           Active Socratic Missions
                         </h4>
                         <span className="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-900">
-                          School Science Quest
+                          Science Quest
                         </span>
                       </div>
                     </div>
@@ -1121,22 +1129,23 @@ export default function KindergartenHubPage() {
                     {/* Interactive + Add Custom Mission Button */}
                     <button
                       onClick={() => setIsAddMissionModalOpen(true)}
-                      className="text-xs font-fredoka font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-full shadow-2xs transition-all active:scale-95 flex items-center gap-1"
+                      className="text-xs font-fredoka font-bold bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-2xs transition-all active:scale-95 flex items-center gap-1 shrink-0"
                     >
                       <span>+</span>
-                      <span>Add Mission</span>
+                      <span className="sm:hidden">Add</span>
+                      <span className="hidden sm:inline">Add Custom Mission</span>
                     </button>
                   </div>
 
-                  <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
+                  <div className="space-y-2 sm:space-y-2.5 max-h-[220px] overflow-y-auto pr-1">
                     {socraticMissions.map((mission) => (
                       <div key={mission.id} className="p-3 bg-white/90 rounded-2xl border border-indigo-200/60 space-y-1.5">
                         <div className="flex items-center justify-between">
                           <span className="font-fredoka font-bold text-xs text-indigo-900 flex items-center gap-1.5">
                             <span>{mission.icon || '🌱'}</span>
-                            <span>{mission.title}</span>
+                            <span className="truncate max-w-[170px] sm:max-w-none">{mission.title}</span>
                           </span>
-                          <span className="text-[9px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          <span className="text-[9px] font-fredoka font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
                             {mission.status}
                           </span>
                         </div>
@@ -1154,58 +1163,58 @@ export default function KindergartenHubPage() {
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-indigo-200/60 text-[11px] text-indigo-800 font-medium">
+                <div className="mt-2.5 sm:mt-3 pt-2 border-t border-indigo-200/60 text-[10px] sm:text-[11px] text-indigo-800 font-medium">
                   KOTL guides Parth through open questions rather than simply giving answers.
                 </div>
               </div>
 
               {/* WHO Growth Indicators Card */}
-              <div className="bg-white border border-amber-100 rounded-[32px] p-6 shadow-xs space-y-3 flex flex-col justify-between">
+              <div className="bg-white border border-amber-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs space-y-3 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">📊</span>
-                      <h3 className="font-fredoka text-base font-bold text-slate-900">
+                      <span className="text-lg sm:text-xl">📊</span>
+                      <h3 className="font-fredoka text-sm sm:text-base font-bold text-slate-900">
                         WHO Growth Indicators
                       </h3>
                     </div>
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full">
                       {growthMetrics.who_growth?.who_status || 'Normal & Optimal'}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 text-center my-3">
-                    <div className="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+                  <div className="grid grid-cols-3 gap-2 text-center my-2.5 sm:my-3">
+                    <div className="bg-slate-50 rounded-2xl p-2 sm:p-2.5 border border-slate-100">
                       <div className="text-[10px] text-slate-500 font-medium">Height</div>
-                      <div className="font-fredoka text-lg font-bold text-slate-900 mt-0.5">
+                      <div className="font-fredoka text-base sm:text-lg font-bold text-slate-900 mt-0.5">
                         {growthMetrics.who_growth?.height_cm || 116} <span className="text-[10px] font-normal">cm</span>
                       </div>
                       <div className="text-[9px] text-emerald-600 font-medium">75th %ile</div>
                     </div>
 
-                    <div className="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+                    <div className="bg-slate-50 rounded-2xl p-2 sm:p-2.5 border border-slate-100">
                       <div className="text-[10px] text-slate-500 font-medium">Weight</div>
-                      <div className="font-fredoka text-lg font-bold text-slate-900 mt-0.5">
+                      <div className="font-fredoka text-base sm:text-lg font-bold text-slate-900 mt-0.5">
                         {growthMetrics.who_growth?.weight_kg || 21.5} <span className="text-[10px] font-normal">kg</span>
                       </div>
                       <div className="text-[9px] text-emerald-600 font-medium">75th %ile</div>
                     </div>
 
-                    <div className="bg-slate-50 rounded-2xl p-2.5 border border-slate-100">
+                    <div className="bg-slate-50 rounded-2xl p-2 sm:p-2.5 border border-slate-100">
                       <div className="text-[10px] text-slate-500 font-medium">BMI</div>
-                      <div className="font-fredoka text-lg font-bold text-slate-900 mt-0.5">
+                      <div className="font-fredoka text-base sm:text-lg font-bold text-slate-900 mt-0.5">
                         {growthMetrics.who_growth?.bmi || 15.9}
                       </div>
                       <div className="text-[9px] text-emerald-600 font-medium">Optimal</div>
                     </div>
                   </div>
 
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
                     Pediatric standard 6.0y boy. Height &amp; weight reflect balanced nutrition and active sports.
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-600 font-medium">
+                <div className="pt-2 border-t border-slate-100 text-[10px] sm:text-[11px] text-slate-600 font-medium">
                   Tip: {growthMetrics.daily_parent_tip?.title || 'Encourage Socratic Wonder'}
                 </div>
               </div>
@@ -1219,30 +1228,30 @@ export default function KindergartenHubPage() {
             TAB 3: WALKIE-TALKIE & DEVICE COCKPIT
         ============================================================== */}
         {activeTab === 'cockpit' && (
-          <div className="space-y-6 animate-fadeIn">
+          <div className="space-y-4 sm:space-y-6 animate-fadeIn">
             
-            {/* Live Audio Walkie-Talkie & Parent Memo Card (Push-to-Talk Mic) */}
-            <div className="bg-white border border-sky-100 rounded-[32px] p-6 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
+            {/* Live Audio Walkie-Talkie & Parent Memo Card */}
+            <div className="bg-white border border-sky-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl p-2 bg-sky-100 rounded-2xl">📻</span>
+                  <span className="text-xl sm:text-2xl p-1.5 sm:p-2 bg-sky-100 rounded-2xl">📻</span>
                   <div>
-                    <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                    <h3 className="font-fredoka text-base sm:text-lg font-bold text-slate-900">
                       Parent Walkie-Talkie &amp; Audio Memos
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-[11px] sm:text-xs text-slate-500">
                       Speak directly to Parth through his KOTL companion robot speaker
                     </p>
                   </div>
                 </div>
-                <span className="bg-sky-100 text-sky-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full">
-                  Instant Audio Broadcast
+                <span className="bg-sky-100 text-sky-800 text-[10px] font-fredoka font-bold px-2 sm:px-2.5 py-0.5 rounded-full shrink-0">
+                  Instant Audio
                 </span>
               </div>
 
               {/* 4 1-Click Quick Audio Memo Presets */}
-              <div className="mb-4">
-                <div className="text-xs font-fredoka font-semibold text-slate-600 mb-2">
+              <div className="mb-3 sm:mb-4">
+                <div className="text-xs font-fredoka font-semibold text-slate-600 mb-1.5 sm:mb-2">
                   ⚡ 1-Click Preset Audio Directives:
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -1255,30 +1264,30 @@ export default function KindergartenHubPage() {
                     <button
                       key={idx}
                       onClick={() => handleSendWalkieMemo(p.text)}
-                      className="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs"
+                      className="bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-950 font-fredoka font-bold text-xs p-2 sm:p-2.5 rounded-2xl text-left transition-all active:scale-95 shadow-2xs"
                     >
-                      <div className="text-xs">{p.label}</div>
-                      <div className="text-[10px] font-normal text-sky-700 truncate mt-0.5">&quot;{p.text}&quot;</div>
+                      <div className="text-[11px] sm:text-xs">{p.label}</div>
+                      <div className="text-[9px] sm:text-[10px] font-normal text-sky-700 truncate mt-0.5">&quot;{p.text}&quot;</div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Typed Message + Live Mic Record Button */}
+              {/* Typed Message + Push-to-Talk Mic */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <input
                     type="text"
                     value={walkieText}
                     onChange={(e) => setWalkieText(e.target.value)}
                     placeholder="Type a loving message to speak over KOTL speaker..."
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-300"
+                    className="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-sky-300"
                   />
                   
-                  {/* Circular Push-to-Talk Mic Button */}
+                  {/* Push-to-Talk Mic Button */}
                   <button
                     onClick={handleToggleMicRecord}
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center text-lg transition-transform active:scale-95 shadow-2xs border ${
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-base sm:text-lg transition-transform active:scale-95 shadow-2xs border shrink-0 ${
                       isRecordingMic
                         ? 'bg-rose-500 text-white border-rose-600 animate-pulse'
                         : 'bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200'
@@ -1291,9 +1300,10 @@ export default function KindergartenHubPage() {
                   <button
                     onClick={() => handleSendWalkieMemo(walkieText)}
                     disabled={!walkieText.trim()}
-                    className="bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-fredoka font-bold text-xs sm:text-sm px-5 py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1.5"
+                    className="bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-fredoka font-bold text-xs sm:text-sm px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl shadow-xs transition-all flex items-center gap-1 shrink-0 whitespace-nowrap"
                   >
-                    <span>Broadcast Voice</span>
+                    <span className="sm:hidden">Send</span>
+                    <span className="hidden sm:inline">Broadcast Voice</span>
                   </button>
                 </div>
 
@@ -1308,12 +1318,12 @@ export default function KindergartenHubPage() {
 
               {/* Memo History */}
               {voiceMemos.length > 0 && (
-                <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5">
-                  <div className="text-[11px] font-fredoka font-semibold text-slate-400">Recently Broadcasted Memos:</div>
+                <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-slate-100 space-y-1 sm:space-y-1.5">
+                  <div className="text-[10px] sm:text-[11px] font-fredoka font-semibold text-slate-400">Recently Broadcasted:</div>
                   {voiceMemos.slice(0, 3).map(m => (
                     <div key={m.id} className="text-xs bg-slate-50 p-2 rounded-xl flex items-center justify-between text-slate-700">
-                      <span>&quot;{m.text}&quot;</span>
-                      <span className="text-[10px] text-slate-400">{m.time}</span>
+                      <span className="truncate max-w-[80%]">&quot;{m.text}&quot;</span>
+                      <span className="text-[10px] text-slate-400 shrink-0">{m.time}</span>
                     </div>
                   ))}
                 </div>
@@ -1321,22 +1331,22 @@ export default function KindergartenHubPage() {
             </div>
 
             {/* Promoted Auto Bedtime Curfew Card */}
-            <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 rounded-[32px] p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl p-2.5 bg-indigo-100 rounded-2xl">🌙</span>
+            <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border border-indigo-200/80 rounded-[24px] sm:rounded-[32px] p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <span className="text-2xl sm:text-3xl p-2 sm:p-2.5 bg-indigo-100 rounded-xl sm:rounded-2xl shrink-0">🌙</span>
                 <div>
-                  <h4 className="font-fredoka text-base font-bold text-indigo-950">
+                  <h4 className="font-fredoka text-sm sm:text-base font-bold text-indigo-950">
                     Auto Bedtime Curfew (9:00 PM)
                   </h4>
-                  <p className="text-xs text-indigo-900/80 font-medium mt-0.5">
-                    KOTL automatically enters low-volume soothing whisper mode after 21:00 IST to promote restful sleep.
+                  <p className="text-[11px] sm:text-xs text-indigo-900/80 font-medium mt-0.5">
+                    KOTL automatically enters soothing whisper mode after 21:00 IST to promote restful sleep.
                   </p>
                 </div>
               </div>
 
               <button
                 onClick={handleToggleCurfew}
-                className={`px-4 py-2 rounded-full font-fredoka font-bold text-xs transition-all shadow-2xs active:scale-95 shrink-0 ${
+                className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-fredoka font-bold text-xs transition-all shadow-2xs active:scale-95 shrink-0 ${
                   isCurfewEnabled
                     ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
                     : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
@@ -1347,27 +1357,27 @@ export default function KindergartenHubPage() {
             </div>
 
             {/* Hardware Controls & Parent-Friendly Humanized Telemetry */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4">
               
               {/* Parent-Friendly Humanized Telemetry Card */}
-              <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4">
+              <div className="bg-white border border-slate-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xl">🤖</span>
-                    <h3 className="font-fredoka text-lg font-bold text-slate-900">
+                    <span className="text-lg sm:text-xl">🤖</span>
+                    <h3 className="font-fredoka text-base sm:text-lg font-bold text-slate-900">
                       Companion Hardware Status
                     </h3>
                   </div>
-                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
                     Ready &amp; Active
                   </span>
                 </div>
 
                 {/* Friendly Parent Indicators */}
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-slate-600 font-medium flex items-center gap-2">
+                <div className="space-y-1.5 sm:space-y-2 text-xs">
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-600 font-medium flex items-center gap-1.5">
                       <span>👂</span> Companion Ear (Mic):
                     </span>
                     <span className="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
@@ -1375,17 +1385,17 @@ export default function KindergartenHubPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-slate-600 font-medium flex items-center gap-2">
-                      <span>📢</span> Companion Voice (Speaker):
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                      <span>📢</span> Voice (Speaker):
                     </span>
                     <span className="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
                       <span>🟢</span> {deviceStatus.voice_speaker}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-slate-600 font-medium flex items-center gap-2">
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-600 font-medium flex items-center gap-1.5">
                       <span>💖</span> Head Touch Sensor:
                     </span>
                     <span className="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
@@ -1393,8 +1403,8 @@ export default function KindergartenHubPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-slate-600 font-medium flex items-center gap-2">
+                  <div className="flex items-center justify-between p-2.5 sm:p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <span className="text-slate-600 font-medium flex items-center gap-1.5">
                       <span>☁️</span> Cloud Sync:
                     </span>
                     <span className="font-fredoka font-bold text-emerald-700 flex items-center gap-1">
@@ -1404,7 +1414,7 @@ export default function KindergartenHubPage() {
                 </div>
 
                 {/* Speaker Volume Slider Bound to Backend API */}
-                <div className="pt-2">
+                <div className="pt-1.5 sm:pt-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="font-fredoka text-xs font-bold text-slate-700">
                       🔊 Speaker Volume: {deviceVolume}%
@@ -1433,13 +1443,13 @@ export default function KindergartenHubPage() {
               </div>
 
               {/* Safety Boundaries & Bedtime Routine Card */}
-              <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-xs space-y-4 flex flex-col justify-between">
+              <div className="bg-white border border-slate-100 rounded-[24px] sm:rounded-[32px] p-4 sm:p-6 shadow-xs space-y-3.5 sm:space-y-4 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2.5 sm:mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-xl">🛡️</span>
-                      <h3 className="font-fredoka text-lg font-bold text-slate-900">
-                        Safety Boundaries &amp; Permissions
+                      <span className="text-lg sm:text-xl">🛡️</span>
+                      <h3 className="font-fredoka text-base sm:text-lg font-bold text-slate-900">
+                        Safety Boundaries
                       </h3>
                     </div>
                     <button
@@ -1454,11 +1464,11 @@ export default function KindergartenHubPage() {
                     </button>
                   </div>
 
-                  <p className="text-xs text-slate-500 mb-3">
+                  <p className="text-[11px] sm:text-xs text-slate-500 mb-2.5 sm:mb-3">
                     Enforces strict parental boundaries during conversations:
                   </p>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     {[
                       { key: 'medicines', label: 'Taking medicines / pills without adult', icon: '💊' },
                       { key: 'sharp_tools', label: 'Scissors, knives, matches or fire', icon: '✂️' },
@@ -1474,12 +1484,12 @@ export default function KindergartenHubPage() {
                         >
                           <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
                             <span>{p.icon}</span>
-                            <span>{p.label}</span>
+                            <span className="truncate max-w-[190px] sm:max-w-none">{p.label}</span>
                           </div>
-                          <span className={`text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full ${
+                          <span className={`text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full shrink-0 ${
                             isGated ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-600'
                           }`}>
-                            {isGated ? 'Parent Gated' : 'Allowed'}
+                            {isGated ? 'Gated' : 'Allowed'}
                           </span>
                         </div>
                       );
@@ -1504,7 +1514,7 @@ export default function KindergartenHubPage() {
       -------------------------------------------------------------- */}
       {isAddMissionModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] max-w-md w-full p-6 shadow-xl border border-indigo-100 animate-scaleUp">
+          <div className="bg-white rounded-[32px] max-w-md w-full p-5 sm:p-6 shadow-xl border border-indigo-100 animate-scaleUp">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🌱</span>
@@ -1579,7 +1589,7 @@ export default function KindergartenHubPage() {
       -------------------------------------------------------------- */}
       {isAddHabitModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] max-w-md w-full p-6 shadow-xl border border-emerald-100 animate-scaleUp">
+          <div className="bg-white rounded-[32px] max-w-md w-full p-5 sm:p-6 shadow-xl border border-emerald-100 animate-scaleUp">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🥦</span>
@@ -1677,12 +1687,12 @@ export default function KindergartenHubPage() {
       )}
 
       {/* -------------------------------------------------------------
-          OPTIONAL MOBILE BOTTOM NAV BAR (Strictly hidden on desktop md:hidden)
+          FIXED MOBILE BOTTOM NAV BAR (Strictly hidden on desktop: md:hidden)
       -------------------------------------------------------------- */}
-      <div id="mobileBottomNav" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-amber-200 px-4 py-2 flex items-center justify-around shadow-lg">
+      <div id="mobileBottomNav" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-amber-200 px-4 py-2 pb-safe flex items-center justify-around shadow-lg">
         <button
           onClick={() => setActiveTab('growth')}
-          className={`flex flex-col items-center gap-0.5 text-xs font-fredoka font-bold ${
+          className={`flex flex-col items-center gap-0.5 text-xs font-fredoka font-bold transition-transform active:scale-95 ${
             activeTab === 'growth' ? 'text-amber-600' : 'text-slate-400'
           }`}
         >
@@ -1691,7 +1701,7 @@ export default function KindergartenHubPage() {
         </button>
         <button
           onClick={() => setActiveTab('habits')}
-          className={`flex flex-col items-center gap-0.5 text-xs font-fredoka font-bold ${
+          className={`flex flex-col items-center gap-0.5 text-xs font-fredoka font-bold transition-transform active:scale-95 ${
             activeTab === 'habits' ? 'text-emerald-600' : 'text-slate-400'
           }`}
         >
@@ -1700,7 +1710,7 @@ export default function KindergartenHubPage() {
         </button>
         <button
           onClick={() => setActiveTab('cockpit')}
-          className={`flex flex-col items-center gap-0.5 text-xs font-fredoka font-bold ${
+          className={`flex flex-col items-center gap-0.5 text-xs font-fredoka font-bold transition-transform active:scale-95 ${
             activeTab === 'cockpit' ? 'text-sky-600' : 'text-slate-400'
           }`}
         >
