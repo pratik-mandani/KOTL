@@ -44,7 +44,6 @@ D:\KOTL\
 │   ├── services\                 # Modular AI & business logic services
 │   │   ├── assistant.js          # Core LLM prompt engine, history manager & safety fallback
 │   │   ├── child-memory.js       # Persistent memory, habits, quests, & pediatric reports
-│   │   ├── edge-python-tts.js    # Python edge-tts bridge
 │   │   ├── edge-v2-tts.js        # High-performance MS Edge Neural TTS synthesis
 │   │   ├── eye-animation.js      # Sentiment-to-OLED eye expression mapper
 │   │   ├── gemini.js             # Google Gemini API connector with multi-model fallback

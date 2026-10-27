@@ -9,16 +9,12 @@ const path = require("path");
 const os = require("os");
 const { transcribeAudio, isBlacklistedNoiseTranscript } = require("./stt");
 const { generateAssistantReply } = require("./assistant");
-const { generateSpeech, NORMALIZED_SAMPLE_RATE } = require("./tts");
+const { NORMALIZED_SAMPLE_RATE } = require("./tts");
 const { writePcm16MonoWav } = require("../utils/wav");
-const { execFileSync } = require("child_process");
-const ffmpegBin = require("ffmpeg-static");
-const { EdgeTTS } = require("@andresaya/edge-tts");
 const { detectEyeExpression } = require("./eye-animation");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
 const { synthesizeEdgeV2Pcm } = require("./edge-v2-tts");
 const { synthesizeGeminiPcm } = require("./gemini-tts");
-const { synthesizeEdgePython } = require("./edge-python-tts");
 const { extractMemoryFromDialogue } = require("./child-memory");
 
 const HEARTBEAT_INTERVAL_MS = 15000;
@@ -32,12 +28,58 @@ function splitIntoSentences(text) {
   return parts.map((s) => s.trim()).filter((s) => s.length > 0);
 }
 
+function isAutoTriggerModeEnabled() {
+  const envVal = process.env.AUTO_TRIGGER_MODE;
+  if (envVal === undefined || envVal === null) {
+    return true; // Default: true (auto-trigger enabled on startup for natural conversational speech)
+  }
+  const cleanVal = String(envVal).trim().toLowerCase();
+  if (cleanVal === "") {
+    return true;
+  }
+  return cleanVal !== "false" && cleanVal !== "0" && cleanVal !== "off";
+}
+
+function isValidConversationalSpeech(transcript, clean, words) {
+  if (!transcript || typeof transcript !== "string") return false;
+  if (words.length < 2) return false;
+
+  // Direct question mark with at least 2 words
+  if (transcript.includes("?")) {
+    if (/^when (did it|he did it|they did it)\b/i.test(clean)) return false;
+    return true;
+  }
+
+  // Inquiry and request starters across English, Hindi, and Gujarati
+  const INQUIRY_STARTERS = [
+    "what ", "why ", "how ", "who ", "where ", "which ",
+    "can you ", "could you ", "will you ", "would you ",
+    "do you ", "are you ", "is it ", "is there ",
+    "tell me ", "help me ", "explain ", "teach me ",
+    "sing ", "sing a ", "i want to ", "i have a question",
+    "kya ", "kyu ", "kyun ", "kaise ", "kahan ", "kidhar ",
+    "kaun ", "kab ", "batao ", "mujhe ", "mujhe batao ", "sunao ",
+    "kahani sunao", "kaho ", "madad karo ",
+    "shu ", "kem ", "kyare ", "kya ", "koni ", "kone ",
+    "vaarta kaho", "mane vaarta", "samjhao "
+  ];
+
+  const matchesStarter = INQUIRY_STARTERS.some((s) => clean.startsWith(s));
+  if (!matchesStarter) return false;
+
+  // Reject truncated past fragments like "when did it." or "when he did it."
+  if (/^when (did it|he did it|they did it)\b/i.test(clean)) return false;
+
+  return true;
+}
+
 function shouldRejectAudioTurn({
   transcript,
   isTouchOrButton = false,
   isSessionActive = false,
   consecutiveVoiceTurns = 0,
   maxConsecutiveVoiceTurns = 3,
+  autoTrigger = undefined,
 }) {
   if (!transcript || typeof transcript !== "string") return true;
 
@@ -84,10 +126,20 @@ function shouldRejectAudioTurn({
     return false;
   }
 
-  // 8. Cold Idle Rejection:
-  // In cold idle, sentences with question words ("when", "what", "where") or random statements
-  // without a wake-word or greeting MUST NOT wake the robot.
-  // This completely eliminates false activations from office chatter, TV, or music lyrics.
+  // 8. Cold Idle Auto-Trigger Policy:
+  // When auto-trigger mode is enabled (default), accept valid conversational inquiries
+  // and directives without demanding an explicit "Hey KOTL" wake-word, while strictly
+  // rejecting ambient chatter, filler tokens, pop music lyrics, and background noise.
+  const autoTriggerActive = autoTrigger !== undefined ? Boolean(autoTrigger) : isAutoTriggerModeEnabled();
+  if (autoTriggerActive && !isSessionActive) {
+    if (isValidConversationalSpeech(transcript, clean, words)) {
+      return false; // ACCEPTED as valid conversational speech in cold idle
+    }
+  }
+
+  // 9. Cold Idle Rejection:
+  // In cold idle when auto-trigger is disabled or speech is not a valid inquiry,
+  // reject turn to prevent false activations from office chatter, TV, or ambient noise.
   return true;
 }
 
@@ -454,6 +506,8 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       ws.consecutiveVoiceFollowUps = 0; // Fresh wake-word or touch resets follow-up count
     } else if (isSessionActive) {
       ws.consecutiveVoiceFollowUps = currentFollowUpCount + 1; // Increment consecutive voice follow-ups
+    } else {
+      ws.consecutiveVoiceFollowUps = 0; // Fresh auto-triggered conversation start resets follow-up count
     }
 
     sendJson({
@@ -565,4 +619,6 @@ module.exports = {
   initWebSocketServer,
   synthesizeSpeechPcm,
   shouldRejectAudioTurn,
+  isAutoTriggerModeEnabled,
+  isValidConversationalSpeech,
 };

@@ -10,12 +10,10 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { promisify } = require("util");
-const { EdgeTTS } = require("@andresaya/edge-tts");
 const { toPhoneticSpokenText } = require("../utils/phonetic");
 const { synthesizeEdgeV2Pcm } = require("./edge-v2-tts");
 const { pcmToWavBuffer } = require("./gemini-tts");
 const { generateGeminiSpeech } = require("./gemini-tts");
-const { synthesizeEdgePython } = require("./edge-python-tts");
 
 const execFileAsync = promisify(execFile);
 

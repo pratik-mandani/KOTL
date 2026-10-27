@@ -14,7 +14,11 @@ const path = require("path");
 const assert = require("assert");
 
 const { isBlacklistedNoiseTranscript } = require("../services/stt");
-const { shouldRejectAudioTurn } = require("../services/websocket");
+const {
+  shouldRejectAudioTurn,
+  isAutoTriggerModeEnabled,
+  isValidConversationalSpeech,
+} = require("../services/websocket");
 const { getDayWiseHistory, getGrowthMetrics, generateChildDevelopmentReport } = require("../services/child-memory");
 
 let passed = 0;
@@ -220,6 +224,205 @@ runTest("shouldRejectAudioTurn rejects the words 'hotel' or 'bottle' in unrelate
   for (const p of unrelatedPhrases) {
     const rejected = shouldRejectAudioTurn({ transcript: p, isTouchOrButton: false, isSessionActive: false });
     assert.strictEqual(rejected, true, `Unrelated speech with homophone '${p}' must be rejected`);
+  }
+});
+
+runTest("shouldRejectAudioTurn accepts valid natural conversational speech in cold idle when auto-trigger mode is enabled", () => {
+  const naturalSpeechTurns = [
+    "What is the sun?",
+    "Why is the sky blue?",
+    "Tell me a story",
+    "Can you tell me a story about space?",
+    "How do birds fly?",
+    "Who made the stars?",
+    "Where do fish sleep?",
+    "Do stars sleep at night?",
+    "What are planets?",
+    "Help me with my homework",
+    "Sing a song for me",
+    "Mane vaarta kaho",
+    "Mujhe ek kahani sunao",
+    "Kya tum sun sakte ho?"
+  ];
+  for (const s of naturalSpeechTurns) {
+    const rejected = shouldRejectAudioTurn({
+      transcript: s,
+      isTouchOrButton: false,
+      isSessionActive: false,
+      autoTrigger: true,
+    });
+    assert.strictEqual(rejected, false, `Natural speech inquiry '${s}' must be accepted in auto-trigger mode`);
+  }
+});
+
+runTest("shouldRejectAudioTurn preserves existing wake-word-required behavior when auto-trigger mode is disabled", () => {
+  const naturalSpeechTurns = [
+    "What is the sun?",
+    "Why is the sky blue?",
+    "Tell me a story",
+    "Can you tell me a story about space?",
+    "How do birds fly?",
+    "Who made the stars?"
+  ];
+  for (const s of naturalSpeechTurns) {
+    const rejected = shouldRejectAudioTurn({
+      transcript: s,
+      isTouchOrButton: false,
+      isSessionActive: false,
+      autoTrigger: false,
+    });
+    assert.strictEqual(rejected, true, `Speech without wake-word '${s}' must be rejected when auto-trigger mode is disabled`);
+  }
+
+  // Wake-word phrases must still be accepted when auto-trigger mode is disabled
+  const wakeWordTurns = [
+    "Hey KOTL, what is the sun?",
+    "Hello KOTL, tell me a story",
+    "KOTL, why is the sky blue?",
+    "Hello KOTL",
+    "Kem cho KOTL"
+  ];
+  for (const w of wakeWordTurns) {
+    const rejected = shouldRejectAudioTurn({
+      transcript: w,
+      isTouchOrButton: false,
+      isSessionActive: false,
+      autoTrigger: false,
+    });
+    assert.strictEqual(rejected, false, `Wake-word turn '${w}' must remain accepted even when auto-trigger is disabled`);
+  }
+});
+
+runTest("shouldRejectAudioTurn rejects empty, noise, and filler transcripts under both auto-trigger and strict modes", () => {
+  const invalidTranscripts = [
+    "",
+    "   ",
+    null,
+    undefined,
+    "[music] la la la",
+    "♪ pop music playing ♪",
+    "yeah yeah yeah",
+    "uh huh uh huh",
+    "la la la"
+  ];
+  for (const inv of invalidTranscripts) {
+    assert.strictEqual(
+      shouldRejectAudioTurn({ transcript: inv, isTouchOrButton: false, isSessionActive: false, autoTrigger: true }),
+      true,
+      `Invalid transcript '${inv}' must be rejected in auto-trigger mode`
+    );
+    assert.strictEqual(
+      shouldRejectAudioTurn({ transcript: inv, isTouchOrButton: false, isSessionActive: false, autoTrigger: false }),
+      true,
+      `Invalid transcript '${inv}' must be rejected in strict wake-word mode`
+    );
+  }
+});
+
+runTest("isAutoTriggerModeEnabled respects AUTO_TRIGGER_MODE environment setting and defaults to true", () => {
+  const originalEnv = process.env.AUTO_TRIGGER_MODE;
+  try {
+    delete process.env.AUTO_TRIGGER_MODE;
+    assert.strictEqual(isAutoTriggerModeEnabled(), true, "Default configuration must enable auto-trigger on startup");
+
+    process.env.AUTO_TRIGGER_MODE = "";
+    assert.strictEqual(isAutoTriggerModeEnabled(), true, "Empty string must default to enabled");
+
+    process.env.AUTO_TRIGGER_MODE = "   ";
+    assert.strictEqual(isAutoTriggerModeEnabled(), true, "Whitespace-only string must default to enabled");
+
+    process.env.AUTO_TRIGGER_MODE = "true";
+    assert.strictEqual(isAutoTriggerModeEnabled(), true, "AUTO_TRIGGER_MODE=true must enable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "TRUE";
+    assert.strictEqual(isAutoTriggerModeEnabled(), true, "AUTO_TRIGGER_MODE=TRUE must enable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "1";
+    assert.strictEqual(isAutoTriggerModeEnabled(), true, "AUTO_TRIGGER_MODE=1 must enable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "false";
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "AUTO_TRIGGER_MODE=false must disable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "FALSE";
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "AUTO_TRIGGER_MODE=FALSE (uppercase) must disable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "False";
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "AUTO_TRIGGER_MODE=False (mixed case) must disable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "0";
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "AUTO_TRIGGER_MODE=0 must disable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "off";
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "AUTO_TRIGGER_MODE=off must disable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "OFF";
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "AUTO_TRIGGER_MODE=OFF (uppercase) must disable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "Off";
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "AUTO_TRIGGER_MODE=Off (mixed case) must disable auto-trigger");
+  } finally {
+    if (originalEnv !== undefined) {
+      process.env.AUTO_TRIGGER_MODE = originalEnv;
+    } else {
+      delete process.env.AUTO_TRIGGER_MODE;
+    }
+  }
+});
+
+runTest("shouldRejectAudioTurn rejects ordinary statements containing embedded question words even in auto-trigger mode", () => {
+  const embeddedQuestionStatements = [
+    "This is how it works.",
+    "He asked me who was there.",
+    "I do not know where it went.",
+    "We decided which one to take."
+  ];
+  for (const s of embeddedQuestionStatements) {
+    const rejected = shouldRejectAudioTurn({
+      transcript: s,
+      isTouchOrButton: false,
+      isSessionActive: false,
+      autoTrigger: true,
+    });
+    assert.strictEqual(rejected, true, `Statement with embedded question word '${s}' must be rejected in auto-trigger mode`);
+  }
+});
+
+runTest("isValidConversationalSpeech accurately identifies conversational inquiries and rejects ambient fragments", () => {
+  const positive = [
+    "What is the sun?",
+    "Why is the sky blue?",
+    "Tell me a story",
+    "Can you tell me a story about space?",
+    "How do birds fly?",
+    "Who made the stars?",
+    "Where do fish sleep?",
+    "Mane vaarta kaho",
+    "Mujhe ek kahani sunao"
+  ];
+  for (const p of positive) {
+    const clean = p.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
+    const words = clean.split(/\s+/).filter(Boolean);
+    assert.strictEqual(isValidConversationalSpeech(p, clean, words), true, `Inquiry '${p}' must be recognized as valid conversational speech`);
+  }
+
+  const negative = [
+    "This is how it works.",
+    "He asked me who was there.",
+    "I do not know where it went.",
+    "We decided which one to take.",
+    "When did it.",
+    "When he did it.",
+    "I'm going to go to the side.",
+    "baby girl dancing tonight",
+    "all night long",
+    "We booked a hotel in Mumbai",
+    "The bottle is on the table",
+    "couch"
+  ];
+  for (const n of negative) {
+    const clean = n.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
+    const words = clean.split(/\s+/).filter(Boolean);
+    assert.strictEqual(isValidConversationalSpeech(n, clean, words), false, `Noise/fragment '${n}' must not be recognized as valid conversational speech`);
   }
 });
 
