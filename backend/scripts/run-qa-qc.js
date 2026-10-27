@@ -304,6 +304,25 @@ assertTest('Development Observation Report Modal integrated in web UI', hasRepor
 assertTest('8-Dimension Indicators & Evidence Grid present in HTML', hasRepContainers, 'repDimensionsGrid and repEvidenceList present');
 assertTest('Bento Metric 4 Card triggers Development Report', hasMetric4Report, 'Metric 4 linked to openReportModal()');
 
+// Verify Live Device Status UI Elements & Hydration Logic
+const hasTopStatusElements = htmlContent.includes('id="deviceStatusPill"') && htmlContent.includes('id="deviceStatusLabel"') && htmlContent.includes('id="deviceStatusDot"');
+const hasSidebarStatusElements = htmlContent.includes('id="sidebarDeviceStatusBadge"') && htmlContent.includes('id="sidebarDeviceStatusLabel"') && htmlContent.includes('id="sidebarDeviceStatusDesc"') && htmlContent.includes('id="hardwareCardStatusBadge"');
+const hasStatusLogic = htmlContent.includes('function updateDeviceStatusUI(') &&
+                       htmlContent.includes("topLabel.innerText = 'Online'") &&
+                       htmlContent.includes("topLabel.innerText = 'Offline ('") &&
+                       htmlContent.includes("topLabel.innerText = 'Demo / Unverified'") &&
+                       htmlContent.includes("topLabel.innerText = 'Offline (Sync Error)'") &&
+                       htmlContent.includes("elapsed < 45");
+const hasSafePollingAndRefresh = htmlContent.includes('function startDeviceStatePolling()') &&
+                                htmlContent.includes('15000') &&
+                                htmlContent.includes('isDeviceStateFetching') &&
+                                htmlContent.includes('deviceStateFailCount >= 2') &&
+                                htmlContent.includes('loadDeviceState();" title="Refresh Dashboard Data"');
+
+assertTest('Live Device Status UI Elements: Top pill, sidebar badge & hardware station', hasTopStatusElements && hasSidebarStatusElements, 'All dynamic status DOM IDs present');
+assertTest('Live Device Status Binding: Online, Offline, Missing & Error states', hasStatusLogic, 'Derived truthfully from device_status without unsupported claims');
+assertTest('Safe Telemetry Polling (15s) & Request Overlap Protection', hasSafePollingAndRefresh, '15-second non-overlapping interval with graceful failure fallback');
+
 // ----------------------------------------------------
 // SUMMARY REPORT
 // ----------------------------------------------------
