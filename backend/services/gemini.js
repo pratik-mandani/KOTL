@@ -8,6 +8,7 @@ try {
 const DEFAULT_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const DEFAULT_MODEL = process.env.GEMINI_CHAT_MODEL || "gemini-3.5-flash-lite";
 const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.GEMINI_TIMEOUT_MS || "", 10) || 15000;
+const { recordLlmUsage } = require("./api-usage");
 
 async function generateGeminiAssistantReply({ messages, sessionId = null }) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -80,11 +81,23 @@ async function generateGeminiAssistantReply({ messages, sessionId = null }) {
         continue;
       }
 
+      const usage = data.usage || null;
+      try {
+        recordLlmUsage({
+          provider: "gemini",
+          model: modelToUse,
+          promptTokens: usage?.prompt_tokens ?? null,
+          completionTokens: usage?.completion_tokens ?? null,
+          totalTokens: usage?.total_tokens ?? null,
+        });
+      } catch (_) {}
+
       return {
         success: true,
         reply,
         provider: "gemini",
         model: modelToUse,
+        usage: usage,
         error: null,
       };
     } catch (error) {

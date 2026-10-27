@@ -11,6 +11,7 @@ const fs = require("fs");
 const path = require("path");
 const { generateAssistantReply, resetSessionHistory, getSessionHistory, attachTtsUrlToLastAssistantReply } = require("./services/assistant");
 const { getGroqQuotaStats } = require("./services/groq");
+const { getUsageSummary } = require("./services/api-usage");
 const { transcribeAudio, normalizeWhisperTranscript, isBlacklistedNoiseTranscript } = require("./services/stt");
 const { generateSpeech, NORMALIZED_SAMPLE_RATE } = require("./services/tts");
 const { writePcm16MonoWav } = require("./utils/wav");
@@ -185,9 +186,72 @@ function createHardwareTestToneWav() {
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/api/status", (_req, res) => {
-  const groqQuota = getGroqQuotaStats();
+// Verification helper for secure usage endpoint
+function verifyUsageAuthorization(req) {
+  const isProduction = process.env.NODE_ENV === "production";
+  const configuredPin = (process.env.PARENT_PIN || "").trim();
+  const configuredKey = (process.env.ADMIN_KEY || "").trim();
+
+  // If no PIN or key is configured in environment:
+  // In production, strictly deny access to prevent open public leakage
+  // In development/test, allow local dashboard access for smooth developer onboarding
+  if (!configuredPin && !configuredKey) {
+    if (isProduction) {
+      return {
+        authorized: false,
+        error: "Unauthorized: PARENT_PIN or ADMIN_KEY must be configured in production",
+      };
+    }
+    return { authorized: true };
+  }
+
+  const providedPin = (
+    req.headers["x-parent-pin"] ||
+    req.headers["x-pin"] ||
+    req.query?.pin ||
+    req.body?.pin ||
+    ""
+  ).toString().trim();
+
+  const providedKey = (
+    req.headers["x-admin-key"] ||
+    req.headers["x-api-key"] ||
+    (req.headers.authorization && req.headers.authorization.startsWith("Bearer ") ? req.headers.authorization.slice(7) : "") ||
+    req.query?.key ||
+    ""
+  ).toString().trim();
+
+  if (configuredPin && providedPin === configuredPin) {
+    return { authorized: true };
+  }
+  if (configuredKey && providedKey === configuredKey) {
+    return { authorized: true };
+  }
+
+  return { authorized: false, error: "Unauthorized: Valid Parent PIN or Admin Key required" };
+}
+
+app.get("/api/usage", (req, res) => {
+  const auth = verifyUsageAuthorization(req);
+  if (!auth.authorized) {
+    return res.status(401).json({
+      success: false,
+      error: auth.error || "Unauthorized",
+    });
+  }
+
+  const summary = getUsageSummary();
   res.json({
+    success: true,
+    ...summary,
+  });
+});
+
+app.get("/api/status", (req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  const auth = verifyUsageAuthorization(req);
+
+  const baseStatus = {
     status: "online",
     port: PORT,
     ip: getLocalIPv4Address(),
@@ -195,31 +259,67 @@ app.get("/api/status", (_req, res) => {
     llm_provider: process.env.LLM_PROVIDER || process.env.AI_PROVIDER || "groq",
     tts_provider: process.env.TTS_PROVIDER || "edge",
     normalized_sample_rate: NORMALIZED_SAMPLE_RATE,
+  };
+
+  // In production, hide detailed quota and operational token metrics unless authenticated
+  if (isProduction && !auth.authorized) {
+    return res.json({
+      ...baseStatus,
+      quota: {
+        status: "protected",
+        message: "Detailed operational usage telemetry is protected in production. Authenticate via Parent PIN or Admin Key.",
+      },
+    });
+  }
+
+  const usage = getUsageSummary();
+  const groqUsage = usage.providers.llm.groq;
+  const geminiUsage = usage.providers.llm.gemini;
+  const whisperUsage = usage.providers.stt.groq_whisper;
+  const edgeUsage = usage.providers.tts.edge_tts;
+
+  res.json({
+    ...baseStatus,
     quota: {
       groq: {
-        tier: "100% Free Tier",
-        remaining_requests: groqQuota.remainingRequests || "14,380",
-        limit_requests: groqQuota.limitRequests || "14,400",
-        remaining_tokens: groqQuota.remainingTokens || "498,000",
-        limit_tokens: groqQuota.limitTokens || "500,000",
-        rpm_limit: "30 RPM",
-        rpd_limit: "14,400 RPD",
-        status: "Active & Free",
+        tier: "Groq Cloud Free Tier",
+        remaining_requests: groqUsage.remainingRequests,
+        limit_requests: groqUsage.limitRequests,
+        remaining_tokens: groqUsage.remainingTokens,
+        limit_tokens: groqUsage.limitTokens,
+        rpm_limit: groqUsage.referenceLimits?.rpm || "30 RPM",
+        rpd_limit: groqUsage.referenceLimits?.rpd || "14,400 RPD",
+        status: groqUsage.quotaStatus,
+        requests_today: groqUsage.requestsToday,
+        tokens_today: groqUsage.totalTokensToday,
+        official_dashboard: groqUsage.officialDashboardUrl,
       },
       gemini: {
-        tier: "100% Free Tier",
-        rpm_limit: "15 RPM",
-        rpd_limit: "1,500 RPD",
-        status: "Active & Free (Backup)",
+        tier: "Google AI Studio Free Tier",
+        rpm_limit: geminiUsage.referenceLimits?.rpm || "15 RPM",
+        rpd_limit: geminiUsage.referenceLimits?.rpd || "1,500 RPD",
+        status: geminiUsage.quotaStatus,
+        requests_today: geminiUsage.requestsToday,
+        tokens_today: geminiUsage.totalTokensToday,
+        official_dashboard: geminiUsage.officialDashboardUrl,
       },
       edge_tts: {
-        tier: "100% Free & Unlimited",
-        status: "Unlimited (Zero API Costs)",
+        tier: "Edge Read Aloud (Free)",
+        status: edgeUsage.quotaStatus,
+        requests_today: edgeUsage.requestsToday,
+        characters_today: edgeUsage.charactersToday,
       },
       whisper_stt: {
-        tier: "100% Free Tier",
-        limit: "7,200 sec/day (20 RPM)",
-        status: "Active & Free",
+        tier: "Groq Whisper STT Free Tier",
+        remaining_requests: whisperUsage.remainingRequests,
+        limit_requests: whisperUsage.limitRequests,
+        rpm_limit: whisperUsage.referenceLimits?.rpm || "20 RPM",
+        rpd_limit: whisperUsage.referenceLimits?.rpd || "2,000 RPD",
+        audio_limit: whisperUsage.referenceLimits?.audioDailyLimit || "7,200 sec/day",
+        status: whisperUsage.quotaStatus,
+        requests_today: whisperUsage.requestsToday,
+        audio_seconds_today: whisperUsage.audioSecondsToday,
+        official_dashboard: whisperUsage.officialDashboardUrl,
       }
     }
   });
@@ -1568,5 +1668,6 @@ module.exports = {
   getDeviceConfig,
   saveDeviceConfig,
   touchDeviceHeartbeat,
-  markDeviceOffline
+  markDeviceOffline,
+  verifyUsageAuthorization,
 };

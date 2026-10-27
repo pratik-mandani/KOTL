@@ -14,6 +14,7 @@ const { toPhoneticSpokenText } = require("../utils/phonetic");
 const { synthesizeEdgeV2Pcm } = require("./edge-v2-tts");
 const { pcmToWavBuffer } = require("./gemini-tts");
 const { generateGeminiSpeech } = require("./gemini-tts");
+const { recordTtsUsage } = require("./api-usage");
 
 const execFileAsync = promisify(execFile);
 
@@ -477,6 +478,7 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
   // 1. Try Edge TTS (Primary - Indian Male Voices: en-IN-PrabhatNeural, gu-IN-NiranjanNeural, hi-IN-MadhurNeural)
   const edgeResult = await generateEdgeSpeech({ text, sessionId, voice });
   if (edgeResult.success) {
+    try { recordTtsUsage({ provider: "edge", characterCount: text.length }); } catch (_) {}
     return edgeResult;
   }
   console.warn(`[TTS] Edge TTS failed (${edgeResult.error}). Switching to Gemini Neural Male Voice ("Puck")...`);
@@ -484,6 +486,7 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
   // 2. Guaranteed Datacenter-Unblocked Neural Male Voice Fallback (Gemini "Puck" - Never blocked on Render)
   const geminiResult = await generateGeminiSpeech({ text, sessionId });
   if (geminiResult.success) {
+    try { recordTtsUsage({ provider: "gemini", characterCount: text.length }); } catch (_) {}
     return geminiResult;
   }
   console.warn(`[TTS] Gemini TTS failed (${geminiResult.error}). Checking backup providers...`);
@@ -492,6 +495,7 @@ async function generateSpeech({ text, sessionId = null, voice = null }) {
   if (provider === "piper") {
     const piperResult = await generatePiperSpeech({ text, sessionId });
     if (piperResult.success) {
+      try { recordTtsUsage({ provider: "piper", characterCount: text.length }); } catch (_) {}
       return piperResult;
     }
   }

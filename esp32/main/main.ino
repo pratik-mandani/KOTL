@@ -492,11 +492,60 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         else if (msgType == "transcript")
         {
           String text = "";
-          if (extractJsonString(msg, "text", &text))
+          String status = "";
+          String reason = "";
+          String rawTranscript = "";
+          extractJsonString(msg, "text", &text);
+          extractJsonString(msg, "status", &status);
+          extractJsonString(msg, "reason", &reason);
+          extractJsonString(msg, "raw_transcript", &rawTranscript);
+
+          if (text.length() > 0)
           {
             voiceTurn.lastTranscript = text;
             Serial.printf("[WebSocket] Transcript: \"%s\"\n", text.c_str());
           }
+          else if (status.length() > 0)
+          {
+            voiceTurn.lastTranscript = "";
+            if (status == "rejected_cold_idle")
+            {
+              Serial.printf("[WebSocket] Cold-idle rejection: \"%s\" [Reason: %s]\n",
+                            rawTranscript.c_str(), reason.length() > 0 ? reason.c_str() : "No wake word");
+            }
+            else if (status == "empty_or_noise")
+            {
+              Serial.printf("[WebSocket] Transcript empty/noise (raw: \"%s\") [Reason: %s]\n",
+                            rawTranscript.c_str(), reason.length() > 0 ? reason.c_str() : "Silent/filtered");
+            }
+            else if (status == "stt_error")
+            {
+              Serial.printf("[WebSocket] STT Provider Error: %s\n", reason.c_str());
+            }
+            else
+            {
+              Serial.printf("[WebSocket] Transcript rejected (%s) [Reason: %s]\n", status.c_str(), reason.c_str());
+            }
+          }
+          else
+          {
+            voiceTurn.lastTranscript = "";
+            Serial.printf("[WebSocket] Transcript: \"\"\n");
+          }
+        }
+        else if (msgType == "diagnostic")
+        {
+          String diagStatus = "";
+          String diagReason = "";
+          extractJsonString(msg, "status", &diagStatus);
+          extractJsonString(msg, "reason", &diagReason);
+          Serial.printf("[WebSocket Diagnostic] %s: %s\n", diagStatus.c_str(), diagReason.c_str());
+        }
+        else if (msgType == "warning")
+        {
+          String warnMsg = "";
+          extractJsonString(msg, "message", &warnMsg);
+          Serial.printf("[WebSocket Warning] %s\n", warnMsg.c_str());
         }
         else if (msgType == "reply_text")
         {
@@ -2391,6 +2440,8 @@ void performSynchronousAudioCapture()
   int32_t peakSpeechAmp = 0;
   float recHpX1 = 0.0f;
   float recHpY1 = 0.0f;
+  int16_t preRollChunkPcm[kMicDmaChunkSize];
+  size_t preRollCount = 0;
 
   while (capturedSamples < kAudioCaptureSampleCount)
   {
@@ -2433,12 +2484,6 @@ void performSynchronousAudioCapture()
       captureState.absSum += (uint64_t)absSample;
     }
 
-    // Stream binary PCM chunk live over WebSocket as child speaks!
-    if (s_useWebSocketForCurrentTurn && voiceDetected && streamChunkCount > 0)
-    {
-      wsSendBinSafe((const uint8_t *)streamChunkPcm, streamChunkCount * sizeof(int16_t));
-    }
-
     const uint32_t nowMs = millis();
     // Keep I2C bus completely free during audio capture so I2S DMA buffer never overflows or drops audio chunks!
 
@@ -2454,8 +2499,26 @@ void performSynchronousAudioCapture()
         voiceDetected = true;
         voiceStartMs = nowMs;
         Serial.printf("[VAD] >>> Speech active! (Peak: %d) <<<\n", chunkPeak);
+        // Flush pre-roll buffer if available so initial consonant/word is preserved
+        if (s_useWebSocketForCurrentTurn && preRollCount > 0)
+        {
+          wsSendBinSafe((const uint8_t *)preRollChunkPcm, preRollCount * sizeof(int16_t));
+          preRollCount = 0;
+        }
       }
       lastVoiceMs = nowMs;
+    }
+
+    // Stream binary PCM chunk live over WebSocket as child speaks!
+    if (s_useWebSocketForCurrentTurn && voiceDetected && streamChunkCount > 0)
+    {
+      wsSendBinSafe((const uint8_t *)streamChunkPcm, streamChunkCount * sizeof(int16_t));
+    }
+    else if (s_useWebSocketForCurrentTurn && !voiceDetected && streamChunkCount > 0)
+    {
+      // Buffer latest pre-speech chunk so speech onset is never chopped off
+      memcpy(preRollChunkPcm, streamChunkPcm, streamChunkCount * sizeof(int16_t));
+      preRollCount = streamChunkCount;
     }
 
     // 1. Initial silence timeout: If no voice within 1.8s, abort false trigger early

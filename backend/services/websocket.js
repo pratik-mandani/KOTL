@@ -16,10 +16,36 @@ const { toPhoneticSpokenText } = require("../utils/phonetic");
 const { synthesizeEdgeV2Pcm } = require("./edge-v2-tts");
 const { synthesizeGeminiPcm } = require("./gemini-tts");
 const { extractMemoryFromDialogue } = require("./child-memory");
+const { recordTtsUsage } = require("./api-usage");
 
 const HEARTBEAT_INTERVAL_MS = 15000;
 const CLIENT_TIMEOUT_MS = 35000;
 const AUDIO_CHUNK_STREAM_SIZE = 1024; // 1024 bytes (512 samples @ 16kHz = 32ms per frame)
+
+function categorizeAndSanitizeError(err) {
+  if (!err) return { category: "unknown_error", safeReason: "Unknown internal error" };
+  const str = String(err).toLowerCase();
+
+  const sanitized = String(err)
+    .replace(/bearer\s+[a-zA-Z0-9_\-\.]+/gi, "Bearer [REDACTED]")
+    .replace(/gsk_[a-zA-Z0-9]+/gi, "[REDACTED_GROQ_KEY]")
+    .replace(/AIza[a-zA-Z0-9_\-]+/gi, "[REDACTED_GEMINI_KEY]")
+    .replace(/sk-[a-zA-Z0-9_\-]+/gi, "[REDACTED_OPENAI_KEY]");
+
+  if (str.includes("429") || str.includes("rate limit") || str.includes("quota") || str.includes("resource exhausted") || str.includes("too many requests")) {
+    return { category: "quota_or_rate_limit", safeReason: "API quota or rate limit exceeded" };
+  }
+  if (str.includes("401") || str.includes("403") || str.includes("unauthorized") || str.includes("invalid api key") || str.includes("forbidden") || str.includes("not configured")) {
+    return { category: "authentication_error", safeReason: "Provider authentication or configuration error" };
+  }
+  if (str.includes("timeout") || str.includes("abort") || str.includes("etimedout")) {
+    return { category: "timeout_error", safeReason: "Provider request timed out" };
+  }
+  if (str.includes("econnrefused") || str.includes("enotfound") || str.includes("fetch failed") || str.includes("network")) {
+    return { category: "network_error", safeReason: "Network or connection error" };
+  }
+  return { category: "provider_error", safeReason: sanitized.slice(0, 100) };
+}
 
 function splitIntoSentences(text) {
   if (!text || typeof text !== "string") return [];
@@ -347,7 +373,11 @@ function initWebSocketServer(httpServer, options = {}) {
             if (ws.audioChunks.length === 0 || ws.totalAudioBytes < 1600) {
               console.log(`[WebSocket ${ws.deviceId || "client"}] Audio too short, ignoring.`);
               setState("IDLE");
-              sendJson({ type: "warning", message: "Audio too short or empty" });
+              sendJson({
+                type: "warning",
+                status: "insufficient_audio",
+                message: "Audio too short or empty",
+              });
               return;
             }
 
@@ -447,6 +477,11 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     const avgAmp = numSamples > 0 ? Math.floor(sumAbs / numSamples) : 0;
     if (peakSample < 80 || avgAmp < 10) {
       console.log(`[WebSocket ${ws.deviceId}] Sub-threshold silence/noise (Peak: ${peakSample} < 80, Avg: ${avgAmp}), dismissing silently.`);
+      sendJson({
+        type: "diagnostic",
+        status: "insufficient_audio",
+        reason: `Sub-threshold audio energy (Peak: ${peakSample} < 80)`,
+      });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;
@@ -463,13 +498,31 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     console.log(`[WebSocket ${ws.deviceId}] Transcribing audio...`);
     const sttResult = await transcribeAudio(tempWavPath);
     if (!sttResult.success) {
-      console.warn(`[WebSocket ${ws.deviceId}] STT error: ${sttResult.error}`);
+      const { category, safeReason } = categorizeAndSanitizeError(sttResult.error);
+      console.warn(`[WebSocket ${ws.deviceId}] STT error [${category}]: ${safeReason}`);
+      sendJson({
+        type: "transcript",
+        text: "",
+        status: "stt_error",
+        error_category: category,
+        reason: safeReason,
+      });
+      sendJson({ type: "state", value: "IDLE" });
+      setState("IDLE");
+      return;
     }
     const transcript = (sttResult.text || "").trim();
 
     if (!transcript || isBlacklistedNoiseTranscript(transcript)) {
-      console.log(`[WebSocket ${ws.deviceId}] Empty or noise transcript ("${transcript}"), dismissing silently without TTS.`);
-      sendJson({ type: "transcript", text: "" });
+      const reasonLabel = !transcript ? "Empty transcript from STT" : "Filtered blacklisted noise token";
+      console.log(`[WebSocket ${ws.deviceId}] Empty or noise transcript ("${transcript}"), dismissing silently without TTS. [Reason: ${reasonLabel}]`);
+      sendJson({
+        type: "transcript",
+        text: "",
+        status: "empty_or_noise",
+        reason: reasonLabel,
+        raw_transcript: transcript,
+      });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;
@@ -488,8 +541,14 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       consecutiveVoiceTurns: currentFollowUpCount,
       maxConsecutiveVoiceTurns: 3,
     })) {
-      console.log(`[WebSocket ${ws.deviceId}] Background noise/music rejected without wake word: "${transcript}". Staying silent.`);
-      sendJson({ type: "transcript", text: "" });
+      console.log(`[WebSocket ${ws.deviceId}] Background noise/music rejected without wake word: "${transcript}". Staying silent. [Reason: Cold-idle classifier rejection]`);
+      sendJson({
+        type: "transcript",
+        text: "",
+        status: "rejected_cold_idle",
+        reason: "Cold-idle speech without wake-word or inquiry starter",
+        raw_transcript: transcript,
+      });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;
@@ -513,6 +572,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     sendJson({
       type: "transcript",
       text: transcript,
+      status: "accepted",
       duration_ms: Date.now() - turnStartTime,
     });
     console.log(`[WebSocket ${ws.deviceId}] Transcript: "${transcript}"`);
@@ -527,7 +587,14 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     const replyText = (assistantResult.reply || "").trim();
 
     if (!replyText) {
-      console.log(`[WebSocket ${ws.deviceId}] Assistant reply empty, returning to idle without speaking.`);
+      const { category, safeReason } = categorizeAndSanitizeError(assistantResult.error);
+      console.log(`[WebSocket ${ws.deviceId}] Assistant reply empty [${category}]: ${safeReason}, returning to idle without speaking.`);
+      sendJson({
+        type: "diagnostic",
+        status: "llm_error",
+        error_category: category,
+        reason: safeReason,
+      });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;
@@ -560,10 +627,23 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
 
     if (!pcmAudio || pcmAudio.length === 0) {
       console.warn(`[WebSocket ${ws.deviceId}] TTS produced empty audio, returning to idle.`);
+      sendJson({
+        type: "diagnostic",
+        status: "tts_error",
+        reason: "TTS synthesis produced empty audio",
+      });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;
     }
+
+    try {
+      recordTtsUsage({
+        provider: "edge",
+        characterCount: replyText.length,
+        audioBytes: pcmAudio.length,
+      });
+    } catch (_) {}
 
     setState("SPEAKING");
     sendJson({
@@ -604,7 +684,12 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     setState("IDLE");
   } catch (turnError) {
     console.error(`[WebSocket Turn Error]:`, turnError.stack || turnError.message);
-    sendJson({ type: "error", message: turnError.message });
+    const { category, safeReason } = categorizeAndSanitizeError(turnError);
+    sendJson({
+      type: "error",
+      error_category: category,
+      message: safeReason,
+    });
     setState("IDLE");
   } finally {
     if (fs.existsSync(tempWavPath)) {
@@ -621,4 +706,5 @@ module.exports = {
   shouldRejectAudioTurn,
   isAutoTriggerModeEnabled,
   isValidConversationalSpeech,
+  categorizeAndSanitizeError,
 };

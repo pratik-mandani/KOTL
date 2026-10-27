@@ -8,12 +8,13 @@ try {
 const DEFAULT_URL = "https://api.groq.com/openai/v1/chat/completions";
 const DEFAULT_MODEL = process.env.GROQ_CHAT_MODEL || "openai/gpt-oss-20b";
 const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.GROQ_TIMEOUT_MS || "", 10) || 15000;
+const { recordLlmUsage } = require("./api-usage");
 
 let lastGroqQuota = {
-  remainingRequests: "14,380",
-  limitRequests: "14,400",
-  remainingTokens: "498,200",
-  limitTokens: "500,000",
+  remainingRequests: null,
+  limitRequests: null,
+  remainingTokens: null,
+  limitTokens: null,
   requestsCountToday: 0,
   lastUpdated: null,
 };
@@ -112,11 +113,24 @@ async function generateGroqAssistantReply({ messages, sessionId = null }) {
 
       console.log(`[Groq LLM Output (${modelToUse})]: ${reply}`);
 
+      const usage = data.usage || null;
+      try {
+        recordLlmUsage({
+          provider: "groq",
+          model: modelToUse,
+          promptTokens: usage?.prompt_tokens ?? null,
+          completionTokens: usage?.completion_tokens ?? null,
+          totalTokens: usage?.total_tokens ?? null,
+          headers: response.headers,
+        });
+      } catch (_) {}
+
       return {
         success: true,
         reply,
         provider: "groq",
         model: modelToUse,
+        usage: usage,
         error: null,
       };
     } catch (err) {

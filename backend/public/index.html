@@ -217,6 +217,11 @@
         <span class="text-base">🛡️</span>
         <span>Safety Guardrails</span>
       </button>
+
+      <button onclick="navigateToApiUsage()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
+        <span class="text-base">⚡</span>
+        <span>AI Quotas & Usage</span>
+      </button>
     </nav>
 
     <!-- Sidebar Bottom Telemetry Status -->
@@ -519,6 +524,226 @@
               Note: Unvalidated percentage bars removed to protect data integrity.
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- 5. AI Provider Free-Quota & Usage Telemetry Station -->
+      <section id="apiUsageSection" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xl">⚡</span>
+              <h2 class="font-fredoka font-bold text-base sm:text-lg text-slate-900">
+                AI Provider Usage & Free-Quota Telemetry
+              </h2>
+              <span id="usageLiveBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live Tracked
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Real-time token metrics, STT audio limits, and official provider quota boundaries</p>
+          </div>
+          <div class="flex items-center gap-2.5 shrink-0">
+            <span id="usageLastUpdatedLabel" class="text-[10px] text-slate-400 font-mono">Updated: Just now</span>
+            <button onclick="fetchApiUsageData(true)" title="Refresh Usage Telemetry" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1">
+              <span>↻</span> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Transparency & Quota Distinction Callout -->
+        <div class="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-600 leading-relaxed flex items-start gap-2.5">
+          <span class="text-base shrink-0">ℹ️</span>
+          <div class="space-y-1">
+            <p class="font-semibold text-slate-800">Truthful Quota Telemetry Guarantee:</p>
+            <p class="text-[11px] text-slate-500">
+              KOTL differentiates between <strong>Provider-Reported Live Quotas</strong> (e.g. Groq official response headers) and <strong>Application-Measured Counts</strong> (e.g. Google Gemini & Edge-TTS, which do not expose remaining allowances through API keys). Local metrics represent interactions through this KOTL companion only. Official management links are provided below to inspect account-level billing and rate limits.
+            </p>
+          </div>
+        </div>
+
+        <!-- Provider Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <!-- 1. Google Gemini Flash LLM -->
+          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>✨</span> Google Gemini
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/60">Primary LLM</span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono truncate" id="geminiModelLabel">gemini-3.5-flash-lite</div>
+            </div>
+
+            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Requests Today:</span>
+                <span id="geminiReqToday" class="font-bold text-slate-800 font-mono">0</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Tokens Today:</span>
+                <span id="geminiTokensToday" class="font-bold text-indigo-700 font-mono">0</span>
+              </div>
+              <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Prompt / Compl:</span>
+                <span id="geminiTokenBreakdown" class="font-mono">0 / 0</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Cumulative Tokens:</span>
+                <span id="geminiTokensTotal" class="font-bold text-slate-700 font-mono">0</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Provider Quota API:</span>
+                <span class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">Unavailable via API</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="text-[10px] text-slate-400">
+                <span>Free Tier Reference: <strong>15 RPM / 1,500 RPD</strong></span>
+              </div>
+              <a href="https://aistudio.google.com/app/plan_information" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 hover:border-indigo-300 rounded-lg py-1.5 transition-colors">
+                AI Studio Console ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- 2. Groq Whisper STT -->
+          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>🎙️</span> Groq Whisper STT
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200/60">Speech-to-Text</span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono truncate" id="whisperModelLabel">whisper-large-v3-turbo</div>
+            </div>
+
+            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Audio Today:</span>
+                <span id="whisperAudioToday" class="font-bold text-sky-700 font-mono">0 sec</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">STT Turns Today:</span>
+                <span id="whisperReqToday" class="font-bold text-slate-800 font-mono">0</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Remaining Requests:</span>
+                <span id="whisperRemainingReq" class="font-bold text-emerald-700 font-mono">Header-monitored</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Cumulative Audio:</span>
+                <span id="whisperAudioTotal" class="font-bold text-slate-700 font-mono">0 sec</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Telemetry Source:</span>
+                <span id="whisperSourceBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Response Header</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="text-[10px] text-slate-400">
+                <span>Free Limit: <strong>7,200 audio sec/day (20 RPM)</strong></span>
+              </div>
+              <a href="https://console.groq.com/settings/limits" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-sky-600 hover:text-sky-800 bg-white border border-sky-200 hover:border-sky-300 rounded-lg py-1.5 transition-colors">
+                Groq Limits Dashboard ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- 3. Groq Cloud LLM -->
+          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>⚡</span> Groq LLM
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/60">Backup LLM</span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono truncate" id="groqModelLabel">qwen/qwen3.8-27b</div>
+            </div>
+
+            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Requests Today:</span>
+                <span id="groqReqToday" class="font-bold text-slate-800 font-mono">0</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Tokens Today:</span>
+                <span id="groqTokensToday" class="font-bold text-amber-700 font-mono">0</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Remaining Tokens:</span>
+                <span id="groqRemainingTokens" class="font-bold text-emerald-700 font-mono">Header-monitored</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Remaining Requests:</span>
+                <span id="groqRemainingReq" class="font-bold text-slate-700 font-mono">Header-monitored</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Telemetry Source:</span>
+                <span id="groqSourceBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Response Header</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="text-[10px] text-slate-400">
+                <span>Free Limit: <strong>30 RPM / 14,400 RPD</strong></span>
+              </div>
+              <a href="https://console.groq.com/settings/limits" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-amber-600 hover:text-amber-800 bg-white border border-amber-200 hover:border-amber-300 rounded-lg py-1.5 transition-colors">
+                Groq Limits Dashboard ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- 4. Microsoft Edge TTS -->
+          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>🔊</span> Edge-TTS
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">Voice Engine</span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono truncate" id="edgeVoiceLabel">en-IN-PrabhatNeural</div>
+            </div>
+
+            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Speech Today:</span>
+                <span id="edgeReqToday" class="font-bold text-emerald-700 font-mono">0 turns</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Characters Today:</span>
+                <span id="edgeCharsToday" class="font-bold text-slate-800 font-mono">0 chars</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Audio Streamed:</span>
+                <span id="edgeAudioBytesToday" class="font-bold text-slate-700 font-mono">0 KB</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Cumulative Chars:</span>
+                <span id="edgeCharsTotal" class="font-bold text-slate-700 font-mono">0 chars</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Provider Quota:</span>
+                <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Free / Unmetered</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="text-[10px] text-slate-400">
+                <span>Protocol: <strong>WebSocket Audio Streaming</strong></span>
+              </div>
+              <a href="https://learn.microsoft.com/azure/ai-services/speech-service/" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-emerald-600 hover:text-emerald-800 bg-white border border-emerald-200 hover:border-emerald-300 rounded-lg py-1.5 transition-colors">
+                Azure Speech Docs ↗
+              </a>
+            </div>
+          </div>
+
         </div>
       </section>
     </main>
@@ -1852,6 +2077,7 @@
       var modal = document.getElementById('childReportModal');
       if (modal) modal.classList.remove('hidden');
       loadChildReport(false);
+      fetchApiUsageData(false);
     }
 
     function closeReportModal() {
@@ -2195,6 +2421,7 @@
       if (dashboardSyncPollTimer) clearInterval(dashboardSyncPollTimer);
       dashboardSyncPollTimer = setInterval(function() {
         pollDashboardSync();
+        fetchApiUsageData(false);
       }, 30000);
     }
 
@@ -2205,6 +2432,101 @@
         loadDayWiseHistory();
       }
     });
+
+
+    function navigateToSafetyGuardrails() {
+      switchMainTab('cockpit');
+      var el = document.getElementById('safetyGuardrailsSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function navigateToApiUsage() {
+      switchMainTab('cockpit');
+      var el = document.getElementById('apiUsageSection');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function fetchApiUsageData(showToast) {
+      var pin = (document.getElementById('parentPinInput') ? document.getElementById('parentPinInput').value : '') || '';
+      var headers = {};
+      if (pin) headers['x-parent-pin'] = pin;
+
+      fetch(getBaseApiUrl() + '/api/usage', { headers: headers })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d || !d.success || !d.providers) return;
+          var p = d.providers;
+
+          // Timestamp
+          var updateLabel = document.getElementById('usageLastUpdatedLabel');
+          if (updateLabel && d.lastUpdated) {
+            var timeStr = new Date(d.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            updateLabel.innerText = 'Updated: ' + timeStr;
+          }
+
+          // Gemini
+          if (p.llm && p.llm.gemini) {
+            var g = p.llm.gemini;
+            if (document.getElementById('geminiModelLabel')) document.getElementById('geminiModelLabel').innerText = g.model || 'gemini-3.5-flash-lite';
+            if (document.getElementById('geminiReqToday')) document.getElementById('geminiReqToday').innerText = (g.requestsToday || 0).toLocaleString();
+            if (document.getElementById('geminiTokensToday')) document.getElementById('geminiTokensToday').innerText = (g.totalTokensToday || 0).toLocaleString() + ' tok';
+            if (document.getElementById('geminiTokenBreakdown')) document.getElementById('geminiTokenBreakdown').innerText = (g.promptTokensToday || 0).toLocaleString() + ' / ' + (g.completionTokensToday || 0).toLocaleString();
+            if (document.getElementById('geminiTokensTotal')) document.getElementById('geminiTokensTotal').innerText = (g.totalTokensTotal || 0).toLocaleString() + ' tok';
+          }
+
+          // Groq Whisper
+          if (p.stt && p.stt.groq_whisper) {
+            var w = p.stt.groq_whisper;
+            if (document.getElementById('whisperModelLabel')) document.getElementById('whisperModelLabel').innerText = w.model || 'whisper-large-v3-turbo';
+            if (document.getElementById('whisperAudioToday')) document.getElementById('whisperAudioToday').innerText = (w.audioSecondsToday || 0).toLocaleString() + ' sec';
+            if (document.getElementById('whisperReqToday')) document.getElementById('whisperReqToday').innerText = (w.requestsToday || 0).toLocaleString();
+            if (document.getElementById('whisperAudioTotal')) document.getElementById('whisperAudioTotal').innerText = (w.audioSecondsTotal || 0).toLocaleString() + ' sec';
+            if (document.getElementById('whisperRemainingReq')) {
+              document.getElementById('whisperRemainingReq').innerText = w.remainingRequests !== null && w.remainingRequests !== undefined ? Number(w.remainingRequests).toLocaleString() + ' rem' : 'Header-monitored';
+            }
+            if (document.getElementById('whisperSourceBadge')) {
+              document.getElementById('whisperSourceBadge').innerText = w.quotaReportedByProvider ? 'Provider Header' : 'Measured by KOTL';
+            }
+          }
+
+          // Groq LLM
+          if (p.llm && p.llm.groq) {
+            var q = p.llm.groq;
+            if (document.getElementById('groqModelLabel')) document.getElementById('groqModelLabel').innerText = q.model || 'qwen/qwen3.8-27b';
+            if (document.getElementById('groqReqToday')) document.getElementById('groqReqToday').innerText = (q.requestsToday || 0).toLocaleString();
+            if (document.getElementById('groqTokensToday')) document.getElementById('groqTokensToday').innerText = (q.totalTokensToday || 0).toLocaleString() + ' tok';
+            if (document.getElementById('groqRemainingTokens')) {
+              document.getElementById('groqRemainingTokens').innerText = q.remainingTokens !== null && q.remainingTokens !== undefined ? Number(q.remainingTokens).toLocaleString() + ' tok' : 'Header-monitored';
+            }
+            if (document.getElementById('groqRemainingReq')) {
+              document.getElementById('groqRemainingReq').innerText = q.remainingRequests !== null && q.remainingRequests !== undefined ? Number(q.remainingRequests).toLocaleString() + ' rem' : 'Header-monitored';
+            }
+            if (document.getElementById('groqSourceBadge')) {
+              document.getElementById('groqSourceBadge').innerText = q.quotaReportedByProvider ? 'Provider Header' : 'Measured by KOTL';
+            }
+          }
+
+          // Edge TTS
+          if (p.tts && p.tts.edge_tts) {
+            var e = p.tts.edge_tts;
+            if (document.getElementById('edgeVoiceLabel')) document.getElementById('edgeVoiceLabel').innerText = e.voice || 'en-IN-PrabhatNeural';
+            if (document.getElementById('edgeReqToday')) document.getElementById('edgeReqToday').innerText = (e.requestsToday || 0).toLocaleString() + ' turns';
+            if (document.getElementById('edgeCharsToday')) document.getElementById('edgeCharsToday').innerText = (e.charactersToday || 0).toLocaleString() + ' chars';
+            if (document.getElementById('edgeAudioBytesToday')) {
+              var kb = Math.round((e.audioBytesToday || 0) / 1024);
+              document.getElementById('edgeAudioBytesToday').innerText = kb.toLocaleString() + ' KB';
+            }
+            if (document.getElementById('edgeCharsTotal')) document.getElementById('edgeCharsTotal').innerText = (e.charactersTotal || 0).toLocaleString() + ' chars';
+          }
+
+          if (showToast && typeof showToastPill === 'function') {
+            showToastPill('AI Usage Telemetry Refreshed');
+          }
+        })
+        .catch(function(err) {
+          console.warn('[Usage Telemetry] Fetch error:', err.message);
+        });
+    }
 
     // Initialize all dynamic data on page load
     window.addEventListener('DOMContentLoaded', function() {

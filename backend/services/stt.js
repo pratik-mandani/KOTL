@@ -12,6 +12,7 @@ const path = require("path");
 const { promisify } = require("util");
 
 const execFileAsync = promisify(execFile);
+const { recordSttUsage } = require("./api-usage");
 
 const OPENAI_TRANSCRIPTION_URL = "https://api.openai.com/v1/audio/transcriptions";
 const GROQ_TRANSCRIPTION_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
@@ -313,6 +314,16 @@ async function transcribeWithGroq(filePath) {
 
       const data = await response.json();
       console.log(`[STT groq] Raw response received from ${model}:`, JSON.stringify(data));
+
+      try {
+        const durationMs = Math.max(0, Math.round((audioBuffer.length - 44) / 32));
+        recordSttUsage({
+          provider: "groq",
+          model,
+          audioDurationMs: durationMs,
+          headers: response.headers,
+        });
+      } catch (_) {}
 
       const rawTranscript = typeof data.text === "string" ? data.text.trim() : "";
       const cleanTranscript = isBlacklistedNoiseTranscript(rawTranscript) ? "" : rawTranscript;
