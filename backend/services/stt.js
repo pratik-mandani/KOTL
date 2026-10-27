@@ -43,8 +43,6 @@ function cleanupWhisperOutputs(outputBase) {
 const NOISE_FILTER_BLACKLIST = [
   "and the other.",
   "and the other",
-  "thank you.",
-  "thank you",
   "thank you for watching.",
   "thank you for watching",
   "subtitles by",
@@ -70,14 +68,11 @@ const NOISE_FILTER_BLACKLIST = [
   "amara",
   "प्रधान दृश्य",
   "pradhan drishya",
-  "धन्यवाद",
   "देखने के लिए धन्यवाद",
   "सब्सक्राइब करें",
   "लाइक करें",
   "शेयर करें",
   "thanks for watching",
-  "bye bye",
-  "shukriya",
 ];
 
 function isBlacklistedNoiseTranscript(text) {
@@ -95,7 +90,7 @@ function isBlacklistedNoiseTranscript(text) {
 
   // 1. Whitelist genuine conversational greetings FIRST so "hello hello" is NEVER blocked!
   const GREETING_TOKENS = ["hello", "hi", "hey", "namaste", "kem cho", "kemcho", "halo", "morning", "evening"];
-  const isGreeting = GREETING_TOKENS.some((g) => clean === g || clean.startsWith(g + " ") || clean.includes(g));
+  const isGreeting = GREETING_TOKENS.some((g) => clean === g || clean.startsWith(g + " ") || clean.endsWith(" " + g) || clean.includes(" " + g + " ") || words.includes(g));
   if (isGreeting) {
     return false; // Genuine human greeting, 100% valid!
   }
@@ -175,14 +170,14 @@ function prepareCompletionsFormData(audioBuffer, fileName, model, defaultLanguag
 
   // Read config language and prompt fallbacks
   const configLanguage = process.env.STT_LANGUAGE || process.env.WHISPER_LANGUAGE || defaultLanguage;
-  const configPrompt = process.env.STT_PROMPT || process.env.WHISPER_PROMPT || defaultPrompt;
+  const configPrompt = (process.env.STT_PROMPT || process.env.WHISPER_PROMPT || defaultPrompt || "").trim();
 
   if (configLanguage && configLanguage.trim().toLowerCase() !== "auto") {
     form.append("language", configLanguage.trim());
   }
 
-  if (configPrompt && configPrompt.trim()) {
-    form.append("prompt", configPrompt.trim());
+  if (configPrompt) {
+    form.append("prompt", configPrompt);
   }
 
   return { form, language: configLanguage, prompt: configPrompt };
@@ -209,7 +204,7 @@ async function transcribeWithOpenAi(filePath) {
     fileName,
     model,
     "en",
-    "Hello KOTL."
+    ""
   );
 
   console.log(`[STT openai] Sending request to OpenAI STT API. Model: ${model}, Language: ${language}, Prompt hint: "${prompt}"`);
@@ -295,7 +290,7 @@ async function transcribeWithGroq(filePath) {
       fileName,
       model,
       "en",
-      "Hello KOTL."
+      ""
     );
 
     console.log(`[STT groq] Sending request to Groq STT API. Model: ${model}, Language: ${language}, Prompt: "${prompt}"`);

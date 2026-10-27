@@ -32,6 +32,55 @@ function splitIntoSentences(text) {
   return parts.map((s) => s.trim()).filter((s) => s.length > 0);
 }
 
+function shouldRejectAudioTurn({ transcript, isTouchOrButton = false, isSessionActive = false }) {
+  if (!transcript || typeof transcript !== "string") return true;
+
+  const clean = transcript.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+
+  const isMusicSymbol = transcript.includes("♪") || transcript.includes("🎵") || /\[music\]|\(music\)/i.test(transcript);
+  if (isMusicSymbol) return true;
+
+  // Touch or button always accepted
+  if (isTouchOrButton) return false;
+
+  // Active dialogue window (turn completed < 30s) accepts conversational responses
+  if (isSessionActive) return false;
+
+  // COLD-START REJECTION FILTER
+  // 1. Direct Neologism Wake-Words for KOTL (discrete word boundary)
+  const PRIMARY_WAKE_WORDS = ["kotl", "kotil", "cotte", "cuttle", "cotel", "coatl"];
+  const hasPrimaryWakeWord = words.some((w) => PRIMARY_WAKE_WORDS.includes(w));
+  if (hasPrimaryWakeWord) return false;
+
+  // 2. Homophone Wake-Words ('hotel', 'bottle', 'turtle') - ONLY when paired with greetings
+  const HOMOPHONE_PAIR_REGEX = /\b(hey|hi|hello|namaste|kem\s*cho|suno|ok|okay)\s+(hotel|bottle|turtle|cattle)\b/i;
+  if (HOMOPHONE_PAIR_REGEX.test(transcript)) return false;
+
+  // 3. Conversational Greetings (discrete tokens)
+  const GREETING_TOKENS = ["hello", "namaste", "kem cho", "kemcho", "morning", "evening"];
+  const hasGreeting = GREETING_TOKENS.some((g) => clean === g || clean.startsWith(g + " ") || clean.endsWith(" " + g) || clean.includes(" " + g + " ") || words.includes(g));
+  if (hasGreeting) return false;
+  if (words[0] === "hi" || words[0] === "hey") return false;
+
+  // 4. Inquisitive Questions (Explicit question mark or inquiry trigger word)
+  const QUESTION_WORDS = [
+    "what", "who", "where", "when", "why", "how", "tell me", "can you", "could you", "please tell",
+    "કેમ", "શું", "કોણ", "ક્યાં", "ક્યારે", "કેવી", "મને", "બોલો", "કહો", "વાર્તા", "જોક", "ગીત", "તમે",
+    "kaho", "vaarta", "varta", "story", "joke", "time",
+    "क्या", "कौन", "कहाँ", "कब", "कैसे", "बताओ", "बोलो", "कहानी", "सुनाओ", "तुम", "आप"
+  ];
+  const transcriptLower = transcript.toLowerCase();
+  const hasQuestionWord = QUESTION_WORDS.some((q) => transcriptLower.includes(q));
+  const hasQuestionMark = transcript.includes("?");
+
+  if (hasQuestionWord || hasQuestionMark) return false;
+
+  // Everything else on a cold idle start without wake-word is rejected (e.g. 2-word music lyrics, background chatter)
+  return true;
+}
+
 async function synthesizeSpeechPcm(text) {
   if (!text || !text.trim()) return Buffer.alloc(0);
 
@@ -363,28 +412,11 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       return;
     }
 
-        // 2b. Intelligent Wake-Word & Background Music Filter:
-    // If turn was triggered purely by room mic without touch, and session is not active:
-    // Require a wake word (e.g. "KOTL", "hello", "hey", "hi", etc.) so background music/songs are strictly ignored.
-    const WAKE_WORDS = [
-      "kotl", "kotil", "cotte", "cuttle", "bottle", "cattle", "cotel", "coatl", "hotel", "turtle",
-      "hello", "hey", "hi", "namaste", "kem cho", "suno", "sun", "aarav", "arav"
-    ];
+    // 2b. Intelligent Wake-Word & Background Music Filter:
     const isTouchOrButton = ws.turnSource === "touch" || ws.turnSource === "button";
     const isSessionActive = ws.lastTurnCompletedAt && (Date.now() - ws.lastTurnCompletedAt < 30000);
-    const transcriptLower = transcript.toLowerCase();
-    const hasWakeWord = WAKE_WORDS.some((w) => transcriptLower.includes(w));
 
-    const QUESTION_TRIGGERS = [
-      "what", "who", "where", "when", "why", "how", "tell", "can you", "could you", "please",
-      "sing", "say", "joke", "story", "time", "weather", "today", "tomorrow", "name",
-      "કેમ", "શું", "કોણ", "ક્યાં", "ક્યારે", "કેવી", "મને", "બોલો", "કહો", "વાર્તા", "જોક", "ગીત", "સમય", "તમે",
-      "क्या", "कौन", "कहाँ", "कब", "कैसे", "बताओ", "बोलो", "कहानी", "सुनाओ", "समय", "गाना", "तुम", "आप"
-    ];
-    const hasQuestionIntent = QUESTION_TRIGGERS.some((q) => transcriptLower.includes(q)) || transcript.includes("?") || transcript.split(/\s+/).length >= 2;
-    const isMusicSymbol = transcript.includes("♪") || transcript.includes("🎵") || /\[music\]|\(music\)/i.test(transcript);
-
-    if (isMusicSymbol || (!isTouchOrButton && !isSessionActive && !hasWakeWord && !hasQuestionIntent)) {
+    if (shouldRejectAudioTurn({ transcript, isTouchOrButton, isSessionActive })) {
       console.log(`[WebSocket ${ws.deviceId}] Background noise/music rejected without wake word: "${transcript}". Staying silent.`);
       sendJson({ type: "transcript", text: "" });
       sendJson({ type: "state", value: "IDLE" });
@@ -500,4 +532,5 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
 module.exports = {
   initWebSocketServer,
   synthesizeSpeechPcm,
+  shouldRejectAudioTurn,
 };

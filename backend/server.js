@@ -261,8 +261,9 @@ app.get("/api/history/daywise", (req, res) => {
   const sessionId = typeof req.query?.sessionId === "string" && req.query.sessionId.trim() 
     ? req.query.sessionId.trim() 
     : "default-session";
-  const days = getDayWiseHistory(sessionId);
-  res.json({ success: true, sessionId, days });
+  const isDemo = req.query?.demo === "1" || req.query?.demo === "true";
+  const days = getDayWiseHistory(sessionId, { demo: isDemo });
+  res.json({ success: true, sessionId, is_demo: isDemo, days });
 });
 
 app.post("/api/test/chat", async (req, res) => {
@@ -383,9 +384,10 @@ app.post("/api/habits/award-star", (_req, res) => {
   }
 });
 
-app.get("/api/growth/metrics", (_req, res) => {
+app.get("/api/growth/metrics", (req, res) => {
   try {
-    res.json(getGrowthMetrics());
+    const isDemo = req.query?.demo === "1" || req.query?.demo === "true";
+    res.json(getGrowthMetrics("default-session", { demo: isDemo }));
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

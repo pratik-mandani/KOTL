@@ -324,6 +324,58 @@ assertTest('Live Device Status Binding: Online, Offline, Missing & Error states'
 assertTest('Safe Telemetry Polling (15s) & Request Overlap Protection', hasSafePollingAndRefresh, '15-second non-overlapping interval with graceful failure fallback');
 
 // ----------------------------------------------------
+// 5.0 DATA INTEGRITY & AUDIO VAD REGRESSION QA
+// ----------------------------------------------------
+console.log('\n>>> [5/5] Data Integrity, Audio VAD & Seed Isolation QA');
+
+const { isBlacklistedNoiseTranscript } = require('../services/stt');
+const { getDayWiseHistory, getGrowthMetrics } = require('../services/child-memory');
+
+const hasPromptDebiasing = (sttContent.includes('model,\n      "en",\n      ""') || sttContent.includes('model,\r\n      "en",\r\n      ""')) &&
+  !sttContent.includes('"Hello KOTL."');
+assertTest('STT Whisper Prompt De-biasing: Default prompt neutral & unbiased',
+  hasPromptDebiasing,
+  'Eliminates hallucinated prompt loops on ambient sound and office music');
+
+const hasNoiseFiltering = isBlacklistedNoiseTranscript('[music]') &&
+  isBlacklistedNoiseTranscript('(music)') &&
+  isBlacklistedNoiseTranscript('the end') &&
+  isBlacklistedNoiseTranscript('thank you for watching') &&
+  !isBlacklistedNoiseTranscript('Hello KOTL, what are the stars?');
+assertTest('Audio Noise & Hallucination Filter: Rejects ambient noise tokens',
+  hasNoiseFiltering,
+  'Filters ambient bracketed tokens and silence artifacts while keeping speech valid');
+
+const testQaSession = `test-qa-isolation-${Date.now()}`;
+const prodHistory = getDayWiseHistory(testQaSession, { demo: false });
+const hasNoSeedDaysInProd = !prodHistory.some(d => d.date === '2026-10-23' || d.date === '2026-10-22');
+assertTest('Production Seed-Data Isolation: Mock historical days hidden in standard mode',
+  hasNoSeedDaysInProd,
+  'Prevents mock seed fixtures from polluting production history');
+
+const demoHistory = getDayWiseHistory(testQaSession, { demo: true });
+const hasDemoDaysInDemo = demoHistory.some(d => d.is_demo === true);
+assertTest('Explicit Demo Mode Support: Seed fixtures accessible via ?demo=1',
+  hasDemoDaysInDemo,
+  'Permits isolated demo exploration without altering production storage');
+
+const zeroMetrics = getGrowthMetrics(testQaSession, { demo: false });
+const hasTruthfulMetrics = zeroMetrics.talk_time_minutes === 0 &&
+  zeroMetrics.curiosity_count === 0 &&
+  Array.isArray(zeroMetrics.new_words_learned) && zeroMetrics.new_words_learned.length === 0;
+assertTest('Truthful Zero/Empty-State Metrics: Artificial clamps and mock words removed',
+  hasTruthfulMetrics,
+  'Reports 0 minutes, 0 questions, and empty vocabulary when child has not spoken');
+
+const hasUiDemoBadgeAndTruthfulCounters = htmlContent.includes('id="demoModeIndicatorBadge"') &&
+  htmlContent.includes('isDemoRequested()') &&
+  htmlContent.includes('metricTalkMinutes') &&
+  htmlContent.includes('>--<');
+assertTest('Dashboard Empty States & Demo Pill: Honest initial states and demo badge',
+  hasUiDemoBadgeAndTruthfulCounters,
+  'Web UI uses uncalibrated placeholders (--), honest zero counts, and demo pill');
+
+// ----------------------------------------------------
 // SUMMARY REPORT
 // ----------------------------------------------------
 console.log('\n====================================================');

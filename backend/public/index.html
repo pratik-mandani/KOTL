@@ -246,9 +246,14 @@
             🤖
           </div>
           <div class="min-w-0">
-            <h1 class="font-fredoka font-bold text-base sm:text-lg text-slate-900 truncate">
-              KOTL Parent Dashboard
-            </h1>
+            <div class="flex items-center gap-2">
+              <h1 class="font-fredoka font-bold text-base sm:text-lg text-slate-900 truncate">
+                KOTL Parent Dashboard
+              </h1>
+              <span id="demoModeIndicatorBadge" class="hidden text-[10px] font-fredoka font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full whitespace-nowrap">
+                Demo Mode (?demo=1)
+              </span>
+            </div>
             <p class="text-[11px] text-slate-500 hidden sm:block truncate">
               Smart Emotional Companion & Development Ecosystem for Parth
             </p>
@@ -261,7 +266,7 @@
           <!-- Manner Stars Awarder Button -->
           <button onclick="handleAwardMannerStar()" title="Award a Good Habit & Kindness Star" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-fredoka font-bold py-1.5 px-2.5 sm:px-3 rounded-full shadow-2xs flex items-center gap-1.5 transition-transform active:scale-95">
             <span>⭐</span>
-            <span id="headerMannerStars">15 Stars</span>
+            <span id="headerMannerStars">-- Stars</span>
           </button>
 
           <!-- ESP32 Device Status Badge (Required by QA: deviceStatusPill with whitespace-nowrap) -->
@@ -335,7 +340,7 @@
           </div>
           <div>
             <div class="flex items-baseline gap-1">
-              <span id="metricTalkMinutes" class="font-fredoka font-bold text-2xl sm:text-3xl text-slate-900">24</span>
+              <span id="metricTalkMinutes" class="font-fredoka font-bold text-2xl sm:text-3xl text-slate-900">--</span>
               <span class="text-xs text-slate-500 font-medium">Mins Today</span>
             </div>
             <p class="text-[11px] text-slate-400 mt-1">Verbal speech exchange</p>
@@ -350,7 +355,7 @@
           </div>
           <div>
             <div class="flex items-baseline gap-1">
-              <span id="metricCuriosityCount" class="font-fredoka font-bold text-2xl sm:text-3xl text-slate-900">28</span>
+              <span id="metricCuriosityCount" class="font-fredoka font-bold text-2xl sm:text-3xl text-slate-900">--</span>
               <span class="text-xs text-slate-500 font-medium">Questions</span>
             </div>
             <p class="text-[11px] text-slate-400 mt-1">Why/How inquiry turns</p>
@@ -365,7 +370,7 @@
           </div>
           <div>
             <div class="flex items-baseline gap-1">
-              <span id="metricMannerStars" class="font-fredoka font-bold text-2xl sm:text-3xl text-slate-900">15</span>
+              <span id="metricMannerStars" class="font-fredoka font-bold text-2xl sm:text-3xl text-slate-900">--</span>
               <span class="text-xs text-slate-500 font-medium">Earned Stars</span>
             </div>
             <p class="text-[11px] text-slate-400 mt-1">Habit streaks & manners</p>
@@ -463,7 +468,7 @@
                 <span>Observed Passion Topics</span>
               </h3>
               <span class="text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
-                Sample Qualitative
+                Sample Qualitative Preview
               </span>
             </div>
 
@@ -1291,35 +1296,54 @@
       }
     }
 
+    function isDemoRequested() {
+      return (new URLSearchParams(window.location.search).get('demo') === '1');
+    }
+
     // Dynamic Growth Metrics Loading
     function loadGrowthMetrics() {
-      fetch(getBaseApiUrl() + '/api/growth/metrics')
+      var url = getBaseApiUrl() + '/api/growth/metrics' + (isDemoRequested() ? '?demo=1' : '');
+      fetch(url)
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data && data.success) {
           var talkEl = document.getElementById('metricTalkMinutes');
-          if (talkEl) talkEl.innerText = data.talk_time_minutes || 24;
+          if (talkEl) {
+            talkEl.innerText = (typeof data.talk_time_minutes === 'number') ? data.talk_time_minutes : '--';
+          }
           var curEl = document.getElementById('metricCuriosityCount');
-          if (curEl) curEl.innerText = data.curiosity_count || 28;
+          if (curEl) {
+            curEl.innerText = (typeof data.curiosity_count === 'number') ? data.curiosity_count : '--';
+          }
           var starEl = document.getElementById('metricMannerStars');
-          if (starEl) starEl.innerText = data.manner_stars || 15;
+          if (starEl) {
+            starEl.innerText = (typeof data.manner_stars === 'number') ? data.manner_stars : '0';
+          }
           var headStars = document.getElementById('headerMannerStars');
-          if (headStars) headStars.innerText = (data.manner_stars || 15) + ' Stars';
+          if (headStars) {
+            headStars.innerText = ((typeof data.manner_stars === 'number') ? data.manner_stars : '0') + ' Stars';
+          }
 
           // Render Vocabulary
-          var words = data.new_words_learned || ['orbit', 'gravity', 'satellite', 'stamina', 'telescope', 'herbivore', 'solar', 'nebula'];
+          var words = Array.isArray(data.new_words_learned) ? data.new_words_learned : [];
           var countBadge = document.getElementById('vocabWordCountBadge');
-          if (countBadge) countBadge.innerText = words.length + ' Words Acquired';
+          if (countBadge) {
+            countBadge.innerText = words.length > 0 ? (words.length + ' Words Acquired') : 'No Words Acquired Yet';
+          }
           var container = document.getElementById('vocabularyBadgesContainer');
           if (container) {
             container.innerHTML = '';
-            words.forEach(function(w) {
-              var btn = document.createElement('button');
-              btn.className = 'bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-800 font-fredoka font-bold text-xs px-3 py-1 rounded-xl shadow-2xs flex items-center gap-1.5 transition-all';
-              btn.innerHTML = '<span>✨</span><span>' + w + '</span><span class="text-[10px] text-indigo-600">▶</span>';
-              btn.onclick = function() { playLocalVoice('Parth learned the word: ' + w + '! What a brilliant word to use!'); };
-              container.appendChild(btn);
-            });
+            if (words.length === 0) {
+              container.innerHTML = '<div class="py-4 text-center text-slate-400 text-xs italic font-medium w-full">Awaiting speech observations... Speak with KOTL to discover new vocabulary.</div>';
+            } else {
+              words.forEach(function(w) {
+                var btn = document.createElement('button');
+                btn.className = 'bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 text-slate-800 font-fredoka font-bold text-xs px-3 py-1 rounded-xl shadow-2xs flex items-center gap-1.5 transition-all';
+                btn.innerHTML = '<span>✨</span><span>' + w + '</span><span class="text-[10px] text-indigo-600">▶</span>';
+                btn.onclick = function() { playLocalVoice('Parth learned the word: ' + w + '! What a brilliant word to use!'); };
+                container.appendChild(btn);
+              });
+            }
           }
         }
       })
@@ -1517,7 +1541,8 @@
 
     // Day-Wise Conversation Turns Loading
     function loadDayWiseHistory() {
-      fetch(getBaseApiUrl() + '/api/history/daywise')
+      var url = getBaseApiUrl() + '/api/history/daywise' + (isDemoRequested() ? '?demo=1' : '');
+      fetch(url)
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d && d.success && Array.isArray(d.days)) {
@@ -1821,7 +1846,11 @@
     }
 
     function loadChildReport(forceRefresh) {
-      fetch(getBaseApiUrl() + '/api/child/report' + (forceRefresh ? '?refresh=true' : ''))
+      var params = [];
+      if (forceRefresh) params.push('refresh=true');
+      if (isDemoRequested()) params.push('demo=1');
+      var queryString = params.length > 0 ? ('?' + params.join('&')) : '';
+      fetch(getBaseApiUrl() + '/api/child/report' + queryString)
       .then(function(r) { return r.json(); })
       .then(function(d) {
         if (d && d.success && d.report) {
@@ -1830,7 +1859,11 @@
 
           // Sync Metric 4 in Tab 1
           var badge = document.getElementById('metricReportSufficiencyBadge');
-          if (badge) badge.innerText = d.report.data_sufficiency_label || '8 Dimensions';
+          if (badge) {
+            badge.innerText = d.report.data_sufficiency === 'insufficient'
+              ? 'Baseline Pending'
+              : (d.report.data_sufficiency_label || '8 Dimensions');
+          }
           var sub = document.getElementById('metricReportSubtitle');
           if (sub) {
             sub.innerText = d.report.total_conversations_analyzed > 0
@@ -2142,6 +2175,10 @@
 
     // Initialize all dynamic data on page load
     window.addEventListener('DOMContentLoaded', function() {
+      if (isDemoRequested()) {
+        var badge = document.getElementById('demoModeIndicatorBadge');
+        if (badge) badge.classList.remove('hidden');
+      }
       loadGrowthMetrics();
       loadHabits();
       loadMissions();

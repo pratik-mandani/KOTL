@@ -602,7 +602,7 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
   const distinctWords = Array.from(wordFreq.keys());
   const completedHabits = habits.filter(h => h.completed_today).length;
   const totalHabits = habits.length;
-  const mannerStars = typeof profile.manner_stars === "number" ? profile.manner_stars : 15;
+  const mannerStars = typeof profile.manner_stars === "number" ? profile.manner_stars : 0;
 
   const pronoun = (profile.gender || "").toLowerCase() === "girl" ? "She" : ((profile.gender || "").toLowerCase() === "boy" ? "He" : "They");
   const pronounPossessive = (profile.gender || "").toLowerCase() === "girl" ? "Her" : ((profile.gender || "").toLowerCase() === "boy" ? "His" : "Their");
@@ -687,13 +687,15 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       category: "Health & Active Movement",
       source: "Daily Sports Tracker & Profile health logs",
       sample_size: "Daily 60-minute WHO activity recommendation",
-      status: "Active Observation",
+      status: profile.medical?.sports?.active_minutes ? "Active Observation" : "Awaiting Logs",
       calculated_indicator: {
-        active_minutes: 45,
+        active_minutes: profile.medical?.sports?.active_minutes || 0,
         target_minutes: 60,
-        completion_pct: 75
+        completion_pct: Math.min(100, Math.round(((profile.medical?.sports?.active_minutes || 0) / 60) * 100))
       },
-      evidence_summary: "45 of 60 active movement minutes logged today (Playground sports & cycling).",
+      evidence_summary: profile.medical?.sports?.active_minutes
+        ? `${profile.medical.sports.active_minutes} of 60 active movement minutes logged today.`
+        : "Awaiting physical activity log for today (WHO recommends 60 minutes active play).",
       ai_guidance: "Outdoor movement builds stamina and promotes a smooth evening sleep transition."
     },
     socratic_reasoning: {
@@ -769,8 +771,12 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       ? "Insufficient Data (Awaiting Conversations)"
       : (isPreliminary ? "Preliminary Baseline (Gathering Data)" : "Active Observation Profile"),
     disclaimer: "This observational report summarizes conversational dialogue turns and habit tracking recorded by KOTL. It provides descriptive behavioral feedback for parents and is NOT a clinical, medical, or psychological diagnostic tool.",
-    overall_development_score: distinctWords.length > 0 ? Math.min(95, Math.max(65, 70 + distinctWords.length * 3)) : 75,
-    pediatric_status: "Active Observation Profile & Strong Conversational Growth",
+    overall_development_score: isInsufficient
+      ? null
+      : (distinctWords.length > 0 ? Math.min(95, Math.max(65, 70 + distinctWords.length * 3)) : 70),
+    pediatric_status: isInsufficient
+      ? "Observation Baseline Pending (Gathering Data)"
+      : (isPreliminary ? "Preliminary Baseline (Gathering Data)" : "Active Observation Profile & Strong Conversational Growth"),
     executive_summary: isInsufficient
       ? `${profile.name || "Parth"} has not recorded conversational sessions with KOTL yet. ${pronoun} shows potential for inquisitive learning as daily storytelling begins.`
       : `${profile.name || "Parth"} has participated in ${totalTurns} recorded dialogue turn(s). ${pronoun} shows inquisitive interest in conversational storytelling and asks ${rawQuestions.length} spontaneous question(s). ${pronounPossessive} conversational inquiry is supported through playful storytelling and habit reinforcement.`,
@@ -1170,13 +1176,13 @@ const SEED_HISTORICAL_DAYS = [
   }
 ];
 
-function getDayWiseHistory(sessionId = "default-session") {
+function getDayWiseHistory(sessionId = "default-session", { demo = false } = {}) {
   ensureUploadsDir();
   let rawSession = [];
   try {
     if (fs.existsSync(SESSIONS_FILE)) {
       const data = JSON.parse(fs.readFileSync(SESSIONS_FILE, "utf-8"));
-      rawSession = data[sessionId] || data["default-session"] || [];
+      rawSession = data[sessionId] || [];
     }
   } catch (err) {
     console.warn("[Child Memory] Error reading sessions.json:", err.message);
@@ -1228,16 +1234,34 @@ function getDayWiseHistory(sessionId = "default-session") {
     date: new Date().toISOString().split('T')[0],
     label: "Today",
     sublabel: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    badge: "🌟 Live Active",
+    badge: todayTurns.length > 0 ? "🌟 Live Active" : "No turns today",
+    turns: todayTurns
+  };
+
+  if (!demo) {
+    // In production: Strictly return authentic session days only.
+    // Never inject SEED_HISTORICAL_DAYS or mock turns into production history.
+    return [todayObj];
+  }
+
+  // Demo mode explicitly requested (?demo=1)
+  const demoSeedDays = SEED_HISTORICAL_DAYS.map(day => ({
+    ...day,
+    badge: day.badge + " [Demo]",
+    is_demo: true
+  }));
+
+  const demoToday = {
+    ...todayObj,
     turns: todayTurns.length > 0 ? todayTurns : [
       {
-        id: "turn-t1",
+        id: "turn-demo-1",
         time: "10:15 AM",
         child: {
           role: "user",
           name: "Parth",
-          source: "esp32",
-          text: "Hello KOTL!",
+          source: "demo",
+          text: "Hello KOTL! (Sample demo turn)",
           timestamp: new Date().toISOString()
         },
         kotl: {
@@ -1248,49 +1272,11 @@ function getDayWiseHistory(sessionId = "default-session") {
           tts_url: null,
           timestamp: new Date().toISOString()
         }
-      },
-      {
-        id: "turn-t2",
-        time: "11:35 AM",
-        child: {
-          role: "user",
-          name: "Parth",
-          source: "esp32",
-          text: "KOTL, how do stars shine at night?",
-          timestamp: new Date().toISOString()
-        },
-        kotl: {
-          role: "assistant",
-          name: "KOTL",
-          source: "kotl",
-          text: "Stars are huge glowing balls of bright gas, like giant friendly suns far away in space, Parth! They twinkle because their light travels across the sky to say hello to you!",
-          tts_url: null,
-          timestamp: new Date().toISOString()
-        }
-      },
-      {
-        id: "turn-t3",
-        time: "01:20 PM",
-        child: {
-          role: "user",
-          name: "Parth",
-          source: "esp32",
-          text: "I drew a rocket and cleaned up my colors!",
-          timestamp: new Date().toISOString()
-        },
-        kotl: {
-          role: "assistant",
-          name: "KOTL",
-          source: "kotl",
-          text: "That is wonderful, Parth! What vibrant colors did you use for your rocket? And super proud of you for keeping your colors neatly in place, champ!",
-          tts_url: null,
-          timestamp: new Date().toISOString()
-        }
       }
     ]
   };
 
-  return [todayObj, ...SEED_HISTORICAL_DAYS];
+  return [demoToday, ...demoSeedDays];
 }
 
 
@@ -1439,46 +1425,59 @@ function deleteHabit(id) {
 
 function awardMannerStar() {
   const profile = getChildProfile();
-  const currentStars = typeof profile.manner_stars === "number" ? profile.manner_stars : 14;
+  const currentStars = typeof profile.manner_stars === "number" ? profile.manner_stars : 0;
   const newStars = currentStars + 1;
   updateChildProfile({ manner_stars: newStars });
   return { success: true, manner_stars: newStars };
 }
 
-function getGrowthMetrics() {
+function getGrowthMetrics(sessionId = "default-session", { demo = false } = {}) {
   const profile = getChildProfile();
-  const historyDays = getDayWiseHistory("default-session");
+  const historyDays = getDayWiseHistory(sessionId, { demo });
   
   let totalUserTurns = 0;
   let curiosityCount = 0;
-  const extractedWords = new Set([
-    "orbit", "gravity", "satellite", "stamina", "telescope",
-    "herbivore", "solar", "nebula", "constellation", "hydrate"
+  const extractedWords = new Set(
+    demo ? [
+      "orbit", "gravity", "satellite", "stamina", "telescope",
+      "herbivore", "solar", "nebula", "constellation", "hydrate"
+    ] : []
+  );
+
+  const stopWords = new Set([
+    "a", "an", "the", "is", "are", "was", "were", "and", "or", "to", "in", "on", "at", "it", "me", "you",
+    "he", "she", "they", "we", "i", "my", "your", "his", "her", "for", "of", "with", "what", "why", "how",
+    "when", "where", "who", "tell", "can", "do", "does", "did", "about", "this", "that", "so", "just", "be",
+    "kotl", "champ", "parth", "yes", "no"
   ]);
 
   if (Array.isArray(historyDays)) {
     for (const d of historyDays) {
       if (Array.isArray(d.turns)) {
         for (const t of d.turns) {
-          const userText = (t.user?.text || t.parth?.text || "").toLowerCase();
+          const userText = (t.child?.text || t.user?.text || t.parth?.text || "").toLowerCase();
           if (userText) {
             totalUserTurns++;
             if (userText.includes("?") || userText.includes("why") || userText.includes("how") || userText.includes("what") || userText.includes("where") || userText.includes("tell")) {
               curiosityCount++;
             }
-            if (userText.includes("rocket") || userText.includes("planet") || userText.includes("star")) {
-              extractedWords.add("rocket");
-            }
+            // Extract descriptive child vocabulary (words with 5+ chars, non-stopwords)
+            const words = userText.match(/[a-z]{5,}/g) || [];
+            words.forEach(w => {
+              if (!stopWords.has(w)) {
+                extractedWords.add(w);
+              }
+            });
           }
         }
       }
     }
   }
 
-  // Base estimations anchored on real conversation count
-  const talkTimeMins = Math.max(18, Math.round(totalUserTurns * 1.5) + 12);
-  const finalCuriosityCount = Math.max(26, curiosityCount + 18);
-  const mannerStars = typeof profile.manner_stars === "number" ? profile.manner_stars : 14;
+  // Truthful metrics derived strictly from actual child interactions without artificial clamping
+  const talkTimeMins = totalUserTurns > 0 ? Math.round(totalUserTurns * 1.5) : 0;
+  const finalCuriosityCount = curiosityCount;
+  const mannerStars = typeof profile.manner_stars === "number" ? profile.manner_stars : 0;
 
   const whoGrowth = {
     height_cm: profile.medical?.vitals?.height_cm || 116,
@@ -1486,17 +1485,18 @@ function getGrowthMetrics() {
     bmi: profile.medical?.vitals?.bmi || 15.9,
     percentile: profile.medical?.vitals?.percentile || "75th (Healthy)",
     who_status: "Normal & Optimal (WHO Standard)",
-    age_label: "6.0 Years (Boy)"
+    age_label: `${profile.age || "6.0 Years"} (${profile.gender || "Boy"})`
   };
 
   const dailyParentTip = {
     title: "Encourage Socratic Wonder",
-    insight: "When Parth asks 'Why do stars twinkle?', celebrate his curiosity before giving the answer: 'That is a scientist\'s question! What do you think the atmosphere is doing to the light?'",
+    insight: `When ${profile.name || "your child"} asks questions, celebrate curiosity before giving direct answers: 'That is a scientist\\'s question! What do you think happens next?'`,
     category: "Cognitive Curiosity"
   };
 
   return {
     success: true,
+    is_demo: demo,
     talk_time_minutes: talkTimeMins,
     curiosity_count: finalCuriosityCount,
     new_words_learned: Array.from(extractedWords),
