@@ -45,10 +45,15 @@ async function generateGroqAssistantReply({ messages, sessionId = null }) {
     };
   }
 
-  const primaryModel = process.env.GROQ_CHAT_MODEL || "qwen/qwen3.8-27b";
-  const candidateModels = [primaryModel, "openai/gpt-oss-20b", "openai/gpt-oss-120b"].filter(
-    (m, i, arr) => arr.indexOf(m) === i
-  );
+  const primaryModel = process.env.GROQ_CHAT_MODEL || "llama-3.3-70b-versatile";
+  // Prioritize active Groq models and filter out known non-existent model identifiers to avoid delay
+  const isKnownInvalidGroq = (m) => m && (m.includes("gpt-oss") || m.includes("qwen3.8"));
+  const candidateModels = [
+    !isKnownInvalidGroq(primaryModel) ? primaryModel : null,
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+    isKnownInvalidGroq(primaryModel) ? primaryModel : null,
+  ].filter((m, i, arr) => m && arr.indexOf(m) === i);
 
   let lastError = null;
 

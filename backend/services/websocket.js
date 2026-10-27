@@ -645,75 +645,170 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState,
       console.warn(`[WebSocket Memory][${turnId}] Error extracting profile memory:`, memErr.message);
     }
 
-    // 4. Synthesize and Stream Speech (robust single-connection per turn)
+    // 4. Synthesize and Stream Speech (Pipelined sentence-level incremental streaming)
     console.log(`[WebSocket ${ws.deviceId}][${turnId}] Synthesizing speech for reply...`);
-    const tTtsStart = process.hrtime.bigint();
-    const pcmAudio = await synthesizeSpeechPcm(replyText);
-    const tTtsEnd = process.hrtime.bigint();
-    const ttsMs = nsToMs(tTtsEnd - tTtsStart);
-    const totalPrepMs = nsToMs(tTtsEnd - tStopListen);
+    const sentences = splitIntoSentences(replyText);
+    const useIncrementalTts = sentences.length > 1;
 
-    if (!pcmAudio || pcmAudio.length === 0) {
-      console.warn(`[WebSocket ${ws.deviceId}][${turnId}] TTS produced empty audio after ${ttsMs.toFixed(1)}ms, returning to idle.`);
-      sendJson({
-        type: "diagnostic",
-        status: "tts_error",
-        reason: "TTS synthesis produced empty audio",
-        turn_id: turnId,
-      });
-      sendJson({ type: "state", value: "IDLE" });
-      setState("IDLE");
-      return;
-    }
-
-    try {
-      recordTtsUsage({
-        provider: "edge",
-        characterCount: replyText.length,
-        audioBytes: pcmAudio.length,
-      });
-    } catch (_) {}
-
-    setState("SPEAKING");
-    sendJson({
-      type: "tts_start",
-      sample_rate: NORMALIZED_SAMPLE_RATE,
-      turn_id: turnId,
-      server_prep_ms: Math.round(totalPrepMs),
-      stt_ms: Math.round(sttMs),
-      llm_ms: Math.round(llmMs),
-      tts_ms: Math.round(ttsMs),
-    });
-    console.log(
-      `⚡ [WebSocket ${ws.deviceId}][${turnId}] Speech ready in ${totalPrepMs.toFixed(1)}ms (WAV: ${wavPrepMs.toFixed(1)}ms, STT: ${sttMs.toFixed(1)}ms, LLM: ${llmMs.toFixed(1)}ms, TTS: ${ttsMs.toFixed(1)}ms). Streaming ${pcmAudio.length} bytes audio...`
-    );
-
-    let offset = 0;
     let totalStreamedBytes = 0;
     let tFirstChunkSent = null;
     let firstChunkTxMs = null;
+    let ttsMs = 0;
+    let totalPrepMs = 0;
+    const tTtsStart = process.hrtime.bigint();
 
-    while (offset < pcmAudio.length && ws.readyState === WebSocket.OPEN) {
-      const nextOffset = Math.min(offset + AUDIO_CHUNK_STREAM_SIZE, pcmAudio.length);
-      const chunk = pcmAudio.subarray(offset, nextOffset);
-      sendBinary(chunk);
+    if (!useIncrementalTts) {
+      // Single sentence or short reply: direct single synthesis
+      const pcmAudio = await synthesizeSpeechPcm(replyText);
+      const tTtsEnd = process.hrtime.bigint();
+      ttsMs = nsToMs(tTtsEnd - tTtsStart);
+      totalPrepMs = nsToMs(tTtsEnd - tStopListen);
 
-      if (tFirstChunkSent === null) {
-        tFirstChunkSent = process.hrtime.bigint();
-        firstChunkTxMs = nsToMs(tFirstChunkSent - tStopListen);
-        console.log(
-          `[Latency][${turnId}] First audio chunk sent to WebSocket: ${firstChunkTxMs.toFixed(1)}ms after stop_listen`
-        );
+      if (!pcmAudio || pcmAudio.length === 0) {
+        console.warn(`[WebSocket ${ws.deviceId}][${turnId}] TTS produced empty audio after ${ttsMs.toFixed(1)}ms, returning to idle.`);
+        sendJson({
+          type: "diagnostic",
+          status: "tts_error",
+          reason: "TTS synthesis produced empty audio",
+          turn_id: turnId,
+        });
+        sendJson({ type: "state", value: "IDLE" });
+        setState("IDLE");
+        return;
       }
 
-      offset = nextOffset;
-      totalStreamedBytes += chunk.length;
+      try {
+        recordTtsUsage({
+          provider: "edge",
+          characterCount: replyText.length,
+          audioBytes: pcmAudio.length,
+        });
+      } catch (_) {}
 
-      // Pacing: 1024 bytes @ 16kHz 16-bit mono = 32ms audio duration.
-      // Fast-burst first 4 chunks (4KB = 128ms) with 4ms delay to pre-fill ESP32 jitter buffer,
-      // then pace subsequent chunks at 28ms to match real-time consumption and prevent buffer overflow.
-      const delayMs = totalStreamedBytes <= 4 * AUDIO_CHUNK_STREAM_SIZE ? 4 : 28;
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      setState("SPEAKING");
+      sendJson({
+        type: "tts_start",
+        sample_rate: NORMALIZED_SAMPLE_RATE,
+        turn_id: turnId,
+        server_prep_ms: Math.round(totalPrepMs),
+        stt_ms: Math.round(sttMs),
+        llm_ms: Math.round(llmMs),
+        tts_ms: Math.round(ttsMs),
+      });
+      console.log(
+        `⚡ [WebSocket ${ws.deviceId}][${turnId}] Speech ready in ${totalPrepMs.toFixed(1)}ms (WAV: ${wavPrepMs.toFixed(1)}ms, STT: ${sttMs.toFixed(1)}ms, LLM: ${llmMs.toFixed(1)}ms, TTS: ${ttsMs.toFixed(1)}ms). Streaming ${pcmAudio.length} bytes audio...`
+      );
+
+      let offset = 0;
+      while (offset < pcmAudio.length && ws.readyState === WebSocket.OPEN) {
+        const nextOffset = Math.min(offset + AUDIO_CHUNK_STREAM_SIZE, pcmAudio.length);
+        const chunk = pcmAudio.subarray(offset, nextOffset);
+        sendBinary(chunk);
+
+        if (tFirstChunkSent === null) {
+          tFirstChunkSent = process.hrtime.bigint();
+          firstChunkTxMs = nsToMs(tFirstChunkSent - tStopListen);
+          console.log(
+            `[Latency][${turnId}] First audio chunk sent to WebSocket: ${firstChunkTxMs.toFixed(1)}ms after stop_listen`
+          );
+        }
+
+        offset = nextOffset;
+        totalStreamedBytes += chunk.length;
+        const delayMs = totalStreamedBytes <= 4 * AUDIO_CHUNK_STREAM_SIZE ? 4 : 28;
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    } else {
+      // Pipelined multi-sentence streaming: synthesize sentence 1, start streaming immediately, synthesize subsequent sentences concurrently
+      console.log(`[WebSocket ${ws.deviceId}][${turnId}] Incremental TTS pipeline: ${sentences.length} sentences`);
+      const pcmSentence0 = await synthesizeSpeechPcm(sentences[0]);
+      const tFirstReady = process.hrtime.bigint();
+      ttsMs = nsToMs(tFirstReady - tTtsStart);
+      totalPrepMs = nsToMs(tFirstReady - tStopListen);
+
+      let currentPcm = pcmSentence0;
+      if (!currentPcm || currentPcm.length === 0) {
+        console.warn(`[WebSocket ${ws.deviceId}][${turnId}] First sentence TTS empty, falling back to full synthesis.`);
+        currentPcm = await synthesizeSpeechPcm(replyText);
+      }
+
+      if (!currentPcm || currentPcm.length === 0) {
+        console.warn(`[WebSocket ${ws.deviceId}][${turnId}] TTS produced empty audio after ${ttsMs.toFixed(1)}ms, returning to idle.`);
+        sendJson({
+          type: "diagnostic",
+          status: "tts_error",
+          reason: "TTS synthesis produced empty audio",
+          turn_id: turnId,
+        });
+        sendJson({ type: "state", value: "IDLE" });
+        setState("IDLE");
+        return;
+      }
+
+      setState("SPEAKING");
+      sendJson({
+        type: "tts_start",
+        sample_rate: NORMALIZED_SAMPLE_RATE,
+        turn_id: turnId,
+        server_prep_ms: Math.round(totalPrepMs),
+        stt_ms: Math.round(sttMs),
+        llm_ms: Math.round(llmMs),
+        tts_ms: Math.round(ttsMs),
+      });
+      console.log(
+        `⚡ [WebSocket ${ws.deviceId}][${turnId}] First sentence ready in ${totalPrepMs.toFixed(1)}ms (WAV: ${wavPrepMs.toFixed(1)}ms, STT: ${sttMs.toFixed(1)}ms, LLM: ${llmMs.toFixed(1)}ms, TTS: ${ttsMs.toFixed(1)}ms). Streaming sentence 1/${sentences.length}...`
+      );
+
+      let nextIndex = 1;
+      let nextPromise = (nextIndex < sentences.length) ? synthesizeSpeechPcm(sentences[nextIndex]) : null;
+
+      while (currentPcm !== null && ws.readyState === WebSocket.OPEN) {
+        if (currentPcm && currentPcm.length > 0) {
+          let offset = 0;
+          while (offset < currentPcm.length && ws.readyState === WebSocket.OPEN) {
+            const nextOffset = Math.min(offset + AUDIO_CHUNK_STREAM_SIZE, currentPcm.length);
+            const chunk = currentPcm.subarray(offset, nextOffset);
+            sendBinary(chunk);
+
+            if (tFirstChunkSent === null) {
+              tFirstChunkSent = process.hrtime.bigint();
+              firstChunkTxMs = nsToMs(tFirstChunkSent - tStopListen);
+              console.log(
+                `[Latency][${turnId}] First audio chunk sent to WebSocket: ${firstChunkTxMs.toFixed(1)}ms after stop_listen`
+              );
+            }
+
+            offset = nextOffset;
+            totalStreamedBytes += chunk.length;
+            const delayMs = totalStreamedBytes <= 4 * AUDIO_CHUNK_STREAM_SIZE ? 4 : 28;
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+          }
+        } else if (currentPcm && currentPcm.length === 0) {
+          console.warn(`[WebSocket TTS][${turnId}] Sentence ${nextIndex - 1} produced empty audio, continuing pipeline...`);
+        }
+
+        if (nextPromise) {
+          nextIndex++;
+          const pendingNextPromise = (nextIndex < sentences.length) ? synthesizeSpeechPcm(sentences[nextIndex]) : null;
+          try {
+            currentPcm = await nextPromise;
+          } catch (err) {
+            console.warn(`[WebSocket TTS][${turnId}] Sentence synthesis failed: ${err.message}`);
+            currentPcm = Buffer.alloc(0);
+          }
+          nextPromise = pendingNextPromise;
+        } else {
+          currentPcm = null;
+        }
+      }
+
+      try {
+        recordTtsUsage({
+          provider: "edge",
+          characterCount: replyText.length,
+          audioBytes: totalStreamedBytes,
+        });
+      } catch (_) {}
     }
 
     console.log(

@@ -123,7 +123,7 @@ static const uint32_t kWiFiRetryIntervalMs = 15000;
 static const uint32_t kHttpRetryIntervalMs = 15000;
 static const uint32_t kHttpTimeoutMs = 120000;
 static const uint32_t kAudioCaptureSampleRate = 16000;
-static const uint32_t kAudioCaptureDurationMs = 3500;
+static const uint32_t kAudioCaptureDurationMs = 5000;
 static const size_t kAudioCaptureSampleCount = (kAudioCaptureSampleRate * kAudioCaptureDurationMs) / 1000;
 static const uint32_t kAudioCaptureSampleIntervalUs = 1000000UL / kAudioCaptureSampleRate;
 static const uint16_t kAudioCaptureBaselineSamples = 128;
@@ -2479,7 +2479,7 @@ void performSynchronousAudioCapture()
 {
   Serial.println("TURN START");
   Serial.println("=================================================");
-  Serial.println(">>> RECORDING NOW! SPEAK YOUR QUESTION (UP TO 3 SECONDS) <<<");
+  Serial.println(">>> RECORDING NOW! SPEAK YOUR QUESTION (UP TO 5 SECONDS) <<<");
   Serial.println("=================================================");
   Serial.println("RECORDING START (INMP441 I2S + Dynamic VAD)");
   Serial.print("recording sample rate: ");
@@ -2495,7 +2495,7 @@ void performSynchronousAudioCapture()
   captureState.clippedSampleCount = 0;
 
   // Flush any stale samples from the I2S DMA buffer
-  i2s_zero_dma_buffer(I2S_MIC_PORT);
+  // Preserve DMA samples from trigger onset to prevent initial syllable loss
 
   const uint32_t startMs = millis();
   size_t capturedSamples = 0;
@@ -2572,7 +2572,7 @@ void performSynchronousAudioCapture()
       {
         voiceDetected = true;
         voiceStartMs = nowMs;
-        Serial.printf("[VAD] >>> Speech active! (Peak: %d) <<<\n", chunkPeak);
+        Serial.printf("[VAD] >>> Speech active! (Peak: %d >= %d) at %u ms <<<\n", chunkPeak, (int)kVadVoiceThreshold, (unsigned int)(nowMs - startMs));
         // Flush pre-roll buffer if available so initial consonant/word is preserved
         if (s_useWebSocketForCurrentTurn && preRollCount > 0)
         {
@@ -2583,14 +2583,15 @@ void performSynchronousAudioCapture()
       lastVoiceMs = nowMs;
     }
 
-    // Stream binary PCM chunk live over WebSocket as child speaks!
-    if (s_useWebSocketForCurrentTurn && voiceDetected && streamChunkCount > 0)
+    // Stream binary PCM chunk live over WebSocket as speech is captured!
+    // Send all chunks from turn start so initial speech onset and quiet syllables are NEVER dropped!
+    if (s_useWebSocketForCurrentTurn && streamChunkCount > 0)
     {
       wsSendBinSafe((const uint8_t *)streamChunkPcm, streamChunkCount * sizeof(int16_t));
     }
     else if (s_useWebSocketForCurrentTurn && !voiceDetected && streamChunkCount > 0)
     {
-      // Buffer latest pre-speech chunk so speech onset is never chopped off
+      // Maintain pre-roll buffer for fallback/diagnostic tracking
       memcpy(preRollChunkPcm, streamChunkPcm, streamChunkCount * sizeof(int16_t));
       preRollCount = streamChunkCount;
     }
