@@ -578,7 +578,7 @@
           </div>
         </div>
 
-        <!-- Provider Metrics Grid -->
+        <!-- Provider Metrics Grid (User-Friendly Cards with Quota & Progress) -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
           <!-- 1. Google Gemini Flash LLM -->
@@ -593,32 +593,37 @@
               <div class="text-[11px] text-slate-500 font-mono truncate" id="geminiModelLabel">gemini-3.5-flash-lite</div>
             </div>
 
+            <!-- Hero Quota Progress -->
             <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
               <div class="flex justify-between items-center">
-                <span class="text-slate-500">Requests Today:</span>
-                <span id="geminiReqToday" class="font-bold text-slate-800 font-mono">0</span>
+                <span class="text-slate-600 font-medium">Daily Quota Usage:</span>
+                <span id="geminiUsagePct" class="font-bold text-indigo-700 font-mono text-sm">0% used</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                <div id="geminiProgressBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-500">Used vs Total:</span>
+                <span id="geminiUsedVsTotal" class="font-bold text-slate-800 font-mono">0 / 1,500 req</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-slate-500">Tokens Today:</span>
-                <span id="geminiTokensToday" class="font-bold text-indigo-700 font-mono">0</span>
+                <span class="text-slate-500">Remaining Quota:</span>
+                <span id="geminiRemainingQuota" class="font-bold text-indigo-700 font-mono">1,500 req remaining</span>
               </div>
               <div class="flex justify-between items-center text-[10px] text-slate-400">
-                <span>Prompt / Compl:</span>
-                <span id="geminiTokenBreakdown" class="font-mono">0 / 0</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Cumulative Tokens:</span>
-                <span id="geminiTokensTotal" class="font-bold text-slate-700 font-mono">0</span>
+                <span>Reset Period:</span>
+                <span>Daily at 00:00 UTC</span>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-slate-500">Provider Quota API:</span>
-                <span class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">Unavailable via API</span>
+                <span id="geminiQuotaStatusBadge" class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Quota limit unavailable via API</span>
               </div>
             </div>
 
             <div class="space-y-2">
               <div class="text-[10px] text-slate-400">
-                <span>Free Tier Reference: <strong>15 RPM / 1,500 RPD</strong></span>
+                <span>Free Tier Reference: <strong>1,500 Requests / Day</strong></span>
               </div>
               <a href="https://aistudio.google.com/app/plan_information" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 hover:border-indigo-300 rounded-lg py-1.5 transition-colors">
                 AI Studio Console ↗
@@ -638,26 +643,31 @@
               <div class="text-[11px] text-slate-500 font-mono truncate" id="whisperModelLabel">whisper-large-v3-turbo</div>
             </div>
 
+            <!-- Hero Quota Progress -->
             <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
               <div class="flex justify-between items-center">
-                <span class="text-slate-500">Audio Today:</span>
-                <span id="whisperAudioToday" class="font-bold text-sky-700 font-mono">0 sec</span>
+                <span class="text-slate-600 font-medium">Daily Audio Quota:</span>
+                <span id="whisperUsagePct" class="font-bold text-sky-700 font-mono text-sm">0% used</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                <div id="whisperProgressBar" class="bg-sky-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-500">Audio Recorded:</span>
+                <span id="whisperUsedVsTotal" class="font-bold text-slate-800 font-mono">0 / 7,200 sec</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-slate-500">STT Turns Today:</span>
-                <span id="whisperReqToday" class="font-bold text-slate-800 font-mono">0</span>
+                <span class="text-slate-500">Remaining Audio:</span>
+                <span id="whisperRemainingQuota" class="font-bold text-sky-700 font-mono">7,200 sec remaining</span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Remaining Requests:</span>
-                <span id="whisperRemainingReq" class="font-bold text-emerald-700 font-mono">Header-monitored</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Cumulative Audio:</span>
-                <span id="whisperAudioTotal" class="font-bold text-slate-700 font-mono">0 sec</span>
+              <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Reset Period:</span>
+                <span>Daily at 00:00 UTC (2 hrs)</span>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-slate-500">Telemetry Source:</span>
-                <span id="whisperSourceBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Response Header</span>
+                <span id="whisperQuotaStatusBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Daily Audio Quota</span>
               </div>
             </div>
 
@@ -683,26 +693,31 @@
               <div class="text-[11px] text-slate-500 font-mono truncate" id="groqModelLabel">qwen/qwen3.8-27b</div>
             </div>
 
+            <!-- Hero Quota Progress -->
             <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
               <div class="flex justify-between items-center">
-                <span class="text-slate-500">Requests Today:</span>
-                <span id="groqReqToday" class="font-bold text-slate-800 font-mono">0</span>
+                <span class="text-slate-600 font-medium">Rate-Limit Allowance:</span>
+                <span id="groqUsagePct" class="font-bold text-amber-700 font-mono text-sm">—</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                <div id="groqProgressBar" class="bg-amber-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-500">Tokens / Quota:</span>
+                <span id="groqUsedVsTotal" class="font-bold text-slate-800 font-mono">Quota limit unavailable</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-slate-500">Tokens Today:</span>
-                <span id="groqTokensToday" class="font-bold text-amber-700 font-mono">0</span>
+                <span class="text-slate-500">Remaining Quota:</span>
+                <span id="groqRemainingQuota" class="font-bold text-emerald-700 font-mono">Header-monitored</span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Remaining Tokens:</span>
-                <span id="groqRemainingTokens" class="font-bold text-emerald-700 font-mono">Header-monitored</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Remaining Requests:</span>
-                <span id="groqRemainingReq" class="font-bold text-slate-700 font-mono">Header-monitored</span>
+              <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Reset Period:</span>
+                <span>Rolling rate window</span>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-slate-500">Telemetry Source:</span>
-                <span id="groqSourceBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Response Header</span>
+                <span id="groqQuotaStatusBadge" class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Awaiting Request</span>
               </div>
             </div>
 
@@ -728,26 +743,31 @@
               <div class="text-[11px] text-slate-500 font-mono truncate" id="edgeVoiceLabel">en-IN-PrabhatNeural</div>
             </div>
 
+            <!-- Hero Quota Progress -->
             <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
               <div class="flex justify-between items-center">
-                <span class="text-slate-500">Speech Today:</span>
-                <span id="edgeReqToday" class="font-bold text-emerald-700 font-mono">0 turns</span>
+                <span class="text-slate-600 font-medium">Service Quota:</span>
+                <span class="font-bold text-emerald-700 font-mono text-sm">Free / Unmetered</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                <div class="bg-emerald-500 h-2 rounded-full" style="width: 100%"></div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-500">Speech Turns:</span>
+                <span id="edgeReqToday" class="font-bold text-slate-800 font-mono">0 turns</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-slate-500">Characters Today:</span>
-                <span id="edgeCharsToday" class="font-bold text-slate-800 font-mono">0 chars</span>
+                <span class="text-slate-500">Characters Synthesized:</span>
+                <span id="edgeCharsToday" class="font-bold text-emerald-700 font-mono">0 chars</span>
+              </div>
+              <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Reset Period:</span>
+                <span>Local counter resets daily</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-slate-500">Audio Streamed:</span>
-                <span id="edgeAudioBytesToday" class="font-bold text-slate-700 font-mono">0 KB</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Cumulative Chars:</span>
-                <span id="edgeCharsTotal" class="font-bold text-slate-700 font-mono">0 chars</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Provider Quota:</span>
-                <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">Free / Unmetered</span>
+                <span class="text-slate-500">Quota Limit:</span>
+                <span id="edgeQuotaStatusBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Quota limit unavailable</span>
               </div>
             </div>
 
@@ -762,6 +782,53 @@
           </div>
 
         </div>
+
+        <!-- Collapsible Developer Diagnostics View -->
+        <details class="group bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 transition-all">
+          <summary class="cursor-pointer font-semibold text-xs text-slate-700 flex items-center justify-between select-none">
+            <div class="flex items-center gap-2">
+              <span>🔧</span>
+              <span>Technical Diagnostics & Raw Telemetry (Developer View)</span>
+            </div>
+            <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div class="mt-4 pt-3 border-t border-slate-200/60 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <!-- Gemini Technical Details -->
+            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
+              <div class="font-bold text-slate-800 text-[11px] mb-1">Gemini Raw Tokens</div>
+              <div class="flex justify-between"><span class="text-slate-500">Requests Today:</span><span id="geminiReqToday" class="font-mono">0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Tokens Today:</span><span id="geminiTokensToday" class="font-mono text-indigo-700">0 tok</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Prompt / Compl:</span><span id="geminiTokenBreakdown" class="font-mono">0 / 0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Cumulative:</span><span id="geminiTokensTotal" class="font-mono">0 tok</span></div>
+            </div>
+            <!-- Groq Whisper Technical Details -->
+            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
+              <div class="font-bold text-slate-800 text-[11px] mb-1">Whisper STT Details</div>
+              <div class="flex justify-between"><span class="text-slate-500">Audio Today:</span><span id="whisperAudioToday" class="font-mono text-sky-700">0 sec</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Turns Today:</span><span id="whisperReqToday" class="font-mono">0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Cumulative Audio:</span><span id="whisperAudioTotal" class="font-mono">0 sec</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Remaining Req:</span><span id="whisperRemainingReq" class="font-mono text-emerald-700">Header-monitored</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Source:</span><span id="whisperSourceBadge" class="font-mono text-[10px]">Response Header</span></div>
+            </div>
+            <!-- Groq LLM Technical Details -->
+            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
+              <div class="font-bold text-slate-800 text-[11px] mb-1">Groq LLM Headers</div>
+              <div class="flex justify-between"><span class="text-slate-500">Requests Today:</span><span id="groqReqToday" class="font-mono">0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Tokens Today:</span><span id="groqTokensToday" class="font-mono text-amber-700">0 tok</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Remaining Tokens:</span><span id="groqRemainingTokens" class="font-mono text-emerald-700">Header-monitored</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Remaining Req:</span><span id="groqRemainingReq" class="font-mono">Header-monitored</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Source:</span><span id="groqSourceBadge" class="font-mono text-[10px]">Response Header</span></div>
+            </div>
+            <!-- Edge TTS Technical Details -->
+            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
+              <div class="font-bold text-slate-800 text-[11px] mb-1">Edge TTS Metrics</div>
+              <div class="flex justify-between"><span class="text-slate-500">Audio Streamed:</span><span id="edgeAudioBytesToday" class="font-mono">0 KB</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Cumulative Chars:</span><span id="edgeCharsTotal" class="font-mono">0 chars</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Protocol:</span><span class="font-mono text-[10px]">WebSocket Stream</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Provider Quota:</span><span class="font-mono text-[10px] text-emerald-700">Free / Unmetered</span></div>
+            </div>
+          </div>
+        </details>        </div>
       </section>
     </main>
 
@@ -2701,8 +2768,19 @@
           // Gemini
           if (p.llm && p.llm.gemini) {
             var g = p.llm.gemini;
+            var gReq = g.requestsToday || 0;
+            var gLimit = 1500; // Free Tier Reference limit (1,500 RPD)
+            var gPct = Math.min(100, Math.round((gReq / gLimit) * 100));
+            var gRem = Math.max(0, gLimit - gReq);
+
             if (document.getElementById('geminiModelLabel')) document.getElementById('geminiModelLabel').innerText = g.model || 'gemini-3.5-flash-lite';
-            if (document.getElementById('geminiReqToday')) document.getElementById('geminiReqToday').innerText = (g.requestsToday || 0).toLocaleString();
+            if (document.getElementById('geminiUsagePct')) document.getElementById('geminiUsagePct').innerText = gPct + '% used';
+            if (document.getElementById('geminiProgressBar')) document.getElementById('geminiProgressBar').style.width = gPct + '%';
+            if (document.getElementById('geminiUsedVsTotal')) document.getElementById('geminiUsedVsTotal').innerText = gReq.toLocaleString() + ' / ' + gLimit.toLocaleString() + ' req';
+            if (document.getElementById('geminiRemainingQuota')) document.getElementById('geminiRemainingQuota').innerText = gRem.toLocaleString() + ' req remaining';
+
+            // Diagnostics View
+            if (document.getElementById('geminiReqToday')) document.getElementById('geminiReqToday').innerText = gReq.toLocaleString();
             if (document.getElementById('geminiTokensToday')) document.getElementById('geminiTokensToday').innerText = (g.totalTokensToday || 0).toLocaleString() + ' tok';
             if (document.getElementById('geminiTokenBreakdown')) document.getElementById('geminiTokenBreakdown').innerText = (g.promptTokensToday || 0).toLocaleString() + ' / ' + (g.completionTokensToday || 0).toLocaleString();
             if (document.getElementById('geminiTokensTotal')) document.getElementById('geminiTokensTotal').innerText = (g.totalTokensTotal || 0).toLocaleString() + ' tok';
@@ -2711,8 +2789,19 @@
           // Groq Whisper
           if (p.stt && p.stt.groq_whisper) {
             var w = p.stt.groq_whisper;
+            var wSec = w.audioSecondsToday || 0;
+            var wLimit = 7200; // Daily Free Quota: 7,200 audio seconds (~2 hrs)
+            var wPct = Math.min(100, Math.round((wSec / wLimit) * 100));
+            var wRem = Math.max(0, wLimit - wSec);
+
             if (document.getElementById('whisperModelLabel')) document.getElementById('whisperModelLabel').innerText = w.model || 'whisper-large-v3-turbo';
-            if (document.getElementById('whisperAudioToday')) document.getElementById('whisperAudioToday').innerText = (w.audioSecondsToday || 0).toLocaleString() + ' sec';
+            if (document.getElementById('whisperUsagePct')) document.getElementById('whisperUsagePct').innerText = wPct + '% used';
+            if (document.getElementById('whisperProgressBar')) document.getElementById('whisperProgressBar').style.width = wPct + '%';
+            if (document.getElementById('whisperUsedVsTotal')) document.getElementById('whisperUsedVsTotal').innerText = wSec.toLocaleString() + ' / ' + wLimit.toLocaleString() + ' sec';
+            if (document.getElementById('whisperRemainingQuota')) document.getElementById('whisperRemainingQuota').innerText = wRem.toLocaleString() + ' sec remaining';
+
+            // Diagnostics View
+            if (document.getElementById('whisperAudioToday')) document.getElementById('whisperAudioToday').innerText = wSec.toLocaleString() + ' sec';
             if (document.getElementById('whisperReqToday')) document.getElementById('whisperReqToday').innerText = (w.requestsToday || 0).toLocaleString();
             if (document.getElementById('whisperAudioTotal')) document.getElementById('whisperAudioTotal').innerText = (w.audioSecondsTotal || 0).toLocaleString() + ' sec';
             if (document.getElementById('whisperRemainingReq')) {
@@ -2726,7 +2815,49 @@
           // Groq LLM
           if (p.llm && p.llm.groq) {
             var q = p.llm.groq;
+            var hasGroqLimits = q.limitTokens && Number(q.limitTokens) > 0 && q.remainingTokens !== null && q.remainingTokens !== undefined;
+            var hasGroqReqLimits = q.limitRequests && Number(q.limitRequests) > 0 && q.remainingRequests !== null && q.remainingRequests !== undefined;
+
             if (document.getElementById('groqModelLabel')) document.getElementById('groqModelLabel').innerText = q.model || 'qwen/qwen3.8-27b';
+
+            if (hasGroqLimits) {
+              var limTok = Number(q.limitTokens);
+              var remTok = Number(q.remainingTokens);
+              var usedTok = Math.max(0, limTok - remTok);
+              var qPct = Math.min(100, Math.max(0, Math.round((usedTok / limTok) * 100)));
+              if (document.getElementById('groqUsagePct')) document.getElementById('groqUsagePct').innerText = qPct + '% used';
+              if (document.getElementById('groqProgressBar')) document.getElementById('groqProgressBar').style.width = qPct + '%';
+              if (document.getElementById('groqUsedVsTotal')) document.getElementById('groqUsedVsTotal').innerText = usedTok.toLocaleString() + ' / ' + limTok.toLocaleString() + ' tokens';
+              if (document.getElementById('groqRemainingQuota')) document.getElementById('groqRemainingQuota').innerText = remTok.toLocaleString() + ' tokens remaining';
+              if (document.getElementById('groqQuotaStatusBadge')) {
+                document.getElementById('groqQuotaStatusBadge').innerText = 'Live Header Quota';
+                document.getElementById('groqQuotaStatusBadge').className = 'text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200';
+              }
+            } else if (hasGroqReqLimits) {
+              var limReq = Number(q.limitRequests);
+              var remReq = Number(q.remainingRequests);
+              var usedReq = Math.max(0, limReq - remReq);
+              var qPct = Math.min(100, Math.max(0, Math.round((usedReq / limReq) * 100)));
+              if (document.getElementById('groqUsagePct')) document.getElementById('groqUsagePct').innerText = qPct + '% used';
+              if (document.getElementById('groqProgressBar')) document.getElementById('groqProgressBar').style.width = qPct + '%';
+              if (document.getElementById('groqUsedVsTotal')) document.getElementById('groqUsedVsTotal').innerText = usedReq.toLocaleString() + ' / ' + limReq.toLocaleString() + ' req';
+              if (document.getElementById('groqRemainingQuota')) document.getElementById('groqRemainingQuota').innerText = remReq.toLocaleString() + ' req remaining';
+              if (document.getElementById('groqQuotaStatusBadge')) {
+                document.getElementById('groqQuotaStatusBadge').innerText = 'Live Header Quota';
+                document.getElementById('groqQuotaStatusBadge').className = 'text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200';
+              }
+            } else {
+              if (document.getElementById('groqUsagePct')) document.getElementById('groqUsagePct').innerText = '—';
+              if (document.getElementById('groqProgressBar')) document.getElementById('groqProgressBar').style.width = '0%';
+              if (document.getElementById('groqUsedVsTotal')) document.getElementById('groqUsedVsTotal').innerText = 'Quota limit unavailable';
+              if (document.getElementById('groqRemainingQuota')) document.getElementById('groqRemainingQuota').innerText = 'Header-monitored after first request';
+              if (document.getElementById('groqQuotaStatusBadge')) {
+                document.getElementById('groqQuotaStatusBadge').innerText = 'Quota limit unavailable';
+                document.getElementById('groqQuotaStatusBadge').className = 'text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200';
+              }
+            }
+
+            // Diagnostics View
             if (document.getElementById('groqReqToday')) document.getElementById('groqReqToday').innerText = (q.requestsToday || 0).toLocaleString();
             if (document.getElementById('groqTokensToday')) document.getElementById('groqTokensToday').innerText = (q.totalTokensToday || 0).toLocaleString() + ' tok';
             if (document.getElementById('groqRemainingTokens')) {
@@ -2746,6 +2877,9 @@
             if (document.getElementById('edgeVoiceLabel')) document.getElementById('edgeVoiceLabel').innerText = e.voice || 'en-IN-PrabhatNeural';
             if (document.getElementById('edgeReqToday')) document.getElementById('edgeReqToday').innerText = (e.requestsToday || 0).toLocaleString() + ' turns';
             if (document.getElementById('edgeCharsToday')) document.getElementById('edgeCharsToday').innerText = (e.charactersToday || 0).toLocaleString() + ' chars';
+            if (document.getElementById('edgeQuotaStatusBadge')) {
+              document.getElementById('edgeQuotaStatusBadge').innerText = 'Quota limit unavailable (Unmetered)';
+            }
             if (document.getElementById('edgeAudioBytesToday')) {
               var kb = Math.round((e.audioBytesToday || 0) / 1024);
               document.getElementById('edgeAudioBytesToday').innerText = kb.toLocaleString() + ' KB';
