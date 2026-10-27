@@ -186,13 +186,73 @@ function createHardwareTestToneWav() {
 
 app.use(express.static(path.join(__dirname, "public")));
 
-// Verification helper for secure usage endpoint
+// --- Parent Mode Authenticated Session Store ---
+const activeParentSessions = new Map();
+const PARENT_SESSION_TTL_MS = 15 * 60 * 1000; // 15 minutes
+
+function safeCompare(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function createParentSession() {
+  const token = crypto.randomBytes(24).toString("hex");
+  const now = Date.now();
+  const expiresAt = now + PARENT_SESSION_TTL_MS;
+  activeParentSessions.set(token, { createdAt: now, expiresAt });
+  return { token, expiresAt };
+}
+
+function isValidParentSession(token) {
+  if (!token || typeof token !== "string") return false;
+  const session = activeParentSessions.get(token);
+  if (!session) return false;
+  if (Date.now() > session.expiresAt) {
+    activeParentSessions.delete(token);
+    return false;
+  }
+  return true;
+}
+
+function clearExpiredParentSessions() {
+  const now = Date.now();
+  for (const [token, session] of activeParentSessions.entries()) {
+    if (now > session.expiresAt) {
+      activeParentSessions.delete(token);
+    }
+  }
+}
+
+function revokeParentSession(token) {
+  if (!token || typeof token !== "string") return false;
+  return activeParentSessions.delete(token);
+}
+
+// Verification helper for secure usage & parent telemetry endpoints
 function verifyUsageAuthorization(req) {
   const isProduction = process.env.NODE_ENV === "production";
   const configuredPin = (process.env.PARENT_PIN || "").trim();
   const configuredKey = (process.env.ADMIN_KEY || "").trim();
 
-  // If no PIN or key is configured in environment:
+  // 1. Check for backend-issued active parent session token
+  const sessionToken = (
+    req.headers["x-parent-session-token"] ||
+    req.headers["x-parent-session"] ||
+    req.headers["x-session-token"] ||
+    (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : "") ||
+    ""
+  ).toString().trim();
+
+  if (sessionToken && isValidParentSession(sessionToken)) {
+    return { authorized: true, method: "parent_session" };
+  }
+
+  // 2. Production gate when neither PARENT_PIN nor ADMIN_KEY is configured
   // In production, strictly deny access to prevent open public leakage
   // In development/test, allow local dashboard access for smooth developer onboarding
   if (!configuredPin && !configuredKey) {
@@ -202,9 +262,10 @@ function verifyUsageAuthorization(req) {
         error: "Unauthorized: PARENT_PIN or ADMIN_KEY must be configured in production",
       };
     }
-    return { authorized: true };
+    return { authorized: true, method: "dev_open" };
   }
 
+  // 3. Direct Parent PIN verification (backward-compatible)
   const providedPin = (
     req.headers["x-parent-pin"] ||
     req.headers["x-pin"] ||
@@ -213,23 +274,125 @@ function verifyUsageAuthorization(req) {
     ""
   ).toString().trim();
 
+  // 4. Admin Key verification (backward-compatible)
   const providedKey = (
     req.headers["x-admin-key"] ||
     req.headers["x-api-key"] ||
-    (req.headers.authorization && req.headers.authorization.startsWith("Bearer ") ? req.headers.authorization.slice(7) : "") ||
+    (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : "") ||
     req.query?.key ||
     ""
   ).toString().trim();
 
-  if (configuredPin && providedPin === configuredPin) {
-    return { authorized: true };
+  if (configuredPin && providedPin && safeCompare(providedPin, configuredPin)) {
+    return { authorized: true, method: "parent_pin" };
   }
-  if (configuredKey && providedKey === configuredKey) {
-    return { authorized: true };
+  if (configuredKey && providedKey && safeCompare(providedKey, configuredKey)) {
+    return { authorized: true, method: "admin_key" };
   }
 
   return { authorized: false, error: "Unauthorized: Valid Parent PIN or Admin Key required" };
 }
+
+// --- Parent Mode Authentication Endpoints ---
+app.post("/api/auth/parent-session", (req, res) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  const configuredPin = (process.env.PARENT_PIN || "").trim();
+  const configuredKey = (process.env.ADMIN_KEY || "").trim();
+
+  if (!configuredPin && !configuredKey) {
+    if (isProduction) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: PARENT_PIN or ADMIN_KEY must be configured in production",
+      });
+    }
+    clearExpiredParentSessions();
+    const session = createParentSession();
+    return res.json({
+      success: true,
+      token: session.token,
+      expiresIn: Math.floor(PARENT_SESSION_TTL_MS / 1000),
+      expiresAt: session.expiresAt,
+    });
+  }
+
+  const pin = (req.body?.pin || req.headers["x-parent-pin"] || "").toString().trim();
+  const key = (
+    req.body?.key ||
+    req.headers["x-admin-key"] ||
+    (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : "") ||
+    ""
+  ).toString().trim();
+
+  let authenticated = false;
+  if (configuredPin && pin && safeCompare(pin, configuredPin)) {
+    authenticated = true;
+  } else if (configuredKey && key && safeCompare(key, configuredKey)) {
+    authenticated = true;
+  }
+
+  if (!authenticated) {
+    return res.status(401).json({
+      success: false,
+      error: "Invalid Parent PIN or Admin Key",
+    });
+  }
+
+  clearExpiredParentSessions();
+  const session = createParentSession();
+  return res.json({
+    success: true,
+    token: session.token,
+    expiresIn: Math.floor(PARENT_SESSION_TTL_MS / 1000),
+    expiresAt: session.expiresAt,
+  });
+});
+
+app.get("/api/auth/parent-session", (req, res) => {
+  const token = (
+    req.headers["x-parent-session-token"] ||
+    req.headers["x-session-token"] ||
+    (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : "") ||
+    ""
+  ).toString().trim();
+
+  if (token && isValidParentSession(token)) {
+    const session = activeParentSessions.get(token);
+    return res.json({
+      success: true,
+      authenticated: true,
+      expiresIn: Math.max(0, Math.floor((session.expiresAt - Date.now()) / 1000)),
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    authenticated: false,
+    error: "Session expired or invalid",
+  });
+});
+
+app.delete("/api/auth/parent-session", (req, res) => {
+  const token = (
+    req.headers["x-parent-session-token"] ||
+    req.headers["x-session-token"] ||
+    (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : "") ||
+    ""
+  ).toString().trim();
+
+  if (token) {
+    revokeParentSession(token);
+  }
+  return res.json({ success: true, message: "Parent session ended" });
+});
 
 app.get("/api/usage", (req, res) => {
   const auth = verifyUsageAuthorization(req);
@@ -1670,4 +1833,11 @@ module.exports = {
   touchDeviceHeartbeat,
   markDeviceOffline,
   verifyUsageAuthorization,
+  createParentSession,
+  isValidParentSession,
+  clearExpiredParentSessions,
+  revokeParentSession,
+  activeParentSessions,
+  PARENT_SESSION_TTL_MS,
+  safeCompare,
 };

@@ -16,6 +16,7 @@
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
+const http = require("http");
 
 const {
   recordLlmUsage,
@@ -23,15 +24,27 @@ const {
   recordTtsUsage,
   getUsageSummary,
 } = require("../services/api-usage");
-const { verifyUsageAuthorization } = require("../server");
+const {
+  app,
+  verifyUsageAuthorization,
+  createParentSession,
+  isValidParentSession,
+  clearExpiredParentSessions,
+  revokeParentSession,
+  activeParentSessions,
+  safeCompare,
+} = require("../server");
 const { categorizeAndSanitizeError } = require("../services/websocket");
 
 let passedCount = 0;
 let failedCount = 0;
 
-function runTest(title, fn) {
+async function runTest(title, fn) {
   try {
-    fn();
+    const res = fn();
+    if (res && typeof res.then === "function") {
+      await res;
+    }
     console.log(`  [PASS] ${title}`);
     passedCount++;
   } catch (err) {
@@ -40,16 +53,17 @@ function runTest(title, fn) {
   }
 }
 
-console.log("====================================================");
-console.log("   KOTL USAGE & OBSERVABILITY REGRESSION SUITE      ");
-console.log("====================================================\n");
+async function runAll() {
+  console.log("====================================================");
+  console.log("   KOTL USAGE & OBSERVABILITY REGRESSION SUITE      ");
+  console.log("====================================================\n");
 
 // ----------------------------------------------------
 // 1. LLM Usage Tracking (Gemini & Token Accounting)
 // ----------------------------------------------------
 console.log(">>> [1/4] LLM Token Accounting & Quota Truthfulness");
 
-runTest("Gemini token usage records actual tokens without fabricating quotas", () => {
+await runTest("Gemini token usage records actual tokens without fabricating quotas", () => {
   recordLlmUsage({
     provider: "gemini",
     model: "gemini-3.5-flash-lite",
@@ -71,7 +85,7 @@ runTest("Gemini token usage records actual tokens without fabricating quotas", (
   assert.strictEqual(gemini.officialDashboardUrl, "https://aistudio.google.com/app/plan_information");
 });
 
-runTest("Groq LLM headers capture live rate limits truthfully when provided", () => {
+await runTest("Groq LLM headers capture live rate limits truthfully when provided", () => {
   const mockHeaders = new Map([
     ["x-ratelimit-remaining-requests", "14350"],
     ["x-ratelimit-limit-requests", "14400"],
@@ -111,7 +125,7 @@ runTest("Groq LLM headers capture live rate limits truthfully when provided", ()
 // ----------------------------------------------------
 console.log("\n>>> [2/4] STT & TTS Telemetry Tracking");
 
-runTest("STT audio duration and turns are tracked separately from LLM tokens", () => {
+await runTest("STT audio duration and turns are tracked separately from LLM tokens", () => {
   recordSttUsage({
     provider: "groq",
     model: "whisper-large-v3-turbo",
@@ -127,7 +141,7 @@ runTest("STT audio duration and turns are tracked separately from LLM tokens", (
   assert.strictEqual(whisper.officialDashboardUrl, "https://console.groq.com/settings/limits");
 });
 
-runTest("Edge-TTS synthesis metrics are tracked with unmetered status", () => {
+await runTest("Edge-TTS synthesis metrics are tracked with unmetered status", () => {
   recordTtsUsage({
     provider: "edge",
     characterCount: 65,
@@ -148,7 +162,7 @@ runTest("Edge-TTS synthesis metrics are tracked with unmetered status", () => {
 // ----------------------------------------------------
 console.log("\n>>> [3/4] Security, Authorization & Sanitization");
 
-runTest("Usage summary never exposes any API keys or credentials", () => {
+await runTest("Usage summary never exposes any API keys or credentials", () => {
   const summary = getUsageSummary();
   const str = JSON.stringify(summary);
 
@@ -157,7 +171,7 @@ runTest("Usage summary never exposes any API keys or credentials", () => {
   assert.ok(!str.includes("sk-"), "Must not expose OpenAI API keys");
 });
 
-runTest("Production security: verifies Parent PIN & Admin Key when configured", () => {
+await runTest("Production security: verifies Parent PIN & Admin Key when configured", () => {
   const origPin = process.env.PARENT_PIN;
   const origKey = process.env.ADMIN_KEY;
   const origEnv = process.env.NODE_ENV;
@@ -189,7 +203,7 @@ runTest("Production security: verifies Parent PIN & Admin Key when configured", 
   }
 });
 
-runTest("Production security: denies open access when both PARENT_PIN and ADMIN_KEY are unset", () => {
+await runTest("Production security: denies open access when both PARENT_PIN and ADMIN_KEY are unset", () => {
   const origPin = process.env.PARENT_PIN;
   const origKey = process.env.ADMIN_KEY;
   const origEnv = process.env.NODE_ENV;
@@ -209,7 +223,7 @@ runTest("Production security: denies open access when both PARENT_PIN and ADMIN_
   }
 });
 
-runTest("Development preservation: allows local dashboard access when credentials are unset", () => {
+await runTest("Development preservation: allows local dashboard access when credentials are unset", () => {
   const origPin = process.env.PARENT_PIN;
   const origKey = process.env.ADMIN_KEY;
   const origEnv = process.env.NODE_ENV;
@@ -228,7 +242,159 @@ runTest("Development preservation: allows local dashboard access when credential
   }
 });
 
-runTest("Outer WebSocket error sanitization scrubs keys, Bearer tokens, and categorizes errors", () => {
+await runTest("Parent session store: creates secure tokens and validates TTL and expiration", () => {
+  const session = createParentSession();
+  assert.ok(session.token && session.token.length >= 32, "Must generate high-entropy session token");
+  assert.ok(session.expiresAt > Date.now(), "Expiration must be in the future");
+  assert.strictEqual(isValidParentSession(session.token), true, "Fresh session token must be valid");
+
+  // Fast-forward token expiration
+  const stored = activeParentSessions.get(session.token);
+  assert.ok(stored, "Session must exist in store");
+  stored.expiresAt = Date.now() - 1000;
+
+  assert.strictEqual(isValidParentSession(session.token), false, "Expired session token must be rejected");
+  assert.strictEqual(activeParentSessions.has(session.token), false, "Expired session token must be purged");
+});
+
+await runTest("Parent session revocation: explicit logout immediately revokes session token", () => {
+  const session = createParentSession();
+  assert.strictEqual(isValidParentSession(session.token), true);
+
+  const revoked = revokeParentSession(session.token);
+  assert.strictEqual(revoked, true, "Revoke must report success for active token");
+  assert.strictEqual(isValidParentSession(session.token), false, "Revoked session must not be valid");
+  assert.strictEqual(revokeParentSession(session.token), false, "Double revoke must return false");
+});
+
+await runTest("Timing-safe comparison: correctly matches and rejects credentials", () => {
+  assert.strictEqual(safeCompare("1234", "1234"), true, "Identical strings match");
+  assert.strictEqual(safeCompare("1234", "5678"), false, "Different strings do not match");
+  assert.strictEqual(safeCompare("12", "1234"), false, "Different length strings do not match");
+  assert.strictEqual(safeCompare(null, "1234"), false, "Non-string handles safely");
+});
+
+await runTest("verifyUsageAuthorization: accepts valid parent session token and rejects expired or forged token", () => {
+  const origPin = process.env.PARENT_PIN;
+  const origEnv = process.env.NODE_ENV;
+
+  try {
+    process.env.NODE_ENV = "production";
+    process.env.PARENT_PIN = "configured-pin-9999";
+
+    const session = createParentSession();
+
+    // 1. Valid token in x-parent-session-token header
+    const r1 = verifyUsageAuthorization({ headers: { "x-parent-session-token": session.token } });
+    assert.strictEqual(r1.authorized, true);
+    assert.strictEqual(r1.method, "parent_session");
+
+    // 2. Valid token in Bearer authorization header
+    const r2 = verifyUsageAuthorization({ headers: { authorization: `Bearer ${session.token}` } });
+    assert.strictEqual(r2.authorized, true);
+
+    // 3. Forged or random token
+    const r3 = verifyUsageAuthorization({ headers: { "x-parent-session-token": "forged-session-token-xyz" } });
+    assert.strictEqual(r3.authorized, false);
+
+    // 4. Expired token
+    activeParentSessions.get(session.token).expiresAt = Date.now() - 500;
+    const r4 = verifyUsageAuthorization({ headers: { "x-parent-session-token": session.token } });
+    assert.strictEqual(r4.authorized, false);
+  } finally {
+    if (origPin === undefined) delete process.env.PARENT_PIN; else process.env.PARENT_PIN = origPin;
+    if (origEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = origEnv;
+  }
+});
+
+await runTest("HTTP Integration: Parent authentication flow, session issuance, usage gating, and logout", async () => {
+  const origPin = process.env.PARENT_PIN;
+  const origEnv = process.env.NODE_ENV;
+
+  const testServer = http.createServer(app);
+  await new Promise((resolve) => testServer.listen(0, "127.0.0.1", resolve));
+  const port = testServer.address().port;
+  const baseUrl = `http://127.0.0.1:${port}`;
+
+  try {
+    process.env.NODE_ENV = "production";
+    process.env.PARENT_PIN = "7410";
+
+    // 1. Unauthenticated request to /api/usage is blocked with 401
+    const unauthRes = await fetch(`${baseUrl}/api/usage`);
+    assert.strictEqual(unauthRes.status, 401, "Unauthenticated /api/usage must return HTTP 401");
+    const unauthData = await unauthRes.json();
+    assert.strictEqual(unauthData.success, false);
+
+    // 2. Incorrect PIN attempt to /api/auth/parent-session is rejected with 401
+    const wrongPinRes = await fetch(`${baseUrl}/api/auth/parent-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: "0000" }),
+    });
+    assert.strictEqual(wrongPinRes.status, 401, "Wrong PIN must return HTTP 401");
+    const wrongPinData = await wrongPinRes.json();
+    assert.strictEqual(wrongPinData.success, false);
+    assert.ok(wrongPinData.error.includes("Invalid Parent PIN"));
+
+    // 3. Demo PIN attempt (1234) is rejected with 401
+    const demoPinRes = await fetch(`${baseUrl}/api/auth/parent-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: "1234" }),
+    });
+    assert.strictEqual(demoPinRes.status, 401, "Demo PIN 1234 must be rejected when PARENT_PIN is 7410");
+
+    // 4. Correct PIN returns session token with HTTP 200
+    const authRes = await fetch(`${baseUrl}/api/auth/parent-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: "7410" }),
+    });
+    assert.strictEqual(authRes.status, 200, "Valid PIN must return HTTP 200");
+    const authData = await authRes.json();
+    assert.strictEqual(authData.success, true);
+    assert.ok(authData.token && typeof authData.token === "string");
+    assert.strictEqual(authData.expiresIn, 900);
+    const sessionToken = authData.token;
+
+    // 5. Authenticated request to /api/usage succeeds with HTTP 200
+    const usageRes = await fetch(`${baseUrl}/api/usage`, {
+      headers: { "x-parent-session-token": sessionToken },
+    });
+    assert.strictEqual(usageRes.status, 200, "Authenticated /api/usage must return HTTP 200");
+    const usageData = await usageRes.json();
+    assert.strictEqual(usageData.success, true);
+    assert.ok(usageData.providers, "Usage payload must contain providers object");
+
+    // 6. Session status verification via GET /api/auth/parent-session
+    const checkRes = await fetch(`${baseUrl}/api/auth/parent-session`, {
+      headers: { "x-parent-session-token": sessionToken },
+    });
+    assert.strictEqual(checkRes.status, 200);
+    const checkData = await checkRes.json();
+    assert.strictEqual(checkData.authenticated, true);
+
+    // 7. Session logout via DELETE /api/auth/parent-session
+    const logoutRes = await fetch(`${baseUrl}/api/auth/parent-session`, {
+      method: "DELETE",
+      headers: { "x-parent-session-token": sessionToken },
+    });
+    assert.strictEqual(logoutRes.status, 200);
+
+    // 8. Subsequent request with revoked token fails with HTTP 401
+    const postLogoutUsage = await fetch(`${baseUrl}/api/usage`, {
+      headers: { "x-parent-session-token": sessionToken },
+    });
+    assert.strictEqual(postLogoutUsage.status, 401, "Revoked session must be denied access");
+  } finally {
+    await new Promise((resolve) => testServer.close(resolve));
+    if (origPin === undefined) delete process.env.PARENT_PIN; else process.env.PARENT_PIN = origPin;
+    if (origEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = origEnv;
+  }
+});
+
+await runTest("Outer WebSocket error sanitization scrubs keys, Bearer tokens, and categorizes errors", () => {
   // Test 1: Groq API Key leakage in error
   const groqLeak = new Error("Failed connecting to https://api.groq.com with key gsk_abc123xyz789SECRET");
   const s1 = categorizeAndSanitizeError(groqLeak);
@@ -259,7 +425,7 @@ runTest("Outer WebSocket error sanitization scrubs keys, Bearer tokens, and cate
 // ----------------------------------------------------
 console.log("\n>>> [4/4] Observability Diagnostics & Firmware Integrity");
 
-runTest("WebSocket handler hardens outer catch-block and retains diagnostic statuses", () => {
+await runTest("WebSocket handler hardens outer catch-block and retains diagnostic statuses", () => {
   const wsSource = fs.readFileSync(path.join(__dirname, "..", "services", "websocket.js"), "utf8");
 
   assert.ok(wsSource.includes("status: \"rejected_cold_idle\""), "Must emit rejected_cold_idle status");
@@ -272,7 +438,7 @@ runTest("WebSocket handler hardens outer catch-block and retains diagnostic stat
   assert.ok(wsSource.includes("message: safeReason"), "Outer error response must send safeReason");
 });
 
-runTest("Firmware main.ino inspects status, reason, and raw_transcript for clear Serial Monitor output", () => {
+await runTest("Firmware main.ino inspects status, reason, and raw_transcript for clear Serial Monitor output", () => {
   const inoSource = fs.readFileSync(path.join(__dirname, "..", "..", "esp32", "main", "main.ino"), "utf8");
 
   assert.ok(inoSource.includes("extractJsonString(msg, \"status\", &status)"), "Firmware must extract status");
@@ -282,7 +448,7 @@ runTest("Firmware main.ino inspects status, reason, and raw_transcript for clear
   assert.ok(inoSource.includes("[WebSocket] STT Provider Error:"), "Firmware must log STT provider error");
 });
 
-runTest("Firmware main.ino implements stack-based audio pre-roll buffer to prevent onset truncation", () => {
+await runTest("Firmware main.ino implements stack-based audio pre-roll buffer to prevent onset truncation", () => {
   const inoSource = fs.readFileSync(path.join(__dirname, "..", "..", "esp32", "main", "main.ino"), "utf8");
 
   assert.ok(inoSource.includes("int16_t preRollChunkPcm[kMicDmaChunkSize];"), "Firmware must declare preRollChunkPcm");
@@ -290,10 +456,38 @@ runTest("Firmware main.ino implements stack-based audio pre-roll buffer to preve
   assert.ok(inoSource.includes("wsSendBinSafe((const uint8_t *)preRollChunkPcm"), "Firmware must flush pre-roll on speech detection");
 });
 
-console.log("\n====================================================");
-console.log(`TEST SUMMARY: ${passedCount} PASSED, ${failedCount} FAILED`);
-console.log("====================================================");
+await runTest("WebSocket handler measures monotonic stage latencies with hrtime.bigint and emits stage durations", () => {
+  const wsSource = fs.readFileSync(path.join(__dirname, "..", "services", "websocket.js"), "utf8");
 
-if (failedCount > 0) {
-  process.exit(1);
+  assert.ok(wsSource.includes("tStopListen = process.hrtime.bigint()"), "Must capture monotonic stop_listen timestamp");
+  assert.ok(wsSource.includes("wavPrepMs"), "Must measure WAV preparation duration");
+  assert.ok(wsSource.includes("sttMs"), "Must measure STT duration");
+  assert.ok(wsSource.includes("llmMs"), "Must measure LLM duration");
+  assert.ok(wsSource.includes("ttsMs"), "Must measure TTS duration");
+  assert.ok(wsSource.includes("server_prep_ms: Math.round(totalPrepMs)"), "Must send total prep duration in tts_start");
+  assert.ok(wsSource.includes("first_chunk_tx="), "Must log first audio chunk send latency");
+});
+
+await runTest("Firmware main.ino implements monotonic turn latency tracking and logs audible turnaround time", () => {
+  const inoSource = fs.readFileSync(path.join(__dirname, "..", "..", "esp32", "main", "main.ino"), "utf8");
+
+  assert.ok(inoSource.includes("s_turnSpeechEndMs = lastVoiceMs"), "Firmware must capture speech-end timestamp from lastVoiceMs");
+  assert.ok(inoSource.includes("s_turnStopSentMs = millis()"), "Firmware must record stop_listen transmission timestamp");
+  assert.ok(inoSource.includes("First audio chunk RX:"), "Firmware must record first audio chunk arrival");
+  assert.ok(inoSource.includes(">>> AUDIBLE PLAYBACK STARTED <<< Total:"), "Firmware must log total audible turnaround time");
+  assert.ok(inoSource.includes("extractJsonUint32"), "Firmware must provide extractJsonUint32 parser");
+});
+
+  console.log("\n====================================================");
+  console.log(`TEST SUMMARY: ${passedCount} PASSED, ${failedCount} FAILED`);
+  console.log("====================================================");
+
+  if (failedCount > 0) {
+    process.exit(1);
+  }
 }
+
+runAll().catch((err) => {
+  console.error("Test runner encountered unhandled error:", err);
+  process.exit(1);
+});

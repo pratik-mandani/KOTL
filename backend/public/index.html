@@ -208,9 +208,12 @@
 
       <div class="pt-3 text-[10px] font-fredoka font-bold uppercase tracking-wider text-slate-400 px-3 py-1">Parent Controls</div>
 
-      <button onclick="openPinModal()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
-        <span class="text-base">🔒</span>
-        <span>Parent Lock (Demo)</span>
+      <button id="sidebarParentLockBtn" onclick="openPinModal()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
+        <div class="flex items-center gap-3 min-w-0">
+          <span id="sidebarParentLockIcon" class="text-base">🔒</span>
+          <span id="sidebarParentLockTitle">Parent Mode</span>
+        </div>
+        <span id="sidebarParentLockBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shrink-0">Locked</span>
       </button>
 
       <button onclick="navigateToSafetyGuardrails()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
@@ -548,6 +551,20 @@
               <span>↻</span> Refresh
             </button>
           </div>
+        </div>
+
+        <!-- Production Parent Mode Protection Notice (Shown when unauthenticated/locked) -->
+        <div id="usageAuthBanner" class="hidden p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="text-base shrink-0">🔒</span>
+            <div>
+              <p class="font-bold">Operational Usage Telemetry is Protected in Production</p>
+              <p class="text-[11px] text-amber-700 mt-0.5">Authenticate with your Parent PIN to unlock live token metrics and provider quota limits.</p>
+            </div>
+          </div>
+          <button onclick="openPinModal()" class="shrink-0 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors self-start sm:self-auto">
+            Unlock Parent Mode
+          </button>
         </div>
 
         <!-- Transparency & Quota Distinction Callout -->
@@ -1259,28 +1276,49 @@
     </div>
   </div>
 
-  <!-- 6.4 PARENT MODE PIN MODAL (Client-Side Prototype Lock) -->
+  <!-- 6.4 PARENT MODE PIN MODAL -->
   <div id="parentPinModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-xl border border-slate-200 text-center">
-      <div class="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center text-xl">
-        🔒
+      <div id="pinModalIconBox" class="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center text-xl">
+        <span id="pinModalIcon">🔒</span>
       </div>
       <div>
-        <h3 class="font-fredoka font-bold text-base text-slate-900">Parent Mode Lock</h3>
-        <p class="text-xs text-slate-500 mt-1">Prototype deterrent for settings &amp; guardrails</p>
+        <h3 class="font-fredoka font-bold text-base text-slate-900">Parent Mode</h3>
+        <p id="pinModalSubtitle" class="text-xs text-slate-500 mt-1">Enter your configured Parent PIN to unlock parent controls and AI usage telemetry.</p>
       </div>
 
-      <form onsubmit="event.preventDefault(); verifyPin();" class="space-y-4">
+      <!-- Locked State: PIN Input Form -->
+      <form id="pinUnlockForm" onsubmit="event.preventDefault(); submitParentPin();" class="space-y-4">
         <div class="space-y-2">
-          <input type="password" id="parentPinInput" maxlength="4" placeholder="Enter PIN (Demo: 1234)" class="w-full text-center tracking-widest text-lg font-mono bg-slate-50 border border-slate-200 rounded-xl py-2 text-slate-900">
-          <p class="text-[10px] text-slate-400">Notice: This is a client-side prototype modal, not secure backend authentication.</p>
+          <input type="password" id="parentPinInput" maxlength="32" placeholder="Enter Parent PIN" autocomplete="current-password" class="w-full text-center tracking-widest text-lg font-mono bg-slate-50 border border-slate-200 rounded-xl py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+          <div id="pinModalError" class="hidden text-xs text-rose-600 font-medium"></div>
+          <p class="text-[10px] text-slate-400">Authenticated session expires after 15 minutes of inactivity.</p>
         </div>
 
         <div class="flex gap-2 pt-1">
-          <button type="button" onclick="closePinModal()" class="flex-1 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs">Cancel</button>
-          <button type="submit" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs">Unlock</button>
+          <button type="button" onclick="closePinModal()" class="flex-1 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors">Cancel</button>
+          <button id="pinSubmitBtn" type="submit" class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors">Unlock</button>
         </div>
       </form>
+
+      <!-- Active State: Session Actions -->
+      <div id="pinUnlockedView" class="hidden space-y-4">
+        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs">
+          <p class="font-bold">Parent Mode is Active</p>
+          <p class="text-[11px] text-emerald-600 mt-0.5">Session authenticated. Telemetry and controls unlocked.</p>
+        </div>
+        <div class="space-y-2 pt-1">
+          <button type="button" onclick="openProfileModal(); closePinModal();" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors">
+            Open Child Profile
+          </button>
+          <button type="button" onclick="logoutParentSession()" class="w-full py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-colors">
+            🔒 Lock Parent Mode
+          </button>
+          <button type="button" onclick="closePinModal()" class="w-full py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1386,26 +1424,186 @@
       if (modal) modal.classList.add('hidden');
     }
 
-    // Prototype PIN Lock Helpers
-    function openPinModal() {
-      var modal = document.getElementById('parentPinModal');
-      if (modal) {
-        document.getElementById('parentPinInput').value = '';
-        modal.classList.remove('hidden');
+    // --- Parent Mode & PIN Authentication Helpers ---
+    var parentSessionToken = null;
+
+    function getParentSessionToken() {
+      if (parentSessionToken) return parentSessionToken;
+      try {
+        var stored = sessionStorage.getItem('kotl_parent_session_token');
+        if (stored) {
+          parentSessionToken = stored;
+          return stored;
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    function setParentSessionToken(token) {
+      parentSessionToken = token || null;
+      try {
+        if (token) {
+          sessionStorage.setItem('kotl_parent_session_token', token);
+        } else {
+          sessionStorage.removeItem('kotl_parent_session_token');
+        }
+      } catch (_) {}
+      updateParentLockUiState(Boolean(token));
+    }
+
+    function updateParentLockUiState(isAuthenticated) {
+      var sidebarIcon = document.getElementById('sidebarParentLockIcon');
+      var sidebarBadge = document.getElementById('sidebarParentLockBadge');
+      if (sidebarIcon) sidebarIcon.innerText = isAuthenticated ? '🔓' : '🔒';
+      if (sidebarBadge) {
+        if (isAuthenticated) {
+          sidebarBadge.innerText = 'Active';
+          sidebarBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0';
+        } else {
+          sidebarBadge.innerText = 'Locked';
+          sidebarBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shrink-0';
+        }
+      }
+
+      var pinForm = document.getElementById('pinUnlockForm');
+      var unlockedView = document.getElementById('pinUnlockedView');
+      var modalIcon = document.getElementById('pinModalIcon');
+      var modalIconBox = document.getElementById('pinModalIconBox');
+      if (pinForm && unlockedView) {
+        if (isAuthenticated) {
+          pinForm.classList.add('hidden');
+          unlockedView.classList.remove('hidden');
+          if (modalIcon) modalIcon.innerText = '🔓';
+          if (modalIconBox) modalIconBox.className = 'w-12 h-12 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center text-xl';
+        } else {
+          pinForm.classList.remove('hidden');
+          unlockedView.classList.add('hidden');
+          if (modalIcon) modalIcon.innerText = '🔒';
+          if (modalIconBox) modalIconBox.className = 'w-12 h-12 mx-auto rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center text-xl';
+        }
       }
     }
+
+    function openPinModal() {
+      var modal = document.getElementById('parentPinModal');
+      var token = getParentSessionToken();
+      updateParentLockUiState(Boolean(token));
+      var pinInput = document.getElementById('parentPinInput');
+      if (pinInput) {
+        pinInput.value = '';
+        pinInput.classList.remove('border-rose-400', 'bg-rose-50');
+      }
+      var errDiv = document.getElementById('pinModalError');
+      if (errDiv) {
+        errDiv.innerText = '';
+        errDiv.classList.add('hidden');
+      }
+      var submitBtn = document.getElementById('pinSubmitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Unlock';
+      }
+      if (modal) modal.classList.remove('hidden');
+      if (!token && pinInput) setTimeout(function() { pinInput.focus(); }, 100);
+    }
+
     function closePinModal() {
       var modal = document.getElementById('parentPinModal');
       if (modal) modal.classList.add('hidden');
     }
-    function verifyPin() {
-      var pin = document.getElementById('parentPinInput').value.trim();
-      if (pin === '1234' || pin === '') {
-        closePinModal();
-        openProfileModal();
-      } else {
-        alert('Demo PIN incorrect. Try 1234 or leave blank.');
+
+    function submitParentPin() {
+      var pinInput = document.getElementById('parentPinInput');
+      var errDiv = document.getElementById('pinModalError');
+      var submitBtn = document.getElementById('pinSubmitBtn');
+      var pin = (pinInput ? pinInput.value : '').trim();
+
+      if (!pin) {
+        if (errDiv) {
+          errDiv.innerText = 'Please enter a PIN';
+          errDiv.classList.remove('hidden');
+        }
+        if (pinInput) {
+          pinInput.classList.add('border-rose-400', 'bg-rose-50');
+          pinInput.focus();
+        }
+        return;
       }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Verifying...';
+      }
+      if (errDiv) errDiv.classList.add('hidden');
+
+      fetch(getBaseApiUrl() + '/api/auth/parent-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pin }),
+      })
+      .then(function(res) {
+        return res.json().then(function(data) {
+          return { ok: res.ok, status: res.status, data: data };
+        });
+      })
+      .then(function(result) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Unlock';
+        }
+        if (pinInput) pinInput.value = '';
+
+        if (result.ok && result.data && result.data.success && result.data.token) {
+          setParentSessionToken(result.data.token);
+          closePinModal();
+          showToast('Parent Mode Unlocked', '🔓');
+          fetchApiUsageData(false);
+          openProfileModal();
+        } else {
+          var msg = (result.data && result.data.error) ? result.data.error : 'Incorrect PIN. Please try again.';
+          if (msg.includes('PARENT_PIN or ADMIN_KEY must be configured')) {
+            msg = 'Server Configuration: PARENT_PIN is not configured in production.';
+          } else if (result.status === 401) {
+            msg = 'Incorrect PIN. Please try again.';
+          }
+          if (errDiv) {
+            errDiv.innerText = msg;
+            errDiv.classList.remove('hidden');
+          }
+          if (pinInput) {
+            pinInput.classList.add('border-rose-400', 'bg-rose-50');
+            pinInput.focus();
+          }
+        }
+      })
+      .catch(function(err) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Unlock';
+        }
+        if (errDiv) {
+          errDiv.innerText = 'Network error verifying PIN. Please try again.';
+          errDiv.classList.remove('hidden');
+        }
+      });
+    }
+
+    function verifyPin() {
+      submitParentPin();
+    }
+
+    function logoutParentSession() {
+      var token = getParentSessionToken();
+      if (token) {
+        fetch(getBaseApiUrl() + '/api/auth/parent-session', {
+          method: 'DELETE',
+          headers: { 'x-parent-session-token': token }
+        }).catch(function() {});
+      }
+      setParentSessionToken(null);
+      closePinModal();
+      showToast('Parent Mode Locked', '🔒');
+      fetchApiUsageData(false);
     }
 
     // Tab Switcher for Top Bar, Desktop Sidebar & Mobile Bottom Navigation
@@ -2444,18 +2642,54 @@
       switchMainTab('cockpit');
       var el = document.getElementById('apiUsageSection');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
+      fetchApiUsageData(false);
     }
 
     function fetchApiUsageData(showToast) {
-      var pin = (document.getElementById('parentPinInput') ? document.getElementById('parentPinInput').value : '') || '';
+      var token = getParentSessionToken();
       var headers = {};
-      if (pin) headers['x-parent-pin'] = pin;
+      if (token) {
+        headers['x-parent-session-token'] = token;
+      }
 
       fetch(getBaseApiUrl() + '/api/usage', { headers: headers })
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          if (!d || !d.success || !d.providers) return;
+        .then(function(r) {
+          return r.json().then(function(d) {
+            return { ok: r.ok, status: r.status, data: d };
+          });
+        })
+        .then(function(res) {
+          var banner = document.getElementById('usageAuthBanner');
+          var liveBadge = document.getElementById('usageLiveBadge');
+          var updateLabel = document.getElementById('usageLastUpdatedLabel');
+
+          if (!res.ok || !res.data || !res.data.success) {
+            if (res.status === 401) {
+              if (token) {
+                setParentSessionToken(null);
+              }
+              if (banner) banner.classList.remove('hidden');
+              if (liveBadge) {
+                liveBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1';
+                liveBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Protected in Production';
+              }
+              if (updateLabel) updateLabel.innerText = 'Auth Required';
+              if (showToast) {
+                showToast('Parent PIN required to view usage telemetry', '🔒');
+              }
+            }
+            return;
+          }
+
+          if (banner) banner.classList.add('hidden');
+          if (liveBadge) {
+            liveBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1';
+            liveBadge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live Tracked';
+          }
+
+          var d = res.data;
           var p = d.providers;
+          if (!p) return;
 
           // Timestamp
           var updateLabel = document.getElementById('usageLastUpdatedLabel');
@@ -2541,6 +2775,8 @@
       loadDeviceState();
       startDeviceStatePolling();
       loadChildReport(false);
+      updateParentLockUiState(Boolean(getParentSessionToken()));
+      fetchApiUsageData(false);
     });
   </script>
 
