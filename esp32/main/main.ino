@@ -154,6 +154,19 @@ static volatile bool s_useWebSocketForCurrentTurn = false;
 static const char *s_currentTurnSource = "voice";
 static volatile bool s_streamPrebuffering = true;
 
+// Diagnostic Turn Latency Monotonic Timers (Phase 2)
+static volatile uint32_t s_turnSpeechEndMs = 0;
+static volatile uint32_t s_turnStopSentMs = 0;
+static volatile uint32_t s_turnFirstChunkRxMs = 0;
+static volatile bool s_turnFirstChunkLogged = false;
+static volatile uint32_t s_turnPlaybackStartMs = 0;
+static volatile bool s_turnPlaybackLogged = false;
+static String s_turnId = "";
+static volatile uint32_t s_turnServerPrepMs = 0;
+static volatile uint32_t s_turnSttMs = 0;
+static volatile uint32_t s_turnLlmMs = 0;
+static volatile uint32_t s_turnTtsMs = 0;
+
 struct AudioPlaybackState
 {
   PlaybackSource activeSource;
@@ -363,6 +376,7 @@ int streamHttpToFileWithYield(HTTPClient &http, File &file);
 bool parseAudioUploadResponse(const String &payload, bool *ttsReady, String *ttsUrl, String *transcript, String *assistantReply, String *turnStatus, String *sttError, String *assistantError, String *ttsError);
 bool extractJsonBool(const String &payload, const char *key, bool *value);
 bool extractJsonString(const String &payload, const char *key, String *value);
+bool extractJsonUint32(const String &payload, const char *key, uint32_t *value);
 String resolveBackendUrl(const String &relativePath);
 String urlDecode(const String &input);
 bool downloadTtsAudio(const String &ttsUrl);
@@ -563,6 +577,28 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         }
         else if (msgType == "tts_start")
         {
+          const uint32_t ttsStartRxMs = millis();
+          extractJsonString(msg, "turn_id", &s_turnId);
+          extractJsonUint32(msg, "server_prep_ms", (uint32_t *)&s_turnServerPrepMs);
+          extractJsonUint32(msg, "stt_ms", (uint32_t *)&s_turnSttMs);
+          extractJsonUint32(msg, "llm_ms", (uint32_t *)&s_turnLlmMs);
+          extractJsonUint32(msg, "tts_ms", (uint32_t *)&s_turnTtsMs);
+
+          const uint32_t flightMs = (s_turnStopSentMs > 0 && ttsStartRxMs >= s_turnStopSentMs) ? (ttsStartRxMs - s_turnStopSentMs) : 0;
+          if (s_turnServerPrepMs > 0)
+          {
+            Serial.printf("⚡ [Latency%s] tts_start RX: %u ms after stop_listen sent [Server prep: %u ms (stt=%u, llm=%u, tts=%u)]\n",
+                          s_turnId.length() > 0 ? (" " + s_turnId).c_str() : "",
+                          (unsigned int)flightMs,
+                          (unsigned int)s_turnServerPrepMs,
+                          (unsigned int)s_turnSttMs,
+                          (unsigned int)s_turnLlmMs,
+                          (unsigned int)s_turnTtsMs);
+          }
+          else
+          {
+            Serial.printf("⚡ [Latency] tts_start RX: %u ms after stop_listen sent\n", (unsigned int)flightMs);
+          }
           Serial.println("⚡ [WebSocket] TTS Audio Stream starting!");
           if (s_audioStreamBuffer)
           {
@@ -602,6 +638,15 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     break;
 
   case WStype_BIN:
+    if (s_turnStopSentMs > 0 && !s_turnFirstChunkLogged)
+    {
+      s_turnFirstChunkRxMs = millis();
+      s_turnFirstChunkLogged = true;
+      const uint32_t chunkWaitMs = (s_turnFirstChunkRxMs >= s_turnStopSentMs) ? (s_turnFirstChunkRxMs - s_turnStopSentMs) : 0;
+      Serial.printf("[Latency%s] First audio chunk RX: %u ms after stop_listen sent\n",
+                    s_turnId.length() > 0 ? (" " + s_turnId).c_str() : "",
+                    (unsigned int)chunkWaitMs);
+    }
     if (s_audioStreamBuffer && length > 0)
     {
       xStreamBufferSend(s_audioStreamBuffer, payload, length, pdMS_TO_TICKS(50));
@@ -1216,6 +1261,17 @@ void clearVoiceTurnRuntimeState()
   micState.soundActive = false;
   s_wsStreamTtsActive = false;
   s_wsStreamTtsFinished = false;
+  s_turnSpeechEndMs = 0;
+  s_turnStopSentMs = 0;
+  s_turnFirstChunkRxMs = 0;
+  s_turnFirstChunkLogged = false;
+  s_turnPlaybackStartMs = 0;
+  s_turnPlaybackLogged = false;
+  s_turnId = "";
+  s_turnServerPrepMs = 0;
+  s_turnSttMs = 0;
+  s_turnLlmMs = 0;
+  s_turnTtsMs = 0;
   freeAudioCaptureBuffer();
 }
 
@@ -1958,6 +2014,24 @@ void fillAudioChunk()
         return;
       }
       s_streamPrebuffering = false;
+
+      if (s_turnSpeechEndMs > 0 && !s_turnPlaybackLogged)
+      {
+        s_turnPlaybackStartMs = millis();
+        s_turnPlaybackLogged = true;
+
+        const uint32_t totalAudibleDelayMs = (s_turnPlaybackStartMs >= s_turnSpeechEndMs) ? (s_turnPlaybackStartMs - s_turnSpeechEndMs) : 0;
+        const uint32_t vadSilenceMs = (s_turnStopSentMs >= s_turnSpeechEndMs) ? (s_turnStopSentMs - s_turnSpeechEndMs) : 0;
+        const uint32_t netServerWaitMs = (s_turnFirstChunkRxMs >= s_turnStopSentMs && s_turnStopSentMs > 0) ? (s_turnFirstChunkRxMs - s_turnStopSentMs) : 0;
+        const uint32_t prebufferFillMs = (s_turnPlaybackStartMs >= s_turnFirstChunkRxMs && s_turnFirstChunkRxMs > 0) ? (s_turnPlaybackStartMs - s_turnFirstChunkRxMs) : 0;
+
+        Serial.printf("[Latency%s] >>> AUDIBLE PLAYBACK STARTED <<< Total: %u ms [VAD silence: %u ms | Net+Server: %u ms | DAC pre-buffer: %u ms]\n",
+                      s_turnId.length() > 0 ? (" " + s_turnId).c_str() : "",
+                      (unsigned int)totalAudibleDelayMs,
+                      (unsigned int)vadSilenceMs,
+                      (unsigned int)netServerWaitMs,
+                      (unsigned int)prebufferFillMs);
+      }
     }
 
     int16_t monoBlock[kI2SChunkFrames];
@@ -2532,6 +2606,16 @@ void performSynchronousAudioCapture()
     // 2. Dynamic end-of-speech silence timeout: User finished talking!
     if (voiceDetected && (nowMs - voiceStartMs >= kVadMinSpeechMs) && (nowMs - lastVoiceMs >= kVadTrailingSilenceMs))
     {
+      s_turnSpeechEndMs = lastVoiceMs;
+      s_turnFirstChunkRxMs = 0;
+      s_turnFirstChunkLogged = false;
+      s_turnPlaybackStartMs = 0;
+      s_turnPlaybackLogged = false;
+      s_turnId = "";
+      s_turnServerPrepMs = 0;
+      s_turnSttMs = 0;
+      s_turnLlmMs = 0;
+      s_turnTtsMs = 0;
       Serial.printf("[VAD] End of speech detected (%u ms silence). Utterance duration: %u ms.\n",
                     (unsigned int)(nowMs - lastVoiceMs), (unsigned int)(nowMs - voiceStartMs));
       break;
@@ -2567,7 +2651,9 @@ void performSynchronousAudioCapture()
 
   if (s_useWebSocketForCurrentTurn)
   {
-    Serial.println("⚡ [WebSocket] Speech stopped -> Notified server via stop_listen! Instant turn processing...");
+    s_turnStopSentMs = millis();
+    const uint32_t vadDelay = (s_turnSpeechEndMs > 0 && s_turnStopSentMs >= s_turnSpeechEndMs) ? (s_turnStopSentMs - s_turnSpeechEndMs) : 0;
+    Serial.printf("⚡ [WebSocket] Speech stopped -> Notified server via stop_listen! (VAD trailing wait: %u ms)\n", (unsigned int)vadDelay);
     wsSendTxtSafe("{\"type\":\"stop_listen\"}");
     setVoiceTurnState(VOICE_THINKING);
     // 0s upload wait! Core 0 WebSocket task handles incoming TTS chunks.
@@ -3852,6 +3938,25 @@ bool parseAudioUploadResponse(const String &payload, bool *ttsReady, String *tts
   }
 
   return hasReady;
+}
+
+bool extractJsonUint32(const String &payload, const char *key, uint32_t *value)
+{
+  const String pattern = String("\"") + key + "\":";
+  const int keyIndex = payload.indexOf(pattern);
+  if (keyIndex < 0) return false;
+
+  int valueIndex = keyIndex + pattern.length();
+  while (valueIndex < payload.length() && payload.charAt(valueIndex) == ' ') ++valueIndex;
+
+  if (valueIndex < payload.length() && payload.charAt(valueIndex) == '"') ++valueIndex;
+
+  int endIndex = valueIndex;
+  while (endIndex < payload.length() && isDigit(payload.charAt(endIndex))) ++endIndex;
+
+  if (endIndex == valueIndex) return false;
+  *value = (uint32_t)payload.substring(valueIndex, endIndex).toInt();
+  return true;
 }
 
 bool extractJsonBool(const String &payload, const char *key, bool *value)

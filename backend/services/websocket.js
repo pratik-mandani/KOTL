@@ -361,22 +361,25 @@ function initWebSocketServer(httpServer, options = {}) {
             break;
 
           case "stop_listen":
+            const tStopListen = process.hrtime.bigint();
+            const turnId = `turn-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
             touchRobotHeartbeat(false);
             const audioRate = ws.sampleRate || 16000;
             console.log(
-              `[WebSocket ${ws.deviceId || "client"}] Listening stopped. Received ${ws.totalAudioBytes} bytes (${(
+              `[WebSocket ${ws.deviceId || "client"}][${turnId}] Listening stopped. Received ${ws.totalAudioBytes} bytes (${(
                 ws.totalAudioBytes / (audioRate * 2)
               ).toFixed(2)}s)`
             );
             setState("THINKING");
 
             if (ws.audioChunks.length === 0 || ws.totalAudioBytes < 1600) {
-              console.log(`[WebSocket ${ws.deviceId || "client"}] Audio too short, ignoring.`);
+              console.log(`[WebSocket ${ws.deviceId || "client"}][${turnId}] Audio too short, ignoring.`);
               setState("IDLE");
               sendJson({
                 type: "warning",
                 status: "insufficient_audio",
                 message: "Audio too short or empty",
+                turn_id: turnId,
               });
               return;
             }
@@ -386,8 +389,8 @@ function initWebSocketServer(httpServer, options = {}) {
             ws.audioChunks = [];
             ws.totalAudioBytes = 0;
 
-            // Process turn asynchronously
-            await handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState);
+            // Process turn asynchronously with monotonic timing context
+            await handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState, { tStopListen, turnId });
             break;
 
           case "cancel":
@@ -460,8 +463,11 @@ function initWebSocketServer(httpServer, options = {}) {
 /**
  * Executes a full Voice Turn: STT -> LLM -> TTS -> Audio Stream out
  */
-async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState) {
+async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState, timingContext = {}) {
   const turnStartTime = Date.now();
+  const tStopListen = timingContext.tStopListen || process.hrtime.bigint();
+  const turnId = timingContext.turnId || `turn-${Date.now().toString(36)}`;
+  const nsToMs = (ns) => Number(ns) / 1e6;
   const tempWavPath = path.join(os.tmpdir(), `ws-turn-${Date.now()}.wav`);
 
   try {
@@ -476,11 +482,12 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     }
     const avgAmp = numSamples > 0 ? Math.floor(sumAbs / numSamples) : 0;
     if (peakSample < 80 || avgAmp < 10) {
-      console.log(`[WebSocket ${ws.deviceId}] Sub-threshold silence/noise (Peak: ${peakSample} < 80, Avg: ${avgAmp}), dismissing silently.`);
+      console.log(`[WebSocket ${ws.deviceId}][${turnId}] Sub-threshold silence/noise (Peak: ${peakSample} < 80, Avg: ${avgAmp}), dismissing silently.`);
       sendJson({
         type: "diagnostic",
         status: "insufficient_audio",
         reason: `Sub-threshold audio energy (Peak: ${peakSample} < 80)`,
+        turn_id: turnId,
       });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
@@ -488,24 +495,32 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     }
 
     // 1. Write PCM buffer to temporary 16kHz WAV file for STT
+    const tWavStart = process.hrtime.bigint();
     writePcm16MonoWav({
       wavPath: tempWavPath,
       sampleRate: ws.sampleRate || 16000,
       audioDataBytes: rawPcmBuffer,
     });
+    const tWavEnd = process.hrtime.bigint();
+    const wavPrepMs = nsToMs(tWavEnd - tWavStart);
 
     // 2. Transcribe Audio (Groq Whisper)
-    console.log(`[WebSocket ${ws.deviceId}] Transcribing audio...`);
+    console.log(`[WebSocket ${ws.deviceId}][${turnId}] Transcribing audio...`);
+    const tSttStart = process.hrtime.bigint();
     const sttResult = await transcribeAudio(tempWavPath);
+    const tSttEnd = process.hrtime.bigint();
+    const sttMs = nsToMs(tSttEnd - tSttStart);
+
     if (!sttResult.success) {
       const { category, safeReason } = categorizeAndSanitizeError(sttResult.error);
-      console.warn(`[WebSocket ${ws.deviceId}] STT error [${category}]: ${safeReason}`);
+      console.warn(`[WebSocket ${ws.deviceId}][${turnId}] STT error [${category}] after ${sttMs.toFixed(1)}ms: ${safeReason}`);
       sendJson({
         type: "transcript",
         text: "",
         status: "stt_error",
         error_category: category,
         reason: safeReason,
+        turn_id: turnId,
       });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
@@ -515,13 +530,14 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
 
     if (!transcript || isBlacklistedNoiseTranscript(transcript)) {
       const reasonLabel = !transcript ? "Empty transcript from STT" : "Filtered blacklisted noise token";
-      console.log(`[WebSocket ${ws.deviceId}] Empty or noise transcript ("${transcript}"), dismissing silently without TTS. [Reason: ${reasonLabel}]`);
+      console.log(`[WebSocket ${ws.deviceId}][${turnId}] Empty or noise transcript after ${sttMs.toFixed(1)}ms, dismissing silently without TTS. [Reason: ${reasonLabel}]`);
       sendJson({
         type: "transcript",
         text: "",
         status: "empty_or_noise",
         reason: reasonLabel,
         raw_transcript: transcript,
+        turn_id: turnId,
       });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
@@ -541,13 +557,14 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       consecutiveVoiceTurns: currentFollowUpCount,
       maxConsecutiveVoiceTurns: 3,
     })) {
-      console.log(`[WebSocket ${ws.deviceId}] Background noise/music rejected without wake word: "${transcript}". Staying silent. [Reason: Cold-idle classifier rejection]`);
+      console.log(`[WebSocket ${ws.deviceId}][${turnId}] Background speech rejected without wake-word after ${sttMs.toFixed(1)}ms. [Reason: Cold-idle classifier rejection]`);
       sendJson({
         type: "transcript",
         text: "",
         status: "rejected_cold_idle",
         reason: "Cold-idle speech without wake-word or inquiry starter",
         raw_transcript: transcript,
+        turn_id: turnId,
       });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
@@ -573,27 +590,32 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       type: "transcript",
       text: transcript,
       status: "accepted",
-      duration_ms: Date.now() - turnStartTime,
+      duration_ms: Math.round(sttMs),
+      turn_id: turnId,
     });
-    console.log(`[WebSocket ${ws.deviceId}] Transcript: "${transcript}"`);
+    console.log(`[WebSocket ${ws.deviceId}][${turnId}] Transcript accepted (STT took ${sttMs.toFixed(1)}ms)`);
 
     // 3. Generate Assistant Reply (Gemini 2.5 Flash)
-    console.log(`[WebSocket ${ws.deviceId}] Asking Gemini...`);
+    console.log(`[WebSocket ${ws.deviceId}][${turnId}] Asking Gemini...`);
+    const tLlmStart = process.hrtime.bigint();
     const assistantResult = await generateAssistantReply({
       transcript: transcript,
       prompt: transcript,
       sessionId: ws.sessionId,
     });
+    const tLlmEnd = process.hrtime.bigint();
+    const llmMs = nsToMs(tLlmEnd - tLlmStart);
     const replyText = (assistantResult.reply || "").trim();
 
     if (!replyText) {
       const { category, safeReason } = categorizeAndSanitizeError(assistantResult.error);
-      console.log(`[WebSocket ${ws.deviceId}] Assistant reply empty [${category}]: ${safeReason}, returning to idle without speaking.`);
+      console.log(`[WebSocket ${ws.deviceId}][${turnId}] Assistant reply empty [${category}] after ${llmMs.toFixed(1)}ms: ${safeReason}, returning to idle.`);
       sendJson({
         type: "diagnostic",
         status: "llm_error",
         error_category: category,
         reason: safeReason,
+        turn_id: turnId,
       });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
@@ -604,6 +626,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     sendJson({
       type: "eye_expression",
       value: eyeExpr,
+      turn_id: turnId,
     });
 
     sendJson({
@@ -612,25 +635,31 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       eye_expression: eyeExpr,
       provider: assistantResult.provider,
       model: assistantResult.model,
+      turn_id: turnId,
     });
-    console.log(`[WebSocket ${ws.deviceId}] Reply: "${replyText}" (Eye: ${eyeExpr})`);
+    console.log(`[WebSocket ${ws.deviceId}][${turnId}] Reply ready (LLM took ${llmMs.toFixed(1)}ms, Eye: ${eyeExpr})`);
 
     try {
       extractMemoryFromDialogue(transcript, replyText);
     } catch (memErr) {
-      console.warn(`[WebSocket Memory] Error extracting profile memory:`, memErr.message);
+      console.warn(`[WebSocket Memory][${turnId}] Error extracting profile memory:`, memErr.message);
     }
 
     // 4. Synthesize and Stream Speech (robust single-connection per turn)
-    console.log(`[WebSocket ${ws.deviceId}] Synthesizing speech for reply: "${replyText}"...`);
+    console.log(`[WebSocket ${ws.deviceId}][${turnId}] Synthesizing speech for reply...`);
+    const tTtsStart = process.hrtime.bigint();
     const pcmAudio = await synthesizeSpeechPcm(replyText);
+    const tTtsEnd = process.hrtime.bigint();
+    const ttsMs = nsToMs(tTtsEnd - tTtsStart);
+    const totalPrepMs = nsToMs(tTtsEnd - tStopListen);
 
     if (!pcmAudio || pcmAudio.length === 0) {
-      console.warn(`[WebSocket ${ws.deviceId}] TTS produced empty audio, returning to idle.`);
+      console.warn(`[WebSocket ${ws.deviceId}][${turnId}] TTS produced empty audio after ${ttsMs.toFixed(1)}ms, returning to idle.`);
       sendJson({
         type: "diagnostic",
         status: "tts_error",
         reason: "TTS synthesis produced empty audio",
+        turn_id: turnId,
       });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
@@ -649,17 +678,34 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
     sendJson({
       type: "tts_start",
       sample_rate: NORMALIZED_SAMPLE_RATE,
+      turn_id: turnId,
+      server_prep_ms: Math.round(totalPrepMs),
+      stt_ms: Math.round(sttMs),
+      llm_ms: Math.round(llmMs),
+      tts_ms: Math.round(ttsMs),
     });
     console.log(
-      `⚡ [WebSocket ${ws.deviceId}] Speech ready in ${Date.now() - turnStartTime}ms! Streaming ${pcmAudio.length} bytes audio...`
+      `⚡ [WebSocket ${ws.deviceId}][${turnId}] Speech ready in ${totalPrepMs.toFixed(1)}ms (WAV: ${wavPrepMs.toFixed(1)}ms, STT: ${sttMs.toFixed(1)}ms, LLM: ${llmMs.toFixed(1)}ms, TTS: ${ttsMs.toFixed(1)}ms). Streaming ${pcmAudio.length} bytes audio...`
     );
 
     let offset = 0;
     let totalStreamedBytes = 0;
+    let tFirstChunkSent = null;
+    let firstChunkTxMs = null;
+
     while (offset < pcmAudio.length && ws.readyState === WebSocket.OPEN) {
       const nextOffset = Math.min(offset + AUDIO_CHUNK_STREAM_SIZE, pcmAudio.length);
       const chunk = pcmAudio.subarray(offset, nextOffset);
       sendBinary(chunk);
+
+      if (tFirstChunkSent === null) {
+        tFirstChunkSent = process.hrtime.bigint();
+        firstChunkTxMs = nsToMs(tFirstChunkSent - tStopListen);
+        console.log(
+          `[Latency][${turnId}] First audio chunk sent to WebSocket: ${firstChunkTxMs.toFixed(1)}ms after stop_listen`
+        );
+      }
+
       offset = nextOffset;
       totalStreamedBytes += chunk.length;
 
@@ -670,11 +716,16 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
+    console.log(
+      `[Latency][${turnId}] Backend breakdown: wav=${wavPrepMs.toFixed(1)}ms | stt=${sttMs.toFixed(1)}ms | llm=${llmMs.toFixed(1)}ms | tts=${ttsMs.toFixed(1)}ms | total_prep=${totalPrepMs.toFixed(1)}ms | first_chunk_tx=${(firstChunkTxMs ?? totalPrepMs).toFixed(1)}ms`
+    );
+
     // Finish streaming
     sendJson({
       type: "tts_end",
       total_bytes: totalStreamedBytes,
       total_turn_time_ms: Date.now() - turnStartTime,
+      turn_id: turnId,
     });
     ws.lastTurnCompletedAt = Date.now();
     console.log(
