@@ -1301,7 +1301,10 @@
     }
 
     // Dynamic Growth Metrics Loading
+    var isMetricsFetching = false;
     function loadGrowthMetrics() {
+      if (isMetricsFetching) return;
+      isMetricsFetching = true;
       var url = getBaseApiUrl() + '/api/growth/metrics' + (isDemoRequested() ? '?demo=1' : '');
       fetch(url)
       .then(function(r) { return r.json(); })
@@ -1346,8 +1349,12 @@
             }
           }
         }
+        isMetricsFetching = false;
       })
-      .catch(function() {});
+      .catch(function(err) {
+        isMetricsFetching = false;
+        console.warn("[Metrics Fetch Error]:", err ? err.message : "error");
+      });
     }
 
     // Dynamic Habits Loading
@@ -1540,7 +1547,10 @@
     }
 
     // Day-Wise Conversation Turns Loading
+    var isHistoryFetching = false;
     function loadDayWiseHistory() {
+      if (isHistoryFetching) return;
+      isHistoryFetching = true;
       var url = getBaseApiUrl() + '/api/history/daywise' + (isDemoRequested() ? '?demo=1' : '');
       fetch(url)
       .then(function(r) { return r.json(); })
@@ -1553,8 +1563,12 @@
           renderDayPills();
           renderChatBubbles();
         }
+        isHistoryFetching = false;
       })
-      .catch(function() {});
+      .catch(function(err) {
+        isHistoryFetching = false;
+        console.warn("[History Fetch Error]:", err ? err.message : "error");
+      });
     }
 
     function renderDayPills() {
@@ -2166,12 +2180,31 @@
       });
     }
 
+    var dashboardSyncPollTimer = null;
+    function pollDashboardSync() {
+      loadGrowthMetrics();
+      loadDayWiseHistory();
+    }
+
     function startDeviceStatePolling() {
       if (deviceStatePollTimer) clearInterval(deviceStatePollTimer);
       deviceStatePollTimer = setInterval(function() {
         loadDeviceState();
       }, 15000);
+
+      if (dashboardSyncPollTimer) clearInterval(dashboardSyncPollTimer);
+      dashboardSyncPollTimer = setInterval(function() {
+        pollDashboardSync();
+      }, 30000);
     }
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        loadDeviceState();
+        loadGrowthMetrics();
+        loadDayWiseHistory();
+      }
+    });
 
     // Initialize all dynamic data on page load
     window.addEventListener('DOMContentLoaded', function() {

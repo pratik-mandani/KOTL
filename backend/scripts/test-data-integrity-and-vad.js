@@ -106,25 +106,107 @@ runTest("WebSocket handler aborts turn early on empty or noise transcript withou
   );
 });
 
-runTest("shouldRejectAudioTurn rejects ordinary two-word background music lyrics on cold start", () => {
-  const lyrics = ["baby girl", "dancing tonight", "love me", "hold on", "never know", "all night"];
-  for (const l of lyrics) {
-    const rejected = shouldRejectAudioTurn({ transcript: l, isTouchOrButton: false, isSessionActive: false });
-    assert.strictEqual(rejected, true, `Two-word lyric '${l}' must be rejected on cold start`);
+runTest("shouldRejectAudioTurn rejects cold-idle false triggers ('When did it.', 'I\'m going to go to the side.', 'Yeah, yeah, yeah.')", () => {
+  const coldFalseTriggers = [
+    "When did it.",
+    "When he did it.",
+    "I'm going to go to the side.",
+    "Yeah, yeah, yeah.",
+    "yeah yeah yeah",
+    "baby girl dancing tonight",
+    "all night long"
+  ];
+  for (const t of coldFalseTriggers) {
+    const rejected = shouldRejectAudioTurn({ transcript: t, isTouchOrButton: false, isSessionActive: false });
+    assert.strictEqual(rejected, true, `Cold idle false-trigger '${t}' must be rejected`);
   }
 });
 
-runTest("shouldRejectAudioTurn evaluates song lyrics containing questions (text limitation documented)", () => {
-  // A sung lyric that is syntactically a question passes text filtering because pure text has no acoustic pitch signals.
-  // Hardware acoustic VAD (spike threshold & debounce) and Whisper [music] tags provide physical protection.
-  const questionLyrics = ["Where are you now?", "Do you love me?"];
-  for (const q of questionLyrics) {
-    const rejected = shouldRejectAudioTurn({ transcript: q, isTouchOrButton: false, isSessionActive: false });
-    assert.strictEqual(rejected, false, `Question lyric '${q}' passes text-layer question filter as expected`);
+runTest("shouldRejectAudioTurn accepts valid wake-word and inquiry ('Hey KOTL, what is the sun?')", () => {
+  const validWakeWordTurns = [
+    "Hey KOTL, what is the sun?",
+    "Hello KOTL, tell me a story",
+    "KOTL, why is the sky blue?",
+    "Hey KOTL",
+    "Hello KOTL",
+    "hey kotil",
+    "hello bottle"
+  ];
+  for (const w of validWakeWordTurns) {
+    const rejected = shouldRejectAudioTurn({ transcript: w, isTouchOrButton: false, isSessionActive: false });
+    assert.strictEqual(rejected, false, `Valid wake-word turn '${w}' must be accepted`);
   }
-  // But if Whisper outputs musical notation, it is rejected immediately
-  const musicQuestion = shouldRejectAudioTurn({ transcript: "♪ Where are you now? ♪", isTouchOrButton: false, isSessionActive: false });
-  assert.strictEqual(musicQuestion, true, "Musical notation question must be rejected");
+});
+
+runTest("shouldRejectAudioTurn accepts explicit touch/button activation even without wake-word", () => {
+  const touchTurns = [
+    "What is the sun?",
+    "Why is it hot?",
+    "Tell me a story",
+    "couch",
+    "I'm going to go to the side."
+  ];
+  for (const t of touchTurns) {
+    const rejected = shouldRejectAudioTurn({ transcript: t, isTouchOrButton: true, isSessionActive: false });
+    assert.strictEqual(rejected, false, `Touch/button-initiated turn '${t}' must be accepted`);
+  }
+});
+
+runTest("shouldRejectAudioTurn accepts valid follow-ups inside active window & enforces max 3 turns limit", () => {
+  // Inside 10s active window (turns 1 and 2):
+  assert.strictEqual(
+    shouldRejectAudioTurn({ transcript: "Why is it hot?", isTouchOrButton: false, isSessionActive: true, consecutiveVoiceTurns: 1 }),
+    false,
+    "Follow-up turn 1 within active window must be accepted"
+  );
+  assert.strictEqual(
+    shouldRejectAudioTurn({ transcript: "And how big is it?", isTouchOrButton: false, isSessionActive: true, consecutiveVoiceTurns: 2 }),
+    false,
+    "Follow-up turn 2 within active window must be accepted"
+  );
+
+  // Follow-up limit reached (consecutiveVoiceTurns >= 3):
+  assert.strictEqual(
+    shouldRejectAudioTurn({ transcript: "And why does it shine?", isTouchOrButton: false, isSessionActive: true, consecutiveVoiceTurns: 3, maxConsecutiveVoiceTurns: 3 }),
+    true,
+    "Follow-up turn 4 exceeding limit without renewed wake-word must be rejected to prevent infinite background loops"
+  );
+
+  // If child renews wake-word on turn 4, it is accepted:
+  assert.strictEqual(
+    shouldRejectAudioTurn({ transcript: "Hey KOTL, why does it shine?", isTouchOrButton: false, isSessionActive: true, consecutiveVoiceTurns: 3 }),
+    false,
+    "Renewed wake-word turn must be accepted even after follow-up limit"
+  );
+});
+
+runTest("shouldRejectAudioTurn rejects background music lyrics and repetitive filler tokens", () => {
+  const musicFillers = [
+    "♪ Where are you now? ♪",
+    "♫ dancing in the dark ♫",
+    "[music] la la la",
+    "yeah yeah yeah",
+    "uh huh uh huh",
+    "la la la",
+    "side side side"
+  ];
+  for (const m of musicFillers) {
+    const rejected = shouldRejectAudioTurn({ transcript: m, isTouchOrButton: false, isSessionActive: true });
+    assert.strictEqual(rejected, true, `Music/filler token '${m}' must be rejected even during active session`);
+  }
+});
+
+runTest("shouldRejectAudioTurn accepts Gujarati speech with greetings or wake-word", () => {
+  const gujaratiTurns = [
+    "Kem cho KOTL, mane vaarta kaho",
+    "KOTL, tame kem cho?",
+    "kem cho",
+    "hello KOTL"
+  ];
+  for (const g of gujaratiTurns) {
+    const rejected = shouldRejectAudioTurn({ transcript: g, isTouchOrButton: false, isSessionActive: false });
+    assert.strictEqual(rejected, false, `Gujarati turn with wake-word/greeting '${g}' must be accepted`);
+  }
 });
 
 runTest("shouldRejectAudioTurn rejects the words 'hotel' or 'bottle' in unrelated speech", () => {
@@ -141,62 +223,6 @@ runTest("shouldRejectAudioTurn rejects the words 'hotel' or 'bottle' in unrelate
   }
 });
 
-runTest("shouldRejectAudioTurn accepts 'Hey KOTL' and common Whisper misspellings", () => {
-  const wakeVariations = [
-    "Hey KOTL",
-    "Hello KOTL",
-    "hey kotl",
-    "hey cotte",
-    "hello kotil",
-    "hey hotel",
-    "hello bottle"
-  ];
-  for (const w of wakeVariations) {
-    const rejected = shouldRejectAudioTurn({ transcript: w, isTouchOrButton: false, isSessionActive: false });
-    assert.strictEqual(rejected, false, `Wake-word variation '${w}' must be accepted`);
-  }
-});
-
-runTest("shouldRejectAudioTurn accepts valid short conversational phrases during an active session", () => {
-  const activeAnswers = ["Yes", "No", "Blue", "Why", "Thank you", "Ten", "Star", "Red", "Sure"];
-  for (const a of activeAnswers) {
-    const rejected = shouldRejectAudioTurn({ transcript: a, isTouchOrButton: false, isSessionActive: true });
-    assert.strictEqual(rejected, false, `Active dialogue answer '${a}' must be accepted`);
-  }
-});
-
-runTest("shouldRejectAudioTurn accepts Gujarati and mixed Gujarati/English speech", () => {
-  const gujaratiTurns = [
-    "Kem cho KOTL, mane vaarta kaho",
-    "KOTL, tame kem cho?",
-    "Mara drawing joyu?",
-    "મને વાર્તા કહો",
-    "તમે કેમ છો?",
-    "Mane vaarta kaho"
-  ];
-  for (const g of gujaratiTurns) {
-    const rejected = shouldRejectAudioTurn({ transcript: g, isTouchOrButton: false, isSessionActive: false });
-    assert.strictEqual(rejected, false, `Gujarati turn '${g}' must be accepted`);
-  }
-});
-
-runTest("shouldRejectAudioTurn enforces timeout & drops cold unprompted 1-word noises unless touch activated", () => {
-  // Cold single word without wake-word/question is rejected as room noise
-  const coldNoise = shouldRejectAudioTurn({ transcript: "couch", isTouchOrButton: false, isSessionActive: false });
-  assert.strictEqual(coldNoise, true, "Cold isolated grunt 'couch' should be rejected as ambient noise");
-
-  // Same word initiated with touch/button is accepted
-  const touchWord = shouldRejectAudioTurn({ transcript: "couch", isTouchOrButton: true, isSessionActive: false });
-  assert.strictEqual(touchWord, false, "Touch-initiated word must be accepted");
-
-  // Music symbols rejected even if session was active
-  const musicSymbol = shouldRejectAudioTurn({ transcript: "♪ music ♪", isTouchOrButton: false, isSessionActive: true });
-  assert.strictEqual(musicSymbol, true, "Music symbols must always be rejected");
-});
-
-// -----------------------------------------------------------------
-// 4. Production Seed-Data Isolation
-// -----------------------------------------------------------------
 console.log("\n>>> [4/5] Production Seed-Data Isolation");
 runTest("getDayWiseHistory returns only authentic days in production mode (demo: false)", () => {
   const testSessionId = `test-empty-session-${Date.now()}`;

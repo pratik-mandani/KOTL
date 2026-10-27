@@ -32,52 +32,62 @@ function splitIntoSentences(text) {
   return parts.map((s) => s.trim()).filter((s) => s.length > 0);
 }
 
-function shouldRejectAudioTurn({ transcript, isTouchOrButton = false, isSessionActive = false }) {
+function shouldRejectAudioTurn({
+  transcript,
+  isTouchOrButton = false,
+  isSessionActive = false,
+  consecutiveVoiceTurns = 0,
+  maxConsecutiveVoiceTurns = 3,
+}) {
   if (!transcript || typeof transcript !== "string") return true;
 
   const clean = transcript.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
   const words = clean.split(/\s+/).filter(Boolean);
   if (words.length === 0) return true;
 
-  const isMusicSymbol = transcript.includes("♪") || transcript.includes("🎵") || /\[music\]|\(music\)/i.test(transcript);
+  // 1. Music symbol or bracketed music tokens
+  const isMusicSymbol = /[♪♫♬♩🎵🎶]/.test(transcript) || /\[music\]|\(music\)/i.test(transcript);
   if (isMusicSymbol) return true;
 
-  // Touch or button always accepted
+  // 2. Reject vocal filler and repetitive noise-like transcripts (e.g., "yeah yeah yeah", "la la la")
+  if (words.length >= 2) {
+    const FILLER_TOKENS = ["yeah", "uh", "um", "oh", "ah", "la", "na", "da", "mm", "hmm", "ha", "huh"];
+    const allFillers = words.every((w) => FILLER_TOKENS.includes(w));
+    if (allFillers) return true;
+
+    // Repetitive identical word loops of 3+ words (e.g. "side side side")
+    if (words.length >= 3 && words.every((w) => w === words[0])) return true;
+  }
+
+  // 3. Touch or button always accepted (explicit physical intent by child/parent)
   if (isTouchOrButton) return false;
 
-  // Active dialogue window (turn completed < 30s) accepts conversational responses
-  if (isSessionActive) return false;
-
-  // COLD-START REJECTION FILTER
-  // 1. Direct Neologism Wake-Words for KOTL (discrete word boundary)
+  // 4. Primary Wake-Words for KOTL (discrete word boundary)
   const PRIMARY_WAKE_WORDS = ["kotl", "kotil", "cotte", "cuttle", "cotel", "coatl"];
   const hasPrimaryWakeWord = words.some((w) => PRIMARY_WAKE_WORDS.includes(w));
   if (hasPrimaryWakeWord) return false;
 
-  // 2. Homophone Wake-Words ('hotel', 'bottle', 'turtle') - ONLY when paired with greetings
+  // 5. Homophone Wake-Words ('hotel', 'bottle', 'turtle') - ONLY when paired with greetings
   const HOMOPHONE_PAIR_REGEX = /\b(hey|hi|hello|namaste|kem\s*cho|suno|ok|okay)\s+(hotel|bottle|turtle|cattle)\b/i;
   if (HOMOPHONE_PAIR_REGEX.test(transcript)) return false;
 
-  // 3. Conversational Greetings (discrete tokens)
+  // 6. Conversational Greetings (discrete tokens)
   const GREETING_TOKENS = ["hello", "namaste", "kem cho", "kemcho", "morning", "evening"];
   const hasGreeting = GREETING_TOKENS.some((g) => clean === g || clean.startsWith(g + " ") || clean.endsWith(" " + g) || clean.includes(" " + g + " ") || words.includes(g));
   if (hasGreeting) return false;
   if (words[0] === "hi" || words[0] === "hey") return false;
 
-  // 4. Inquisitive Questions (Explicit question mark or inquiry trigger word)
-  const QUESTION_WORDS = [
-    "what", "who", "where", "when", "why", "how", "tell me", "can you", "could you", "please tell",
-    "કેમ", "શું", "કોણ", "ક્યાં", "ક્યારે", "કેવી", "મને", "બોલો", "કહો", "વાર્તા", "જોક", "ગીત", "તમે",
-    "kaho", "vaarta", "varta", "story", "joke", "time",
-    "क्या", "कौन", "कहाँ", "कब", "कैसे", "बताओ", "बोलो", "कहानी", "सुनाओ", "तुम", "आप"
-  ];
-  const transcriptLower = transcript.toLowerCase();
-  const hasQuestionWord = QUESTION_WORDS.some((q) => transcriptLower.includes(q));
-  const hasQuestionMark = transcript.includes("?");
+  // 7. Active Follow-up Conversation Window (within 10s of last assistant reply):
+  // Allows natural follow-up questions and conversational responses without repeating wake-word,
+  // limited to maxConsecutiveVoiceTurns (3 turns) before requiring a fresh wake-word or touch.
+  if (isSessionActive && consecutiveVoiceTurns < maxConsecutiveVoiceTurns) {
+    return false;
+  }
 
-  if (hasQuestionWord || hasQuestionMark) return false;
-
-  // Everything else on a cold idle start without wake-word is rejected (e.g. 2-word music lyrics, background chatter)
+  // 8. Cold Idle Rejection:
+  // In cold idle, sentences with question words ("when", "what", "where") or random statements
+  // without a wake-word or greeting MUST NOT wake the robot.
+  // This completely eliminates false activations from office chatter, TV, or music lyrics.
   return true;
 }
 
@@ -166,6 +176,7 @@ function initWebSocketServer(httpServer, options = {}) {
     ws.totalAudioBytes = 0;
     ws.clientIp = clientIp;
     ws.lastHeartbeatTouch = 0;
+    ws.consecutiveVoiceFollowUps = 0;
 
     // Helper: Safely touch heartbeat for verified physical robot with rate-limiting (min 10s interval unless forced)
     const touchRobotHeartbeat = (force = false, rssi = null) => {
@@ -414,14 +425,35 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState)
 
     // 2b. Intelligent Wake-Word & Background Music Filter:
     const isTouchOrButton = ws.turnSource === "touch" || ws.turnSource === "button";
-    const isSessionActive = ws.lastTurnCompletedAt && (Date.now() - ws.lastTurnCompletedAt < 30000);
+    const FOLLOW_UP_WINDOW_MS = 10000; // 10s natural follow-up window
+    const isSessionActive = Boolean(ws.lastTurnCompletedAt && (Date.now() - ws.lastTurnCompletedAt < FOLLOW_UP_WINDOW_MS));
+    const currentFollowUpCount = ws.consecutiveVoiceFollowUps || 0;
 
-    if (shouldRejectAudioTurn({ transcript, isTouchOrButton, isSessionActive })) {
+    if (shouldRejectAudioTurn({
+      transcript,
+      isTouchOrButton,
+      isSessionActive,
+      consecutiveVoiceTurns: currentFollowUpCount,
+      maxConsecutiveVoiceTurns: 3,
+    })) {
       console.log(`[WebSocket ${ws.deviceId}] Background noise/music rejected without wake word: "${transcript}". Staying silent.`);
       sendJson({ type: "transcript", text: "" });
       sendJson({ type: "state", value: "IDLE" });
       setState("IDLE");
       return;
+    }
+
+    // Determine whether this turn contained an explicit wake-word, greeting, or touch:
+    const cleanLower = transcript.trim().toLowerCase();
+    const hasWakeOrTouch = isTouchOrButton ||
+      ["kotl", "kotil", "cotte", "cuttle", "cotel", "coatl"].some((w) => cleanLower.includes(w)) ||
+      ["hello", "namaste", "kem cho", "kemcho"].some((g) => cleanLower.includes(g)) ||
+      cleanLower.startsWith("hi ") || cleanLower.startsWith("hey ");
+
+    if (hasWakeOrTouch) {
+      ws.consecutiveVoiceFollowUps = 0; // Fresh wake-word or touch resets follow-up count
+    } else if (isSessionActive) {
+      ws.consecutiveVoiceFollowUps = currentFollowUpCount + 1; // Increment consecutive voice follow-ups
     }
 
     sendJson({

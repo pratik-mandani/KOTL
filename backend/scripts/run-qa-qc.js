@@ -129,6 +129,14 @@ assertTest('Boot Logo UI: KOTL brand logo presented on screen for guaranteed 2.5
   hasBootLogoFn && callsBootLogoOnStartup && hasGuaranteedLogoDelay && noTestUiInNormalBoot && hasDirectEyesOpen && calibSilent,
   'Screen presents bold centered KOTL brand logo for full 2.5 seconds; transitions smoothly to eyes; test UI strictly suppressed');
 
+// Verify Firmware Mic False-Trigger Hardening
+const hasDebounce16 = inoContent.includes('kMicHighDebounceCount = 16');
+const hasCooldown2200 = inoContent.includes('kPlaybackCooldownMs = 2200');
+const noArtificialPostPlaybackClamp = !inoContent.includes('s_ambientNoiseFloor = min(s_ambientNoiseFloor, (uint32_t)60)');
+assertTest('Firmware Acoustic VAD Hardening: 64ms Debounce & 2.2s Playback Cooldown',
+  hasDebounce16 && hasCooldown2200 && noArtificialPostPlaybackClamp,
+  'Rejects transient drum beats (<64ms), enforces 2.2s cooldown, and preserves calibrated room noise floor');
+
 // ----------------------------------------------------
 // TEST GROUP 2: Backend Node.js Syntax & Compilation QA
 // ----------------------------------------------------
@@ -322,6 +330,15 @@ const hasSafePollingAndRefresh = htmlContent.includes('function startDeviceState
 assertTest('Live Device Status UI Elements: Top pill, sidebar badge & hardware station', hasTopStatusElements && hasSidebarStatusElements, 'All dynamic status DOM IDs present');
 assertTest('Live Device Status Binding: Online, Offline, Missing & Error states', hasStatusLogic, 'Derived truthfully from device_status without unsupported claims');
 assertTest('Safe Telemetry Polling (15s) & Request Overlap Protection', hasSafePollingAndRefresh, '15-second non-overlapping interval with graceful failure fallback');
+
+const hasDashboardSync = htmlContent.includes('dashboardSyncPollTimer') &&
+                         htmlContent.includes('30000') &&
+                         htmlContent.includes('isHistoryFetching') &&
+                         htmlContent.includes('isMetricsFetching') &&
+                         htmlContent.includes('visibilitychange');
+assertTest('Live Dashboard Sync: 30s Background Metrics/History Polling & Visibility Resync',
+  hasDashboardSync,
+  'Automatically updates dialogue history, spoken minutes, and curiosity inquiries without manual page reloads');
 
 // ----------------------------------------------------
 // 5.0 DATA INTEGRITY & AUDIO VAD REGRESSION QA

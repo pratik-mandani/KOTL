@@ -85,7 +85,7 @@ static const uint32_t kI2SSampleRate = kHelloSampleRate;
 static const size_t kI2SChunkFrames = 256;
 static const uint16_t kMicSpikeThreshold = 350;
 static const uint16_t kMicReleaseThreshold = 200;
-static const uint8_t kMicHighDebounceCount = 2;
+static const uint8_t kMicHighDebounceCount = 16; // 16 * 4ms = ~64ms debounce rejects transient beats, drum hits & noise spikes
 static const uint32_t kMicMinSilenceMs = 120;
 static const uint32_t kMicPrintIntervalMs = 50;
 static const uint32_t kSoundReactionDurationMs = 700;
@@ -283,7 +283,7 @@ static const uint32_t kVoiceThinkingTimeoutMs = 60000;
 static const uint32_t kVoiceDownloadingTtsTimeoutMs = 60000;
 static const uint32_t kVoiceSpeakingTimeoutMs = 45000;
 static uint32_t s_playbackCooldownUntilMs = 0;
-static const uint32_t kPlaybackCooldownMs = 750;
+static const uint32_t kPlaybackCooldownMs = 2200; // 2.2s cooldown drains acoustic tail/echo & rejects immediate loops
 
 // Dynamic Room Acoustic Calibration
 static uint32_t s_ambientNoiseFloor = 40;       // Adaptive rolling baseline noise floor
@@ -1153,7 +1153,7 @@ void resetVoiceTurnToIdle()
 
   setVoiceTurnState(VOICE_IDLE);
   // Protect against rapid trigger loops by enforcing a minimum 1.5s post-turn cooldown
-  s_playbackCooldownUntilMs = millis() + 1500;
+  s_playbackCooldownUntilMs = millis() + kPlaybackCooldownMs;
   Serial.println("TURN IDLE");
 }
 
@@ -2253,8 +2253,8 @@ void finishPlayback()
   micState.consecutiveHighReadings = 0;
   micState.silenceStartMs = 0;
 
-  // Reset ambient noise floor so speaker volume does not inflate room baseline
-  s_ambientNoiseFloor = min(s_ambientNoiseFloor, (uint32_t)60);
+  // Cooldown drains acoustic echo; preserve calibrated room noise floor
+  // Speaker audio is drained via post-playback cooldown; keep ambientNoiseFloor calibrated.
 
   s_playbackCooldownUntilMs = millis() + kPlaybackCooldownMs;
 
@@ -2992,15 +2992,19 @@ void serviceMicrophoneInput()
   const bool risingEdge = !wasSoundHigh && micState.soundHigh;
   if (risingEdge && !canStartVoiceTurn())
   {
-    Serial.println("Voice turn trigger ignored; turn active");
+    if ((int32_t)(nowMs - s_playbackCooldownUntilMs) < 0) {
+      Serial.printf("[Voice Ignored] Sound trigger during cooldown (%d ms remaining)\n", (int)(s_playbackCooldownUntilMs - nowMs));
+    } else {
+      Serial.println("Voice turn trigger ignored; turn active");
+    }
     micState.soundHigh = false;
   }
   else if (risingEdge && !micState.soundActive && !audioState.isPlaying && !audioState.isDownloading)
   {
     micState.soundActive = true;
     s_currentTurnSource = "voice";
-    Serial.print("Sound detected! Peak amp: ");
-    Serial.println(peakAmp);
+    Serial.printf("[Voice Trigger] Peak: %d | Ambient: %u | Threshold: %u | Debounce: %u samples (~%u ms)\n", peakAmp, (unsigned int)s_ambientNoiseFloor, (unsigned int)dynamicSpikeThreshold, (unsigned int)kMicHighDebounceCount, (unsigned int)(kMicHighDebounceCount * 4)); //
+
     beginAudioCapture();
     triggerSoundReaction(nowMs);
   }
@@ -3097,7 +3101,7 @@ void serviceNetworking()
     Serial.println(WiFi.localIP());
     networkState.wifiConnectInProgress = false;
     s_wifiFailCount = 0;
-    s_playbackCooldownUntilMs = millis() + 1500; // 1.5s cooldown ignores RF transient spike on connect
+    s_playbackCooldownUntilMs = millis() + kPlaybackCooldownMs; // 1.5s cooldown ignores RF transient spike on connect
     Serial.println("Listening for sound/voice...");
 
     // Initialize SNTP network time sync for India Standard Time (UTC+5:30 -> 19800 sec)
