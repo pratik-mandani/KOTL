@@ -1,48 +1,39 @@
 # KOTL — Current Repository Status & Verification Snapshot
 
-**Snapshot Timestamp:** 2026-10-28T15:20:00+05:30
+**Snapshot Timestamp:** 2026-10-28T17:15:00+05:30
 **Git Branch:** `main`
-**Latest Local Commit:** [`3d30c9a`](file:///D:/KOTL#3d30c9a) (`feat(analytics): introduce 8-domain child development intelligence, skills radar, and sub-second chat performance`)
-**Sprint State:** **KOTL Master Redesign Complete** (Dashboard UI + Dedicated Skills Explorer + Developer Diagnostics Tab + Tasks & Activities Card Polish + Child Intelligence Report)
+**Latest Local Commit:** [`b53ebd6`](file:///D:/KOTL#b53ebd6) (`feat(dashboard): redesign skills explorer, task layout, and child intelligence overview`)
+**Sprint State:** **Skills Radar Layout & Collision Overhaul Complete** (Zero Overlap Across Desktop, Tablet & Mobile · Dedicated Hero Station · Real CDP Verified)
 **Primary Working Dashboard:** [`backend/public/index.html`](file:///D:/KOTL/backend/public/index.html) (Production single-page application)
 
 ---
 
 ## 1. Executive Status Summary
 
-The KOTL Master Redesign is complete and verified across all services and client scripts. All 155 automated regression tests across 6 test suites plus 59 QA/QC checks pass with 100% success (exit code 0).
+The layout defects in the Child Development Intelligence & Skills Radar section have been systematically diagnosed, resolved, and verified using Chrome Headless CDP at 1440px desktop, 768px tablet, and 390px mobile viewports. All 155 automated regression tests across 6 test suites plus 59 QA/QC checks pass with 100% success (214/214 checks passed, exit code 0).
 
 ### Key Upgrades Delivered
-1. **Dedicated Skills Explorer Tab (`#tabContent_skills`):**
-   - 24 observable developmental milestones across 8 core domains.
-   - Quick counters: Total Skills (24), Demonstrated count, Emerging count, Awaiting Observations count.
-   - Domain filter pills (All Domains + 8 domain filters).
-   - Status filter pills (All, Demonstrated, Emerging, Awaiting Observations).
-   - Real-time search input (`#skillsExplorerSearchInput`).
-   - Responsive card grid (`#skillsExplorerGrid`) with evidence snippets and Socratic parent suggestions.
-2. **Dedicated Developer & System Diagnostics Tab (`#tabContent_diagnostics`):**
-   - Moved `#apiUsageSection` off the parent Overview page into its own technical tab.
-   - Preserved all IDs and contracts (`geminiModelLabel`, `groqReqToday`, `groqTokensToday`, `groqRemainingTokens`, `groqRemainingReq`, etc.).
-   - Connected `navigateToApiUsage()` and Left Sidebar `#sideBtn_diagnostics` directly to this tab.
-3. **Overview Learning & Daily Routine Snapshot (`#overviewSnapshotSection`):**
-   - Replaced developer token meters on Overview with a 3-card parent summary:
-     1. Active Tasks & Homework: active tasks count, milestones checked, quick link to Tasks.
-     2. Daily Habits & Routines: today's completed habits, adherence rate %, quick link to Habits.
-     3. Companion Intelligence: live operational status, cloud AI provider, quick link to Diagnostics.
-4. **SVG Skills Radar Visual Polish (`generateSkillsRadarSvg`):**
-   - ViewBox expanded to 380x380 with 110px radius for generous label padding.
-   - Replaced 12-char truncation (`slice(0, 10) + '..'`) with clean, two-line `<tspan>` labels for all 8 domains.
-5. **Authentic Dialogue Passion Topics (`renderPassionTopics`):**
-   - Dynamically extracts topic affinities (`space_astronomy`, `animals_nature`, `numbers_logic`, `civic_geography`, etc.) from authentic turns and project keywords.
-   - Returns honest empty state with developmental reassurance when turns are 0.
-6. **Tasks & Activities UI Polish:**
-   - Fixed invalid Tailwind `gap-4.5` and `p-4.5` classes to `gap-5 sm:gap-6` and `p-5` with `space-y-4`, eliminating card touching.
-7. **Child Intelligence Report Modal Enhancements:**
-   - Integrated Print / Save PDF button (`window.print()`).
-   - Printable CSS (`@media print`) hides web chrome and prepares clean multi-page document layout.
-   - Populates `#repRadarContainer`, `#repRadarStatsGrid`, `#repDimensionsGrid`, `#repSkillsInventoryGrid`, `#repEvidenceList`, and `#repTipsList`.
-
----
+1. **Radar Chart Geometry & Label Containment (`generateSkillsRadarSvg`):**
+   - Calibrated responsive SVG `viewBox="0 0 520 380"` with polygon radius `r = 105` centered at `(260, 190)`.
+   - Replaced un-split single-line labels with precise two-line `<tspan>` labels mapped across all 8 taxonomy keys (`language_communication`, `logical_math`, `scientific_curiosity`, `creativity_imagination`, `emotional_regulation`, `social_perspective`, `executive_skills`, `world_knowledge`).
+   - Clearances: ≥53px on left, ≥46px on right, ≥54px on top, ≥46px on bottom. All labels, icons, dots, and rings are 100% contained within the SVG viewBox.
+2. **Dedicated Hero Radar Station (`#skillsIntelligenceSection`):**
+   - Restructured the section into a full-width Hero Card on top: Left column hosts the Radar Chart (`max-w-[480px]`), Right column hosts the 8 Core Domains Profile (`grid-cols-2`).
+   - Physical separation between Radar Chart and Legend cards is 37px on desktop (zero collision).
+   - Below the Hero Radar Station: Lower Bento grid houses the Skills Spectrum (7 cols) and Activities + Evidence Feed (5 cols) with balanced vertical rhythm.
+3. **8 Core Domains Legend Interactivity (`renderSkillsRadar`):**
+   - Each domain pill upgraded to a spacious card showing icon, name, observation coverage badge, active skill count, and mini progress bar.
+   - One-click navigation: clicking any domain card triggers `setSkillsExplorerDomain(catKey)` and seamlessly switches to the Skills Explorer tab.
+4. **Skills Explorer Domain Filtering Backwards Compatibility:**
+   - Synchronized filter buttons with the exact 8 taxonomy domain IDs while maintaining backward-compatible aliases for legacy domain identifiers.
+5. **Report Modal Radar Polish:**
+   - Expanded `#repRadarContainer` to `max-w-[420px]` and updated to call `generateSkillsRadarSvg(axes, 520, 380)`, eliminating label clipping in the printable report.
+6. **Multi-Device Headless Chrome CDP Verification:**
+   - **Desktop (1440x900):** 0 text collisions with legend, 0 clipped labels, 0 horizontal overflow. Gap: 37px.
+   - **Tablet (768x1024):** 0 collisions, 0 clipped labels, 0 horizontal overflow.
+   - **Mobile (390x844):** 0 collisions, 0 clipped labels, 0 horizontal overflow (`scrollWidth === window.innerWidth`).
+   - **Report Modal (1440x900):** width = 420px, 8 labels rendered, 0 clipped.
+   - Captured artifacts: `radar_overview_desktop_1440.png`, `radar_overview_tablet_768.png`, `radar_overview_mobile_390.png`, `radar_report_modal_desktop_1440.png`.
 
 ## 2. Requirement-by-Requirement Status Matrix
 

@@ -467,49 +467,64 @@
           </div>
         </div>
 
-        <!-- 2-Column Bento Station: Left Radar + Spectrum / Right Suggested Activities + Recent Evidence -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- 1. Hero 8-Domain Radar Station (Full Width Bento Hero) -->
+        <div class="p-4 sm:p-6 bg-slate-50/70 border border-slate-200/80 rounded-2xl shadow-2xs">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
 
-          <!-- Left Column (Span 7): Interactive Skills Radar + Skills Spectrum Tabs -->
-          <div class="lg:col-span-7 space-y-4">
-            <!-- Radar Canvas Container -->
-            <div class="p-4 bg-slate-50/70 border border-slate-200/70 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-              <div id="skillsRadarChartContainer" class="w-full max-w-[280px] sm:max-w-[320px] mx-auto shrink-0">
+            <!-- Radar Visual Chart (Span 6 on LG/XL, centered on mobile/tablet) -->
+            <div class="lg:col-span-6 flex flex-col items-center justify-center space-y-2">
+              <div id="skillsRadarChartContainer" class="w-full max-w-[480px] mx-auto">
                 <!-- Dynamically generated interactive SVG Radar -->
                 <div class="py-12 text-center text-slate-400 text-xs">Loading Skills Radar...</div>
               </div>
-              <div class="flex-1 space-y-2 text-xs w-full">
-                <div class="text-[11px] font-fredoka font-bold uppercase tracking-wider text-slate-400">8 Core Domains:</div>
-                <div id="skillsDomainLegendGrid" class="grid grid-cols-2 gap-1.5">
-                  <!-- Dynamically populated with domain scores and observation counts -->
-                </div>
-                <p class="text-[10px] text-slate-400 italic pt-1 leading-tight">
-                  Mapped from verified child dialogue turns, task milestones, and positive routines. Unobserved areas remain at baseline.
-                </p>
-              </div>
+              <span class="text-[10px] text-slate-400 font-medium text-center">
+                Radial density represents verified observation coverage across 8 core domains
+              </span>
             </div>
 
-            <!-- Skills Spectrum Filter Tabs -->
-            <div class="space-y-3">
-              <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 flex-wrap">
-                <div class="flex items-center gap-1.5 overflow-x-auto text-xs">
-                  <button id="skillTabBtn_strongest" onclick="setSkillsFilterTab('strongest')" class="px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-indigo-600 text-white transition-all shrink-0">
-                    ⭐ Demonstrated (<span id="strongestSkillsCount">0</span>)
-                  </button>
-                  <button id="skillTabBtn_emerging" onclick="setSkillsFilterTab('emerging')" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0">
-                    🌱 Emerging (<span id="emergingSkillsCount">0</span>)
-                  </button>
-                  <button id="skillTabBtn_unobserved" onclick="setSkillsFilterTab('unobserved')" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0">
-                    🔍 Awaiting Observations (<span id="unobservedSkillsCount">0</span>)
-                  </button>
+            <!-- 8 Core Domains Legend Grid (Span 6 on LG/XL) -->
+            <div class="lg:col-span-6 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="text-[11px] font-fredoka font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                  <span>🎯</span>
+                  <span>8 Core Developmental Domains Profile</span>
                 </div>
-                <span class="text-[10px] text-slate-400 font-medium">Click skill for evidence</span>
+                <span class="text-[10px] text-slate-400 font-medium">Click to explore domain</span>
               </div>
+              <div id="skillsDomainLegendGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <!-- Dynamically populated with domain scores and observation counts -->
+              </div>
+              <p class="text-[10px] text-slate-400 italic pt-1 leading-snug">
+                Mapped from verified child dialogue turns, task milestones, and positive routines. Unobserved areas remain at baseline.
+              </p>
+            </div>
 
-              <!-- Skills Cards Grid Container -->
-              <div id="skillsCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <!-- Dynamically populated with evaluated skills -->
+          </div>
+        </div>
+
+        <!-- 2. Lower Bento Station: Left Skills Spectrum (Span 7) / Right Suggested Activities + Evidence (Span 5) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-1">
+
+          <!-- Left Column (Span 7): Skills Spectrum Tabs & Interactive Cards -->
+          <div class="lg:col-span-7 space-y-3">
+            <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 flex-wrap">
+              <div class="flex items-center gap-1.5 overflow-x-auto text-xs">
+                <button id="skillTabBtn_strongest" onclick="setSkillsFilterTab('strongest')" class="px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-indigo-600 text-white transition-all shrink-0">
+                  ⭐ Demonstrated (<span id="strongestSkillsCount">0</span>)
+                </button>
+                <button id="skillTabBtn_emerging" onclick="setSkillsFilterTab('emerging')" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0">
+                  🌱 Emerging (<span id="emergingSkillsCount">0</span>)
+                </button>
+                <button id="skillTabBtn_unobserved" onclick="setSkillsFilterTab('unobserved')" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0">
+                  🔍 Awaiting Observations (<span id="unobservedSkillsCount">0</span>)
+                </button>
               </div>
+              <span class="text-[10px] text-slate-400 font-medium">Click skill for evidence</span>
+            </div>
+
+            <!-- Skills Cards Grid Container -->
+            <div id="skillsCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Dynamically populated with evaluated skills -->
             </div>
           </div>
 
@@ -822,26 +837,26 @@
           <button id="explorerDomainBtn_language_communication" onclick="setSkillsExplorerDomain('language_communication')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
             🗣️ Language
           </button>
-          <button id="explorerDomainBtn_logical_quantitative" onclick="setSkillsExplorerDomain('logical_quantitative')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
-            🔢 Logical
+          <button id="explorerDomainBtn_logical_math" onclick="setSkillsExplorerDomain('logical_math')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🔢 Logical & Math
           </button>
           <button id="explorerDomainBtn_scientific_curiosity" onclick="setSkillsExplorerDomain('scientific_curiosity')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
             🔬 Science
           </button>
-          <button id="explorerDomainBtn_emotional_articulation" onclick="setSkillsExplorerDomain('emotional_articulation')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
-            ❤️ Emotional
+          <button id="explorerDomainBtn_creativity_imagination" onclick="setSkillsExplorerDomain('creativity_imagination')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🎨 Creativity
           </button>
-          <button id="explorerDomainBtn_creative_storytelling" onclick="setSkillsExplorerDomain('creative_storytelling')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
-            🎨 Creative
+          <button id="explorerDomainBtn_emotional_regulation" onclick="setSkillsExplorerDomain('emotional_regulation')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            💖 Emotional
           </button>
-          <button id="explorerDomainBtn_social_manners" onclick="setSkillsExplorerDomain('social_manners')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
-            🤝 Social
+          <button id="explorerDomainBtn_social_perspective" onclick="setSkillsExplorerDomain('social_perspective')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🤝 Social Manners
           </button>
-          <button id="explorerDomainBtn_physical_movement" onclick="setSkillsExplorerDomain('physical_movement')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
-            🏃 Physical
+          <button id="explorerDomainBtn_executive_skills" onclick="setSkillsExplorerDomain('executive_skills')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            ⚡ Executive Function
           </button>
-          <button id="explorerDomainBtn_routine_habits" onclick="setSkillsExplorerDomain('routine_habits')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
-            ⭐ Daily Routine
+          <button id="explorerDomainBtn_world_knowledge" onclick="setSkillsExplorerDomain('world_knowledge')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🌍 World Knowledge
           </button>
         </div>
       </div>
@@ -1702,7 +1717,7 @@
           <span class="text-[10px] text-slate-400">8 Core Domains Profile</span>
         </div>
         <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col md:flex-row items-center justify-around gap-4">
-          <div id="repRadarContainer" class="w-full max-w-[280px] mx-auto shrink-0">
+          <div id="repRadarContainer" class="w-full max-w-[340px] sm:max-w-[420px] mx-auto shrink-0">
             <!-- Rendered dynamically by renderReportModal() -->
           </div>
           <div id="repRadarStatsGrid" class="flex-1 grid grid-cols-2 gap-2 text-xs w-full">
@@ -2617,14 +2632,15 @@
 
     /**
      * Pure SVG Radar Generator (Zero external dependencies)
+     * Responsive 520x380 geometry calibrated with generous margins to prevent label overlap.
      */
     function generateSkillsRadarSvg(axes, width, height) {
       if (!Array.isArray(axes) || axes.length === 0) return '';
-      width = width || 380;
+      width = width || 520;
       height = height || 380;
       var cx = width / 2;
       var cy = height / 2;
-      var r = 110;
+      var r = 105;
       var n = axes.length;
 
       // Background concentric polygons (rings at 25%, 50%, 75%, 100%)
@@ -2645,14 +2661,36 @@
       var labelsSvg = '';
       var dataPts = [];
 
-      var domainLabelSplits = {
+      var domainLabelSplitsByKey = {
+        'language_communication': ['Language &', 'Communication'],
+        'logical_math': ['Logical & Math', 'Thinking'],
+        'logical_quantitative': ['Logical & Math', 'Thinking'],
+        'scientific_curiosity': ['Curiosity &', 'Science Inquiry'],
+        'creativity_imagination': ['Creativity &', 'Imagination'],
+        'creative_storytelling': ['Creativity &', 'Imagination'],
+        'emotional_regulation': ['Emotional', 'Awareness'],
+        'emotional_articulation': ['Emotional', 'Awareness'],
+        'social_perspective': ['Social Manners', '& Perspective'],
+        'social_manners': ['Social Manners', '& Perspective'],
+        'executive_skills': ['Learning &', 'Executive'],
+        'world_knowledge': ['World Knowledge', '& Practical Life']
+      };
+
+      var domainLabelSplitsByLabel = {
         'Language & Communication': ['Language &', 'Communication'],
-        'Logical & Quantitative': ['Logical &', 'Quantitative'],
-        'Scientific Curiosity': ['Scientific', 'Curiosity'],
-        'Emotional Articulation': ['Emotional', 'Articulation'],
-        'Creative Storytelling': ['Creative', 'Storytelling'],
-        'Social & Empathy': ['Social &', 'Empathy'],
-        'Physical & Motor': ['Physical &', 'Motor'],
+        'Logical & Mathematical Thinking': ['Logical & Math', 'Thinking'],
+        'Logical & Quantitative': ['Logical & Math', 'Thinking'],
+        'Curiosity & Scientific Inquiry': ['Curiosity &', 'Science Inquiry'],
+        'Scientific Curiosity': ['Curiosity &', 'Science Inquiry'],
+        'Creativity & Imagination': ['Creativity &', 'Imagination'],
+        'Creative Storytelling': ['Creativity &', 'Imagination'],
+        'Emotional Awareness & Self-Regulation': ['Emotional', 'Awareness'],
+        'Emotional Articulation': ['Emotional', 'Awareness'],
+        'Social Manners & Perspective-Taking': ['Social Manners', '& Perspective'],
+        'Social & Empathy': ['Social Manners', '& Perspective'],
+        'Learning & Executive Function': ['Learning &', 'Executive'],
+        'Executive Function': ['Learning &', 'Executive'],
+        'World Knowledge & Practical Life': ['World Knowledge', '& Practical Life'],
         'Daily Routine': ['Daily', 'Routine']
       };
 
@@ -2662,21 +2700,43 @@
         var ay = cy + r * Math.sin(angle);
         raysSvg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + ax.toFixed(1) + '" y2="' + ay.toFixed(1) + '" stroke="#CBD5E1" stroke-width="1.2"/>';
 
-        // Label position with generous padding
-        var lx = cx + (r + 34) * Math.cos(angle);
-        var ly = cy + (r + 24) * Math.sin(angle);
-        var anchor = Math.abs(Math.cos(angle)) < 0.25 ? 'middle' : (Math.cos(angle) > 0 ? 'start' : 'end');
+        // Precise radial label placement
+        var isTopOrBottom = Math.abs(Math.cos(angle)) < 0.25;
+        var isRight = Math.cos(angle) > 0.25;
+        var anchor = isTopOrBottom ? 'middle' : (isRight ? 'start' : 'end');
 
-        var parts = domainLabelSplits[axis.label] || [axis.label];
+        var radialPad = isTopOrBottom ? 22 : 24;
+        var lx = cx + (r + radialPad) * Math.cos(angle);
+        var ly = cy + (r + (isTopOrBottom ? 20 : 14)) * Math.sin(angle);
+
+        var parts = (axis.key && domainLabelSplitsByKey[axis.key]) ||
+                    domainLabelSplitsByLabel[axis.label];
+        if (!parts) {
+          if (axis.label && axis.label.length > 16) {
+            var mid = Math.floor(axis.label.length / 2);
+            var spaceIdx = axis.label.indexOf(' ', mid);
+            if (spaceIdx === -1) spaceIdx = axis.label.lastIndexOf(' ', mid);
+            if (spaceIdx !== -1) {
+              parts = [axis.label.substring(0, spaceIdx), axis.label.substring(spaceIdx + 1)];
+            } else {
+              parts = [axis.label];
+            }
+          } else {
+            parts = [axis.label || ''];
+          }
+        }
+
         var iconStr = (axis.icon || '') + ' ';
 
         if (parts.length === 2) {
           labelsSvg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" font-family="Fredoka, sans-serif" font-size="10.5" font-weight="600" fill="#334155" class="select-none">' +
-            '<tspan x="' + lx.toFixed(1) + '" dy="-0.6em">' + iconStr + parts[0] + '</tspan>' +
+            '<title>' + axis.label + ': ' + (axis.has_data ? (axis.value + '% coverage') : 'Awaiting Observations') + ' (' + axis.coverage_pct + '% observed)</title>' +
+            '<tspan x="' + lx.toFixed(1) + '" dy="-0.65em">' + iconStr + parts[0] + '</tspan>' +
             '<tspan x="' + lx.toFixed(1) + '" dy="1.25em">' + parts[1] + '</tspan>' +
           '</text>';
         } else {
           labelsSvg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" font-family="Fredoka, sans-serif" font-size="10.5" font-weight="600" fill="#334155" class="select-none">' +
+            '<title>' + axis.label + ': ' + (axis.has_data ? (axis.value + '% coverage') : 'Awaiting Observations') + ' (' + axis.coverage_pct + '% observed)</title>' +
             iconStr + parts[0] +
           '</text>';
         }
@@ -2701,7 +2761,7 @@
         '</circle>';
       });
 
-      return '<svg viewBox="0 0 ' + width + ' ' + height + '" class="w-full h-auto select-none overflow-visible">' +
+      return '<svg viewBox="0 0 ' + width + ' ' + height + '" class="w-full h-auto select-none block" preserveAspectRatio="xMidYMid meet">' +
         ringsSvg + raysSvg + polySvg + dotsSvg + labelsSvg +
       '</svg>';
     }
@@ -2751,7 +2811,7 @@
     function renderSkillsRadar(data) {
       var container = document.getElementById('skillsRadarChartContainer');
       if (container && Array.isArray(data.radar_axes)) {
-        container.innerHTML = generateSkillsRadarSvg(data.radar_axes, 300, 300);
+        container.innerHTML = generateSkillsRadarSvg(data.radar_axes, 520, 380);
       }
 
       var legendGrid = document.getElementById('skillsDomainLegendGrid');
@@ -2760,16 +2820,29 @@
         Object.keys(data.categories).forEach(function(catKey) {
           var cat = data.categories[catKey];
           var pill = document.createElement('div');
-          pill.className = 'p-1.5 rounded-xl bg-white border border-slate-200/70 flex items-center justify-between text-[11px] shadow-2xs';
+          pill.className = 'p-2 sm:p-2.5 rounded-xl bg-white border border-slate-200/80 hover:border-indigo-300 transition-all flex flex-col justify-between shadow-2xs gap-1.5 cursor-pointer group';
+          pill.title = 'Click to explore ' + cat.name + ' skills';
+          pill.onclick = function() {
+            setSkillsExplorerDomain(catKey);
+            switchMainTab('skills');
+          };
           pill.innerHTML =
-            '<div class="flex items-center gap-1.5 min-w-0 truncate">' +
-              '<span>' + cat.icon + '</span>' +
-              '<span class="font-medium text-slate-800 truncate">' + cat.name + '</span>' +
+            '<div class="flex items-center justify-between gap-1.5">' +
+              '<div class="flex items-center gap-1.5 min-w-0">' +
+                '<span class="text-base shrink-0">' + (cat.icon || '🎯') + '</span>' +
+                '<span class="font-fredoka font-semibold text-slate-800 text-xs truncate group-hover:text-indigo-600 transition-colors">' + cat.name + '</span>' +
+              '</div>' +
+              '<span class="font-fredoka font-bold text-[10px] px-2 py-0.5 rounded-full shrink-0 ' +
+                (cat.observed_skills_count > 0 ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-500 border border-slate-200') + '">' +
+                (cat.observed_skills_count > 0 ? (cat.observation_coverage_pct + '% cov') : 'Awaiting') +
+              '</span>' +
             '</div>' +
-            '<span class="font-fredoka font-bold text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ml-1 ' +
-              (cat.observed_skills_count > 0 ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-500') + '">' +
-              (cat.observed_skills_count > 0 ? (cat.observation_coverage_pct + '% cov') : 'Awaiting') +
-            '</span>';
+            '<div class="flex items-center justify-between text-[10px] text-slate-400">' +
+              '<span>' + (cat.observed_skills_count || 0) + ' of ' + (cat.total_skills_count || 3) + ' skills active</span>' +
+              '<div class="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden ml-2 shrink-0">' +
+                '<div class="h-full bg-indigo-500 rounded-full transition-all" style="width: ' + (cat.observation_coverage_pct || 0) + '%"></div>' +
+              '</div>' +
+            '</div>';
           legendGrid.appendChild(pill);
         });
       }
@@ -2909,16 +2982,29 @@
     }
 
     function setSkillsExplorerDomain(domainKey) {
-      skillsExplorerCurrentDomain = domainKey;
+      var domainAliasMap = {
+        'logical_quantitative': 'logical_math',
+        'emotional_articulation': 'emotional_regulation',
+        'creative_storytelling': 'creativity_imagination',
+        'social_manners': 'social_perspective',
+        'physical_movement': 'world_knowledge',
+        'routine_habits': 'executive_skills'
+      };
+      skillsExplorerCurrentDomain = domainAliasMap[domainKey] || domainKey;
+
       var domainKeys = [
-        'all', 'language_communication', 'logical_quantitative',
-        'scientific_curiosity', 'emotional_articulation', 'creative_storytelling',
+        'all', 'language_communication', 'logical_math',
+        'scientific_curiosity', 'creativity_imagination', 'emotional_regulation',
+        'social_perspective', 'executive_skills', 'world_knowledge',
+        'logical_quantitative', 'emotional_articulation', 'creative_storytelling',
         'social_manners', 'physical_movement', 'routine_habits'
       ];
       domainKeys.forEach(function(d) {
         var btn = document.getElementById('explorerDomainBtn_' + d);
         if (btn) {
-          btn.className = (d === domainKey)
+          var isCurrent = (d === skillsExplorerCurrentDomain) ||
+                          (domainAliasMap[d] === skillsExplorerCurrentDomain);
+          btn.className = isCurrent
             ? 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white border border-indigo-600 shrink-0 transition-all'
             : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all';
         }
@@ -4264,7 +4350,7 @@
       var repRadarBox = document.getElementById('repRadarContainer');
       var repRadarStats = document.getElementById('repRadarStatsGrid');
       if (cachedSkillsAnalytics && Array.isArray(cachedSkillsAnalytics.radar_axes)) {
-        if (repRadarBox) repRadarBox.innerHTML = generateSkillsRadarSvg(cachedSkillsAnalytics.radar_axes, 260, 260);
+        if (repRadarBox) repRadarBox.innerHTML = generateSkillsRadarSvg(cachedSkillsAnalytics.radar_axes, 520, 380);
         if (repRadarStats && cachedSkillsAnalytics.categories) {
           repRadarStats.innerHTML = '';
           Object.keys(cachedSkillsAnalytics.categories).forEach(function(k) {
