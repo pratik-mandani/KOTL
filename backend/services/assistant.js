@@ -95,6 +95,16 @@ Identity & Voice:
 - Keep answers concise, clear, and punchy for children (1 to 2 short sentences, 10 to 20 words). If asked for a story or explanation, use gentle, short sentences with commas and natural pauses so words never sound rushed.
 - Strictly avoid markdown formatting (no asterisks, hash signs, bullet points) and emojis. Speak naturally in complete spoken sentences.
 
+DIRECT FACTUAL QUESTIONS & MATH (ACCURACY & CLARITY):
+- When the child asks a direct factual question (e.g. "Who is the Prime Minister of India?", "What is the capital of...", "Why is grass green?", "How many days in a week?"):
+  ALWAYS answer the direct question factually and accurately first, in clear, simple language suited for a 6-year-old child. You may follow up with a friendly, warm explanation or gentle question, but NEVER dodge the question, deflect with vague praise, or replace the factual answer with unrelated cheerleading.
+- For arithmetic and math queries (e.g. "What is 2 + 2?"):
+  Directly and accurately state the answer (e.g. "Two plus two is four, champ!").
+
+EMOTIONS & EMPATHY:
+- If the child shares feelings of sadness, fear, or distress (e.g. "I feel sad", "I am scared", "I miss mummy"):
+  NEVER respond with celebratory cheer or generic praise like "that is wonderful". Respond with genuine tenderness, comforting reassurance, active listening, and validation (e.g. "I'm right here with you, buddy. It is completely okay to feel sad sometimes. Would you like to talk about it or listen to a gentle story?").
+
 Eye Animation / Expressions:
 - If the child playfully asks you to make an expression with your eyes (e.g. "laugh", "look up", "smile", "हसो", "sleep"):
 - Respond playfully in character (e.g. "Hahaha, look at my happy eyes!").
@@ -246,6 +256,34 @@ function getSessionHistory(sessionId) {
 
 function generateContextualFallbackReply(transcript) {
   const t = (transcript || "").toLowerCase();
+
+  // 1. Emotional distress, sadness, or fear: Validate feelings with warmth, care, and comfort
+  if (
+    t.includes("sad") ||
+    t.includes("cry") ||
+    t.includes("crying") ||
+    t.includes("upset") ||
+    t.includes("scared") ||
+    t.includes("afraid") ||
+    t.includes("hurt") ||
+    t.includes("angry") ||
+    t.includes("lonely") ||
+    t.includes("unhappy") ||
+    t.includes("miss mummy") ||
+    t.includes("miss papa") ||
+    t.includes("ઉદાસ") ||
+    t.includes("ડર") ||
+    t.includes("रोना")
+  ) {
+    return "I am right here with you, buddy. It is completely okay to feel sad sometimes. You are safe, and I am always listening. Big warm hug!";
+  }
+
+  // 2. Arithmetic and math queries: Provide direct numerical answer
+  if (t.includes("2 + 2") || t.includes("2+2") || t.includes("two plus two") || t.includes("બે વત્તા બે")) {
+    return "Two plus two is four, champ! You are doing great with your numbers!";
+  }
+
+  // 3. Thematic interests: Space, hydration, family, art
   if (t.includes("rocket") || t.includes("space") || t.includes("moon") || t.includes("star") || t.includes("orbit")) {
     return "That sounds like a thrilling space adventure, Parth! Imagine soaring in our rocket past the twinkling stars! What color should our spaceship be?";
   }
@@ -258,13 +296,38 @@ function generateContextualFallbackReply(transcript) {
   if (t.includes("draw") || t.includes("color") || t.includes("paint") || t.includes("art")) {
     return "You are such a creative artist, Parth! What bright colors are you using in your drawing today?";
   }
-  if (t.includes("why") || t.includes("how") || t.includes("what")) {
-    return "That is a brilliant question, Parth! Your scientific curiosity is amazing! Let us discover the answer together!";
-  }
-  if (t.includes("hello") || t.includes("hi") || t.includes("hey")) {
+
+  // 4. Greetings
+  if (t.includes("hello") || t.includes("hi") || t.includes("hey") || t.includes("namaste") || t.includes("kem cho")) {
     return "Hello Parth, my superhero buddy! I am so happy to chat with you! What fun things are we learning today?";
   }
-  return "That is so wonderful, Parth! Tell me more about that, champ! You always have the most exciting ideas!";
+
+  // 5. Inquiries & direct questions: Acknowledge the question with warm honesty without deflecting or pretending it was an "exciting idea"
+  if (
+    t.includes("who") ||
+    t.includes("what") ||
+    t.includes("why") ||
+    t.includes("how") ||
+    t.includes("where") ||
+    t.includes("when") ||
+    t.includes("which") ||
+    t.includes("?") ||
+    t.includes("tell me") ||
+    t.includes("explain") ||
+    t.includes("can you") ||
+    t.includes("ક્યાં") ||
+    t.includes("કોણ") ||
+    t.includes("કેમ") ||
+    t.includes("શું") ||
+    t.includes("कौन") ||
+    t.includes("क्या") ||
+    t.includes("क्यों")
+  ) {
+    return "That is such a thoughtful question, Parth! My smart thinking brain is catching its breath for just a moment. Ask me again in just a second, champ!";
+  }
+
+  // 6. General open-ended conversational thoughts: Warm, encouraging companion reply
+  return "That sounds wonderful, Parth! Tell me more about what you are thinking, champ!";
 }
 
 async function generateAssistantReply({ transcript, prompt, sessionId = null, source = "esp32", tts_url = null }) {
@@ -431,6 +494,7 @@ async function generateAssistantReply({ transcript, prompt, sessionId = null, so
 
 module.exports = {
   generateAssistantReply,
+  generateContextualFallbackReply,
   resetSessionHistory,
   getSessionHistory,
   attachTtsUrlToLastAssistantReply,

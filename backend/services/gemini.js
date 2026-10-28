@@ -32,14 +32,15 @@ async function generateGeminiAssistantReply({ messages, sessionId = null }) {
     };
   }
 
-  const primaryModel = process.env.GEMINI_CHAT_MODEL || "gemini-2.0-flash";
-  // Prioritize active Gemini models and filter out known non-existent model identifiers to avoid delay
-  const isKnownInvalidGemini = (m) => m && (m.includes("3.5") || m.includes("2.5"));
+  const primaryModel = process.env.GEMINI_CHAT_MODEL || "gemini-flash-latest";
+  // Always prioritize the configured primary model first, followed by supported Gemini candidate models
   const candidateModels = [
-    !isKnownInvalidGemini(primaryModel) ? primaryModel : null,
+    primaryModel,
+    "gemini-flash-latest",
+    "gemini-3.5-flash-lite",
+    "gemini-2.5-flash-lite",
     "gemini-2.0-flash",
     "gemini-1.5-flash",
-    isKnownInvalidGemini(primaryModel) ? primaryModel : null,
   ].filter((m, i, arr) => m && arr.indexOf(m) === i);
 
   const cleanMessages = messages.map((m) => ({

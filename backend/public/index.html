@@ -86,6 +86,11 @@
       color: #FFFFFF !important;
       box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
     }
+    .tab-btn-active-tasks {
+      background-color: #D97706 !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 1px 3px rgba(217, 119, 6, 0.3);
+    }
     .tab-btn-active-habits {
       background-color: #059669 !important;
       color: #FFFFFF !important;
@@ -189,6 +194,11 @@
         <span>Overview & Growth</span>
       </button>
 
+      <button id="sideBtn_tasks" onclick="switchMainTab('tasks')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
+        <span class="text-base">📝</span>
+        <span>Tasks & Activities</span>
+      </button>
+
       <button id="sideBtn_habits" onclick="switchMainTab('habits')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
         <span class="text-base">⭐</span>
         <span>Routines & Missions</span>
@@ -285,7 +295,7 @@
 
           <!-- Quick Refresh Button -->
           <button onclick="switchMainTab(currentActiveTab);
-      loadGrowthMetrics(); loadHabits(); loadDayWiseHistory(); loadChildReport(true); loadDeviceState();" title="Refresh Dashboard Data" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition-all active:scale-95">
+      loadGrowthMetrics(); loadTasks(); loadHabits(); loadDayWiseHistory(); loadChildReport(true); loadDeviceState();" title="Refresh Dashboard Data" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition-all active:scale-95">
             ⟳
           </button>
 
@@ -314,6 +324,7 @@
     <!-- Tab Navigation Compatibility Nodes (Desktop uses Left Sidebar; Mobile uses Fixed Bottom Nav) -->
     <div id="mainTabNavContainer" class="hidden" aria-hidden="true">
       <button id="tabBtn_growth" onclick="switchMainTab('growth')"></button>
+      <button id="tabBtn_tasks" onclick="switchMainTab('tasks')"></button>
       <button id="tabBtn_habits" onclick="switchMainTab('habits')"></button>
       <button id="tabBtn_cockpit" onclick="switchMainTab('cockpit')"></button>
     </div>
@@ -332,9 +343,14 @@
           </h2>
           <p class="text-xs text-slate-500">Real-time conversational telemetry, curious inquiries & emotional milestones</p>
         </div>
-        <button onclick="openReportModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-fredoka font-bold text-xs py-2 px-3.5 rounded-xl shadow-2xs flex items-center gap-1.5 transition-all active:scale-95 shrink-0 self-start sm:self-auto">
-          <span>📋 View 8-Dimension Report</span>
-        </button>
+        <div class="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          <button id="overviewCreateTaskBtn" onclick="openCreateTaskModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-fredoka font-bold text-xs py-2 px-3.5 rounded-xl shadow-2xs flex items-center gap-1.5 transition-all active:scale-95">
+            <span>➕ Create a Task</span>
+          </button>
+          <button onclick="openReportModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-fredoka font-bold text-xs py-2 px-3.5 rounded-xl shadow-2xs flex items-center gap-1.5 transition-all active:scale-95">
+            <span>📋 View 8-Dimension Report</span>
+          </button>
+        </div>
       </div>
 
       <!-- Bento Summary Row: 4 Essential Developmental Metric Cards -->
@@ -829,6 +845,139 @@
             </div>
           </div>
         </details>        </div>
+      </section>
+    </main>
+
+    <!-- ============================================================== -->
+    <!-- 3.5 TAB 1.5: TASKS & LEARNING ACTIVITIES BENTO SECTION          -->
+    <!-- ============================================================== -->
+    <main id="tabContent_tasks" class="hidden max-w-7xl w-full mx-auto px-4 sm:px-6 py-2 pb-24 lg:pb-8 space-y-6">
+
+      <!-- Tasks Header with Stats & Actions -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="font-fredoka font-bold text-lg text-slate-900 flex items-center gap-2">
+            <span>📝</span>
+            <span>Tasks, Homework & Learning Activities</span>
+          </h2>
+          <p class="text-xs text-slate-500">School projects, daily homework, reading goals & milestone tracking</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+          <button onclick="loadTasks(true)" title="Refresh Tasks" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all active:scale-95 text-xs font-bold">
+            <span>↻</span>
+          </button>
+          <button onclick="openCreateTaskModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-fredoka font-bold text-xs py-2 px-3.5 rounded-xl shadow-2xs flex items-center gap-1.5 transition-all active:scale-95">
+            <span>➕ Add New Task</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bento Summary Row: 4 Essential Task Metrics -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-fredoka font-bold text-slate-500">Total Assigned</span>
+            <span class="text-lg p-1.5 bg-amber-50 rounded-xl text-amber-600">📋</span>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-1">
+              <span id="tasksMetricTotal" class="font-fredoka font-bold text-2xl sm:text-3xl text-slate-900">0</span>
+              <span class="text-xs text-slate-500 font-medium">Tasks</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Active & completed</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-fredoka font-bold text-slate-500">In Progress</span>
+            <span class="text-lg p-1.5 bg-sky-50 rounded-xl text-sky-600">⏳</span>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-1">
+              <span id="tasksMetricInProgress" class="font-fredoka font-bold text-2xl sm:text-3xl text-sky-700">0</span>
+              <span class="text-xs text-slate-500 font-medium">Active</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Pending milestones</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-fredoka font-bold text-slate-500">Completed</span>
+            <span class="text-lg p-1.5 bg-emerald-50 rounded-xl text-emerald-600">✅</span>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-1">
+              <span id="tasksMetricCompleted" class="font-fredoka font-bold text-2xl sm:text-3xl text-emerald-700">0</span>
+              <span class="text-xs text-slate-500 font-medium">Done</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Finished tasks</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-fredoka font-bold text-slate-500">Stars Earned</span>
+            <span class="text-lg p-1.5 bg-amber-50 rounded-xl text-amber-500">⭐</span>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-1">
+              <span id="tasksMetricStarsEarned" class="font-fredoka font-bold text-2xl sm:text-3xl text-amber-600">0</span>
+              <span class="text-xs text-slate-500 font-medium">Earned</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Task completion rewards</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-3">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <!-- Category Filter Pills -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <button onclick="setTaskCategoryFilter('all')" id="taskFilterBtn_all" class="px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-amber-600 text-white transition-all shrink-0">
+              All Tasks
+            </button>
+            <button onclick="setTaskCategoryFilter('School Project')" id="taskFilterBtn_school" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all shrink-0">
+              🌱 School Projects
+            </button>
+            <button onclick="setTaskCategoryFilter('Homework')" id="taskFilterBtn_homework" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all shrink-0">
+              🔢 Homework
+            </button>
+            <button onclick="setTaskCategoryFilter('Reading')" id="taskFilterBtn_reading" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all shrink-0">
+              📖 Reading
+            </button>
+            <button onclick="setTaskCategoryFilter('Household Chore')" id="taskFilterBtn_chore" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all shrink-0">
+              🧹 Chores
+            </button>
+            <button onclick="setTaskCategoryFilter('Creative Arts')" id="taskFilterBtn_creative" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all shrink-0">
+              🎨 Arts & Crafts
+            </button>
+          </div>
+
+          <!-- Status Dropdown & Search -->
+          <div class="flex items-center gap-2">
+            <select id="taskStatusFilterSelect" onchange="setTaskStatusFilter(this.value)" class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-700 font-medium focus:bg-white transition-all">
+              <option value="all">All Statuses</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+
+            <div class="relative w-full sm:w-48">
+              <input type="text" id="tasksSearchInput" oninput="handleSearchTasks(this.value)" placeholder="Search tasks..." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 pl-8 focus:bg-white text-slate-800 placeholder-slate-400 transition-all">
+              <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks Grid Container -->
+      <section id="tasksGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
+        <!-- Rendered dynamically by renderTasksGrid() -->
+        <div class="col-span-full py-12 text-center text-slate-400 font-fredoka text-sm">
+          Loading learning tasks & projects...
+        </div>
       </section>
     </main>
 
@@ -1389,15 +1538,111 @@
     </div>
   </div>
 
+  <!-- 6.5 TASK CREATION & EDIT MODAL -->
+  <div id="taskModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-slate-200 my-8">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <h3 id="taskModalTitle" class="font-fredoka font-bold text-base text-slate-900">Create New Task</h3>
+          <p class="text-[11px] text-slate-500">Assignments, school science projects & daily milestones</p>
+        </div>
+        <button onclick="closeTaskModal()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <form id="taskForm" onsubmit="handleSaveTaskForm(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Task Title <span class="text-rose-500">*</span></label>
+          <input type="text" id="taskTitleInput" placeholder="e.g. 🌱 Plant Growth in a Cup (Science Project)" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500">
+          <div id="taskTitleError" class="hidden text-[11px] text-rose-600 mt-1 font-medium">Task title is required</div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Category</label>
+            <select id="taskCategorySelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white">
+              <option value="School Project">🌱 School Project</option>
+              <option value="Homework">🔢 Homework</option>
+              <option value="Reading">📖 Reading</option>
+              <option value="Household Chore">🧹 Household Chore</option>
+              <option value="Physical Activity">🏃 Physical Activity</option>
+              <option value="Creative Arts">🎨 Creative Arts</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Priority</label>
+            <select id="taskPrioritySelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white">
+              <option value="medium">Medium Priority</option>
+              <option value="high">High Priority ⚡</option>
+              <option value="low">Low Priority</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block font-medium text-slate-700 mb-1">Due Date</label>
+            <input type="date" id="taskDueDateInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-900 focus:bg-white">
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Due Time</label>
+            <input type="time" id="taskDueTimeInput" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-900 focus:bg-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-slate-700 mb-1">Instructions / Goal Description</label>
+          <textarea id="taskDescriptionInput" rows="2" placeholder="Child-friendly steps or instructions..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white"></textarea>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="font-medium text-slate-700">Checklist Milestones (Steps)</label>
+            <button type="button" onclick="addMilestoneInputRow()" class="text-amber-700 hover:text-amber-800 font-bold text-[11px] flex items-center gap-1">
+              <span>+ Add Step</span>
+            </button>
+          </div>
+          <div id="milestonesInputsContainer" class="space-y-2 max-h-36 overflow-y-auto pr-1">
+            <!-- Dynamic rows rendered by addMilestoneInputRow() -->
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Reward Manner Stars</label>
+            <div class="flex items-center gap-2">
+              <input type="number" id="taskRewardStarsInput" min="0" max="10" value="2" class="w-24 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-900 focus:bg-white">
+              <span class="text-amber-500 text-sm">⭐⭐</span>
+            </div>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">Private Parent Notes</label>
+            <input type="text" id="taskParentNotesInput" placeholder="Grading criteria or notes..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-900 focus:bg-white">
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <button type="button" onclick="closeTaskModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors">Cancel</button>
+          <button id="taskSubmitBtn" type="submit" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold transition-all active:scale-95 shadow-2xs">Create Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ============================================================== -->
   <!-- 7. FIXED MOBILE BOTTOM NAVIGATION (Required by QA: id: mobileBottomNav) -->
   <!-- ============================================================== -->
   <nav id="mobileBottomNav" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 pb-[env(safe-area-inset-bottom)] select-none">
-    <div class="max-w-md mx-auto grid grid-cols-4 h-16">
+    <div class="max-w-md mx-auto grid grid-cols-5 h-16">
 
       <button id="mobBtn_growth" onclick="switchMainTab('growth')" class="flex flex-col items-center justify-center gap-1 text-indigo-600 font-fredoka font-bold text-[10px] active:scale-95 transition-all">
         <span class="text-lg">📊</span>
         <span>Growth</span>
+      </button>
+
+      <button id="mobBtn_tasks" onclick="switchMainTab('tasks')" class="flex flex-col items-center justify-center gap-1 text-slate-400 font-fredoka font-bold text-[10px] active:scale-95 transition-all">
+        <span class="text-lg">📝</span>
+        <span>Tasks</span>
       </button>
 
       <button id="mobBtn_habits" onclick="switchMainTab('habits')" class="flex flex-col items-center justify-center gap-1 text-slate-400 font-fredoka font-bold text-[10px] active:scale-95 transition-all">
@@ -1676,7 +1921,7 @@
     // Tab Switcher for Top Bar, Desktop Sidebar & Mobile Bottom Navigation
     function switchMainTab(tabKey) {
       currentActiveTab = tabKey;
-      var tabs = ['growth', 'habits', 'cockpit'];
+      var tabs = ['growth', 'tasks', 'habits', 'cockpit'];
       tabs.forEach(function(t) {
         var content = document.getElementById('tabContent_' + t);
         var btn = document.getElementById('tabBtn_' + t);
@@ -1687,13 +1932,13 @@
           if (content) content.classList.remove('hidden');
           if (btn) {
             if (t === 'growth') btn.className = 'tab-btn-active flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
+            if (t === 'tasks') btn.className = 'tab-btn-active-tasks flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
             if (t === 'habits') btn.className = 'tab-btn-active-habits flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
             if (t === 'cockpit') btn.className = 'tab-btn-active-cockpit flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
           }
           if (mobBtn) {
-            mobBtn.className = 'flex flex-col items-center justify-center gap-1 ' +
-              (t === 'growth' ? 'text-indigo-600' : (t === 'habits' ? 'text-emerald-700' : 'text-sky-700')) +
-              ' font-fredoka font-bold text-[10px] active:scale-95 transition-all';
+            var color = (t === 'growth' ? 'text-indigo-600' : (t === 'tasks' ? 'text-amber-600' : (t === 'habits' ? 'text-emerald-700' : 'text-sky-700')));
+            mobBtn.className = 'flex flex-col items-center justify-center gap-1 ' + color + ' font-fredoka font-bold text-[10px] active:scale-95 transition-all';
           }
           if (sideBtn) {
             sideBtn.className = 'sidebar-link-active w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-left';
@@ -1711,6 +1956,9 @@
           }
         }
       });
+      if (tabKey === 'tasks' && (!cachedTasks || cachedTasks.length === 0)) {
+        loadTasks();
+      }
     }
 
     // Audio Playback (Hardware identical en-IN-PrabhatNeural or live Edge-TTS)
@@ -1965,6 +2213,512 @@
         }
       })
       .catch(function() {});
+    }
+
+    // ================================================================
+    // TASKS & ACTIVITIES CLIENT STATE & REST API INTEGRATION (Sprint 2)
+    // ================================================================
+    var cachedTasks = [];
+    var activeTaskFilterCategory = 'all';
+    var activeTaskFilterStatus = 'all';
+    var activeTaskSearchQuery = '';
+    var editingTaskId = null;
+    var isTasksLoading = false;
+    var tasksLoadError = null;
+
+    function loadTasks(showFeedback) {
+      isTasksLoading = true;
+      tasksLoadError = null;
+      var container = document.getElementById('tasksGridContainer');
+      if (container && (!cachedTasks || cachedTasks.length === 0)) {
+        container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-fredoka text-sm flex items-center justify-center gap-2"><span>⏳</span><span>Loading tasks & activities...</span></div>';
+      }
+
+      fetch(getBaseApiUrl() + '/api/tasks')
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status + ': Failed to load tasks');
+          return r.json();
+        })
+        .then(function(d) {
+          isTasksLoading = false;
+          if (d && d.success && Array.isArray(d.tasks)) {
+            cachedTasks = d.tasks;
+            updateTasksSummaryMetrics();
+            renderTasksGrid();
+            if (showFeedback) showToast('Tasks synchronized', '✓');
+          } else {
+            throw new Error((d && d.error) || 'Failed to parse tasks response');
+          }
+        })
+        .catch(function(err) {
+          isTasksLoading = false;
+          tasksLoadError = err.message;
+          console.warn('[Tasks] Load error:', err.message);
+          if (container && (!cachedTasks || cachedTasks.length === 0)) {
+            container.innerHTML =
+              '<div class="col-span-full py-10 px-4 bg-rose-50 border border-rose-200 rounded-2xl text-center space-y-2">' +
+                '<p class="text-rose-800 font-bold text-xs">Could not load tasks</p>' +
+                '<p class="text-rose-600 text-[11px]">' + err.message + '</p>' +
+                '<button onclick="loadTasks(true)" class="mt-2 px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 transition-colors">Retry ↻</button>' +
+              '</div>';
+          }
+          if (showFeedback) showToast('Could not load tasks', '⚠️');
+        });
+    }
+
+    function updateTasksSummaryMetrics() {
+      var total = cachedTasks.length;
+      var completed = cachedTasks.filter(function(t) { return t.completed === true || t.status === 'completed'; }).length;
+      var inProgress = total - completed;
+      var starsEarned = cachedTasks.reduce(function(sum, t) {
+        return (t.completed === true || t.status === 'completed') ? (sum + (typeof t.reward_stars === 'number' ? t.reward_stars : 2)) : sum;
+      }, 0);
+
+      var elTotal = document.getElementById('tasksMetricTotal');
+      if (elTotal) elTotal.innerText = total;
+
+      var elInProg = document.getElementById('tasksMetricInProgress');
+      if (elInProg) elInProg.innerText = inProgress;
+
+      var elComp = document.getElementById('tasksMetricCompleted');
+      if (elComp) elComp.innerText = completed;
+
+      var elStars = document.getElementById('tasksMetricStarsEarned');
+      if (elStars) elStars.innerText = starsEarned;
+    }
+
+    function setTaskCategoryFilter(category) {
+      activeTaskFilterCategory = category;
+      var btnIds = {
+        'all': 'taskFilterBtn_all',
+        'School Project': 'taskFilterBtn_school',
+        'Homework': 'taskFilterBtn_homework',
+        'Reading': 'taskFilterBtn_reading',
+        'Household Chore': 'taskFilterBtn_chore',
+        'Creative Arts': 'taskFilterBtn_creative'
+      };
+
+      for (var cat in btnIds) {
+        var btn = document.getElementById(btnIds[cat]);
+        if (btn) {
+          if (cat === category) {
+            btn.className = 'px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-amber-600 text-white transition-all shrink-0';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all shrink-0';
+          }
+        }
+      }
+      renderTasksGrid();
+    }
+
+    function setTaskStatusFilter(status) {
+      activeTaskFilterStatus = status;
+      renderTasksGrid();
+    }
+
+    function handleSearchTasks(query) {
+      activeTaskSearchQuery = (query || '').trim().toLowerCase();
+      renderTasksGrid();
+    }
+
+    function renderTasksGrid() {
+      var container = document.getElementById('tasksGridContainer');
+      if (!container) return;
+
+      var filtered = cachedTasks.filter(function(t) {
+        // Category filter
+        if (activeTaskFilterCategory !== 'all' && (t.category || '').toLowerCase() !== activeTaskFilterCategory.toLowerCase()) {
+          return false;
+        }
+        // Status filter
+        if (activeTaskFilterStatus === 'completed' && !(t.completed === true || t.status === 'completed')) {
+          return false;
+        }
+        if (activeTaskFilterStatus === 'in_progress' && (t.completed === true || t.status === 'completed')) {
+          return false;
+        }
+        // Keyword query filter
+        if (activeTaskSearchQuery) {
+          var titleMatch = (t.title || '').toLowerCase().includes(activeTaskSearchQuery);
+          var descMatch = (t.description || '').toLowerCase().includes(activeTaskSearchQuery);
+          var instMatch = (t.instructions || '').toLowerCase().includes(activeTaskSearchQuery);
+          var catMatch = (t.category || '').toLowerCase().includes(activeTaskSearchQuery);
+          if (!titleMatch && !descMatch && !instMatch && !catMatch) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML =
+          '<div class="col-span-full py-16 px-4 text-center space-y-3 bg-white rounded-2xl border border-dashed border-slate-200">' +
+            '<div class="w-12 h-12 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">📝</div>' +
+            '<p class="font-fredoka font-bold text-slate-700 text-sm">No tasks found</p>' +
+            '<p class="text-xs text-slate-400 max-w-sm mx-auto">There are no learning tasks or projects matching your active filter. Create a new task to get started!</p>' +
+            '<button onclick="openCreateTaskModal()" class="mt-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-fredoka font-bold text-xs transition-all shadow-2xs">' +
+              '+ Create a Task' +
+            '</button>' +
+          '</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      filtered.forEach(function(task) {
+        var card = document.createElement('div');
+        var isDone = task.completed === true || task.status === 'completed';
+        card.className = 'bg-white rounded-2xl border ' + (isDone ? 'border-emerald-200/90 bg-emerald-50/20' : 'border-slate-200/80') + ' p-4.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all space-y-3.5';
+
+        // Badges & Actions
+        var catBg = 'bg-slate-100 text-slate-700 border-slate-200';
+        if (task.category === 'School Project') catBg = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+        if (task.category === 'Homework') catBg = 'bg-sky-50 text-sky-800 border-sky-200';
+        if (task.category === 'Reading') catBg = 'bg-purple-50 text-purple-800 border-purple-200';
+        if (task.category === 'Household Chore') catBg = 'bg-amber-50 text-amber-800 border-amber-200';
+        if (task.category === 'Creative Arts') catBg = 'bg-rose-50 text-rose-800 border-rose-200';
+
+        var priorityBadge = '';
+        if (task.priority === 'high') priorityBadge = '<span class="text-[9px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">High ⚡</span>';
+        if (task.priority === 'low') priorityBadge = '<span class="text-[9px] font-fredoka font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">Low</span>';
+
+        // Milestone Checklist HTML
+        var milestonesHtml = '';
+        if (Array.isArray(task.milestones) && task.milestones.length > 0) {
+          milestonesHtml += '<div class="space-y-1.5 pt-1.5 border-t border-slate-100 text-xs">';
+          milestonesHtml += '<div class="text-[10px] font-fredoka font-bold uppercase tracking-wider text-slate-400">Milestones (' + (task.milestones_completed || 0) + '/' + task.milestones.length + '):</div>';
+          task.milestones.forEach(function(m) {
+            var mDone = Boolean(m.completed);
+            milestonesHtml +=
+              '<label class="flex items-start gap-2 cursor-pointer p-1 rounded-lg hover:bg-slate-50 transition-colors">' +
+                '<input type="checkbox" ' + (mDone ? 'checked' : '') + ' onchange="handleToggleMilestone(\'' + task.id + '\', \'' + m.id + '\')" class="mt-0.5 accent-amber-600 rounded cursor-pointer">' +
+                '<span class="' + (mDone ? 'line-through text-slate-400' : 'text-slate-700 font-medium') + ' leading-snug">' + m.title + '</span>' +
+              '</label>';
+          });
+          milestonesHtml += '</div>';
+        }
+
+        // AI Guidance Callout (Sprint 3 note per PRD rule)
+        var hintsHtml = '';
+        if (Array.isArray(task.ai_hints) && task.ai_hints.length > 0) {
+          hintsHtml =
+            '<div class="p-2 bg-indigo-50/70 rounded-xl border border-indigo-100 text-[11px] text-indigo-900 leading-snug space-y-0.5">' +
+              '<div class="font-bold flex items-center gap-1 text-indigo-700 text-[10px]">' +
+                '<span>🤖</span><span>Companion Mentoring Hints (Sprint 3 Voice Feature):</span>' +
+              '</div>' +
+              '<p class="italic text-indigo-800">"' + task.ai_hints[0] + '"</p>' +
+            '</div>';
+        }
+
+        var dueDateStr = task.due_date ? ('📅 Due ' + task.due_date + (task.due_time ? ' at ' + task.due_time : '')) : 'No deadline';
+        var progressPct = typeof task.progress_pct === 'number' ? task.progress_pct : (isDone ? 100 : 0);
+        var rewardStars = typeof task.reward_stars === 'number' ? task.reward_stars : 2;
+
+        card.innerHTML =
+          '<div>' +
+            '<div class="flex items-center justify-between gap-2 mb-2">' +
+              '<div class="flex items-center gap-1.5 flex-wrap">' +
+                '<span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full border ' + catBg + '">' + (task.category || 'School Project') + '</span>' +
+                priorityBadge +
+              '</div>' +
+              '<div class="flex items-center gap-1">' +
+                '<button onclick="openEditTaskModal(\'' + task.id + '\')" title="Edit Task" class="p-1 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors text-xs">✏️</button>' +
+                '<button onclick="handleDeleteTask(\'' + task.id + '\')" title="Delete Task" class="p-1 rounded-lg hover:bg-rose-50 text-rose-500 transition-colors text-xs">🗑️</button>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="flex items-start gap-2.5">' +
+              '<input type="checkbox" ' + (isDone ? 'checked' : '') + ' onchange="handleToggleTask(\'' + task.id + '\')" title="Toggle Task Completion" class="mt-1 w-4 h-4 accent-amber-600 rounded cursor-pointer shrink-0">' +
+              '<div class="min-w-0 flex-1">' +
+                '<h3 class="font-fredoka font-bold text-sm text-slate-900 ' + (isDone ? 'line-through text-slate-400' : '') + '">' + task.title + '</h3>' +
+                (task.description ? '<p class="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">' + task.description + '</p>' : '') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="space-y-2.5 pt-1">' +
+            '<div class="flex items-center justify-between text-[11px] text-slate-500">' +
+              '<span>' + dueDateStr + '</span>' +
+              '<span class="font-bold text-amber-600 flex items-center gap-1">⭐ +' + rewardStars + ' Stars</span>' +
+            '</div>' +
+
+            '<div>' +
+              '<div class="flex justify-between items-center text-[10px] font-fredoka font-bold text-slate-500 mb-1">' +
+                '<span>Progress</span>' +
+                '<span>' + progressPct + '%</span>' +
+              '</div>' +
+              '<div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">' +
+                '<div class="' + (isDone ? 'bg-emerald-500' : 'bg-amber-500') + ' h-2 rounded-full transition-all duration-300" style="width: ' + progressPct + '%"></div>' +
+              '</div>' +
+            '</div>' +
+
+            milestonesHtml +
+            hintsHtml +
+          '</div>';
+
+        container.appendChild(card);
+      });
+    }
+
+    function openCreateTaskModal() {
+      editingTaskId = null;
+      var titleEl = document.getElementById('taskModalTitle');
+      if (titleEl) titleEl.innerText = 'Create Learning Task';
+      var submitBtn = document.getElementById('taskSubmitBtn');
+      if (submitBtn) submitBtn.innerText = 'Create Task';
+
+      document.getElementById('taskTitleInput').value = '';
+      document.getElementById('taskTitleInput').classList.remove('border-rose-400', 'bg-rose-50');
+      var errEl = document.getElementById('taskTitleError');
+      if (errEl) errEl.classList.add('hidden');
+
+      document.getElementById('taskCategorySelect').value = 'School Project';
+      document.getElementById('taskPrioritySelect').value = 'medium';
+      document.getElementById('taskDueDateInput').value = '';
+      document.getElementById('taskDueTimeInput').value = '';
+      document.getElementById('taskDescriptionInput').value = '';
+      document.getElementById('taskRewardStarsInput').value = 2;
+      document.getElementById('taskParentNotesInput').value = '';
+
+      var mContainer = document.getElementById('milestonesInputsContainer');
+      if (mContainer) {
+        mContainer.innerHTML = '';
+        addMilestoneInputRow('First step / material to gather', null, false);
+      }
+
+      var modal = document.getElementById('taskModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function openEditTaskModal(taskId) {
+      var task = cachedTasks.find(function(t) { return t.id === taskId; });
+      if (!task) return;
+      editingTaskId = taskId;
+
+      var titleEl = document.getElementById('taskModalTitle');
+      if (titleEl) titleEl.innerText = 'Edit Learning Task';
+      var submitBtn = document.getElementById('taskSubmitBtn');
+      if (submitBtn) submitBtn.innerText = 'Save Changes';
+
+      document.getElementById('taskTitleInput').value = task.title || '';
+      document.getElementById('taskCategorySelect').value = task.category || 'School Project';
+      document.getElementById('taskPrioritySelect').value = task.priority || 'medium';
+      document.getElementById('taskDueDateInput').value = task.due_date || '';
+      document.getElementById('taskDueTimeInput').value = task.due_time || '';
+      document.getElementById('taskDescriptionInput').value = task.description || task.instructions || '';
+      document.getElementById('taskRewardStarsInput').value = typeof task.reward_stars === 'number' ? task.reward_stars : 2;
+      document.getElementById('taskParentNotesInput').value = task.parent_notes || '';
+
+      var mContainer = document.getElementById('milestonesInputsContainer');
+      if (mContainer) {
+        mContainer.innerHTML = '';
+        if (Array.isArray(task.milestones) && task.milestones.length > 0) {
+          task.milestones.forEach(function(m) {
+            addMilestoneInputRow(m.title, m.id, m.completed);
+          });
+        } else {
+          addMilestoneInputRow('', null, false);
+        }
+      }
+
+      var modal = document.getElementById('taskModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeTaskModal() {
+      var modal = document.getElementById('taskModal');
+      if (modal) modal.classList.add('hidden');
+      editingTaskId = null;
+    }
+
+    function addMilestoneInputRow(title, id, completed) {
+      var container = document.getElementById('milestonesInputsContainer');
+      if (!container) return;
+      var row = document.createElement('div');
+      row.className = 'milestone-input-row flex items-center gap-2';
+      row.dataset.milestoneId = id || ('m-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5));
+      row.dataset.completed = completed ? 'true' : 'false';
+
+      row.innerHTML =
+        '<span class="text-slate-400 text-xs">●</span>' +
+        '<input type="text" value="' + (title ? String(title).replace(/"/g, '&quot;') : '') + '" placeholder="e.g. Gather supplies, draw sketch..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-900 focus:bg-white">' +
+        '<button type="button" onclick="this.parentElement.remove()" title="Remove Step" class="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors">✕</button>';
+
+      container.appendChild(row);
+    }
+
+    function handleSaveTaskForm(e) {
+      e.preventDefault();
+      var titleInput = document.getElementById('taskTitleInput');
+      var title = (titleInput.value || '').trim();
+      var errEl = document.getElementById('taskTitleError');
+
+      if (!title) {
+        titleInput.classList.add('border-rose-400', 'bg-rose-50');
+        if (errEl) errEl.classList.remove('hidden');
+        showToast('Task title is required', '⚠️');
+        return;
+      }
+
+      var category = document.getElementById('taskCategorySelect').value;
+      var priority = document.getElementById('taskPrioritySelect').value;
+      var dueDate = document.getElementById('taskDueDateInput').value || null;
+      var dueTime = document.getElementById('taskDueTimeInput').value || null;
+      var description = document.getElementById('taskDescriptionInput').value || '';
+      var rewardStars = parseInt(document.getElementById('taskRewardStarsInput').value, 10) || 2;
+      var parentNotes = document.getElementById('taskParentNotesInput').value || '';
+
+      // Collect milestones
+      var milestoneRows = document.querySelectorAll('.milestone-input-row');
+      var milestones = [];
+      milestoneRows.forEach(function(row, idx) {
+        var input = row.querySelector('input');
+        var val = input ? (input.value || '').trim() : '';
+        if (val) {
+          milestones.push({
+            id: row.dataset.milestoneId || ('m-' + (idx + 1)),
+            title: val,
+            completed: row.dataset.completed === 'true'
+          });
+        }
+      });
+
+      var payload = {
+        title: title,
+        category: category,
+        priority: priority,
+        due_date: dueDate,
+        due_time: dueTime,
+        description: description,
+        instructions: description,
+        reward_stars: rewardStars,
+        parent_notes: parentNotes,
+        milestones: milestones
+      };
+
+      var isEdit = Boolean(editingTaskId);
+      var url = getBaseApiUrl() + '/api/tasks' + (isEdit ? ('/' + editingTaskId) : '');
+      var method = isEdit ? 'PATCH' : 'POST';
+
+      fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(d) {
+        if (d && d.success) {
+          cachedTasks = d.tasks || cachedTasks;
+          updateTasksSummaryMetrics();
+          renderTasksGrid();
+          closeTaskModal();
+          showToast(isEdit ? 'Task updated!' : 'Task created! ⭐', '✓');
+          if (!isEdit) {
+            playLocalVoice('Added new task: ' + title + '! Let us achieve this together, champ!');
+          }
+        } else {
+          throw new Error((d && d.error) || 'Could not save task');
+        }
+      })
+      .catch(function(err) {
+        console.warn('[Tasks] Save error:', err.message);
+        showToast('Error saving task: ' + err.message, '⚠️');
+      });
+    }
+
+    function handleToggleTask(taskId) {
+      fetch(getBaseApiUrl() + '/api/tasks/' + taskId + '/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(d) {
+        if (d && d.success) {
+          cachedTasks = d.tasks;
+          updateTasksSummaryMetrics();
+          renderTasksGrid();
+          if (d.task && (d.task.completed === true || d.task.status === 'completed')) {
+            var stars = d.stars_awarded || d.task.reward_stars || 2;
+            showToast('Task Completed! ⭐ +' + stars + ' Stars', '⭐');
+            playLocalVoice('Super job finishing ' + d.task.title + '! You earned ' + stars + ' stars!');
+            loadGrowthMetrics();
+          } else {
+            showToast('Task marked in-progress', '⏳');
+          }
+        }
+      })
+      .catch(function(err) {
+        showToast('Error updating task: ' + err.message, '⚠️');
+      });
+    }
+
+    function handleToggleMilestone(taskId, milestoneId) {
+      fetch(getBaseApiUrl() + '/api/tasks/' + taskId + '/milestones/' + milestoneId + '/toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(d) {
+        if (d && d.success) {
+          cachedTasks = d.tasks;
+          updateTasksSummaryMetrics();
+          renderTasksGrid();
+          if (d.task && (d.task.completed === true || d.task.status === 'completed')) {
+            showToast('All milestones completed! Task done ⭐', '⭐');
+            playLocalVoice('All steps complete for ' + d.task.title + '! Awesome job, champ!');
+            loadGrowthMetrics();
+          } else {
+            showToast('Step updated (' + (d.task ? d.task.progress_pct : 0) + '%)', '✓');
+          }
+        }
+      })
+      .catch(function(err) {
+        showToast('Error updating milestone: ' + err.message, '⚠️');
+      });
+    }
+
+    function handleDeleteTask(taskId) {
+      if (!confirm('Are you sure you want to delete this task?')) return;
+
+      var headers = {};
+      var token = getParentSessionToken();
+      if (token) {
+        headers['x-parent-session-token'] = token;
+      }
+
+      fetch(getBaseApiUrl() + '/api/tasks/' + taskId, {
+        method: 'DELETE',
+        headers: headers
+      })
+      .then(function(r) {
+        if (r.status === 401) {
+          showToast('Parent Mode required to delete tasks', '🔒');
+          openPinModal();
+          return null;
+        }
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(d) {
+        if (!d) return;
+        if (d.success) {
+          cachedTasks = d.tasks;
+          updateTasksSummaryMetrics();
+          renderTasksGrid();
+          showToast('Task deleted successfully', '🗑️');
+        } else {
+          throw new Error(d.error || 'Delete failed');
+        }
+      })
+      .catch(function(err) {
+        showToast('Error deleting task: ' + err.message, '⚠️');
+      });
     }
 
     // Dynamic Socratic Missions Loading & Persistence (Fix 2)
@@ -2674,6 +3428,7 @@
     var dashboardSyncPollTimer = null;
     function pollDashboardSync() {
       loadGrowthMetrics();
+      loadTasks();
       loadDayWiseHistory();
     }
 
@@ -2694,6 +3449,7 @@
       if (document.visibilityState === 'visible') {
         loadDeviceState();
         loadGrowthMetrics();
+        loadTasks();
         loadDayWiseHistory();
       }
     });
@@ -2903,6 +3659,7 @@
         if (badge) badge.classList.remove('hidden');
       }
       loadGrowthMetrics();
+      loadTasks();
       loadHabits();
       loadMissions();
       loadDayWiseHistory();

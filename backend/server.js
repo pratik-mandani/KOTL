@@ -42,6 +42,13 @@ const {
   getQuests,
   addQuest,
   toggleQuestStatus,
+  getTasks,
+  getTaskById,
+  addTask,
+  updateTask,
+  toggleTaskStatus,
+  toggleMilestoneStatus,
+  deleteTask,
   logSickness,
   updateVaccination,
   addVaccination,
@@ -52,7 +59,7 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const uploadsDir = path.join(__dirname, "uploads");
+const uploadsDir = process.env.DATA_DIR || process.env.UPLOADS_DIR || path.join(__dirname, "uploads");
 const ttsUploadsDir = path.join(uploadsDir, "tts");
 
 const activeSessions = new Map();
@@ -800,6 +807,143 @@ app.post("/api/quests/toggle", (req, res) => {
       return res.status(404).json({ success: false, error: "Quest not found" });
     }
     res.json({ success: true, quest, quests: getQuests() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- Tasks & Activities (Learning Projects, Homework, Habits & Milestones) ---
+app.get("/api/tasks", (req, res) => {
+  try {
+    const { category, status, search } = req.query || {};
+    const tasks = getTasks({ category, status, search });
+    res.json({ success: true, tasks });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/tasks", (req, res) => {
+  try {
+    const { title } = req.body || {};
+    if (!title || typeof title !== "string" || !title.trim()) {
+      return res.status(400).json({ success: false, error: "Task title is required" });
+    }
+    const task = addTask(req.body);
+    res.status(201).json({ success: true, task, tasks: getTasks() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.patch("/api/tasks/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || !id.trim()) {
+      return res.status(400).json({ success: false, error: "Task ID is required" });
+    }
+    if (req.body && req.body.title !== undefined) {
+      if (typeof req.body.title !== "string" || !req.body.title.trim()) {
+        return res.status(400).json({ success: false, error: "Task title cannot be empty" });
+      }
+    }
+    const updated = updateTask(id, req.body || {});
+    if (!updated) {
+      return res.status(404).json({ success: false, error: "Task not found" });
+    }
+    res.json({ success: true, task: updated, tasks: getTasks() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put("/api/tasks/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || !id.trim()) {
+      return res.status(400).json({ success: false, error: "Task ID is required" });
+    }
+    if (req.body && req.body.title !== undefined) {
+      if (typeof req.body.title !== "string" || !req.body.title.trim()) {
+        return res.status(400).json({ success: false, error: "Task title cannot be empty" });
+      }
+    }
+    const updated = updateTask(id, req.body || {});
+    if (!updated) {
+      return res.status(404).json({ success: false, error: "Task not found" });
+    }
+    res.json({ success: true, task: updated, tasks: getTasks() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/tasks/:id/toggle", (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || !id.trim()) {
+      return res.status(400).json({ success: false, error: "Task ID is required" });
+    }
+    const { status } = req.body || {};
+    const result = toggleTaskStatus(id, status);
+    if (!result) {
+      return res.status(404).json({ success: false, error: "Task not found" });
+    }
+    res.json({
+      success: true,
+      task: result.task,
+      stars_awarded: result.stars_awarded,
+      tasks: getTasks()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post("/api/tasks/:id/milestones/:milestoneId/toggle", (req, res) => {
+  try {
+    const { id, milestoneId } = req.params;
+    if (!id || !milestoneId) {
+      return res.status(400).json({ success: false, error: "Task ID and Milestone ID are required" });
+    }
+    const { completed } = req.body || {};
+    const result = toggleMilestoneStatus(id, milestoneId, completed);
+    if (result.error === "task_not_found") {
+      return res.status(404).json({ success: false, error: "Task not found" });
+    }
+    if (result.error === "milestone_not_found") {
+      return res.status(404).json({ success: false, error: "Milestone not found" });
+    }
+    res.json({
+      success: true,
+      task: result.task,
+      milestone: result.milestone,
+      tasks: getTasks()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete("/api/tasks/:id", (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || !id.trim()) {
+      return res.status(400).json({ success: false, error: "Task ID is required" });
+    }
+    // Apply existing authentication/authorization rules to protected operations
+    const auth = verifyUsageAuthorization(req);
+    if (!auth.authorized) {
+      return res.status(401).json({
+        success: false,
+        error: auth.error || "Unauthorized: Valid Parent PIN or Session required"
+      });
+    }
+    const deleted = deleteTask(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: "Task not found" });
+    }
+    res.json({ success: true, message: "Task deleted successfully", tasks: getTasks() });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

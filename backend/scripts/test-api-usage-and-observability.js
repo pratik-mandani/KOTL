@@ -485,6 +485,7 @@ await runTest("Firmware main.ino implements monotonic turn latency tracking and 
   if (failedCount > 0) {
     process.exit(1);
   }
+  process.exit(0);
 }
 
 runAll().catch((err) => {

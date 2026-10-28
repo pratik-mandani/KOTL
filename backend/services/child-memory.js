@@ -6,14 +6,16 @@
 
 const fs = require("fs");
 const path = require("path");
+const { getDataDir, readJsonFileSafe, writeJsonFileSafe } = require("../utils/storage");
 
-const UPLOADS_DIR = path.join(__dirname, "..", "uploads");
+const UPLOADS_DIR = getDataDir();
 const PROFILE_FILE = path.join(UPLOADS_DIR, "child_profile.json");
 const MISSIONS_FILE = path.join(UPLOADS_DIR, "parent_missions.json");
 const REPORT_FILE = path.join(UPLOADS_DIR, "child_report.json");
 const VOICE_MEMOS_FILE = path.join(UPLOADS_DIR, "voice_memos.json");
 const SESSIONS_FILE = path.join(UPLOADS_DIR, "sessions.json");
 const HABITS_FILE = path.join(UPLOADS_DIR, "habits.json");
+const TASKS_FILE = path.join(UPLOADS_DIR, "tasks.json");
 
 let s_lastDataSourceChangeMs = Date.now();
 function notifyDataSourceChanged() {
@@ -917,6 +919,442 @@ function toggleQuestStatus(id) {
   return null;
 }
 
+// ============================================================================
+// Tasks & Activities Engine (Educational Projects, Homework & Daily Milestones)
+// ============================================================================
+
+const DEFAULT_TASKS = [
+  {
+    id: "task-school-1",
+    title: "🌱 My First Plant in a Cup (School Science Project)",
+    category: "School Project",
+    description: "Plant a gram seed in moist soil, observe daily sprout growth, and record in drawing book.",
+    instructions: "1. Moisten the soil. 2. Keep near morning sunlight. 3. Sketch the first green sprout in your notebook.",
+    due_date: "2026-11-05",
+    due_time: "17:00",
+    priority: "high",
+    status: "in_progress",
+    reward_stars: 3,
+    parent_notes: "School project for Class 1 Science exhibition.",
+    milestones: [
+      { id: "m-1", title: "Plant gram seed in moist soil", completed: true },
+      { id: "m-2", title: "Place cup near morning sunlight & water gently", completed: true },
+      { id: "m-3", title: "Sketch first green sprout in observation notebook", completed: false }
+    ],
+    ai_hints: [
+      "What do seeds need to wake up? Water, soil, or juice?",
+      "Where should we keep our cup so sunlight can touch it?",
+      "Let us draw a tiny leaf on our chart when it sprouts!"
+    ],
+    created_at: "2026-10-24T11:54:16.262Z",
+    updated_at: "2026-10-24T11:54:16.262Z",
+    completed_at: null
+  },
+  {
+    id: "task-homework-1",
+    title: "🔢 Math Fun: Count & Group 10 Colorful Shapes",
+    category: "Homework",
+    description: "Group triangle and circle shapes into sets of 5.",
+    instructions: "Draw 5 blue triangles and 5 orange circles. Count them aloud with KOTL!",
+    due_date: "2026-10-28",
+    due_time: "18:00",
+    priority: "medium",
+    status: "in_progress",
+    reward_stars: 2,
+    parent_notes: "Reinforces counting up to 10 and shape recognition.",
+    milestones: [
+      { id: "m-1", title: "Draw 5 triangles", completed: true },
+      { id: "m-2", title: "Draw 5 circles", completed: false },
+      { id: "m-3", title: "Count all 10 shapes aloud", completed: false }
+    ],
+    ai_hints: [
+      "How many sides does a triangle have? One, two, three!",
+      "If you have 5 triangles and 5 circles, how many do they make together?"
+    ],
+    created_at: "2026-10-25T09:30:00.000Z",
+    updated_at: "2026-10-25T09:30:00.000Z",
+    completed_at: null
+  },
+  {
+    id: "task-reading-1",
+    title: "📖 Bedtime Star Journey Reading",
+    category: "Reading",
+    description: "Read Chapter 1 of 'The Little Astronaut' with KOTL.",
+    instructions: "Listen to KOTL's star story and pronounce 3 new words: Orbit, Galaxy, Nebula.",
+    due_date: "2026-10-27",
+    due_time: "20:30",
+    priority: "medium",
+    status: "completed",
+    reward_stars: 2,
+    parent_notes: "Part of evening wind-down routine.",
+    milestones: [
+      { id: "m-1", title: "Listen to Chapter 1", completed: true },
+      { id: "m-2", title: "Repeat words: Orbit, Galaxy, Nebula", completed: true }
+    ],
+    ai_hints: [
+      "What is a galaxy? A big swirl of millions of stars!",
+      "Which star is closest to Earth? The Sun!"
+    ],
+    stars_awarded: true,
+    created_at: "2026-10-26T14:00:00.000Z",
+    updated_at: "2026-10-26T20:45:00.000Z",
+    completed_at: "2026-10-26T20:45:00.000Z"
+  }
+];
+
+/**
+ * Enriches a raw task object with derived progress metrics and completion state.
+ */
+function enrichTask(task) {
+  if (!task || typeof task !== "object") return null;
+  const milestones = Array.isArray(task.milestones) ? task.milestones : [];
+  const completedCount = milestones.filter(m => m.completed === true).length;
+  const totalCount = milestones.length;
+
+  let progressPct = 0;
+  if (totalCount > 0) {
+    progressPct = Math.round((completedCount / totalCount) * 100);
+  } else if (task.status === "completed") {
+    progressPct = 100;
+  }
+
+  const isCompleted = task.status === "completed";
+
+  return {
+    ...task,
+    milestones,
+    completed: isCompleted,
+    progress_pct: progressPct,
+    milestones_total: totalCount,
+    milestones_completed: completedCount,
+    stars_awarded: Boolean(task.stars_awarded)
+  };
+}
+
+/**
+ * Retrieves tasks with optional filtering by category, status, or search query.
+ */
+function getTasks({ category = null, status = null, search = null } = {}) {
+  ensureUploadsDir();
+  let tasks = readJsonFileSafe(TASKS_FILE, null);
+  if (!Array.isArray(tasks)) {
+    // Initialize tasks.json with DEFAULT_TASKS if missing
+    tasks = [...DEFAULT_TASKS];
+    saveTasks(tasks);
+  }
+
+  let result = tasks.map(enrichTask).filter(Boolean);
+
+  if (category && typeof category === "string" && category.trim()) {
+    const catLower = category.trim().toLowerCase();
+    result = result.filter(t => (t.category || "").toLowerCase() === catLower);
+  }
+
+  if (status && typeof status === "string" && status.trim()) {
+    const statusLower = status.trim().toLowerCase();
+    result = result.filter(t => (t.status || "").toLowerCase() === statusLower);
+  }
+
+  if (search && typeof search === "string" && search.trim()) {
+    const qLower = search.trim().toLowerCase();
+    result = result.filter(t =>
+      (t.title || "").toLowerCase().includes(qLower) ||
+      (t.description || "").toLowerCase().includes(qLower) ||
+      (t.instructions || "").toLowerCase().includes(qLower) ||
+      (t.category || "").toLowerCase().includes(qLower)
+    );
+  }
+
+  return result;
+}
+
+/**
+ * Saves tasks array safely to persistent storage.
+ */
+function saveTasks(tasks) {
+  ensureUploadsDir();
+  const success = writeJsonFileSafe(TASKS_FILE, Array.isArray(tasks) ? tasks : []);
+  if (success) {
+    notifyDataSourceChanged();
+  }
+  return success;
+}
+
+/**
+ * Finds a single task by ID.
+ */
+function getTaskById(id) {
+  if (!id || typeof id !== "string") return null;
+  const tasks = getTasks();
+  const match = tasks.find(t => t.id === id.trim());
+  return match ? enrichTask(match) : null;
+}
+
+/**
+ * Adds a new task with validation and sanitization.
+ */
+function addTask(data = {}) {
+  const {
+    title,
+    category,
+    description,
+    instructions,
+    due_date,
+    due_time,
+    priority,
+    status,
+    reward_stars,
+    parent_notes,
+    milestones,
+    ai_hints
+  } = data;
+
+  if (!title || typeof title !== "string" || !title.trim()) {
+    throw new Error("Task title is required");
+  }
+
+  const tasks = readJsonFileSafe(TASKS_FILE, DEFAULT_TASKS);
+  const now = new Date().toISOString();
+
+  // Clean milestones
+  const cleanMilestones = Array.isArray(milestones)
+    ? milestones.map((m, idx) => ({
+        id: (m && m.id) ? String(m.id) : `m-${idx + 1}`,
+        title: (m && m.title) ? String(m.title).trim() : `Milestone ${idx + 1}`,
+        completed: Boolean(m && m.completed)
+      }))
+    : [];
+
+  // Clean ai_hints
+  const cleanHints = Array.isArray(ai_hints)
+    ? ai_hints.map(h => String(h).trim()).filter(Boolean)
+    : (typeof ai_hints === "string" && ai_hints.trim() ? [ai_hints.trim()] : []);
+
+  const initialStatus = status === "completed" ? "completed" : (status && ["pending", "in_progress", "completed", "overdue"].includes(status.toLowerCase()) ? status.toLowerCase() : "in_progress");
+
+  const newTask = {
+    id: (data.id && typeof data.id === "string" && data.id.trim())
+      ? data.id.trim()
+      : "task-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6),
+    title: title.trim(),
+    category: (category && typeof category === "string" && category.trim()) ? category.trim() : "School Project",
+    description: (description || instructions || "").trim(),
+    instructions: (instructions || description || "").trim(),
+    due_date: (due_date && typeof due_date === "string") ? due_date.trim() : null,
+    due_time: (due_time && typeof due_time === "string") ? due_time.trim() : null,
+    priority: (priority && ["low", "medium", "high"].includes(priority.toLowerCase())) ? priority.toLowerCase() : "medium",
+    status: initialStatus,
+    reward_stars: (typeof reward_stars === "number" && reward_stars >= 0) ? Math.floor(reward_stars) : 2,
+    stars_awarded: initialStatus === "completed",
+    parent_notes: (parent_notes && typeof parent_notes === "string") ? parent_notes.trim() : "",
+    milestones: cleanMilestones,
+    ai_hints: cleanHints,
+    created_at: now,
+    updated_at: now,
+    completed_at: initialStatus === "completed" ? now : null
+  };
+
+  tasks.unshift(newTask);
+  saveTasks(tasks);
+  return enrichTask(newTask);
+}
+
+/**
+ * Updates an existing task by ID.
+ */
+function updateTask(id, updates = {}) {
+  if (!id || typeof id !== "string") return null;
+  const tasks = readJsonFileSafe(TASKS_FILE, DEFAULT_TASKS);
+  const task = tasks.find(t => t.id === id.trim());
+  if (!task) return null;
+
+  if (updates.title !== undefined) {
+    if (!updates.title || typeof updates.title !== "string" || !updates.title.trim()) {
+      throw new Error("Task title cannot be empty");
+    }
+    task.title = updates.title.trim();
+  }
+
+  if (updates.category !== undefined && typeof updates.category === "string") {
+    task.category = updates.category.trim() || task.category;
+  }
+
+  if (updates.description !== undefined) {
+    task.description = String(updates.description).trim();
+  }
+
+  if (updates.instructions !== undefined) {
+    task.instructions = String(updates.instructions).trim();
+  }
+
+  if (updates.due_date !== undefined) {
+    task.due_date = updates.due_date ? String(updates.due_date).trim() : null;
+  }
+
+  if (updates.due_time !== undefined) {
+    task.due_time = updates.due_time ? String(updates.due_time).trim() : null;
+  }
+
+  if (updates.priority !== undefined && typeof updates.priority === "string") {
+    const p = updates.priority.toLowerCase();
+    if (["low", "medium", "high"].includes(p)) {
+      task.priority = p;
+    }
+  }
+
+  if (updates.reward_stars !== undefined) {
+    const s = Number(updates.reward_stars);
+    if (!isNaN(s) && s >= 0) {
+      task.reward_stars = Math.floor(s);
+    }
+  }
+
+  if (updates.parent_notes !== undefined) {
+    task.parent_notes = String(updates.parent_notes).trim();
+  }
+
+  if (Array.isArray(updates.milestones)) {
+    task.milestones = updates.milestones.map((m, idx) => ({
+      id: (m && m.id) ? String(m.id) : `m-${idx + 1}`,
+      title: (m && m.title) ? String(m.title).trim() : `Milestone ${idx + 1}`,
+      completed: Boolean(m && m.completed)
+    }));
+  }
+
+  if (Array.isArray(updates.ai_hints)) {
+    task.ai_hints = updates.ai_hints.map(h => String(h).trim()).filter(Boolean);
+  }
+
+  if (updates.status !== undefined && typeof updates.status === "string") {
+    const nextStatus = updates.status.trim().toLowerCase();
+    if (["pending", "in_progress", "completed", "overdue"].includes(nextStatus)) {
+      if (nextStatus === "completed" && task.status !== "completed") {
+        task.completed_at = new Date().toISOString();
+        if (Array.isArray(task.milestones)) {
+          task.milestones.forEach(m => { m.completed = true; });
+        }
+        if (!task.stars_awarded) {
+          const starCount = (typeof task.reward_stars === "number" && task.reward_stars >= 0) ? task.reward_stars : 2;
+          if (starCount > 0) {
+            awardMannerStar(starCount);
+            task.stars_awarded = true;
+          }
+        }
+      } else if (nextStatus !== "completed" && task.status === "completed") {
+        task.completed_at = null;
+      }
+      task.status = nextStatus;
+    }
+  }
+
+  task.updated_at = new Date().toISOString();
+  saveTasks(tasks);
+  return enrichTask(task);
+}
+
+/**
+ * Toggles a task's completion status.
+ * Automatically awards manner stars when marking completed.
+ */
+function toggleTaskStatus(id, forcedStatus = null) {
+  if (!id) return null;
+  const tasks = readJsonFileSafe(TASKS_FILE, DEFAULT_TASKS);
+  const task = tasks.find(t => t.id === String(id).trim());
+  if (!task) return null;
+
+  let newStatus;
+  if (typeof forcedStatus === "string" && forcedStatus.trim()) {
+    newStatus = forcedStatus.trim().toLowerCase();
+  } else {
+    newStatus = task.status === "completed" ? "in_progress" : "completed";
+  }
+
+  let starsAwarded = 0;
+  const now = new Date().toISOString();
+
+  if (newStatus === "completed") {
+    task.status = "completed";
+    task.completed_at = now;
+    if (Array.isArray(task.milestones)) {
+      task.milestones.forEach(m => { m.completed = true; });
+    }
+    const starCount = (typeof task.reward_stars === "number" && task.reward_stars >= 0) ? task.reward_stars : 2;
+    if (starCount > 0 && !task.stars_awarded) {
+      awardMannerStar(starCount);
+      task.stars_awarded = true;
+      starsAwarded = starCount;
+    }
+  } else {
+    task.status = newStatus;
+    task.completed_at = null;
+  }
+
+  task.updated_at = now;
+  saveTasks(tasks);
+  return {
+    task: enrichTask(task),
+    stars_awarded: starsAwarded
+  };
+}
+
+/**
+ * Toggles a specific milestone within a task.
+ */
+function toggleMilestoneStatus(taskId, milestoneId, forcedCompleted = null) {
+  if (!taskId || !milestoneId) return { error: "missing_id" };
+  const tasks = readJsonFileSafe(TASKS_FILE, DEFAULT_TASKS);
+  const task = tasks.find(t => t.id === String(taskId).trim());
+  if (!task) return { error: "task_not_found" };
+
+  if (!Array.isArray(task.milestones)) {
+    task.milestones = [];
+  }
+
+  const milestone = task.milestones.find(m => String(m.id) === String(milestoneId).trim());
+  if (!milestone) return { error: "milestone_not_found" };
+
+  milestone.completed = typeof forcedCompleted === "boolean" ? forcedCompleted : !milestone.completed;
+
+  const allComplete = task.milestones.length > 0 && task.milestones.every(m => m.completed === true);
+  const now = new Date().toISOString();
+
+  if (allComplete && task.status !== "completed") {
+    task.status = "completed";
+    task.completed_at = now;
+    const starCount = (typeof task.reward_stars === "number" && task.reward_stars >= 0) ? task.reward_stars : 2;
+    if (starCount > 0 && !task.stars_awarded) {
+      awardMannerStar(starCount);
+      task.stars_awarded = true;
+    }
+  } else if (!allComplete && task.status === "completed") {
+    task.status = "in_progress";
+    task.completed_at = null;
+  }
+
+  task.updated_at = now;
+  saveTasks(tasks);
+  return {
+    task: enrichTask(task),
+    milestone
+  };
+}
+
+/**
+ * Deletes a task by ID.
+ */
+function deleteTask(id) {
+  if (!id) return false;
+  const tasks = readJsonFileSafe(TASKS_FILE, DEFAULT_TASKS);
+  const targetId = String(id).trim();
+  const initialLength = tasks.length;
+  const filtered = tasks.filter(t => t.id !== targetId);
+  if (filtered.length === initialLength) {
+    return false;
+  }
+  saveTasks(filtered);
+  return true;
+}
+
 function logSickness({ date, symptom, doctor, medicines, dosage, status, remedy }) {
   const profile = getChildProfile();
   if (!profile.medical) profile.medical = {};
@@ -1423,12 +1861,13 @@ function deleteHabit(id) {
   return filtered;
 }
 
-function awardMannerStar() {
+function awardMannerStar(count = 1) {
   const profile = getChildProfile();
   const currentStars = typeof profile.manner_stars === "number" ? profile.manner_stars : 0;
-  const newStars = currentStars + 1;
+  const increment = typeof count === "number" && count > 0 ? Math.floor(count) : 1;
+  const newStars = currentStars + increment;
   updateChildProfile({ manner_stars: newStars });
-  return { success: true, manner_stars: newStars };
+  return { success: true, manner_stars: newStars, stars_awarded: increment };
 }
 
 function getGrowthMetrics(sessionId = "default-session", { demo = false } = {}) {
@@ -1533,6 +1972,16 @@ module.exports = {
   saveQuests,
   addQuest,
   toggleQuestStatus,
+  getTasks,
+  saveTasks,
+  getTaskById,
+  addTask,
+  updateTask,
+  toggleTaskStatus,
+  toggleMilestoneStatus,
+  deleteTask,
+  enrichTask,
+  DEFAULT_TASKS,
   logSickness,
   updateVaccination,
   addVaccination,
