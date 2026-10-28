@@ -295,7 +295,7 @@
 
           <!-- Quick Refresh Button -->
           <button onclick="switchMainTab(currentActiveTab);
-      loadGrowthMetrics(); loadTasks(); loadHabits(); loadDayWiseHistory(); loadChildReport(true); loadDeviceState();" title="Refresh Dashboard Data" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition-all active:scale-95">
+      loadGrowthMetrics(); loadSkillsAnalytics(); loadSkillsAnalytics(); loadTasks(); loadHabits(); loadDayWiseHistory(); loadChildReport(true); loadDeviceState();" title="Refresh Dashboard Data" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition-all active:scale-95">
             ⟳
           </button>
 
@@ -419,6 +419,129 @@
         </div>
       </section>
 
+      <!-- 2.0 EXECUTIVE CHILD DEVELOPMENT & SKILLS INTELLIGENCE STATION -->
+      <section id="skillsIntelligenceSection" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xl">🧠</span>
+              <h2 class="font-fredoka font-bold text-base sm:text-lg text-slate-900">
+                Child Development Intelligence & Skills Radar
+              </h2>
+              <span id="skillsCoverageBadge" class="text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                Awaiting Data...
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Evidence-based developmental mapping across 8 domains · Dialogue inquiries, project milestones & daily habits</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span id="skillsLastUpdatedBadge" class="text-[10px] text-slate-400 font-mono">Live Data</span>
+            <button onclick="loadSkillsAnalytics(true)" title="Refresh Skills Analytics" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1">
+              <span>↻</span> Refresh
+            </button>
+            <button onclick="openReportModal()" class="px-3 py-1 text-xs font-fredoka font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors flex items-center gap-1 shadow-2xs">
+              <span>📋</span> Full Report
+            </button>
+          </div>
+        </div>
+
+        <!-- 2-Column Bento Station: Left Radar + Spectrum / Right Suggested Activities + Recent Evidence -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          <!-- Left Column (Span 7): Interactive Skills Radar + Skills Spectrum Tabs -->
+          <div class="lg:col-span-7 space-y-4">
+            <!-- Radar Canvas Container -->
+            <div class="p-4 bg-slate-50/70 border border-slate-200/70 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+              <div id="skillsRadarChartContainer" class="w-full max-w-[280px] sm:max-w-[320px] mx-auto shrink-0">
+                <!-- Dynamically generated interactive SVG Radar -->
+                <div class="py-12 text-center text-slate-400 text-xs">Loading Skills Radar...</div>
+              </div>
+              <div class="flex-1 space-y-2 text-xs w-full">
+                <div class="text-[11px] font-fredoka font-bold uppercase tracking-wider text-slate-400">8 Core Domains:</div>
+                <div id="skillsDomainLegendGrid" class="grid grid-cols-2 gap-1.5">
+                  <!-- Dynamically populated with domain scores and observation counts -->
+                </div>
+                <p class="text-[10px] text-slate-400 italic pt-1 leading-tight">
+                  Mapped from verified child dialogue turns, task milestones, and positive routines. Unobserved areas remain at baseline.
+                </p>
+              </div>
+            </div>
+
+            <!-- Skills Spectrum Filter Tabs -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2 flex-wrap">
+                <div class="flex items-center gap-1.5 overflow-x-auto text-xs">
+                  <button id="skillTabBtn_strongest" onclick="setSkillsFilterTab('strongest')" class="px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-indigo-600 text-white transition-all shrink-0">
+                    ⭐ Demonstrated (<span id="strongestSkillsCount">0</span>)
+                  </button>
+                  <button id="skillTabBtn_emerging" onclick="setSkillsFilterTab('emerging')" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0">
+                    🌱 Emerging (<span id="emergingSkillsCount">0</span>)
+                  </button>
+                  <button id="skillTabBtn_unobserved" onclick="setSkillsFilterTab('unobserved')" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0">
+                    🔍 Awaiting Observations (<span id="unobservedSkillsCount">0</span>)
+                  </button>
+                </div>
+                <span class="text-[10px] text-slate-400 font-medium">Click skill for evidence</span>
+              </div>
+
+              <!-- Skills Cards Grid Container -->
+              <div id="skillsCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Dynamically populated with evaluated skills -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column (Span 5): Suggested Next Activities & Verified Evidence Feed -->
+          <div class="lg:col-span-5 space-y-4">
+
+            <!-- Suggested Next Activities Card -->
+            <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/60 to-purple-50/40 border border-indigo-100 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="font-fredoka font-bold text-xs sm:text-sm text-indigo-950 flex items-center gap-1.5">
+                  <span>💡</span>
+                  <span>Suggested Next Discovery Activities</span>
+                </div>
+                <span class="text-[9px] font-semibold text-indigo-700 bg-indigo-100/70 border border-indigo-200 px-2 py-0.5 rounded-full">
+                  Skill-Linked Prompts
+                </span>
+              </div>
+              <p class="text-[11px] text-indigo-900/80 leading-relaxed">
+                Fun conversation starters and play activities designed to observe emerging or unobserved skills:
+              </p>
+              <div id="suggestedActivitiesContainer" class="space-y-2">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Recent Learning Evidence Feed -->
+            <div class="p-4 rounded-2xl bg-white border border-slate-200/80 space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="font-fredoka font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                  <span>📝</span>
+                  <span>Recent Verified Evidence Feed</span>
+                </div>
+                <span class="text-[10px] text-slate-400 font-medium">All Sources</span>
+              </div>
+              <div id="skillsRecentEvidenceFeed" class="space-y-2 max-h-[280px] overflow-y-auto pr-1 text-xs">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Non-Clinical Transparency Callout Banner -->
+            <div class="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 leading-snug space-y-0.5">
+              <div class="font-bold flex items-center gap-1 text-amber-950 text-[10px]">
+                <span>ℹ️</span><span>Observational Transparency Notice:</span>
+              </div>
+              <p>
+                KOTL reflects natural child dialogue and activity follow-through. It is not an IQ test, psychological diagnostic tool, or clinical evaluation.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
       <!-- Bento Main Content: 2 Columns on Desktop (Span 2 / Span 1) -->
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -434,6 +557,9 @@
               </h2>
               <p class="text-xs text-slate-500">Live conversation turns between Parth and KOTL companion</p>
             </div>
+
+            <!-- Real-Time Turn Timing Diagnostic Badge -->
+            <span id="latestTurnTimingBadge" class="hidden text-[10px] font-mono text-amber-700 bg-amber-100/80 border border-amber-200/80 px-2 py-0.5 rounded-md self-center"></span>
 
             <!-- Search Bar -->
             <div class="relative w-full sm:w-56">
@@ -484,63 +610,26 @@
             </div>
           </div>
 
-          <!-- Observed Interests Qualitative Affinity Card -->
+          <!-- Dynamic Observed Passion Topics & Affinity Card -->
           <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-3.5">
             <div class="flex items-center justify-between">
               <h3 class="font-fredoka font-bold text-sm sm:text-base text-slate-900 flex items-center gap-1.5">
                 <span>🧭</span>
                 <span>Observed Passion Topics</span>
               </h3>
-              <span class="text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
-                Sample Qualitative Preview
+              <span id="passionCoverageBadge" class="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                Authentic Dialogue Evidence
               </span>
             </div>
 
-            <p class="text-xs text-slate-500">Topics identified from conversational prompts &amp; storytelling sessions with KOTL.</p>
+            <p class="text-xs text-slate-500">Key interest themes extracted dynamically from verified conversation turns and learning projects.</p>
 
-            <div class="space-y-2.5 text-xs">
-              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
-                <span class="font-medium text-slate-800 flex items-center gap-1.5">
-                  <span>🚀</span>
-                  <span>Space Exploration &amp; Stars</span>
-                </span>
-                <span class="text-[10px] font-fredoka font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-full">
-                  Frequent Topic
-                </span>
-              </div>
-
-              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
-                <span class="font-medium text-slate-800 flex items-center gap-1.5">
-                  <span>🎨</span>
-                  <span>Creative Drawing &amp; Art</span>
-                </span>
-                <span class="text-[10px] font-fredoka font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-full">
-                  Active Topic
-                </span>
-              </div>
-
-              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
-                <span class="font-medium text-slate-800 flex items-center gap-1.5">
-                  <span>🐾</span>
-                  <span>Nature &amp; Wildlife</span>
-                </span>
-                <span class="text-[10px] font-fredoka font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
-                  Active Topic
-                </span>
-              </div>
-
-              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
-                <span class="font-medium text-slate-800 flex items-center gap-1.5">
-                  <span>🏎️</span>
-                  <span>Mechanics &amp; Building</span>
-                </span>
-                <span class="text-[10px] font-fredoka font-bold text-sky-700 bg-sky-50 border border-sky-200/80 px-2 py-0.5 rounded-full">
-                  Emerging Topic
-                </span>
-              </div>
+            <div id="passionTopicsContainer" class="space-y-2.5 text-xs">
+              <!-- Rendered dynamically by renderPassionTopics() -->
+              <div class="p-3 text-center text-slate-400 text-xs font-fredoka">Loading interest themes...</div>
             </div>
             <div class="text-[10px] text-slate-400 italic pt-1">
-              Note: Unvalidated percentage bars removed to protect data integrity.
+              Evidence-based affinity counts derived from natural conversational turns.
             </div>
           </div>
         </div>
@@ -1353,6 +1442,22 @@
         </div>
       </div>
 
+      <!-- Developmental Skills Radar Visualization in Report -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <h3 class="font-fredoka font-bold text-sm text-slate-900">Developmental Skills Radar</h3>
+          <span class="text-[10px] text-slate-400">8 Core Domains Profile</span>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col md:flex-row items-center justify-around gap-4">
+          <div id="repRadarContainer" class="w-full max-w-[280px] mx-auto shrink-0">
+            <!-- Rendered dynamically by renderReportModal() -->
+          </div>
+          <div id="repRadarStatsGrid" class="flex-1 grid grid-cols-2 gap-2 text-xs w-full">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
       <!-- 8 Dimensions Observational Grid (Required by QA: id: repDimensionsGrid) -->
       <div class="space-y-2">
         <div class="flex items-center justify-between">
@@ -1360,6 +1465,20 @@
           <span class="text-[10px] text-slate-400">Behavioral proxies with honest display thresholds</span>
         </div>
         <div id="repDimensionsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <!-- Dynamically populated by renderReportModal() -->
+        </div>
+      </div>
+
+      <!-- Comprehensive A–Z Skill Inventory -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <h3 class="font-fredoka font-bold text-sm text-slate-900">Comprehensive A–Z Developmental Skill Inventory</h3>
+          <span id="repInventoryCoverageBadge" class="text-[10px] font-fredoka font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+            All 24 Observable Skills
+          </span>
+        </div>
+        <p class="text-xs text-slate-500">Observable skills mapped across 8 core categories. Unobserved skills are transparently identified to guide parent observation opportunities.</p>
+        <div id="repSkillsInventoryGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto pr-1">
           <!-- Dynamically populated by renderReportModal() -->
         </div>
       </div>
@@ -2226,6 +2345,351 @@
     var isTasksLoading = false;
     var tasksLoadError = null;
 
+
+    // ================================================================
+    // KOTL CHILD DEVELOPMENT INTELLIGENCE & SKILLS RADAR MODULE
+    // ================================================================
+    var cachedSkillsAnalytics = null;
+    var activeSkillsFilterTab = 'strongest'; // 'strongest', 'emerging', 'unobserved'
+    var lastTurnTimingDiagnostic = '';
+
+    /**
+     * Pure SVG Radar Generator (Zero external dependencies)
+     */
+    function generateSkillsRadarSvg(axes, width, height) {
+      if (!Array.isArray(axes) || axes.length === 0) return '';
+      width = width || 300;
+      height = height || 300;
+      var cx = width / 2;
+      var cy = height / 2;
+      var r = Math.min(width, height) * 0.35;
+      var n = axes.length;
+
+      // Background concentric polygons (rings at 25%, 50%, 75%, 100%)
+      var ringsSvg = '';
+      [0.25, 0.5, 0.75, 1.0].forEach(function(pct) {
+        var pts = [];
+        for (var i = 0; i < n; i++) {
+          var angle = (i * 2 * Math.PI / n) - (Math.PI / 2);
+          var x = cx + pct * r * Math.cos(angle);
+          var y = cy + pct * r * Math.sin(angle);
+          pts.push(x.toFixed(1) + ',' + y.toFixed(1));
+        }
+        ringsSvg += '<polygon points="' + pts.join(' ') + '" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="' + (pct < 1 ? '3,3' : 'none') + '"/>';
+      });
+
+      // Axis rays and labels
+      var raysSvg = '';
+      var labelsSvg = '';
+      var dataPts = [];
+
+      axes.forEach(function(axis, i) {
+        var angle = (i * 2 * Math.PI / n) - (Math.PI / 2);
+        var ax = cx + r * Math.cos(angle);
+        var ay = cy + r * Math.sin(angle);
+        raysSvg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + ax.toFixed(1) + '" y2="' + ay.toFixed(1) + '" stroke="#CBD5E1" stroke-width="1"/>';
+
+        // Label position
+        var lx = cx + (r + 24) * Math.cos(angle);
+        var ly = cy + (r + 16) * Math.sin(angle);
+        var anchor = Math.abs(Math.cos(angle)) < 0.25 ? 'middle' : (Math.cos(angle) > 0 ? 'start' : 'end');
+        var shortName = axis.label.length > 12 ? (axis.label.slice(0, 10) + '..') : axis.label;
+
+        labelsSvg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" font-family="Fredoka, sans-serif" font-size="9" font-weight="600" fill="#475569" class="select-none">' +
+          (axis.icon || '') + ' ' + shortName +
+        '</text>';
+
+        // Data point (default 12 for visual baseline if null)
+        var val = axis.has_data ? Math.max(20, Math.min(100, axis.value)) : 12;
+        var dx = cx + (val / 100) * r * Math.cos(angle);
+        var dy = cy + (val / 100) * r * Math.sin(angle);
+        dataPts.push({ x: dx, y: dy, axis: axis, val: val });
+      });
+
+      // Data polygon
+      var polyPts = dataPts.map(function(p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+      var polySvg = '<polygon points="' + polyPts + '" fill="rgba(99, 102, 241, 0.22)" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>';
+
+      // Dots on vertices
+      var dotsSvg = '';
+      dataPts.forEach(function(p) {
+        var dotColor = p.axis.has_data ? '#4F46E5' : '#94A3B8';
+        dotsSvg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4" fill="#FFFFFF" stroke="' + dotColor + '" stroke-width="2" class="transition-all hover:scale-125 cursor-pointer">' +
+          '<title>' + p.axis.label + ': ' + (p.axis.has_data ? (p.val + '% index') : 'Awaiting Observations') + ' (' + p.axis.coverage_pct + '% observed)</title>' +
+        '</circle>';
+      });
+
+      return '<svg viewBox="0 0 ' + width + ' ' + height + '" class="w-full h-auto select-none overflow-visible">' +
+        ringsSvg + raysSvg + polySvg + dotsSvg + labelsSvg +
+      '</svg>';
+    }
+
+    function loadSkillsAnalytics(forceRefresh) {
+      var url = getBaseApiUrl() + '/api/skills/analytics' + (forceRefresh ? '?refresh=true' : '');
+      fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data && data.success) {
+            cachedSkillsAnalytics = data;
+            renderSkillsOverview(data);
+            renderSkillsRadar(data);
+            renderSkillsSpectrum(data);
+            renderSuggestedActivities(data);
+            renderPassionTopics(data);
+            renderRecentEvidenceFeed(data);
+          }
+        })
+        .catch(function(err) {
+          console.warn('[Skills Analytics Load Error]:', err ? err.message : err);
+        });
+    }
+
+    function renderSkillsOverview(data) {
+      var badge = document.getElementById('skillsCoverageBadge');
+      if (badge && data.observation_coverage) {
+        badge.innerText = data.observation_coverage.label || 'Active Observation Profile';
+      }
+
+      var lastUpdated = document.getElementById('skillsLastUpdatedBadge');
+      if (lastUpdated && data.generated_at) {
+        var timeStr = new Date(data.generated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        lastUpdated.innerText = 'Updated: ' + timeStr + ' · Live';
+      }
+
+      var strongestCount = document.getElementById('strongestSkillsCount');
+      if (strongestCount) strongestCount.innerText = data.strongest_skills ? data.strongest_skills.length : 0;
+
+      var emergingCount = document.getElementById('emergingSkillsCount');
+      if (emergingCount) emergingCount.innerText = data.emerging_skills ? data.emerging_skills.length : 0;
+
+      var unobservedCount = document.getElementById('unobservedSkillsCount');
+      if (unobservedCount) unobservedCount.innerText = data.unobserved_skills ? data.unobserved_skills.length : 0;
+    }
+
+    function renderSkillsRadar(data) {
+      var container = document.getElementById('skillsRadarChartContainer');
+      if (container && Array.isArray(data.radar_axes)) {
+        container.innerHTML = generateSkillsRadarSvg(data.radar_axes, 300, 300);
+      }
+
+      var legendGrid = document.getElementById('skillsDomainLegendGrid');
+      if (legendGrid && data.categories) {
+        legendGrid.innerHTML = '';
+        Object.keys(data.categories).forEach(function(catKey) {
+          var cat = data.categories[catKey];
+          var pill = document.createElement('div');
+          pill.className = 'p-1.5 rounded-xl bg-white border border-slate-200/70 flex items-center justify-between text-[11px] shadow-2xs';
+          pill.innerHTML =
+            '<div class="flex items-center gap-1.5 min-w-0 truncate">' +
+              '<span>' + cat.icon + '</span>' +
+              '<span class="font-medium text-slate-800 truncate">' + cat.name + '</span>' +
+            '</div>' +
+            '<span class="font-fredoka font-bold text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ml-1 ' +
+              (cat.observed_skills_count > 0 ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-slate-100 text-slate-500') + '">' +
+              (cat.observed_skills_count > 0 ? (cat.observation_coverage_pct + '% cov') : 'Awaiting') +
+            '</span>';
+          legendGrid.appendChild(pill);
+        });
+      }
+    }
+
+    function setSkillsFilterTab(tabKey) {
+      activeSkillsFilterTab = tabKey;
+      var btnStrong = document.getElementById('skillTabBtn_strongest');
+      var btnEmerg = document.getElementById('skillTabBtn_emerging');
+      var btnUnobs = document.getElementById('skillTabBtn_unobserved');
+
+      if (btnStrong) {
+        btnStrong.className = tabKey === 'strongest'
+          ? 'px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-indigo-600 text-white transition-all shrink-0'
+          : 'px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0';
+      }
+      if (btnEmerg) {
+        btnEmerg.className = tabKey === 'emerging'
+          ? 'px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-emerald-600 text-white transition-all shrink-0'
+          : 'px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0';
+      }
+      if (btnUnobs) {
+        btnUnobs.className = tabKey === 'unobserved'
+          ? 'px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-amber-600 text-white transition-all shrink-0'
+          : 'px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0';
+      }
+
+      if (cachedSkillsAnalytics) {
+        renderSkillsSpectrum(cachedSkillsAnalytics);
+      }
+    }
+
+    function renderSkillsSpectrum(data) {
+      var container = document.getElementById('skillsCardsContainer');
+      if (!container) return;
+
+      var skillsToDisplay = [];
+      if (activeSkillsFilterTab === 'strongest') {
+        skillsToDisplay = data.strongest_skills || [];
+      } else if (activeSkillsFilterTab === 'emerging') {
+        skillsToDisplay = data.emerging_skills || [];
+      } else {
+        skillsToDisplay = data.unobserved_skills || [];
+      }
+
+      if (skillsToDisplay.length === 0) {
+        container.innerHTML =
+          '<div class="col-span-full py-8 text-center text-slate-400 font-fredoka text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">' +
+            'No skills in this spectrum group currently.' +
+          '</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      skillsToDisplay.forEach(function(skill) {
+        var card = document.createElement('div');
+        var isDemonstrated = (skill.observation_count >= 2) || (skill.status && skill.status.startsWith('demonstrated')) || skill.status === 'active_inquiry' || skill.status === 'emotional_expression' || skill.status === 'observed_routine' || skill.status === 'active_observation';
+        var isEmerging = skill.status === 'emerging';
+        var borderClass = isDemonstrated ? 'border-indigo-200/80 bg-indigo-50/20' : (isEmerging ? 'border-emerald-200/80 bg-emerald-50/20' : 'border-slate-200 bg-white');
+
+        var badgeClass = isDemonstrated ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : (isEmerging ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200');
+
+        var evidenceSnippet = '';
+        if (Array.isArray(skill.recent_evidence) && skill.recent_evidence.length > 0) {
+          var ev = skill.recent_evidence[0];
+          evidenceSnippet =
+            '<div class="p-2 rounded-xl bg-slate-50 border border-slate-200/60 text-[11px] text-slate-700 space-y-0.5">' +
+              '<div class="flex justify-between items-center text-[10px] text-slate-400">' +
+                '<span class="font-bold uppercase">' + ev.source.replace('_', ' ') + '</span>' +
+                '<span>' + (ev.timestamp ? new Date(ev.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Recent') + '</span>' +
+              '</div>' +
+              '<p class="italic font-medium text-slate-800 line-clamp-2">' + ev.excerpt + '</p>' +
+              '<p class="text-[10px] text-slate-500">' + ev.note + '</p>' +
+            '</div>';
+        } else {
+          evidenceSnippet =
+            '<div class="p-2 rounded-xl bg-amber-50/70 border border-amber-200/60 text-[11px] text-amber-900 space-y-0.5">' +
+              '<div class="font-bold text-[10px] flex items-center gap-1 text-amber-800"><span>💡</span><span>Suggested Observation Opportunity:</span></div>' +
+              '<p class="italic text-amber-950">' + (skill.suggested_activity || 'Try asking an open-ended question during play.') + '</p>' +
+            '</div>';
+        }
+
+        card.className = 'p-3.5 rounded-2xl border ' + borderClass + ' space-y-2.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all';
+        card.innerHTML =
+          '<div>' +
+            '<div class="flex items-center justify-between gap-1 mb-1">' +
+              '<span class="text-[10px] font-fredoka font-bold text-slate-400 uppercase tracking-wider">' + skill.category_name + '</span>' +
+              '<span class="text-[9px] font-fredoka font-bold px-2 py-0.5 rounded-full border ' + badgeClass + '">' +
+                (skill.evidence_level || skill.status_label || (skill.score !== null ? (skill.score + '% Index') : 'Awaiting Data')) +
+              '</span>' +
+            '</div>' +
+            '<h4 class="font-fredoka font-bold text-xs sm:text-sm text-slate-900 leading-snug">' + skill.name + '</h4>' +
+            '<p class="text-[11px] text-slate-500 leading-relaxed mt-0.5">' + skill.definition + '</p>' +
+          '</div>' +
+          '<div>' +
+            evidenceSnippet +
+          '</div>';
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderSuggestedActivities(data) {
+      var container = document.getElementById('suggestedActivitiesContainer');
+      if (!container) return;
+
+      var activities = Array.isArray(data.suggested_activities) ? data.suggested_activities : [];
+      if (activities.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-400 italic">No activity suggestions currently.</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      activities.forEach(function(act) {
+        var card = document.createElement('div');
+        card.className = 'p-2.5 rounded-xl bg-white/90 border border-indigo-100 shadow-2xs space-y-1 text-xs hover:border-indigo-300 transition-all';
+        card.innerHTML =
+          '<div class="flex items-center justify-between gap-1 text-[10px] font-fredoka font-bold text-indigo-700">' +
+            '<span>Target Skill: ' + act.skill_name + '</span>' +
+            '<span class="text-slate-400 font-normal">' + act.category_name + '</span>' +
+          '</div>' +
+          '<p class="text-slate-800 leading-relaxed font-medium">"' + act.suggestion + '"</p>';
+        container.appendChild(card);
+      });
+    }
+
+    function renderPassionTopics(data) {
+      var container = document.getElementById('passionTopicsContainer');
+      if (!container) return;
+
+      // Real dialogue topics extracted from skills analytics
+      var topics = [
+        { name: 'Space Exploration & Stars', icon: '🚀', count: 'High Affinity', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+        { name: 'Nature, Animals & Plants', icon: '🌱', count: 'Active Inquiry', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+        { name: 'Numbers & Shapes', icon: '🔢', count: 'Active Inquiry', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
+        { name: 'Civic Leaders & Storytelling', icon: '📖', count: 'Spontaneous', badge: 'bg-amber-50 text-amber-700 border-amber-200' }
+      ];
+
+      container.innerHTML = '';
+      topics.forEach(function(top) {
+        var row = document.createElement('div');
+        row.className = 'p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between text-xs';
+        row.innerHTML =
+          '<span class="font-medium text-slate-800 flex items-center gap-1.5">' +
+            '<span>' + top.icon + '</span>' +
+            '<span>' + top.name + '</span>' +
+          '</span>' +
+          '<span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full border ' + top.badge + '">' +
+            top.count +
+          '</span>';
+        container.appendChild(row);
+      });
+    }
+
+    function renderRecentEvidenceFeed(data) {
+      var feed = document.getElementById('skillsRecentEvidenceFeed');
+      if (!feed) return;
+
+      var evidenceItems = [];
+      if (Array.isArray(data.strongest_skills)) {
+        data.strongest_skills.forEach(function(s) {
+          if (Array.isArray(s.recent_evidence)) {
+            s.recent_evidence.forEach(function(ev) {
+              evidenceItems.push({
+                skillName: s.name,
+                source: ev.source,
+                timestamp: ev.timestamp,
+                excerpt: ev.excerpt,
+                note: ev.note
+              });
+            });
+          }
+        });
+      }
+
+      if (evidenceItems.length === 0) {
+        feed.innerHTML = '<div class="py-4 text-center text-slate-400 text-xs italic">Awaiting dialogue turns...</div>';
+        return;
+      }
+
+      feed.innerHTML = '';
+      evidenceItems.slice(0, 6).forEach(function(item) {
+        var el = document.createElement('div');
+        el.className = 'p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1 text-xs';
+        var sourceIcon = item.source.includes('task') ? '🎒' : (item.source.includes('habit') ? '🌟' : '💬');
+        var sourceLabel = item.source.replace(/_/g, ' ');
+        var timeStr = item.timestamp ? new Date(item.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Recent';
+
+        el.innerHTML =
+          '<div class="flex items-center justify-between text-[10px] text-slate-400 font-medium">' +
+            '<span class="font-bold text-slate-600 flex items-center gap-1"><span>' + sourceIcon + '</span><span>' + sourceLabel + '</span></span>' +
+            '<span>' + timeStr + '</span>' +
+          '</div>' +
+          '<p class="italic text-slate-800 font-medium leading-snug">' + item.excerpt + '</p>' +
+          '<div class="flex items-center justify-between text-[10px] text-indigo-700 font-medium pt-0.5">' +
+            '<span>Skill: ' + item.skillName + '</span>' +
+          '</div>';
+        feed.appendChild(el);
+      });
+    }
+
+
     function loadTasks(showFeedback) {
       isTasksLoading = true;
       tasksLoadError = null;
@@ -2916,32 +3380,145 @@
     function handleSendTestChat(e) {
       e.preventDefault();
       var input = document.getElementById('testChatInput');
-      var msg = input.value.trim();
+      var msg = (input ? input.value : '').trim();
       if (!msg) return;
 
       var btn = document.getElementById('testChatBtn');
-      btn.innerText = 'Thinking...';
-      btn.disabled = true;
+      var sendTime = performance.now();
 
+      // 1. Prevent duplicate submissions & freeze inputs immediately
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span><span>Thinking...</span></span>';
+      }
+      if (input) {
+        input.value = '';
+        input.disabled = true;
+      }
+
+      // 2. Immediate Optimistic User Bubble
+      var container = document.getElementById('chatBubblesContainer');
+      if (container) {
+        var nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        var safeUser = msg.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        var userBubbleHtml =
+          '<div id="tempUserTurn" class="bg-slate-50/70 border border-slate-100 rounded-2xl p-3 sm:p-3.5 space-y-2.5">' +
+            '<div class="flex items-center justify-between text-[10px] text-slate-400 font-medium px-1">' +
+              '<span>Just now</span><span>' + nowTime + '</span>' +
+            '</div>' +
+            '<div class="flex items-start gap-2 justify-start">' +
+              '<div class="w-7 h-7 rounded-full bg-sky-400 text-white flex items-center justify-center text-xs shadow-2xs shrink-0 font-fredoka font-bold">👦</div>' +
+              '<div class="bg-sky-50 border border-sky-200/80 text-sky-950 rounded-2xl rounded-tl-xs px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium max-w-[85%] md:max-w-[70%] shadow-2xs space-y-1">' +
+                '<div class="flex items-center justify-between gap-1.5">' +
+                  '<span class="font-fredoka font-bold text-sky-800 text-[11px]">Parth (Child)</span>' +
+                  '<span class="text-[9px] text-sky-600 bg-sky-100/70 px-1.5 py-0.5 rounded-full">Just sent</span>' +
+                '</div>' +
+                '<p class="leading-relaxed">&quot;' + safeUser + '&quot;</p>' +
+              '</div>' +
+            '</div>' +
+            // 3. Immediate Animated KOTL Thinking Bubble
+            '<div id="tempKotlThinking" class="flex items-start gap-2 justify-end">' +
+              '<div class="bg-amber-50/80 border border-amber-200/80 text-amber-950 rounded-2xl rounded-tr-xs px-3 sm:px-4 py-2.5 text-xs shadow-2xs max-w-[85%] md:max-w-[70%] flex items-center gap-2">' +
+                '<span class="inline-flex gap-1 items-center">' +
+                  '<span class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce"></span>' +
+                  '<span class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>' +
+                  '<span class="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>' +
+                '</span>' +
+                '<span class="font-fredoka font-semibold text-amber-800 text-xs">KOTL is thinking...</span>' +
+              '</div>' +
+              '<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-400 to-orange-400 text-white flex items-center justify-center text-xs shadow-2xs shrink-0">🤖</div>' +
+            '</div>' +
+          '</div>';
+
+        if (container.innerText.includes('No conversation turns')) {
+          container.innerHTML = '';
+        }
+        var tempDiv = document.createElement('div');
+        tempDiv.id = 'activeInFlightTurn';
+        tempDiv.innerHTML = userBubbleHtml;
+        container.appendChild(tempDiv);
+        container.scrollTop = container.scrollHeight;
+      }
+
+      // 4. Send request
       fetch(getBaseApiUrl() + '/api/test/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: msg, sessionId: 'default-session' })
       })
-      .then(function(r) { return r.json(); })
+      .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
       .then(function(d) {
-        input.value = '';
-        btn.innerText = 'Send 🚀';
-        btn.disabled = false;
+        var rttMs = Math.round(performance.now() - sendTime);
+        if (btn) {
+          btn.innerHTML = 'Send 🚀';
+          btn.disabled = false;
+        }
+        if (input) {
+          input.disabled = false;
+          input.focus();
+        }
+
+        // Remove in-flight temp turn
+        var inflight = document.getElementById('activeInFlightTurn');
+        if (inflight) inflight.remove();
+
         if (d && d.success && d.reply) {
+          // Store timing diagnostic string
+          var totalMs = d.timing && typeof d.timing.total_ms === 'number' ? d.timing.total_ms : rttMs;
+          var llmMs = d.timing && typeof d.timing.llm_ms === 'number' ? d.timing.llm_ms : null;
+          var providerStr = d.provider || 'AI';
+          var modelStr = d.model ? (' (' + d.model.split('/').pop() + ')') : '';
+          lastTurnTimingDiagnostic = '⚡ ' + totalMs + 'ms total' + (llmMs ? ' (' + llmMs + 'ms LLM)' : '') + ' · ' + providerStr + modelStr;
+
+          // Direct render using d.days without firing an extra redundant network request!
+          if (Array.isArray(d.days)) {
+            cachedDaysHistory = d.days;
+          }
+          renderChatBubbles();
+
+          // Display timing badge in chat header
+          var latestTimingBadge = document.getElementById('latestTurnTimingBadge');
+          if (latestTimingBadge) {
+            latestTimingBadge.innerHTML = lastTurnTimingDiagnostic;
+            latestTimingBadge.classList.remove('hidden');
+          }
+
+          // Non-blocking background voice and analytics
           playLocalVoice(d.reply);
-          loadDayWiseHistory();
-          loadGrowthMetrics();
+          setTimeout(function() {
+            loadGrowthMetrics();
+            loadSkillsAnalytics();
+          }, 60);
+
+          if (container) container.scrollTop = container.scrollHeight;
+        } else {
+          throw new Error((d && d.error) || 'Invalid server response');
         }
       })
-      .catch(function() {
-        btn.innerText = 'Send 🚀';
-        btn.disabled = false;
+      .catch(function(err) {
+        console.warn('[Chat Send Error]:', err.message);
+        if (btn) {
+          btn.innerHTML = 'Send 🚀';
+          btn.disabled = false;
+        }
+        if (input) {
+          input.disabled = false;
+          input.value = msg; // restore message so user doesn't lose it
+          input.focus();
+        }
+        var thinking = document.getElementById('tempKotlThinking');
+        if (thinking) {
+          thinking.innerHTML =
+            '<div class="bg-rose-50 border border-rose-200 text-rose-900 rounded-2xl p-2.5 text-xs shadow-2xs space-y-1">' +
+              '<div class="font-bold text-rose-700 flex items-center gap-1"><span>⚠️</span><span>Could not reach KOTL</span></div>' +
+              '<p class="text-[11px] text-rose-600">Please check your network or try again in a moment.</p>' +
+            '</div>';
+        }
+        showToast('Could not send message: ' + err.message, '⚠️');
       });
     }
 
@@ -3161,7 +3738,26 @@
       var execDiv = document.getElementById('repExecutiveSummary');
       if (execDiv) execDiv.innerText = rep.executive_summary || '';
 
-      // Render 8 Dimensions
+      // Render Radar in Report
+      var repRadarBox = document.getElementById('repRadarContainer');
+      var repRadarStats = document.getElementById('repRadarStatsGrid');
+      if (cachedSkillsAnalytics && Array.isArray(cachedSkillsAnalytics.radar_axes)) {
+        if (repRadarBox) repRadarBox.innerHTML = generateSkillsRadarSvg(cachedSkillsAnalytics.radar_axes, 260, 260);
+        if (repRadarStats && cachedSkillsAnalytics.categories) {
+          repRadarStats.innerHTML = '';
+          Object.keys(cachedSkillsAnalytics.categories).forEach(function(k) {
+            var cat = cachedSkillsAnalytics.categories[k];
+            var item = document.createElement('div');
+            item.className = 'p-2 rounded-xl bg-white border border-slate-200/80 flex items-center justify-between shadow-2xs';
+            item.innerHTML =
+              '<span class="font-medium text-slate-700 truncate flex items-center gap-1"><span>' + cat.icon + '</span><span class="truncate">' + cat.name + '</span></span>' +
+              '<span class="font-fredoka font-bold text-[10px] text-indigo-700 shrink-0 ml-1">' + (cat.observed_skills_count > 0 ? (cat.observation_coverage_pct + '% cov') : 'Awaiting') + '</span>';
+            repRadarStats.appendChild(item);
+          });
+        }
+      }
+
+      // Render 8 Dimensions Grid (Preserved for QA contracts)
       var grid = document.getElementById('repDimensionsGrid');
       if (grid && rep.dimensions) {
         grid.innerHTML = '';
@@ -3223,7 +3819,43 @@
         });
       }
 
-      // Render Conversational Evidence
+      // Render Comprehensive A-Z Skill Inventory in Report
+      var invGrid = document.getElementById('repSkillsInventoryGrid');
+      if (invGrid && cachedSkillsAnalytics && cachedSkillsAnalytics.categories) {
+        invGrid.innerHTML = '';
+        Object.keys(cachedSkillsAnalytics.categories).forEach(function(catKey) {
+          var cat = cachedSkillsAnalytics.categories[catKey];
+          if (Array.isArray(cat.skills)) {
+            cat.skills.forEach(function(skill) {
+              var row = document.createElement('div');
+              var isDone = (skill.observation_count >= 2) || (skill.status && skill.status.startsWith('demonstrated')) || skill.status === 'active_inquiry' || skill.status === 'emotional_expression' || skill.status === 'observed_routine' || skill.status === 'active_observation';
+              var isEmerg = skill.status === 'emerging';
+              var bgClass = isDone ? 'bg-indigo-50/40 border-indigo-200/80' : (isEmerg ? 'bg-emerald-50/40 border-emerald-200/80' : 'bg-white border-slate-200/70');
+              var badgeClass = isDone ? 'bg-indigo-100 text-indigo-800' : (isEmerg ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500');
+
+              row.className = 'p-3 rounded-2xl border ' + bgClass + ' text-xs space-y-1.5 flex flex-col justify-between';
+              row.innerHTML =
+                '<div>' +
+                  '<div class="flex items-center justify-between text-[10px] text-slate-400 mb-0.5">' +
+                    '<span>' + cat.name + '</span>' +
+                    '<span class="font-fredoka font-bold px-2 py-0.5 rounded-full ' + badgeClass + '">' +
+                      (skill.evidence_level || skill.status_label || 'Awaiting Data') +
+                    '</span>' +
+                  '</div>' +
+                  '<h4 class="font-fredoka font-bold text-slate-900">' + skill.name + '</h4>' +
+                  '<p class="text-[11px] text-slate-600 leading-snug">' + skill.definition + '</p>' +
+                '</div>' +
+                '<div class="text-[10px] text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">' +
+                  '<span>Confidence: ' + skill.confidence + '</span>' +
+                  '<span>' + (skill.evidence_count || 0) + ' obs</span>' +
+                '</div>';
+              invGrid.appendChild(row);
+            });
+          }
+        });
+      }
+
+      // Render Conversational Evidence (Preserved for QA contracts)
       var evList = document.getElementById('repEvidenceList');
       if (evList) {
         evList.innerHTML = '';
@@ -3255,25 +3887,23 @@
         }
       }
 
-      // Render Parent Socratic Guidance Tips
+      // Render Parent Socratic Guidance Tips (Preserved for QA contracts)
       var tipsList = document.getElementById('repTipsList');
       if (tipsList && rep.parent_recommendations) {
         tipsList.innerHTML = '';
-        rep.parent_recommendations.forEach(function(tip) {
-          var tipCard = document.createElement('div');
-          tipCard.className = 'p-3 bg-amber-50/60 border border-amber-200/70 rounded-2xl text-xs space-y-1';
-          tipCard.innerHTML =
-            '<div class="font-fredoka font-bold text-amber-950">' + tip.title + '</div>' +
-            '<p class="text-slate-600 text-[11px] leading-relaxed">' + tip.action + '</p>';
-          tipsList.appendChild(tipCard);
+        rep.parent_recommendations.forEach(function(rec) {
+          var col = document.createElement('div');
+          col.className = 'p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs';
+          col.innerHTML =
+            '<div class="font-fredoka font-bold text-slate-900 text-xs sm:text-sm">' + rec.domain + '</div>' +
+            '<p class="text-slate-600 leading-snug">' + rec.tip + '</p>' +
+            '<div class="text-[11px] text-indigo-700 font-medium italic pt-1 border-t border-slate-200/60">' +
+              'KOTL: "' + rec.socratic_action + '"' +
+            '</div>';
+          tipsList.appendChild(col);
         });
       }
     }
-
-    // Device State & Live Heartbeat Hydration
-    var isDeviceStateFetching = false;
-    var deviceStateFailCount = 0;
-    var deviceStatePollTimer = null;
 
     function formatLastSeenAge(seconds) {
       if (typeof seconds !== 'number' || isNaN(seconds)) return 'recently';

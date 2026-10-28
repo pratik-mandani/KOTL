@@ -56,6 +56,10 @@ const {
   updateMedicalIdentity,
   getDayWiseHistory,
 } = require("./services/child-memory");
+const {
+  computeSkillsAnalytics,
+  SKILL_TAXONOMY,
+} = require("./services/skills-analytics");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -520,16 +524,16 @@ app.post("/api/speak", async (req, res) => {
 });
 
 app.get("/api/history", (req, res) => {
-  const sessionId = typeof req.query?.sessionId === "string" && req.query.sessionId.trim() 
-    ? req.query.sessionId.trim() 
+  const sessionId = typeof req.query?.sessionId === "string" && req.query.sessionId.trim()
+    ? req.query.sessionId.trim()
     : "default-session";
   const history = getSessionHistory(sessionId);
   res.json({ success: true, sessionId, history });
 });
 
 app.get("/api/history/daywise", (req, res) => {
-  const sessionId = typeof req.query?.sessionId === "string" && req.query.sessionId.trim() 
-    ? req.query.sessionId.trim() 
+  const sessionId = typeof req.query?.sessionId === "string" && req.query.sessionId.trim()
+    ? req.query.sessionId.trim()
     : "default-session";
   const isDemo = req.query?.demo === "1" || req.query?.demo === "true";
   const days = getDayWiseHistory(sessionId, { demo: isDemo });
@@ -537,26 +541,40 @@ app.get("/api/history/daywise", (req, res) => {
 });
 
 app.post("/api/test/chat", async (req, res) => {
+  const reqStart = process.hrtime.bigint();
   try {
     const { message, sessionId = "default-session" } = req.body || {};
     if (!message || !message.trim()) {
       return res.status(400).json({ success: false, error: "Empty message" });
     }
+    const t0 = process.hrtime.bigint();
     const replyResult = await generateAssistantReply({
       transcript: message.trim(),
       sessionId,
       source: "web_dashboard"
     });
+    const llmDurationMs = Number((process.hrtime.bigint() - t0) / 1000000n);
     const days = getDayWiseHistory(sessionId);
-    res.json({ success: true, reply: replyResult.reply, days });
+    const totalDurationMs = Number((process.hrtime.bigint() - reqStart) / 1000000n);
+    res.json({
+      success: true,
+      reply: replyResult.reply,
+      provider: replyResult.provider || "groq",
+      model: replyResult.model || null,
+      timing: {
+        llm_ms: llmDurationMs,
+        total_ms: totalDurationMs
+      },
+      days
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.post("/api/reset-session", (req, res) => {
-  const sessionId = typeof req.body?.sessionId === "string" && req.body.sessionId.trim() 
-    ? req.body.sessionId.trim() 
+  const sessionId = typeof req.body?.sessionId === "string" && req.body.sessionId.trim()
+    ? req.body.sessionId.trim()
     : "default-session";
   resetSessionHistory(sessionId);
   res.json({ success: true, message: `Session ${sessionId} reset successfully` });
@@ -594,6 +612,21 @@ app.post("/api/child/report/generate", (_req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+// --- Child Development Skills & Intelligence Analytics ---
+app.get("/api/skills/analytics", (req, res) => {
+  try {
+    const refresh = req.query.refresh === "true" || req.query.force === "true";
+    const analytics = computeSkillsAnalytics({ refresh });
+    res.json(analytics);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get("/api/skills/taxonomy", (_req, res) => {
+  res.json({ success: true, taxonomy: SKILL_TAXONOMY });
 });
 
 // --- Parent Missions & Directives ---
@@ -731,7 +764,7 @@ app.post("/api/voice-memo/send", async (req, res) => {
   try {
     const { sender, text, preset } = req.body || {};
     const memo = addVoiceMemo({ sender, text, preset });
-    
+
     // Broadcast notification to WebSocket clients if open
     if (wss && wss.clients) {
       wss.clients.forEach(client => {
@@ -1627,12 +1660,12 @@ function isNoiseTranscript(text) {
   if (!text || typeof text !== "string") return true;
   if (isBlacklistedNoiseTranscript(text)) return true;
   const cleanText = text.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, ""); // Strip punctuation
-  
+
   if (cleanText.length === 0) return true;
-  
+
   // Ignore short noise, single-character or two-character transcripts (e.g. "LX", "x", "a")
   if (cleanText.length <= 2) return true;
-  
+
   const noisePhrases = [
     "thank you",
     "thank you for watching",
@@ -1644,7 +1677,7 @@ function isNoiseTranscript(text) {
     "watching",
     "the end",
   ];
-  
+
   // Check if it exactly matches or contains any noise phrases
   if (noisePhrases.some(phrase => cleanText === phrase || cleanText.includes(phrase))) {
     return true;
@@ -1673,12 +1706,12 @@ function isNoiseTranscript(text) {
       }
     }
   }
-  
+
   // Ignore single-character noise or very short filler words if they are alone
   if (words.length === 1 && ["you", "yeah", "okay", "oh", "yes", "no", "uh", "um", "end", "so", "bye", "a", "i", "हा", "हाँ", "नहीं", "अरे"].includes(words[0])) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -1984,4 +2017,6 @@ module.exports = {
   activeParentSessions,
   PARENT_SESSION_TTL_MS,
   safeCompare,
+  computeSkillsAnalytics,
+  SKILL_TAXONOMY,
 };

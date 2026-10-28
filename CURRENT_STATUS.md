@@ -1,19 +1,19 @@
 # KOTL — Current Repository Status & Verification Snapshot
 
-**Snapshot Timestamp:** 2026-10-28T11:15:00+05:30
+**Snapshot Timestamp:** 2026-10-28T13:00:00+05:30
 **Git Branch:** `main`
-**Latest Local Commit:** [`06cca6a`](file:///D:/KOTL#06cca6a) (`feat(dashboard): simplify AI usage telemetry with progress bars and quota percentages`)
-**Sprint State:** **Consolidated Sprint Complete** (Sprint 2 Tasks Dashboard UI + AI Answer Quality Fix Verified)
+**Latest Pushed Commit:** [`ac7a675`](file:///D:/KOTL#ac7a675) (`feat(tasks): integrate Tasks & Activities UI, persistent storage, and AI answer quality fixes`)
+**Sprint State:** **Intelligence Dashboard & Skills Analytics Redesign Complete** (Chat Performance Optimization + 8-Domain Skills Taxonomy & Interactive Radar)
 **Primary Working Dashboard:** [`backend/public/index.html`](file:///D:/KOTL/backend/public/index.html) (Production single-page application)
 
 ---
 
 ## 1. Executive Status Summary
 
-The consolidated sprint verified and finalized the production dashboard integration for Tasks & Activities and School Projects, and resolved the AI answer-quality defect where direct questions received generic praise. All 143 automated regression tests across 5 test suites pass with 100% success (exit code 0).
+The Child Development Intelligence Dashboard, Skills Analytics, and Chat Performance redesign is complete. All 155 automated regression tests across 6 test suites pass with 100% success (exit code 0).
 
 ### Feature Count Breakdown
-- **Verified Working (Complete):** 15 Areas (Child Profile, Overview & Growth, Routines/Habits, Socratic Missions, Tasks & Activities, School Projects, Dialogue History, 8-Dimension Report, Heartbeat/Controls, Parent Mode Auth, AI Quotas, Companion Voice Pipeline, Responsive UI, Direct Factual/Arithmetic Answering, Safe Pediatric Fallback)
+- **Verified Working (Complete):** 17 Areas (Child Profile, Overview & Growth, Routines/Habits, Socratic Missions, Tasks & Activities, School Projects, Dialogue History, 8-Dimension Report, Heartbeat/Controls, Parent Mode Auth, AI Quotas, Companion Voice Pipeline, Responsive UI, Direct Factual/Arithmetic Answering, Safe Pediatric Fallback, **8-Domain Skills Taxonomy & Radar Chart**, **Chat Performance & Immediate Feedback Engine**)
 - **Partially Implemented:** 1 Area (Walkie-Talkie & Remote Volume/Sleep Hardware Playback on physical ESP32)
 - **Pending Cognitive Prompt Integration:** 1 Area (KOTL AI Task Guidance Engine in `backend/services/assistant.js` — Scheduled for Sprint 3)
 - **Broken / Non-Verifiable:** 0 Broken Code Components
@@ -43,11 +43,22 @@ The consolidated sprint verified and finalized the production dashboard integrat
 
 ---
 
-## 3. Test Verification Results (143 Tests Total, 100% Passing)
+## 3. Test Verification Results (155 Tests Total, 100% Passing)
 
-All 5 automated regression test suites executed locally with **100% pass rate (143 of 143 tests passed, exit code 0)**:
+All 6 automated regression test suites executed locally with **100% pass rate (155 of 155 tests passed, exit code 0)**:
 
-### 1. `backend/scripts/test-assistant-quality.js`
+### 1. `backend/scripts/test-skills-analytics.js`
+- **Result:** **12 PASSED, 0 FAILED (Exit Code: 0)**
+- **Capabilities Verified:**
+  - 8-domain taxonomy completeness (24 age-appropriate observable skills).
+  - Multi-source evidence aggregation across conversations (`sessions.json`), tasks & milestones (`tasks.json`), habits (`habits.json`), and child profile.
+  - Truthful evidence classification: demonstrated (with dialogue excerpts and timestamps), emerging, and unobserved ("Not enough observations yet" with null score).
+  - Interactive SVG skills radar data model (8 axes with observation coverage).
+  - Socratic next discovery activity recommendations tied to specific unobserved skills.
+  - Endpoints `GET /api/skills/analytics` and `GET /api/skills/taxonomy`.
+  - Non-clinical transparency disclosure and chat timing telemetry (`llm_ms`, `total_ms`).
+
+### 2. `backend/scripts/test-assistant-quality.js`
 - **Result:** **13 PASSED, 0 FAILED (Exit Code: 0)**
 - **Capabilities Verified:**
   - Codebase & Guardrail Integrity: zero hardcoded political figures or canned factual strings; obsolete deflection string eliminated; candidate ordering prioritizes primary models first.
@@ -55,7 +66,7 @@ All 5 automated regression test suites executed locally with **100% pass rate (1
   - Live LLM Answering Quality: factual answers directly provide correct information (e.g. Narendra Modi); arithmetic provides exact answers (2+2=4); empathy provides genuine comfort without celebration.
   - Multi-Turn Session Continuity: retains pet name ("Bruno") across multiple turns.
 
-### 2. `backend/scripts/test-tasks-and-projects.js`
+### 3. `backend/scripts/test-tasks-and-projects.js`
 - **Result:** **73 PASSED, 0 FAILED (Exit Code: 0)**
 - **Capabilities Verified:**
   - Storage abstraction directory resolution and safe handling of empty 0-byte files.
@@ -69,15 +80,15 @@ All 5 automated regression test suites executed locally with **100% pass rate (1
   - Production authorization gating on `DELETE /api/tasks/:id` with parent session tokens.
   - **DOM & Navigation Wiring:** `#sideBtn_tasks`, `#mobBtn_tasks`, `#tabBtn_tasks`, `#overviewCreateTaskBtn`, `#tabContent_tasks`, `#tasksGridContainer`, `#tasksMetricTotal/InProgress/Completed/StarsEarned`, `#taskModal`, modal title validation, lifecycle hooks.
 
-### 3. `backend/scripts/test-api-usage-and-observability.js`
+### 4. `backend/scripts/test-api-usage-and-observability.js`
 - **Result:** **19 PASSED, 0 FAILED (Exit Code: 0)**
 - **Capabilities Verified:** Token and request quota calculation, Parent PIN session issuance/expiry, `/api/usage` protection, WebSocket error sanitization.
 
-### 4. `backend/scripts/test-data-integrity-and-vad.js`
+### 5. `backend/scripts/test-data-integrity-and-vad.js`
 - **Result:** **23 PASSED, 0 FAILED (Exit Code: 0)**
 - **Capabilities Verified:** Whisper STT prompt de-biasing, noise transcript rejection, zero-turn empty metrics integrity.
 
-### 5. `backend/scripts/test-websocket-heartbeat.js`
+### 6. `backend/scripts/test-websocket-heartbeat.js`
 - **Result:** **15 PASSED, 0 FAILED (Exit Code: 0)**
 - **Capabilities Verified:** ESP32 registration, RSSI tracking, heartbeat disk rate-limiting, clean offline transitions.
 
