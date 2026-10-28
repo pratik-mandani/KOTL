@@ -101,6 +101,16 @@
       color: #FFFFFF !important;
       box-shadow: 0 1px 3px rgba(2, 132, 199, 0.3);
     }
+    .tab-btn-active-skills {
+      background-color: #6366F1 !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 1px 3px rgba(99, 102, 241, 0.3);
+    }
+    .tab-btn-active-diagnostics {
+      background-color: #475569 !important;
+      color: #FFFFFF !important;
+      box-shadow: 0 1px 3px rgba(71, 85, 105, 0.3);
+    }
 
     /* Sidebar Active Item */
     .sidebar-link-active {
@@ -194,6 +204,11 @@
         <span>Overview & Growth</span>
       </button>
 
+      <button id="sideBtn_skills" onclick="switchMainTab('skills')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
+        <span class="text-base">🧠</span>
+        <span>Skills Explorer</span>
+      </button>
+
       <button id="sideBtn_tasks" onclick="switchMainTab('tasks')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
         <span class="text-base">📝</span>
         <span>Tasks & Activities</span>
@@ -213,10 +228,10 @@
 
       <button onclick="openReportModal()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/80 border border-indigo-200/60 transition-all text-left">
         <span class="text-base">📋</span>
-        <span>8-Dimension Report</span>
+        <span>Full Child Report</span>
       </button>
 
-      <div class="pt-3 text-[10px] font-fredoka font-bold uppercase tracking-wider text-slate-400 px-3 py-1">Parent Controls</div>
+      <div class="pt-3 text-[10px] font-fredoka font-bold uppercase tracking-wider text-slate-400 px-3 py-1">Parent & Tech Controls</div>
 
       <button id="sidebarParentLockBtn" onclick="openPinModal()" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
         <div class="flex items-center gap-3 min-w-0">
@@ -226,13 +241,18 @@
         <span id="sidebarParentLockBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shrink-0">Locked</span>
       </button>
 
+      <button id="sideBtn_diagnostics" onclick="switchMainTab('diagnostics')" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
+        <span class="text-base">⚡</span>
+        <span>Developer Diagnostics</span>
+      </button>
+
       <button onclick="navigateToSafetyGuardrails()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
         <span class="text-base">🛡️</span>
         <span>Safety Guardrails</span>
       </button>
 
       <button onclick="navigateToApiUsage()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all text-left">
-        <span class="text-base">⚡</span>
+        <span class="text-base">📊</span>
         <span>AI Quotas & Usage</span>
       </button>
     </nav>
@@ -324,9 +344,11 @@
     <!-- Tab Navigation Compatibility Nodes (Desktop uses Left Sidebar; Mobile uses Fixed Bottom Nav) -->
     <div id="mainTabNavContainer" class="hidden" aria-hidden="true">
       <button id="tabBtn_growth" onclick="switchMainTab('growth')"></button>
+      <button id="tabBtn_skills" onclick="switchMainTab('skills')"></button>
       <button id="tabBtn_tasks" onclick="switchMainTab('tasks')"></button>
       <button id="tabBtn_habits" onclick="switchMainTab('habits')"></button>
       <button id="tabBtn_cockpit" onclick="switchMainTab('cockpit')"></button>
+      <button id="tabBtn_diagnostics" onclick="switchMainTab('diagnostics')"></button>
     </div>
 
     <!-- ============================================================== -->
@@ -635,307 +657,215 @@
         </div>
       </section>
 
-      <!-- 5. AI Provider Free-Quota & Usage Telemetry Station -->
-      <section id="apiUsageSection" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-5">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <!-- 5. Learning & Daily Routine Snapshot Section -->
+      <section id="overviewSnapshotSection" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-100">
           <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-xl">⚡</span>
-              <h2 class="font-fredoka font-bold text-base sm:text-lg text-slate-900">
-                AI Provider Usage & Free-Quota Telemetry
-              </h2>
-              <span id="usageLiveBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live Tracked
-              </span>
-            </div>
-            <p class="text-xs text-slate-500 mt-0.5">Real-time token metrics, STT audio limits, and official provider quota boundaries</p>
+            <h3 class="font-fredoka font-bold text-base text-slate-900 flex items-center gap-2">
+              <span>🚀</span>
+              <span>Learning & Daily Routine Snapshot</span>
+            </h3>
+            <p class="text-xs text-slate-500">Active homework projects, daily habit adherence & companion operational telemetry</p>
           </div>
-          <div class="flex items-center gap-2.5 shrink-0">
-            <span id="usageLastUpdatedLabel" class="text-[10px] text-slate-400 font-mono">Updated: Just now</span>
-            <button onclick="fetchApiUsageData(true)" title="Refresh Usage Telemetry" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1">
-              <span>↻</span> Refresh
+          <span class="text-[10px] font-semibold text-slate-400 font-mono">Live Sync</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Card 1: Active Tasks & Homework -->
+          <div class="bg-amber-50/40 border border-amber-200/70 rounded-2xl p-4 flex flex-col justify-between space-y-3 hover:border-amber-300 transition-all">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="font-fredoka font-bold text-xs text-amber-950 flex items-center gap-1.5">
+                  <span>📝</span>
+                  <span>Tasks & Projects</span>
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">Active</span>
+              </div>
+              <div class="mt-2 text-2xl font-fredoka font-bold text-slate-900">
+                <span id="snapshotTasksCount">0</span> <span class="text-xs font-normal text-slate-500">in progress</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-0.5 leading-snug">
+                <span id="snapshotTasksMilestones">0 milestones completed</span>
+              </p>
+            </div>
+            <button onclick="switchMainTab('tasks')" class="w-full py-2 px-3 rounded-xl bg-white hover:bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold flex items-center justify-between transition-colors">
+              <span>View Tasks & Activities</span>
+              <span>→</span>
+            </button>
+          </div>
+
+          <!-- Card 2: Daily Habit Consistency -->
+          <div class="bg-emerald-50/40 border border-emerald-200/70 rounded-2xl p-4 flex flex-col justify-between space-y-3 hover:border-emerald-300 transition-all">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="font-fredoka font-bold text-xs text-emerald-950 flex items-center gap-1.5">
+                  <span>⭐</span>
+                  <span>Daily Habits & Routines</span>
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">Today</span>
+              </div>
+              <div class="mt-2 text-2xl font-fredoka font-bold text-slate-900">
+                <span id="snapshotHabitsCount">0</span><span class="text-sm font-normal text-slate-500">/<span id="snapshotHabitsTotal">0</span> Done</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-0.5 leading-snug">
+                <span id="snapshotHabitsPct">0%</span> consistency rate today
+              </p>
+            </div>
+            <button onclick="switchMainTab('habits')" class="w-full py-2 px-3 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold flex items-center justify-between transition-colors">
+              <span>View Habits & Streaks</span>
+              <span>→</span>
+            </button>
+          </div>
+
+          <!-- Card 3: Companion Intelligence & Status -->
+          <div class="bg-indigo-50/40 border border-indigo-200/70 rounded-2xl p-4 flex flex-col justify-between space-y-3 hover:border-indigo-300 transition-all">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="font-fredoka font-bold text-xs text-indigo-950 flex items-center gap-1.5">
+                  <span>⚡</span>
+                  <span>Companion Intelligence</span>
+                </span>
+                <span id="snapshotCompanionBadge" class="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">Active</span>
+              </div>
+              <div class="mt-2 text-2xl font-fredoka font-bold text-slate-900">
+                <span id="snapshotCompanionStatus">Ready</span>
+              </div>
+              <p class="text-xs text-slate-600 mt-0.5 leading-snug">
+                <span id="snapshotAiProvider">Groq + Gemini</span> • Fast acoustic turnaround
+              </p>
+            </div>
+            <button onclick="switchMainTab('diagnostics')" class="w-full py-2 px-3 rounded-xl bg-white hover:bg-indigo-50 text-indigo-800 border border-indigo-200 text-xs font-semibold flex items-center justify-between transition-colors">
+              <span>Developer Diagnostics</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- ============================================================== -->
+    <!-- 3.2 TAB: SKILLS EXPLORER (24 OBSERVABLE MILESTONES)            -->
+    <!-- ============================================================== -->
+    <main id="tabContent_skills" class="hidden max-w-7xl w-full mx-auto px-4 sm:px-6 py-2 pb-24 lg:pb-8 space-y-6">
+
+      <!-- Skills Header & Summary -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="font-fredoka font-bold text-lg sm:text-xl text-slate-900 flex items-center gap-2">
+              <span>🧠</span>
+              <span>Child Development Skills Explorer</span>
+            </h2>
+            <span class="text-[10px] font-fredoka font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+              24 Developmental Milestones
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1 max-w-2xl">
+            Observable developmental competencies mapped across 8 core domains. Track verified observations, demonstrated capabilities, and guided opportunities.
+          </p>
+        </div>
+
+        <!-- Quick Counters Bar -->
+        <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+          <div class="px-3 py-2 bg-indigo-50/60 border border-indigo-200/70 rounded-xl text-center">
+            <div id="explorerDemonstratedCount" class="font-fredoka font-bold text-base text-indigo-700">0</div>
+            <div class="text-[9px] font-semibold text-indigo-900 uppercase tracking-wider">Demonstrated</div>
+          </div>
+          <div class="px-3 py-2 bg-emerald-50/60 border border-emerald-200/70 rounded-xl text-center">
+            <div id="explorerEmergingCount" class="font-fredoka font-bold text-base text-emerald-700">0</div>
+            <div class="text-[9px] font-semibold text-emerald-900 uppercase tracking-wider">Emerging</div>
+          </div>
+          <div class="px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-center">
+            <div id="explorerAwaitingCount" class="font-fredoka font-bold text-base text-slate-600">0</div>
+            <div class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Awaiting</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Domain & Status Filters and Search Bar -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-2xs space-y-3">
+        <!-- Search Input & Status Pills -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <!-- Search Box -->
+          <div class="relative flex-1">
+            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-sm">🔍</span>
+            <input
+              id="skillsExplorerSearchInput"
+              type="text"
+              placeholder="Search skills by name, keyword, or concept (e.g. empathy, counting, animals)..."
+              oninput="handleSearchSkillsExplorer(this.value)"
+              class="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-slate-800 placeholder-slate-400"
+            />
+          </div>
+
+          <!-- Status Filters -->
+          <div class="flex items-center gap-1.5 overflow-x-auto text-xs shrink-0">
+            <button id="explorerStatusBtn_all" onclick="setSkillsExplorerStatus('all')" class="px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-indigo-600 text-white transition-all shrink-0">
+              All Skills (24)
+            </button>
+            <button id="explorerStatusBtn_demonstrated" onclick="setSkillsExplorerStatus('demonstrated')" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0">
+              ⭐ Demonstrated
+            </button>
+            <button id="explorerStatusBtn_emerging" onclick="setSkillsExplorerStatus('emerging')" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0">
+              🌱 Emerging
+            </button>
+            <button id="explorerStatusBtn_awaiting" onclick="setSkillsExplorerStatus('awaiting')" class="px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0">
+              🔍 Awaiting Observations
             </button>
           </div>
         </div>
 
-        <!-- Production Parent Mode Protection Notice (Shown when unauthenticated/locked) -->
-        <div id="usageAuthBanner" class="hidden p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div class="flex items-center gap-2.5">
-            <span class="text-base shrink-0">🔒</span>
-            <div>
-              <p class="font-bold">Operational Usage Telemetry is Protected in Production</p>
-              <p class="text-[11px] text-amber-700 mt-0.5">Authenticate with your Parent PIN to unlock live token metrics and provider quota limits.</p>
-            </div>
-          </div>
-          <button onclick="openPinModal()" class="shrink-0 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors self-start sm:self-auto">
-            Unlock Parent Mode
+        <!-- 8 Core Domain Filter Pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs border-t border-slate-100 pt-2.5">
+          <button id="explorerDomainBtn_all" onclick="setSkillsExplorerDomain('all')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white border border-indigo-600 shrink-0 transition-all">
+            All Domains
+          </button>
+          <button id="explorerDomainBtn_language_communication" onclick="setSkillsExplorerDomain('language_communication')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🗣️ Language
+          </button>
+          <button id="explorerDomainBtn_logical_quantitative" onclick="setSkillsExplorerDomain('logical_quantitative')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🔢 Logical
+          </button>
+          <button id="explorerDomainBtn_scientific_curiosity" onclick="setSkillsExplorerDomain('scientific_curiosity')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🔬 Science
+          </button>
+          <button id="explorerDomainBtn_emotional_articulation" onclick="setSkillsExplorerDomain('emotional_articulation')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            ❤️ Emotional
+          </button>
+          <button id="explorerDomainBtn_creative_storytelling" onclick="setSkillsExplorerDomain('creative_storytelling')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🎨 Creative
+          </button>
+          <button id="explorerDomainBtn_social_manners" onclick="setSkillsExplorerDomain('social_manners')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🤝 Social
+          </button>
+          <button id="explorerDomainBtn_physical_movement" onclick="setSkillsExplorerDomain('physical_movement')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            🏃 Physical
+          </button>
+          <button id="explorerDomainBtn_routine_habits" onclick="setSkillsExplorerDomain('routine_habits')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all">
+            ⭐ Daily Routine
           </button>
         </div>
+      </div>
 
-        <!-- Transparency & Quota Distinction Callout -->
-        <div class="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-600 leading-relaxed flex items-start gap-2.5">
-          <span class="text-base shrink-0">ℹ️</span>
-          <div class="space-y-1">
-            <p class="font-semibold text-slate-800">Truthful Quota Telemetry Guarantee:</p>
-            <p class="text-[11px] text-slate-500">
-              KOTL differentiates between <strong>Provider-Reported Live Quotas</strong> (e.g. Groq official response headers) and <strong>Application-Measured Counts</strong> (e.g. Google Gemini & Edge-TTS, which do not expose remaining allowances through API keys). Local metrics represent interactions through this KOTL companion only. Official management links are provided below to inspect account-level billing and rate limits.
-            </p>
-          </div>
+      <!-- Skills Explorer Grid Container -->
+      <section id="skillsExplorerGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <!-- Rendered dynamically by renderSkillsExplorer() -->
+        <div class="col-span-full py-12 text-center text-slate-400 font-fredoka text-sm">
+          Loading 24 developmental skills...
         </div>
-
-        <!-- Provider Metrics Grid (User-Friendly Cards with Quota & Progress) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
-          <!-- 1. Google Gemini Flash LLM -->
-          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
-                  <span>✨</span> Google Gemini
-                </span>
-                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/60">Primary LLM</span>
-              </div>
-              <div class="text-[11px] text-slate-500 font-mono truncate" id="geminiModelLabel">gemini-3.5-flash-lite</div>
-            </div>
-
-            <!-- Hero Quota Progress -->
-            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
-              <div class="flex justify-between items-center">
-                <span class="text-slate-600 font-medium">Daily Quota Usage:</span>
-                <span id="geminiUsagePct" class="font-bold text-indigo-700 font-mono text-sm">0% used</span>
-              </div>
-              <!-- Progress Bar -->
-              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
-                <div id="geminiProgressBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-              </div>
-              <div class="flex justify-between items-center pt-1">
-                <span class="text-slate-500">Used vs Total:</span>
-                <span id="geminiUsedVsTotal" class="font-bold text-slate-800 font-mono">0 / 1,500 req</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Remaining Quota:</span>
-                <span id="geminiRemainingQuota" class="font-bold text-indigo-700 font-mono">1,500 req remaining</span>
-              </div>
-              <div class="flex justify-between items-center text-[10px] text-slate-400">
-                <span>Reset Period:</span>
-                <span>Daily at 00:00 UTC</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Provider Quota API:</span>
-                <span id="geminiQuotaStatusBadge" class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Quota limit unavailable via API</span>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <div class="text-[10px] text-slate-400">
-                <span>Free Tier Reference: <strong>1,500 Requests / Day</strong></span>
-              </div>
-              <a href="https://aistudio.google.com/app/plan_information" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 hover:border-indigo-300 rounded-lg py-1.5 transition-colors">
-                AI Studio Console ↗
-              </a>
-            </div>
-          </div>
-
-          <!-- 2. Groq Whisper STT -->
-          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
-                  <span>🎙️</span> Groq Whisper STT
-                </span>
-                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200/60">Speech-to-Text</span>
-              </div>
-              <div class="text-[11px] text-slate-500 font-mono truncate" id="whisperModelLabel">whisper-large-v3-turbo</div>
-            </div>
-
-            <!-- Hero Quota Progress -->
-            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
-              <div class="flex justify-between items-center">
-                <span class="text-slate-600 font-medium">Daily Audio Quota:</span>
-                <span id="whisperUsagePct" class="font-bold text-sky-700 font-mono text-sm">0% used</span>
-              </div>
-              <!-- Progress Bar -->
-              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
-                <div id="whisperProgressBar" class="bg-sky-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-              </div>
-              <div class="flex justify-between items-center pt-1">
-                <span class="text-slate-500">Audio Recorded:</span>
-                <span id="whisperUsedVsTotal" class="font-bold text-slate-800 font-mono">0 / 7,200 sec</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Remaining Audio:</span>
-                <span id="whisperRemainingQuota" class="font-bold text-sky-700 font-mono">7,200 sec remaining</span>
-              </div>
-              <div class="flex justify-between items-center text-[10px] text-slate-400">
-                <span>Reset Period:</span>
-                <span>Daily at 00:00 UTC (2 hrs)</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Telemetry Source:</span>
-                <span id="whisperQuotaStatusBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Daily Audio Quota</span>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <div class="text-[10px] text-slate-400">
-                <span>Free Limit: <strong>7,200 audio sec/day (20 RPM)</strong></span>
-              </div>
-              <a href="https://console.groq.com/settings/limits" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-sky-600 hover:text-sky-800 bg-white border border-sky-200 hover:border-sky-300 rounded-lg py-1.5 transition-colors">
-                Groq Limits Dashboard ↗
-              </a>
-            </div>
-          </div>
-
-          <!-- 3. Groq Cloud LLM -->
-          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
-                  <span>⚡</span> Groq LLM
-                </span>
-                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/60">Backup LLM</span>
-              </div>
-              <div class="text-[11px] text-slate-500 font-mono truncate" id="groqModelLabel">qwen/qwen3.8-27b</div>
-            </div>
-
-            <!-- Hero Quota Progress -->
-            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
-              <div class="flex justify-between items-center">
-                <span class="text-slate-600 font-medium">Rate-Limit Allowance:</span>
-                <span id="groqUsagePct" class="font-bold text-amber-700 font-mono text-sm">—</span>
-              </div>
-              <!-- Progress Bar -->
-              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
-                <div id="groqProgressBar" class="bg-amber-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-              </div>
-              <div class="flex justify-between items-center pt-1">
-                <span class="text-slate-500">Tokens / Quota:</span>
-                <span id="groqUsedVsTotal" class="font-bold text-slate-800 font-mono">Quota limit unavailable</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Remaining Quota:</span>
-                <span id="groqRemainingQuota" class="font-bold text-emerald-700 font-mono">Header-monitored</span>
-              </div>
-              <div class="flex justify-between items-center text-[10px] text-slate-400">
-                <span>Reset Period:</span>
-                <span>Rolling rate window</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Telemetry Source:</span>
-                <span id="groqQuotaStatusBadge" class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Awaiting Request</span>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <div class="text-[10px] text-slate-400">
-                <span>Free Limit: <strong>30 RPM / 14,400 RPD</strong></span>
-              </div>
-              <a href="https://console.groq.com/settings/limits" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-amber-600 hover:text-amber-800 bg-white border border-amber-200 hover:border-amber-300 rounded-lg py-1.5 transition-colors">
-                Groq Limits Dashboard ↗
-              </a>
-            </div>
-          </div>
-
-          <!-- 4. Microsoft Edge TTS -->
-          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
-                  <span>🔊</span> Edge-TTS
-                </span>
-                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">Voice Engine</span>
-              </div>
-              <div class="text-[11px] text-slate-500 font-mono truncate" id="edgeVoiceLabel">en-IN-PrabhatNeural</div>
-            </div>
-
-            <!-- Hero Quota Progress -->
-            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
-              <div class="flex justify-between items-center">
-                <span class="text-slate-600 font-medium">Service Quota:</span>
-                <span class="font-bold text-emerald-700 font-mono text-sm">Free / Unmetered</span>
-              </div>
-              <!-- Progress Bar -->
-              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
-                <div class="bg-emerald-500 h-2 rounded-full" style="width: 100%"></div>
-              </div>
-              <div class="flex justify-between items-center pt-1">
-                <span class="text-slate-500">Speech Turns:</span>
-                <span id="edgeReqToday" class="font-bold text-slate-800 font-mono">0 turns</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Characters Synthesized:</span>
-                <span id="edgeCharsToday" class="font-bold text-emerald-700 font-mono">0 chars</span>
-              </div>
-              <div class="flex justify-between items-center text-[10px] text-slate-400">
-                <span>Reset Period:</span>
-                <span>Local counter resets daily</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-500">Quota Limit:</span>
-                <span id="edgeQuotaStatusBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Quota limit unavailable</span>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <div class="text-[10px] text-slate-400">
-                <span>Protocol: <strong>WebSocket Audio Streaming</strong></span>
-              </div>
-              <a href="https://learn.microsoft.com/azure/ai-services/speech-service/" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-emerald-600 hover:text-emerald-800 bg-white border border-emerald-200 hover:border-emerald-300 rounded-lg py-1.5 transition-colors">
-                Azure Speech Docs ↗
-              </a>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Collapsible Developer Diagnostics View -->
-        <details class="group bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 transition-all">
-          <summary class="cursor-pointer font-semibold text-xs text-slate-700 flex items-center justify-between select-none">
-            <div class="flex items-center gap-2">
-              <span>🔧</span>
-              <span>Technical Diagnostics & Raw Telemetry (Developer View)</span>
-            </div>
-            <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
-          </summary>
-          <div class="mt-4 pt-3 border-t border-slate-200/60 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            <!-- Gemini Technical Details -->
-            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
-              <div class="font-bold text-slate-800 text-[11px] mb-1">Gemini Raw Tokens</div>
-              <div class="flex justify-between"><span class="text-slate-500">Requests Today:</span><span id="geminiReqToday" class="font-mono">0</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Tokens Today:</span><span id="geminiTokensToday" class="font-mono text-indigo-700">0 tok</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Prompt / Compl:</span><span id="geminiTokenBreakdown" class="font-mono">0 / 0</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Cumulative:</span><span id="geminiTokensTotal" class="font-mono">0 tok</span></div>
-            </div>
-            <!-- Groq Whisper Technical Details -->
-            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
-              <div class="font-bold text-slate-800 text-[11px] mb-1">Whisper STT Details</div>
-              <div class="flex justify-between"><span class="text-slate-500">Audio Today:</span><span id="whisperAudioToday" class="font-mono text-sky-700">0 sec</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Turns Today:</span><span id="whisperReqToday" class="font-mono">0</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Cumulative Audio:</span><span id="whisperAudioTotal" class="font-mono">0 sec</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Remaining Req:</span><span id="whisperRemainingReq" class="font-mono text-emerald-700">Header-monitored</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Source:</span><span id="whisperSourceBadge" class="font-mono text-[10px]">Response Header</span></div>
-            </div>
-            <!-- Groq LLM Technical Details -->
-            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
-              <div class="font-bold text-slate-800 text-[11px] mb-1">Groq LLM Headers</div>
-              <div class="flex justify-between"><span class="text-slate-500">Requests Today:</span><span id="groqReqToday" class="font-mono">0</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Tokens Today:</span><span id="groqTokensToday" class="font-mono text-amber-700">0 tok</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Remaining Tokens:</span><span id="groqRemainingTokens" class="font-mono text-emerald-700">Header-monitored</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Remaining Req:</span><span id="groqRemainingReq" class="font-mono">Header-monitored</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Source:</span><span id="groqSourceBadge" class="font-mono text-[10px]">Response Header</span></div>
-            </div>
-            <!-- Edge TTS Technical Details -->
-            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
-              <div class="font-bold text-slate-800 text-[11px] mb-1">Edge TTS Metrics</div>
-              <div class="flex justify-between"><span class="text-slate-500">Audio Streamed:</span><span id="edgeAudioBytesToday" class="font-mono">0 KB</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Cumulative Chars:</span><span id="edgeCharsTotal" class="font-mono">0 chars</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Protocol:</span><span class="font-mono text-[10px]">WebSocket Stream</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">Provider Quota:</span><span class="font-mono text-[10px] text-emerald-700">Free / Unmetered</span></div>
-            </div>
-          </div>
-        </details>        </div>
       </section>
+
+      <!-- Transparency Notice -->
+      <div class="p-4 rounded-2xl bg-slate-100 border border-slate-200 text-xs text-slate-600 leading-relaxed space-y-1">
+        <div class="font-fredoka font-bold text-slate-800 flex items-center gap-1.5">
+          <span>ℹ️</span>
+          <span>Observational Context Guarantee</span>
+        </div>
+        <p class="text-slate-500">
+          KOTL skill indicators reflect authentic interaction evidence (speech turns, completed quests, and confirmed habits). Unobserved skills do not indicate lack of ability — they simply highlight areas where KOTL has not yet observed dialogue.
+        </p>
+      </div>
     </main>
+
 
     <!-- ============================================================== -->
     <!-- 3.5 TAB 1.5: TASKS & LEARNING ACTIVITIES BENTO SECTION          -->
@@ -1062,7 +992,7 @@
       </div>
 
       <!-- Tasks Grid Container -->
-      <section id="tasksGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4.5">
+      <section id="tasksGridContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6">
         <!-- Rendered dynamically by renderTasksGrid() -->
         <div class="col-span-full py-12 text-center text-slate-400 font-fredoka text-sm">
           Loading learning tasks & projects...
@@ -1381,6 +1311,329 @@
         </div>
       </section>
     </main>
+    <!-- ============================================================== -->
+    <!-- 3.6 TAB 4: DEVELOPER & SYSTEM DIAGNOSTICS                       -->
+    <!-- ============================================================== -->
+    <main id="tabContent_diagnostics" class="hidden max-w-7xl w-full mx-auto px-4 sm:px-6 py-2 pb-24 lg:pb-8 space-y-6">
+
+      <!-- Diagnostics Header -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="font-fredoka font-bold text-lg text-slate-900 flex items-center gap-2">
+            <span>⚡</span>
+            <span>Developer & System Diagnostics</span>
+          </h2>
+          <p class="text-xs text-slate-500">Real-time AI model quotas, token telemetry, latency tracking, and cloud connectivity</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+            Node.js v20+ • Dual AI Provider
+          </span>
+        </div>
+      </div>
+
+<!-- 5. AI Provider Free-Quota & Usage Telemetry Station -->
+      <section id="apiUsageSection" class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xl">⚡</span>
+              <h2 class="font-fredoka font-bold text-base sm:text-lg text-slate-900">
+                AI Provider Usage & Free-Quota Telemetry
+              </h2>
+              <span id="usageLiveBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live Tracked
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Real-time token metrics, STT audio limits, and official provider quota boundaries</p>
+          </div>
+          <div class="flex items-center gap-2.5 shrink-0">
+            <span id="usageLastUpdatedLabel" class="text-[10px] text-slate-400 font-mono">Updated: Just now</span>
+            <button onclick="fetchApiUsageData(true)" title="Refresh Usage Telemetry" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1">
+              <span>↻</span> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Production Parent Mode Protection Notice (Shown when unauthenticated/locked) -->
+        <div id="usageAuthBanner" class="hidden p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2.5">
+            <span class="text-base shrink-0">🔒</span>
+            <div>
+              <p class="font-bold">Operational Usage Telemetry is Protected in Production</p>
+              <p class="text-[11px] text-amber-700 mt-0.5">Authenticate with your Parent PIN to unlock live token metrics and provider quota limits.</p>
+            </div>
+          </div>
+          <button onclick="openPinModal()" class="shrink-0 px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition-colors self-start sm:self-auto">
+            Unlock Parent Mode
+          </button>
+        </div>
+
+        <!-- Transparency & Quota Distinction Callout -->
+        <div class="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs text-slate-600 leading-relaxed flex items-start gap-2.5">
+          <span class="text-base shrink-0">ℹ️</span>
+          <div class="space-y-1">
+            <p class="font-semibold text-slate-800">Truthful Quota Telemetry Guarantee:</p>
+            <p class="text-[11px] text-slate-500">
+              KOTL differentiates between <strong>Provider-Reported Live Quotas</strong> (e.g. Groq official response headers) and <strong>Application-Measured Counts</strong> (e.g. Google Gemini & Edge-TTS, which do not expose remaining allowances through API keys). Local metrics represent interactions through this KOTL companion only. Official management links are provided below to inspect account-level billing and rate limits.
+            </p>
+          </div>
+        </div>
+
+        <!-- Provider Metrics Grid (User-Friendly Cards with Quota & Progress) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <!-- 1. Google Gemini Flash LLM -->
+          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>✨</span> Google Gemini
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200/60">Primary LLM</span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono truncate" id="geminiModelLabel">gemini-3.5-flash-lite</div>
+            </div>
+
+            <!-- Hero Quota Progress -->
+            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Daily Quota Usage:</span>
+                <span id="geminiUsagePct" class="font-bold text-indigo-700 font-mono text-sm">0% used</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                <div id="geminiProgressBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-500">Used vs Total:</span>
+                <span id="geminiUsedVsTotal" class="font-bold text-slate-800 font-mono">0 / 1,500 req</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Remaining Quota:</span>
+                <span id="geminiRemainingQuota" class="font-bold text-indigo-700 font-mono">1,500 req remaining</span>
+              </div>
+              <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Reset Period:</span>
+                <span>Daily at 00:00 UTC</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Provider Quota API:</span>
+                <span id="geminiQuotaStatusBadge" class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Quota limit unavailable via API</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="text-[10px] text-slate-400">
+                <span>Free Tier Reference: <strong>1,500 Requests / Day</strong></span>
+              </div>
+              <a href="https://aistudio.google.com/app/plan_information" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 hover:border-indigo-300 rounded-lg py-1.5 transition-colors">
+                AI Studio Console ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- 2. Groq Whisper STT -->
+          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>🎙️</span> Groq Whisper STT
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200/60">Speech-to-Text</span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono truncate" id="whisperModelLabel">whisper-large-v3-turbo</div>
+            </div>
+
+            <!-- Hero Quota Progress -->
+            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Daily Audio Quota:</span>
+                <span id="whisperUsagePct" class="font-bold text-sky-700 font-mono text-sm">0% used</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                <div id="whisperProgressBar" class="bg-sky-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-500">Audio Recorded:</span>
+                <span id="whisperUsedVsTotal" class="font-bold text-slate-800 font-mono">0 / 7,200 sec</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Remaining Audio:</span>
+                <span id="whisperRemainingQuota" class="font-bold text-sky-700 font-mono">7,200 sec remaining</span>
+              </div>
+              <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Reset Period:</span>
+                <span>Daily at 00:00 UTC (2 hrs)</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Telemetry Source:</span>
+                <span id="whisperQuotaStatusBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Daily Audio Quota</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="text-[10px] text-slate-400">
+                <span>Free Limit: <strong>7,200 audio sec/day (20 RPM)</strong></span>
+              </div>
+              <a href="https://console.groq.com/settings/limits" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-sky-600 hover:text-sky-800 bg-white border border-sky-200 hover:border-sky-300 rounded-lg py-1.5 transition-colors">
+                Groq Limits Dashboard ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- 3. Groq Cloud LLM -->
+          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>⚡</span> Groq LLM
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/60">Backup LLM</span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono truncate" id="groqModelLabel">qwen/qwen3.8-27b</div>
+            </div>
+
+            <!-- Hero Quota Progress -->
+            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Rate-Limit Allowance:</span>
+                <span id="groqUsagePct" class="font-bold text-amber-700 font-mono text-sm">—</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                <div id="groqProgressBar" class="bg-amber-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-500">Tokens / Quota:</span>
+                <span id="groqUsedVsTotal" class="font-bold text-slate-800 font-mono">Quota limit unavailable</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Remaining Quota:</span>
+                <span id="groqRemainingQuota" class="font-bold text-emerald-700 font-mono">Header-monitored</span>
+              </div>
+              <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Reset Period:</span>
+                <span>Rolling rate window</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Telemetry Source:</span>
+                <span id="groqQuotaStatusBadge" class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Awaiting Request</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="text-[10px] text-slate-400">
+                <span>Free Limit: <strong>30 RPM / 14,400 RPD</strong></span>
+              </div>
+              <a href="https://console.groq.com/settings/limits" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-amber-600 hover:text-amber-800 bg-white border border-amber-200 hover:border-amber-300 rounded-lg py-1.5 transition-colors">
+                Groq Limits Dashboard ↗
+              </a>
+            </div>
+          </div>
+
+          <!-- 4. Microsoft Edge TTS -->
+          <div class="bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-fredoka font-bold text-slate-900 flex items-center gap-1.5">
+                  <span>🔊</span> Edge-TTS
+                </span>
+                <span class="text-[9px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60">Voice Engine</span>
+              </div>
+              <div class="text-[11px] text-slate-500 font-mono truncate" id="edgeVoiceLabel">en-IN-PrabhatNeural</div>
+            </div>
+
+            <!-- Hero Quota Progress -->
+            <div class="space-y-2 py-2 border-y border-slate-200/60 text-xs">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Service Quota:</span>
+                <span class="font-bold text-emerald-700 font-mono text-sm">Free / Unmetered</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden">
+                <div class="bg-emerald-500 h-2 rounded-full" style="width: 100%"></div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-500">Speech Turns:</span>
+                <span id="edgeReqToday" class="font-bold text-slate-800 font-mono">0 turns</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Characters Synthesized:</span>
+                <span id="edgeCharsToday" class="font-bold text-emerald-700 font-mono">0 chars</span>
+              </div>
+              <div class="flex justify-between items-center text-[10px] text-slate-400">
+                <span>Reset Period:</span>
+                <span>Local counter resets daily</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Quota Limit:</span>
+                <span id="edgeQuotaStatusBadge" class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Quota limit unavailable</span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <div class="text-[10px] text-slate-400">
+                <span>Protocol: <strong>WebSocket Audio Streaming</strong></span>
+              </div>
+              <a href="https://learn.microsoft.com/azure/ai-services/speech-service/" target="_blank" rel="noopener noreferrer" class="block text-center text-[11px] font-semibold text-emerald-600 hover:text-emerald-800 bg-white border border-emerald-200 hover:border-emerald-300 rounded-lg py-1.5 transition-colors">
+                Azure Speech Docs ↗
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Collapsible Developer Diagnostics View -->
+        <details class="group bg-slate-50/80 border border-slate-200/80 rounded-xl p-4 transition-all">
+          <summary class="cursor-pointer font-semibold text-xs text-slate-700 flex items-center justify-between select-none">
+            <div class="flex items-center gap-2">
+              <span>🔧</span>
+              <span>Technical Diagnostics & Raw Telemetry (Developer View)</span>
+            </div>
+            <span class="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+          <div class="mt-4 pt-3 border-t border-slate-200/60 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <!-- Gemini Technical Details -->
+            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
+              <div class="font-bold text-slate-800 text-[11px] mb-1">Gemini Raw Tokens</div>
+              <div class="flex justify-between"><span class="text-slate-500">Requests Today:</span><span id="geminiReqToday" class="font-mono">0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Tokens Today:</span><span id="geminiTokensToday" class="font-mono text-indigo-700">0 tok</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Prompt / Compl:</span><span id="geminiTokenBreakdown" class="font-mono">0 / 0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Cumulative:</span><span id="geminiTokensTotal" class="font-mono">0 tok</span></div>
+            </div>
+            <!-- Groq Whisper Technical Details -->
+            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
+              <div class="font-bold text-slate-800 text-[11px] mb-1">Whisper STT Details</div>
+              <div class="flex justify-between"><span class="text-slate-500">Audio Today:</span><span id="whisperAudioToday" class="font-mono text-sky-700">0 sec</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Turns Today:</span><span id="whisperReqToday" class="font-mono">0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Cumulative Audio:</span><span id="whisperAudioTotal" class="font-mono">0 sec</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Remaining Req:</span><span id="whisperRemainingReq" class="font-mono text-emerald-700">Header-monitored</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Source:</span><span id="whisperSourceBadge" class="font-mono text-[10px]">Response Header</span></div>
+            </div>
+            <!-- Groq LLM Technical Details -->
+            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
+              <div class="font-bold text-slate-800 text-[11px] mb-1">Groq LLM Headers</div>
+              <div class="flex justify-between"><span class="text-slate-500">Requests Today:</span><span id="groqReqToday" class="font-mono">0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Tokens Today:</span><span id="groqTokensToday" class="font-mono text-amber-700">0 tok</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Remaining Tokens:</span><span id="groqRemainingTokens" class="font-mono text-emerald-700">Header-monitored</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Remaining Req:</span><span id="groqRemainingReq" class="font-mono">Header-monitored</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Source:</span><span id="groqSourceBadge" class="font-mono text-[10px]">Response Header</span></div>
+            </div>
+            <!-- Edge TTS Technical Details -->
+            <div class="space-y-1.5 p-3 bg-white rounded-lg border border-slate-200/60">
+              <div class="font-bold text-slate-800 text-[11px] mb-1">Edge TTS Metrics</div>
+              <div class="flex justify-between"><span class="text-slate-500">Audio Streamed:</span><span id="edgeAudioBytesToday" class="font-mono">0 KB</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Cumulative Chars:</span><span id="edgeCharsTotal" class="font-mono">0 chars</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Protocol:</span><span class="font-mono text-[10px]">WebSocket Stream</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Provider Quota:</span><span class="font-mono text-[10px] text-emerald-700">Free / Unmetered</span></div>
+            </div>
+          </div>
+        </details>        </div>
+      </section>
+    </main>
+
   </div>
 
   <!-- ============================================================== -->
@@ -1774,9 +2027,9 @@
         <span>Device</span>
       </button>
 
-      <button onclick="openReportModal()" class="flex flex-col items-center justify-center gap-1 text-slate-400 font-fredoka font-bold text-[10px] active:scale-95 transition-all">
-        <span class="text-lg">📋</span>
-        <span>Report</span>
+      <button id="mobBtn_skills" onclick="switchMainTab('skills')" class="flex flex-col items-center justify-center gap-1 text-slate-400 font-fredoka font-bold text-[10px] active:scale-95 transition-all">
+        <span class="text-lg">🧠</span>
+        <span>Skills</span>
       </button>
     </div>
   </nav>
@@ -2040,7 +2293,8 @@
     // Tab Switcher for Top Bar, Desktop Sidebar & Mobile Bottom Navigation
     function switchMainTab(tabKey) {
       currentActiveTab = tabKey;
-      var tabs = ['growth', 'tasks', 'habits', 'cockpit'];
+      var coreTabs = ['growth', 'tasks', 'habits', 'cockpit'];
+      var tabs = ['growth', 'skills', 'tasks', 'habits', 'cockpit', 'diagnostics'];
       tabs.forEach(function(t) {
         var content = document.getElementById('tabContent_' + t);
         var btn = document.getElementById('tabBtn_' + t);
@@ -2078,6 +2332,13 @@
       if (tabKey === 'tasks' && (!cachedTasks || cachedTasks.length === 0)) {
         loadTasks();
       }
+      if (tabKey === 'skills') {
+        renderSkillsExplorer();
+      }
+      if (tabKey === 'diagnostics') {
+        fetchApiUsageData(false);
+      }
+      updateOverviewSnapshot();
     }
 
     // Audio Playback (Hardware identical en-IN-PrabhatNeural or live Edge-TTS)
@@ -2327,6 +2588,7 @@
         if (d && d.success) {
           cachedHabits = d.habits;
           renderHabitsGrid();
+          updateOverviewSnapshot();
           closeAddHabitModal();
           playLocalVoice('Added new habit: ' + title + '! Let us practice this together, champ!');
         }
@@ -2358,11 +2620,11 @@
      */
     function generateSkillsRadarSvg(axes, width, height) {
       if (!Array.isArray(axes) || axes.length === 0) return '';
-      width = width || 300;
-      height = height || 300;
+      width = width || 380;
+      height = height || 380;
       var cx = width / 2;
       var cy = height / 2;
-      var r = Math.min(width, height) * 0.35;
+      var r = 110;
       var n = axes.length;
 
       // Background concentric polygons (rings at 25%, 50%, 75%, 100%)
@@ -2375,7 +2637,7 @@
           var y = cy + pct * r * Math.sin(angle);
           pts.push(x.toFixed(1) + ',' + y.toFixed(1));
         }
-        ringsSvg += '<polygon points="' + pts.join(' ') + '" fill="none" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="' + (pct < 1 ? '3,3' : 'none') + '"/>';
+        ringsSvg += '<polygon points="' + pts.join(' ') + '" fill="' + (pct === 1.0 ? '#F8FAFC' : 'none') + '" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="' + (pct < 1 ? '3,3' : 'none') + '"/>';
       });
 
       // Axis rays and labels
@@ -2383,24 +2645,44 @@
       var labelsSvg = '';
       var dataPts = [];
 
+      var domainLabelSplits = {
+        'Language & Communication': ['Language &', 'Communication'],
+        'Logical & Quantitative': ['Logical &', 'Quantitative'],
+        'Scientific Curiosity': ['Scientific', 'Curiosity'],
+        'Emotional Articulation': ['Emotional', 'Articulation'],
+        'Creative Storytelling': ['Creative', 'Storytelling'],
+        'Social & Empathy': ['Social &', 'Empathy'],
+        'Physical & Motor': ['Physical &', 'Motor'],
+        'Daily Routine': ['Daily', 'Routine']
+      };
+
       axes.forEach(function(axis, i) {
         var angle = (i * 2 * Math.PI / n) - (Math.PI / 2);
         var ax = cx + r * Math.cos(angle);
         var ay = cy + r * Math.sin(angle);
-        raysSvg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + ax.toFixed(1) + '" y2="' + ay.toFixed(1) + '" stroke="#CBD5E1" stroke-width="1"/>';
+        raysSvg += '<line x1="' + cx + '" y1="' + cy + '" x2="' + ax.toFixed(1) + '" y2="' + ay.toFixed(1) + '" stroke="#CBD5E1" stroke-width="1.2"/>';
 
-        // Label position
-        var lx = cx + (r + 24) * Math.cos(angle);
-        var ly = cy + (r + 16) * Math.sin(angle);
+        // Label position with generous padding
+        var lx = cx + (r + 34) * Math.cos(angle);
+        var ly = cy + (r + 24) * Math.sin(angle);
         var anchor = Math.abs(Math.cos(angle)) < 0.25 ? 'middle' : (Math.cos(angle) > 0 ? 'start' : 'end');
-        var shortName = axis.label.length > 12 ? (axis.label.slice(0, 10) + '..') : axis.label;
 
-        labelsSvg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" font-family="Fredoka, sans-serif" font-size="9" font-weight="600" fill="#475569" class="select-none">' +
-          (axis.icon || '') + ' ' + shortName +
-        '</text>';
+        var parts = domainLabelSplits[axis.label] || [axis.label];
+        var iconStr = (axis.icon || '') + ' ';
 
-        // Data point (default 12 for visual baseline if null)
-        var val = axis.has_data ? Math.max(20, Math.min(100, axis.value)) : 12;
+        if (parts.length === 2) {
+          labelsSvg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" font-family="Fredoka, sans-serif" font-size="10.5" font-weight="600" fill="#334155" class="select-none">' +
+            '<tspan x="' + lx.toFixed(1) + '" dy="-0.6em">' + iconStr + parts[0] + '</tspan>' +
+            '<tspan x="' + lx.toFixed(1) + '" dy="1.25em">' + parts[1] + '</tspan>' +
+          '</text>';
+        } else {
+          labelsSvg += '<text x="' + lx.toFixed(1) + '" y="' + ly.toFixed(1) + '" text-anchor="' + anchor + '" font-family="Fredoka, sans-serif" font-size="10.5" font-weight="600" fill="#334155" class="select-none">' +
+            iconStr + parts[0] +
+          '</text>';
+        }
+
+        // Data point (default 14 for visual baseline if null/awaiting)
+        var val = axis.has_data ? Math.max(20, Math.min(100, axis.value)) : 14;
         var dx = cx + (val / 100) * r * Math.cos(angle);
         var dy = cy + (val / 100) * r * Math.sin(angle);
         dataPts.push({ x: dx, y: dy, axis: axis, val: val });
@@ -2414,8 +2696,8 @@
       var dotsSvg = '';
       dataPts.forEach(function(p) {
         var dotColor = p.axis.has_data ? '#4F46E5' : '#94A3B8';
-        dotsSvg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4" fill="#FFFFFF" stroke="' + dotColor + '" stroke-width="2" class="transition-all hover:scale-125 cursor-pointer">' +
-          '<title>' + p.axis.label + ': ' + (p.axis.has_data ? (p.val + '% index') : 'Awaiting Observations') + ' (' + p.axis.coverage_pct + '% observed)</title>' +
+        dotsSvg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4.5" fill="#FFFFFF" stroke="' + dotColor + '" stroke-width="2.5" class="transition-all hover:scale-125 cursor-pointer">' +
+          '<title>' + p.axis.label + ': ' + (p.axis.has_data ? (p.val + '% coverage') : 'Awaiting Observations') + ' (' + p.axis.coverage_pct + '% observed)</title>' +
         '</circle>';
       });
 
@@ -2542,7 +2824,9 @@
       }
 
       container.innerHTML = '';
-      skillsToDisplay.forEach(function(skill) {
+      var displaySlice = skillsToDisplay.slice(0, 4);
+
+      displaySlice.forEach(function(skill) {
         var card = document.createElement('div');
         var isDemonstrated = (skill.observation_count >= 2) || (skill.status && skill.status.startsWith('demonstrated')) || skill.status === 'active_inquiry' || skill.status === 'emotional_expression' || skill.status === 'observed_routine' || skill.status === 'active_observation';
         var isEmerging = skill.status === 'emerging';
@@ -2588,6 +2872,228 @@
 
         container.appendChild(card);
       });
+
+      if (skillsToDisplay.length > 4) {
+        var ctaCard = document.createElement('div');
+        ctaCard.className = 'col-span-full p-3 rounded-2xl bg-indigo-50/50 border border-indigo-200/70 flex items-center justify-between gap-3 text-xs';
+        ctaCard.innerHTML =
+          '<div class="flex items-center gap-2">' +
+            '<span class="text-base">🧠</span>' +
+            '<span class="text-slate-700">Showing top ' + displaySlice.length + ' of ' + skillsToDisplay.length + ' skills in this group.</span>' +
+          '</div>' +
+          '<button onclick="switchMainTab(\'skills\')" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-fredoka font-bold text-xs transition-colors shrink-0 flex items-center gap-1 shadow-2xs">' +
+            '<span>Explore All 24 Skills</span> <span>→</span>' +
+          '</button>';
+        container.appendChild(ctaCard);
+      }
+    }
+
+    // ================================================================
+    // SKILLS EXPLORER STATE & CONTROLS
+    // ================================================================
+    var skillsExplorerCurrentStatus = 'all';
+    var skillsExplorerCurrentDomain = 'all';
+    var skillsExplorerSearchTerm = '';
+
+    function setSkillsExplorerStatus(statusKey) {
+      skillsExplorerCurrentStatus = statusKey;
+      ['all', 'demonstrated', 'emerging', 'awaiting'].forEach(function(s) {
+        var btn = document.getElementById('explorerStatusBtn_' + s);
+        if (btn) {
+          btn.className = (s === statusKey)
+            ? 'px-3 py-1.5 rounded-xl font-fredoka font-bold text-xs bg-indigo-600 text-white transition-all shrink-0'
+            : 'px-3 py-1.5 rounded-xl font-fredoka font-medium text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shrink-0';
+        }
+      });
+      renderSkillsExplorer();
+    }
+
+    function setSkillsExplorerDomain(domainKey) {
+      skillsExplorerCurrentDomain = domainKey;
+      var domainKeys = [
+        'all', 'language_communication', 'logical_quantitative',
+        'scientific_curiosity', 'emotional_articulation', 'creative_storytelling',
+        'social_manners', 'physical_movement', 'routine_habits'
+      ];
+      domainKeys.forEach(function(d) {
+        var btn = document.getElementById('explorerDomainBtn_' + d);
+        if (btn) {
+          btn.className = (d === domainKey)
+            ? 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white border border-indigo-600 shrink-0 transition-all'
+            : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 shrink-0 transition-all';
+        }
+      });
+      renderSkillsExplorer();
+    }
+
+    function handleSearchSkillsExplorer(query) {
+      skillsExplorerSearchTerm = (query || '').trim().toLowerCase();
+      renderSkillsExplorer();
+    }
+
+    function getAllSkillsList() {
+      if (!cachedSkillsAnalytics) return [];
+      if (Array.isArray(cachedSkillsAnalytics.all_skills) && cachedSkillsAnalytics.all_skills.length > 0) {
+        return cachedSkillsAnalytics.all_skills;
+      }
+      var list = [];
+      if (cachedSkillsAnalytics.categories) {
+        Object.keys(cachedSkillsAnalytics.categories).forEach(function(k) {
+          var cat = cachedSkillsAnalytics.categories[k];
+          if (Array.isArray(cat.skills)) {
+            cat.skills.forEach(function(s) {
+              list.push(Object.assign({}, s, {
+                category_id: k,
+                category_name: cat.name,
+                category_icon: cat.icon
+              }));
+            });
+          }
+        });
+      }
+      return list;
+    }
+
+    function renderSkillsExplorer() {
+      var grid = document.getElementById('skillsExplorerGrid');
+      if (!grid) return;
+
+      var allSkills = getAllSkillsList();
+      if (allSkills.length === 0) {
+        if (!cachedSkillsAnalytics) {
+          loadSkillsAnalytics(false);
+        }
+        grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 font-fredoka text-sm">Loading developmental skills...</div>';
+        return;
+      }
+
+      var demonstratedCount = allSkills.filter(function(s) {
+        return (s.observation_count >= 2) || (s.status && s.status.startsWith('demonstrated')) || s.status === 'active_inquiry' || s.status === 'emotional_expression' || s.status === 'observed_routine' || s.status === 'active_observation';
+      }).length;
+      var emergingCount = allSkills.filter(function(s) { return s.status === 'emerging'; }).length;
+      var awaitingCount = allSkills.length - demonstratedCount - emergingCount;
+
+      var elDem = document.getElementById('explorerDemonstratedCount');
+      if (elDem) elDem.innerText = demonstratedCount;
+      var elEmg = document.getElementById('explorerEmergingCount');
+      if (elEmg) elEmg.innerText = emergingCount;
+      var elAwt = document.getElementById('explorerAwaitingCount');
+      if (elAwt) elAwt.innerText = awaitingCount;
+
+      var filtered = allSkills.filter(function(s) {
+        if (skillsExplorerCurrentDomain !== 'all') {
+          if (s.category_id !== skillsExplorerCurrentDomain && (s.category || '') !== skillsExplorerCurrentDomain) {
+            return false;
+          }
+        }
+        var isDem = (s.observation_count >= 2) || (s.status && s.status.startsWith('demonstrated')) || s.status === 'active_inquiry' || s.status === 'emotional_expression' || s.status === 'observed_routine' || s.status === 'active_observation';
+        var isEmg = s.status === 'emerging';
+        if (skillsExplorerCurrentStatus === 'demonstrated' && !isDem) return false;
+        if (skillsExplorerCurrentStatus === 'emerging' && !isEmg) return false;
+        if (skillsExplorerCurrentStatus === 'awaiting' && (isDem || isEmg)) return false;
+
+        if (skillsExplorerSearchTerm) {
+          var nameMatch = (s.name || '').toLowerCase().includes(skillsExplorerSearchTerm);
+          var defMatch = (s.definition || '').toLowerCase().includes(skillsExplorerSearchTerm);
+          var catMatch = (s.category_name || s.category_id || '').toLowerCase().includes(skillsExplorerSearchTerm);
+          if (!nameMatch && !defMatch && !catMatch) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML =
+          '<div class="col-span-full py-16 px-4 text-center space-y-3 bg-white rounded-2xl border border-dashed border-slate-200">' +
+            '<span class="text-3xl block">🔍</span>' +
+            '<h4 class="font-fredoka font-bold text-base text-slate-800">No skills match your active filter</h4>' +
+            '<p class="text-xs text-slate-500 max-w-sm mx-auto">Try clearing search keywords or selecting "All Domains" or "All Skills".</p>' +
+            '<button onclick="setSkillsExplorerDomain(\'all\'); setSkillsExplorerStatus(\'all\');" class="mt-2 px-3.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-semibold text-xs border border-indigo-200 hover:bg-indigo-100 transition-colors">Reset Filters</button>' +
+          '</div>';
+        return;
+      }
+
+      grid.innerHTML = '';
+      filtered.forEach(function(skill) {
+        var card = document.createElement('div');
+        var isDone = (skill.observation_count >= 2) || (skill.status && skill.status.startsWith('demonstrated')) || skill.status === 'active_inquiry' || skill.status === 'emotional_expression' || skill.status === 'observed_routine' || skill.status === 'active_observation';
+        var isEmerg = skill.status === 'emerging';
+
+        var borderClass = isDone ? 'border-indigo-200/90 bg-indigo-50/20' : (isEmerg ? 'border-emerald-200/90 bg-emerald-50/20' : 'border-slate-200/90 bg-white');
+        var statusBadge = isDone
+          ? '<span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 flex items-center gap-1"><span>⭐</span> Demonstrated (' + (skill.observation_count || skill.evidence_count || 2) + ' obs)</span>'
+          : (isEmerg
+            ? '<span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1"><span>🌱</span> Emerging (1 obs)</span>'
+            : '<span class="text-[10px] font-fredoka font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">🔍 Awaiting Observations</span>'
+          );
+
+        var evidenceBox = '';
+        if (Array.isArray(skill.recent_evidence) && skill.recent_evidence.length > 0) {
+          var ev = skill.recent_evidence[0];
+          evidenceBox =
+            '<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">' +
+              '<div class="flex items-center justify-between text-[10px] text-slate-400 font-medium">' +
+                '<span class="font-bold text-slate-600 uppercase">' + ev.source.replace('_', ' ') + '</span>' +
+                '<span>' + (ev.timestamp ? new Date(ev.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Recent') + '</span>' +
+              '</div>' +
+              '<p class="italic font-medium text-slate-800 leading-snug">\"' + ev.excerpt + '\"</p>' +
+              '<p class="text-[10px] text-slate-500">' + ev.note + '</p>' +
+            '</div>';
+        } else {
+          evidenceBox =
+            '<div class="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/70 text-xs space-y-1">' +
+              '<div class="font-bold text-[10px] flex items-center gap-1 text-amber-900"><span>💡</span><span>Parent Discovery Idea:</span></div>' +
+              '<p class="text-[11px] text-amber-950 leading-snug italic">\"' + (skill.suggested_activity || 'Ask an open-ended question during evening play.') + '\"</p>' +
+            '</div>';
+        }
+
+        card.className = 'p-5 rounded-2xl border ' + borderClass + ' shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all space-y-3.5';
+        card.innerHTML =
+          '<div class="space-y-2">' +
+            '<div class="flex items-center justify-between gap-2 flex-wrap">' +
+              '<span class="text-[10px] font-fredoka font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">' +
+                '<span>' + (skill.category_icon || '🧠') + '</span>' +
+                '<span>' + (skill.category_name || skill.category || 'Development') + '</span>' +
+              '</span>' +
+              statusBadge +
+            '</div>' +
+            '<h3 class="font-fredoka font-bold text-sm sm:text-base text-slate-900 leading-snug">' + skill.name + '</h3>' +
+            '<p class="text-xs text-slate-500 leading-relaxed">' + skill.definition + '</p>' +
+          '</div>' +
+          '<div>' +
+            evidenceBox +
+          '</div>';
+
+        grid.appendChild(card);
+      });
+    }
+
+    function updateOverviewSnapshot() {
+      if (Array.isArray(cachedTasks)) {
+        var inProg = cachedTasks.filter(function(t) { return !(t.completed === true || t.status === 'completed'); }).length;
+        var compMilestones = 0;
+        cachedTasks.forEach(function(t) {
+          if (Array.isArray(t.milestones)) {
+            compMilestones += t.milestones.filter(function(m) { return m.completed; }).length;
+          }
+        });
+        var tCountEl = document.getElementById('snapshotTasksCount');
+        if (tCountEl) tCountEl.innerText = inProg;
+        var tMilEl = document.getElementById('snapshotTasksMilestones');
+        if (tMilEl) tMilEl.innerText = compMilestones + ' milestones checked';
+      }
+
+      if (Array.isArray(cachedHabits)) {
+        var totalH = cachedHabits.length;
+        var doneH = cachedHabits.filter(function(h) { return h.completed_today; }).length;
+        var pctH = totalH > 0 ? Math.round((doneH / totalH) * 100) : 0;
+
+        var hCountEl = document.getElementById('snapshotHabitsCount');
+        if (hCountEl) hCountEl.innerText = doneH;
+        var hTotEl = document.getElementById('snapshotHabitsTotal');
+        if (hTotEl) hTotEl.innerText = totalH;
+        var hPctEl = document.getElementById('snapshotHabitsPct');
+        if (hPctEl) hPctEl.innerText = pctH + '%';
+      }
     }
 
     function renderSuggestedActivities(data) {
@@ -2618,26 +3124,41 @@
       var container = document.getElementById('passionTopicsContainer');
       if (!container) return;
 
-      // Real dialogue topics extracted from skills analytics
-      var topics = [
-        { name: 'Space Exploration & Stars', icon: '🚀', count: 'High Affinity', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-        { name: 'Nature, Animals & Plants', icon: '🌱', count: 'Active Inquiry', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-        { name: 'Numbers & Shapes', icon: '🔢', count: 'Active Inquiry', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
-        { name: 'Civic Leaders & Storytelling', icon: '📖', count: 'Spontaneous', badge: 'bg-amber-50 text-amber-700 border-amber-200' }
-      ];
+      var topics = (data && Array.isArray(data.passion_topics)) ? data.passion_topics : [];
+
+      if (topics.length === 0) {
+        container.innerHTML =
+          '<div class="p-4 text-center text-slate-400 text-xs font-fredoka bg-slate-50/70 rounded-xl border border-dashed border-slate-200 space-y-1">' +
+            '<span class="text-base block">🧭</span>' +
+            '<p class="font-bold text-slate-600">No strong topic clusters observed yet</p>' +
+            '<p class="text-[11px] font-normal text-slate-400">Themes will emerge automatically as Parth asks questions, tells stories, and completes quests with KOTL.</p>' +
+          '</div>';
+        return;
+      }
 
       container.innerHTML = '';
       topics.forEach(function(top) {
         var row = document.createElement('div');
-        row.className = 'p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between text-xs';
+        row.className = 'p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1 text-xs hover:border-slate-300 transition-all';
+
+        var excerptHtml = top.sample_excerpt ? '<p class="text-[11px] text-slate-600 italic line-clamp-1">' + top.sample_excerpt + '</p>' : '';
+        var timeLabel = top.last_observed ? new Date(top.last_observed).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Observed';
+
         row.innerHTML =
-          '<span class="font-medium text-slate-800 flex items-center gap-1.5">' +
-            '<span>' + top.icon + '</span>' +
-            '<span>' + top.name + '</span>' +
-          '</span>' +
-          '<span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full border ' + top.badge + '">' +
-            top.count +
-          '</span>';
+          '<div class="flex items-center justify-between">' +
+            '<span class="font-fredoka font-bold text-slate-800 flex items-center gap-1.5">' +
+              '<span>' + (top.icon || '🧭') + '</span>' +
+              '<span>' + top.name + '</span>' +
+            '</span>' +
+            '<span class="text-[10px] font-fredoka font-bold px-2 py-0.5 rounded-full border ' + (top.badge || 'bg-slate-100 text-slate-600 border-slate-200') + '">' +
+              top.label + ' (' + top.count + ')' +
+            '</span>' +
+          '</div>' +
+          excerptHtml +
+          '<div class="flex items-center justify-between text-[10px] text-slate-400 pt-0.5">' +
+            '<span>Inquiries: ' + (top.inquiry_count || 0) + '</span>' +
+            '<span>' + timeLabel + '</span>' +
+          '</div>';
         container.appendChild(row);
       });
     }
@@ -2709,6 +3230,7 @@
             cachedTasks = d.tasks;
             updateTasksSummaryMetrics();
             renderTasksGrid();
+            updateOverviewSnapshot();
             if (showFeedback) showToast('Tasks synchronized', '✓');
           } else {
             throw new Error((d && d.error) || 'Failed to parse tasks response');
@@ -2829,7 +3351,7 @@
       filtered.forEach(function(task) {
         var card = document.createElement('div');
         var isDone = task.completed === true || task.status === 'completed';
-        card.className = 'bg-white rounded-2xl border ' + (isDone ? 'border-emerald-200/90 bg-emerald-50/20' : 'border-slate-200/80') + ' p-4.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all space-y-3.5';
+        card.className = 'bg-white rounded-2xl border ' + (isDone ? 'border-emerald-200/90 bg-emerald-50/25' : 'border-slate-200/90') + ' p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all space-y-4';
 
         // Badges & Actions
         var catBg = 'bg-slate-100 text-slate-700 border-slate-200';
@@ -4058,6 +4580,7 @@
     var dashboardSyncPollTimer = null;
     function pollDashboardSync() {
       loadGrowthMetrics();
+      loadSkillsAnalytics(false);
       loadTasks();
       loadDayWiseHistory();
     }
@@ -4092,7 +4615,7 @@
     }
 
     function navigateToApiUsage() {
-      switchMainTab('cockpit');
+      switchMainTab('diagnostics');
       var el = document.getElementById('apiUsageSection');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       fetchApiUsageData(false);
@@ -4289,6 +4812,7 @@
         if (badge) badge.classList.remove('hidden');
       }
       loadGrowthMetrics();
+      loadSkillsAnalytics(false);
       loadTasks();
       loadHabits();
       loadMissions();

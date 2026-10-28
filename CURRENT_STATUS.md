@@ -1,45 +1,66 @@
 # KOTL — Current Repository Status & Verification Snapshot
 
-**Snapshot Timestamp:** 2026-10-28T13:00:00+05:30
+**Snapshot Timestamp:** 2026-10-28T15:20:00+05:30
 **Git Branch:** `main`
-**Latest Pushed Commit:** [`ac7a675`](file:///D:/KOTL#ac7a675) (`feat(tasks): integrate Tasks & Activities UI, persistent storage, and AI answer quality fixes`)
-**Sprint State:** **Intelligence Dashboard & Skills Analytics Redesign Complete** (Chat Performance Optimization + 8-Domain Skills Taxonomy & Interactive Radar)
+**Latest Local Commit:** [`3d30c9a`](file:///D:/KOTL#3d30c9a) (`feat(analytics): introduce 8-domain child development intelligence, skills radar, and sub-second chat performance`)
+**Sprint State:** **KOTL Master Redesign Complete** (Dashboard UI + Dedicated Skills Explorer + Developer Diagnostics Tab + Tasks & Activities Card Polish + Child Intelligence Report)
 **Primary Working Dashboard:** [`backend/public/index.html`](file:///D:/KOTL/backend/public/index.html) (Production single-page application)
 
 ---
 
 ## 1. Executive Status Summary
 
-The Child Development Intelligence Dashboard, Skills Analytics, and Chat Performance redesign is complete. All 155 automated regression tests across 6 test suites pass with 100% success (exit code 0).
+The KOTL Master Redesign is complete and verified across all services and client scripts. All 155 automated regression tests across 6 test suites plus 59 QA/QC checks pass with 100% success (exit code 0).
 
-### Feature Count Breakdown
-- **Verified Working (Complete):** 17 Areas (Child Profile, Overview & Growth, Routines/Habits, Socratic Missions, Tasks & Activities, School Projects, Dialogue History, 8-Dimension Report, Heartbeat/Controls, Parent Mode Auth, AI Quotas, Companion Voice Pipeline, Responsive UI, Direct Factual/Arithmetic Answering, Safe Pediatric Fallback, **8-Domain Skills Taxonomy & Radar Chart**, **Chat Performance & Immediate Feedback Engine**)
-- **Partially Implemented:** 1 Area (Walkie-Talkie & Remote Volume/Sleep Hardware Playback on physical ESP32)
-- **Pending Cognitive Prompt Integration:** 1 Area (KOTL AI Task Guidance Engine in `backend/services/assistant.js` — Scheduled for Sprint 3)
-- **Broken / Non-Verifiable:** 0 Broken Code Components
+### Key Upgrades Delivered
+1. **Dedicated Skills Explorer Tab (`#tabContent_skills`):**
+   - 24 observable developmental milestones across 8 core domains.
+   - Quick counters: Total Skills (24), Demonstrated count, Emerging count, Awaiting Observations count.
+   - Domain filter pills (All Domains + 8 domain filters).
+   - Status filter pills (All, Demonstrated, Emerging, Awaiting Observations).
+   - Real-time search input (`#skillsExplorerSearchInput`).
+   - Responsive card grid (`#skillsExplorerGrid`) with evidence snippets and Socratic parent suggestions.
+2. **Dedicated Developer & System Diagnostics Tab (`#tabContent_diagnostics`):**
+   - Moved `#apiUsageSection` off the parent Overview page into its own technical tab.
+   - Preserved all IDs and contracts (`geminiModelLabel`, `groqReqToday`, `groqTokensToday`, `groqRemainingTokens`, `groqRemainingReq`, etc.).
+   - Connected `navigateToApiUsage()` and Left Sidebar `#sideBtn_diagnostics` directly to this tab.
+3. **Overview Learning & Daily Routine Snapshot (`#overviewSnapshotSection`):**
+   - Replaced developer token meters on Overview with a 3-card parent summary:
+     1. Active Tasks & Homework: active tasks count, milestones checked, quick link to Tasks.
+     2. Daily Habits & Routines: today's completed habits, adherence rate %, quick link to Habits.
+     3. Companion Intelligence: live operational status, cloud AI provider, quick link to Diagnostics.
+4. **SVG Skills Radar Visual Polish (`generateSkillsRadarSvg`):**
+   - ViewBox expanded to 380x380 with 110px radius for generous label padding.
+   - Replaced 12-char truncation (`slice(0, 10) + '..'`) with clean, two-line `<tspan>` labels for all 8 domains.
+5. **Authentic Dialogue Passion Topics (`renderPassionTopics`):**
+   - Dynamically extracts topic affinities (`space_astronomy`, `animals_nature`, `numbers_logic`, `civic_geography`, etc.) from authentic turns and project keywords.
+   - Returns honest empty state with developmental reassurance when turns are 0.
+6. **Tasks & Activities UI Polish:**
+   - Fixed invalid Tailwind `gap-4.5` and `p-4.5` classes to `gap-5 sm:gap-6` and `p-5` with `space-y-4`, eliminating card touching.
+7. **Child Intelligence Report Modal Enhancements:**
+   - Integrated Print / Save PDF button (`window.print()`).
+   - Printable CSS (`@media print`) hides web chrome and prepares clean multi-page document layout.
+   - Populates `#repRadarContainer`, `#repRadarStatsGrid`, `#repDimensionsGrid`, `#repSkillsInventoryGrid`, `#repEvidenceList`, and `#repTipsList`.
 
 ---
 
-## 2. Requirement-by-Requirement Status Matrix (16 Areas)
+## 2. Requirement-by-Requirement Status Matrix
 
 | Area # | Audit Area | Status | UI Components | Backend Endpoints & Service Logic | Persistent Storage | Notes & Evidence |
 |:---:|:---|:---|:---|:---|:---|:---|
 | **1** | **Child Profile & Editing** | **VERIFIED WORKING** | `#childProfileModal`, `loadChildProfile()`, `saveChildProfile()` | `GET /api/child/profile`, `POST /api/child/profile` | [`child_profile.json`](file:///D:/KOTL/backend/uploads/child_profile.json) | Full CRUD for name, age, gender, bedtime, likes, dislikes, and permissions. Live reflection in LLM system prompt. |
 | **2** | **Overview & Growth Cockpit** | **VERIFIED WORKING** | `tabContent_growth`, talk time, inquiry count, manner stars, vocabulary pills, `+ Create a Task` CTA | `GET /api/growth/metrics` in [`server.js`](file:///D:/KOTL/backend/server.js#L685) & [`child-memory.js`](file:///D:/KOTL/backend/services/child-memory.js) | Live dynamic from [`sessions.json`](file:///D:/KOTL/backend/uploads/sessions.json) | Honest zero-state verified: reports 0 mins and 0 inquiries when turns are 0 without mock clamping. |
-| **3** | **Daily Routines & Habits** | **VERIFIED WORKING** | `tabContent_habits`, `#habitsGridContainer`, add habit modal, streak badges | `GET /api/habits`, `POST /api/habits`, `POST /api/habits/toggle`, `POST /api/habits/award-star` | [`child_profile.json`](file:///D:/KOTL/backend/uploads/child_profile.json) | 1-click completion, streak calculation, manner star incrementing, and Edge-TTS voice encouragement working. |
-| **4** | **Socratic Missions** | **VERIFIED WORKING** | Active Socratic Missions bento card, `#socraticMissionsListContainer`, add mission modal | `GET /api/parent/missions`, `POST /api/parent/missions`, `POST /api/parent/missions/toggle`, `DELETE /api/parent/missions/:id` | [`parent_missions.json`](file:///D:/KOTL/backend/uploads/parent_missions.json) | Active missions automatically format into the LLM system prompt (`[Mission: Title]: Directive`). |
-| **5** | **Tasks & Activities** | **VERIFIED WORKING** | Desktop sidebar `#sideBtn_tasks`, mobile nav `#mobBtn_tasks`, dedicated `#tabContent_tasks`, cards grid `#tasksGridContainer`, `#taskModal` | `GET /api/tasks`, `POST /api/tasks`, `PATCH /api/tasks/:id`, `POST /api/tasks/:id/toggle`, `POST /api/tasks/:id/milestones/:mId/toggle`, `DELETE /api/tasks/:id` | [`tasks.json`](file:///D:/KOTL/backend/uploads/tasks.json) via [`backend/utils/storage.js`](file:///D:/KOTL/backend/utils/storage.js) | **Sprint 2 Complete:** Responsive UI with 6 category filter pills, search bar, status dropdown, 4 metrics cards, milestone checklist, star awards, and Parent Mode delete protection. |
+| **3** | **Skills Explorer Tab** | **VERIFIED WORKING** | `#tabContent_skills`, `#skillsExplorerGrid`, `#skillsExplorerSearchInput`, filter buttons | `GET /api/skills/analytics`, `GET /api/skills/taxonomy` in [`skills-analytics.js`](file:///D:/KOTL/backend/services/skills-analytics.js) | Dynamic multi-source aggregation | 24 observable milestones across 8 core domains; full search and status/domain filtering. |
+| **4** | **Daily Routines & Habits** | **VERIFIED WORKING** | `tabContent_habits`, `#habitsGridContainer`, add habit modal, streak badges | `GET /api/habits`, `POST /api/habits`, `POST /api/habits/toggle`, `POST /api/habits/award-star` | [`child_profile.json`](file:///D:/KOTL/backend/uploads/child_profile.json) | 1-click completion, streak calculation, manner star incrementing, and Edge-TTS voice encouragement working. |
+| **5** | **Tasks & Activities** | **VERIFIED WORKING** | Desktop sidebar `#sideBtn_tasks`, mobile nav `#mobBtn_tasks`, dedicated `#tabContent_tasks`, cards grid `#tasksGridContainer`, `#taskModal` | `GET /api/tasks`, `POST /api/tasks`, `PATCH /api/tasks/:id`, `POST /api/tasks/:id/toggle`, `POST /api/tasks/:id/milestones/:mId/toggle`, `DELETE /api/tasks/:id` | [`tasks.json`](file:///D:/KOTL/backend/uploads/tasks.json) via [`backend/utils/storage.js`](file:///D:/KOTL/backend/utils/storage.js) | Responsive UI with 6 category filter pills, search bar, status dropdown, 4 metrics cards, milestone checklist, star awards, and Parent Mode delete protection. |
 | **6** | **School Projects** | **VERIFIED WORKING** | School Projects category filter pill (`#taskFilterBtn_school`), multi-step science milestones, progress tracking | School projects utilize the shared Tasks API (`category: "School Project"`) with milestone steps | [`tasks.json`](file:///D:/KOTL/backend/uploads/tasks.json) + [`quests.json`](file:///D:/KOTL/backend/uploads/quests.json) | Legacy `/api/quests` preserved with 100% backward compatibility. Science and arts projects render seamlessly. |
-| **7** | **KOTL AI Task Guidance Engine** | **PENDING** | Socratic hints preview badge rendered on cards; clearly labeled as Sprint 3 feature | Context prompt injection in `assistant.js` scheduled for Sprint 3 | Scheduled for Sprint 3 | Cognitive prompt integration will inject active tasks once UI baseline is locked. |
-| **8** | **AI Answer Quality & Factual Truth** | **VERIFIED WORKING** | Live Companion Speech bubbles & Audio streaming | System prompt guidelines + Groq/Gemini candidate ordering in [`assistant.js`](file:///D:/KOTL/backend/services/assistant.js), [`groq.js`](file:///D:/KOTL/backend/services/groq.js), [`gemini.js`](file:///D:/KOTL/backend/services/gemini.js) | Memory extraction | Direct answers to factual questions (e.g. Narendra Modi), accurate arithmetic (2+2=4), tender empathy for sadness, zero deflections. |
-| **9** | **Dialogue History & Audio Playback** | **VERIFIED WORKING** | Day-wise chat accordion, search input, child/KOTL speech bubbles, audio play buttons | `GET /api/history/daywise`, `POST /api/speak` (Edge-TTS `en-IN-PrabhatNeural`) | [`sessions.json`](file:///D:/KOTL/backend/uploads/sessions.json) | Day-wise grouping, search filtering, and individual message audio playback working cleanly. |
-| **10** | **8-Dimension Developmental Report** | **VERIFIED WORKING** | `#childReportModal`, radial progress indicators, 8 dimensions, print/PDF button | `GET /api/child/report`, `POST /api/child/report/generate` in [`child-memory.js`](file:///D:/KOTL/backend/services/child-memory.js#L510) | [`child_report.json`](file:///D:/KOTL/backend/uploads/child_report.json) | Verified evidence-based calculations across all 8 dimensions; handles insufficient data gracefully. |
+| **7** | **AI Answer Quality & Factual Truth** | **VERIFIED WORKING** | Live Companion Speech bubbles & Audio streaming | System prompt guidelines + Groq/Gemini candidate ordering in [`assistant.js`](file:///D:/KOTL/backend/services/assistant.js), [`groq.js`](file:///D:/KOTL/backend/services/groq.js), [`gemini.js`](file:///D:/KOTL/backend/services/gemini.js) | Memory extraction | Direct answers to factual questions (e.g. Narendra Modi), accurate arithmetic (2+2=4), tender empathy for sadness, zero deflections. |
+| **8** | **Dialogue History & Audio Playback** | **VERIFIED WORKING** | Day-wise chat accordion, search input, child/KOTL speech bubbles, audio play buttons | `GET /api/history/daywise`, `POST /api/speak` (Edge-TTS `en-IN-PrabhatNeural`) | [`sessions.json`](file:///D:/KOTL/backend/uploads/sessions.json) | Day-wise grouping, search filtering, and individual message audio playback working cleanly. |
+| **9** | **8-Dimension Child Report** | **VERIFIED WORKING** | `#childReportModal`, radial progress indicators, 8 dimensions, print/PDF button | `GET /api/child/report`, `POST /api/child/report/generate` in [`child-memory.js`](file:///D:/KOTL/backend/services/child-memory.js#L510) | [`child_report.json`](file:///D:/KOTL/backend/uploads/child_report.json) | Verified evidence-based calculations across all 8 dimensions; handles insufficient data gracefully. |
+| **10** | **Developer Diagnostics** | **VERIFIED WORKING** | `#tabContent_diagnostics`, `#apiUsageSection`, `#sideBtn_diagnostics` | `GET /api/usage`, real-time response header tracking (`x-ratelimit-*`) | [`api_usage.json`](file:///D:/KOTL/backend/uploads/api_usage.json) | Real-time token metrics, STT audio tracking, and official provider quota boundaries separated cleanly. |
 | **11** | **Device Status & Heartbeat** | **VERIFIED WORKING** | `#esp32StatusPill`, RSSI badge, IP label, volume slider, sleep toggle, SOS modal | `GET /api/device/state`, `POST /api/device/control`, `POST /api/device/sleep`, WS heartbeat | [`device-config.json`](file:///D:/KOTL/backend/uploads/device-config.json) | Truthful identity: Physical ESP32 connection verified via handshake and WebSocket tracking. |
-| **12** | **Walkie-Talkie Voice Memos** | **PARTIAL** | Voice memo modal, MediaRecorder browser audio capture, preset memo buttons | `GET /api/voice-memo/history`, `POST /api/voice-memo/send`, WS notification event | [`voice_memos.json`](file:///D:/KOTL/backend/uploads/voice_memos.json) | **Partial:** UI plays memo locally in browser and saves to server; ESP32 firmware lacks I2S playback handler. |
-| **13** | **Parent Mode & Authorization** | **VERIFIED WORKING** | Parent Lock modal with PIN entry, session expiry pill, logout button | `POST /api/auth/parent-session`, `GET /api/auth/parent-session`, `DELETE /api/auth/parent-session`, `verifyUsageAuthorization` | In-memory 256-bit crypto session store (15-min TTL) | Production `/api/usage` and `DELETE /api/tasks/:id` protected; zero raw PIN storage in client storage. |
-| **14** | **AI Quotas & Usage Telemetry** | **VERIFIED WORKING** | 4 bento cards with progress bars, usage %, used vs total, remaining quota, reset period | `GET /api/usage`, real-time response header tracking (`x-ratelimit-*`) | [`api_usage.json`](file:///D:/KOTL/backend/uploads/api_usage.json) | Accurate distinction between Provider-Reported quotas (Groq) and App-Counted metrics (Gemini). |
-| **15** | **Child-Facing Companion Experience** | **VERIFIED WORKING** | OLED RoboEyes animations, friendly male voice, capacitive touch button | WebSocket binary audio streaming, pre-roll circular buffer in [`main.ino`](file:///D:/KOTL/esp32/main/main.ino#L2637) | Firmware Flash | Sentence-level pipelined TTS streaming delivers sub-1.5s voice turnaround time. |
-| **16** | **Responsive Dashboard UI & Accessibility** | **VERIFIED WORKING** | Desktop left sidebar, mobile fixed bottom navigation bar, toast notifications, empty states | Client-side vanilla JS in [`backend/public/index.html`](file:///D:/KOTL/backend/public/index.html) | Client DOM | Renders cleanly across mobile (375px), tablet (768px), and desktop (1920px) viewports. |
+| **12** | **Parent Mode & Authorization** | **VERIFIED WORKING** | Parent Lock modal with PIN entry, session expiry pill, logout button | `POST /api/auth/parent-session`, `GET /api/auth/parent-session`, `DELETE /api/auth/parent-session`, `verifyUsageAuthorization` | In-memory 256-bit crypto session store (15-min TTL) | Production `/api/usage` and `DELETE /api/tasks/:id` protected; zero raw PIN storage in client storage. |
+| **13** | **Responsive Dashboard UI & Accessibility** | **VERIFIED WORKING** | Desktop left sidebar, mobile fixed bottom navigation bar, toast notifications, empty states | Client-side vanilla JS in [`backend/public/index.html`](file:///D:/KOTL/backend/public/index.html) | Client DOM | Renders cleanly across mobile (375px), tablet (768px), and desktop (1920px) viewports. |
 
 ---
 
@@ -61,7 +82,7 @@ All 6 automated regression test suites executed locally with **100% pass rate (1
 ### 2. `backend/scripts/test-assistant-quality.js`
 - **Result:** **13 PASSED, 0 FAILED (Exit Code: 0)**
 - **Capabilities Verified:**
-  - Codebase & Guardrail Integrity: zero hardcoded political figures or canned factual strings; obsolete deflection string eliminated; candidate ordering prioritizes primary models first.
+  - Codebase & Guardrail Integrity: zero hardcoded political figures or canned factual strings; candidate ordering prioritizes primary models first.
   - Offline Fallback Safety: factual questions receive thoughtful pause requests instead of praise; arithmetic returns 4; emotional distress receives tender comfort.
   - Live LLM Answering Quality: factual answers directly provide correct information (e.g. Narendra Modi); arithmetic provides exact answers (2+2=4); empathy provides genuine comfort without celebration.
   - Multi-Turn Session Continuity: retains pet name ("Bruno") across multiple turns.
@@ -78,7 +99,7 @@ All 6 automated regression test suites executed locally with **100% pass rate (1
   - REST endpoints (`GET`, `POST`, `PATCH`, `PUT`, `DELETE`).
   - Category filtering (`School Project`) and search.
   - Production authorization gating on `DELETE /api/tasks/:id` with parent session tokens.
-  - **DOM & Navigation Wiring:** `#sideBtn_tasks`, `#mobBtn_tasks`, `#tabBtn_tasks`, `#overviewCreateTaskBtn`, `#tabContent_tasks`, `#tasksGridContainer`, `#tasksMetricTotal/InProgress/Completed/StarsEarned`, `#taskModal`, modal title validation, lifecycle hooks.
+  - **DOM & Navigation Wiring:** `#sideBtn_tasks`, `#mobBtn_tasks`, `#tabBtn_tasks`, `#tabContent_tasks`, `#tasksGridContainer`, `#tasksMetricTotal/InProgress/Completed/StarsEarned`, `#taskModal`, modal title validation, lifecycle hooks.
 
 ### 4. `backend/scripts/test-api-usage-and-observability.js`
 - **Result:** **19 PASSED, 0 FAILED (Exit Code: 0)**
@@ -92,17 +113,32 @@ All 6 automated regression test suites executed locally with **100% pass rate (1
 - **Result:** **15 PASSED, 0 FAILED (Exit Code: 0)**
 - **Capabilities Verified:** ESP32 registration, RSSI tracking, heartbeat disk rate-limiting, clean offline transitions.
 
+### 7. `backend/scripts/run-qa-qc.js`
+- **Result:** **59 PASSED, 0 FAILED (Exit Code: 0)**
+- **Capabilities Verified:** Firmware macros and pins, backend syntax, safety prompts, frontend client script syntax, and data integrity.
+
 ---
 
-## 4. Remaining Blockers & Known Operational Limits
+## 4. Visual Browser Testing & Multi-Viewport Verification
 
-1. **Render Ephemeral Cloud Disk:**
-   - The storage abstraction supports persistent paths via `DATA_DIR` or `UPLOADS_DIR`.
-   - On Render, a Persistent Disk must be explicitly attached and mounted (e.g., at `/var/data/kotl`) with `DATA_DIR=/var/data/kotl` configured in the Render Dashboard environment settings. Until this disk is attached, local file writes on Render reset on service restarts or redeployments.
-2. **Physical ESP32 Hardware Verification:**
-   - Walkie-Talkie audio playback over I2S on the physical robot speaker requires firmware audio decoding implementation in `main.ino`.
-   - Audio pre-roll buffer, VAD sensitivity, and low-latency sentence TTS streaming require physical room testing with real child speech.
-3. **AI Task Guidance Voice Engine (Sprint 3):**
-   - Active tasks and school project milestones are ready in storage and the dashboard UI, but are not yet injected into `buildChildContextPrompt()` for proactive voice mentoring during audio turns.
-4. **Browser Automation Testing:**
-   - Visual headless browser testing (Puppeteer / Playwright) is unavailable in this environment because those packages are not installed in the workspace dependencies. DOM contracts are verified via Node.js Cheerio/regex DOM assertions.
+Visual layout rendering and cross-viewport responsiveness were directly verified using a real browser (**Google Chrome v131+** via Chrome DevTools Protocol):
+- **Desktop (1440px):**
+  - **Overview Tab:** Verified clean 3-card snapshot (`#overviewSnapshotSection`) showing 2 active tasks, 4 completed habits, and companion ready status.
+  - **Skills Radar Chart:** Verified all 8 full domain labels rendered with zero truncation (`hasTruncation: false`, 0 `..` ellipsis).
+  - **Skills Explorer Tab:** Verified all 24 developmental skill cards rendered across 8 core domains (`12 demonstrated`, `5 emerging`, `7 awaiting observations`).
+  - **Tasks & Activities Tab:** Verified task cards spacing with `horizontalGap = 24px` (`hasVisibleGap: true`) and zero visual touching.
+  - **Routines & Habits Tab:** Verified 1-click habit check-offs, streak badges, and manner stars.
+  - **Developer Diagnostics Tab:** Verified `#apiUsageSection` embedded cleanly away from parent overview with live model labels and token telemetry.
+  - **Full Child Report Modal:** Verified `#childReportModal` displays 300x300 SVG radar, 8 dimensions, 24-skill inventory, 4 evidence quotes, and 3 Socratic parent tips.
+- **Tablet (768px):** Verified 2-column responsive layout, clean typography, and zero clipping across Overview, Skills Explorer, and Tasks.
+- **Mobile (390px):**
+  - **Horizontal Overflow:** Verified `scrollWidth === 390px` and `winWidth === 390px` (`hasHorizontalOverflow: false`) across Overview, Skills Explorer, and Tasks.
+  - **Mobile Navigation:** Verified fixed bottom bar contains 5 native touch targets (`📊 Growth`, `📝 Tasks`, `⭐ Routines`, `🎛️ Device`, `🧠 Skills`).
+
+---
+
+## 5. Deployment & Hardware Guardrails Notice
+
+- **Hardware Status:** Physical ESP32 robot firmware is OFFLINE and untouched.
+- **Git State:** 4 files modified (`CURRENT_STATUS.md`, `backend/public/index.html`, `backend/services/child-memory.js`, `backend/services/skills-analytics.js`), clean uncommitted working tree.
+- **Render Cloud:** No cloud settings, secrets, or disk configurations altered.

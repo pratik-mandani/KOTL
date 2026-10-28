@@ -777,6 +777,93 @@ function computeSkillsAnalytics({ refresh = false } = {}) {
       suggestion: s.suggested_activity
     }));
 
+  // Authentic Evidence-Backed Passion Topics Extraction
+  const topicDefinitions = [
+    {
+      id: "space_astronomy",
+      name: "Space, Stars & Astronauts",
+      icon: "🚀",
+      keywords: ["space", "star", "stars", "moon", "sun", "rocket", "planet", "alien", "astronaut"]
+    },
+    {
+      id: "animals_nature",
+      name: "Animals, Wildlife & Nature",
+      icon: "🌱",
+      keywords: ["animal", "dog", "bruno", "dolphin", "plant", "tree", "leaf", "nature", "bird", "fish", "elephant"]
+    },
+    {
+      id: "numbers_logic",
+      name: "Numbers, Counting & Logic",
+      icon: "🔢",
+      keywords: ["2 + 2", "2+2", "count", "number", "numbers", "plus", "shapes", "pattern", "triangle", "circle"]
+    },
+    {
+      id: "civic_geography",
+      name: "Civic Leaders & Geography",
+      icon: "🌍",
+      keywords: ["prime minister", "india", "delhi", "country", "leader", "flag", "narendra modi"]
+    },
+    {
+      id: "storytelling_arts",
+      name: "Storytelling & Creative Play",
+      icon: "🎨",
+      keywords: ["story", "magic", "pretend", "draw", "color", "paint", "craft", "spaceship"]
+    },
+    {
+      id: "family_community",
+      name: "Family, Friends & Pets",
+      icon: "💖",
+      keywords: ["mummy", "papa", "bruno", "friend", "sister", "brother"]
+    }
+  ];
+
+  const evaluatedPassionTopics = [];
+  topicDefinitions.forEach(topicDef => {
+    let matchCount = 0;
+    let inquiryCount = 0;
+    let latestExcerpt = null;
+    let latestTimestamp = null;
+
+    userTurns.forEach(turn => {
+      const lower = turn.user_text.toLowerCase();
+      if (topicDef.keywords.some(kw => lower.includes(kw))) {
+        matchCount++;
+        const isQ = turn.user_text.includes("?") || lower.startsWith("what") || lower.startsWith("why") || lower.startsWith("who");
+        if (isQ) inquiryCount++;
+        if (!latestTimestamp || new Date(turn.timestamp) > new Date(latestTimestamp)) {
+          latestTimestamp = turn.timestamp;
+          latestExcerpt = turn.user_text;
+        }
+      }
+    });
+
+    tasks.forEach(task => {
+      const combined = `${task.title || ""} ${task.description || ""} ${task.category || ""}`.toLowerCase();
+      if (topicDef.keywords.some(kw => combined.includes(kw))) {
+        matchCount++;
+        if (!latestTimestamp) {
+          latestTimestamp = task.updated_at || task.created_at;
+          latestExcerpt = task.title;
+        }
+      }
+    });
+
+    if (matchCount > 0) {
+      evaluatedPassionTopics.push({
+        id: topicDef.id,
+        name: topicDef.name,
+        icon: topicDef.icon,
+        count: matchCount,
+        inquiry_count: inquiryCount,
+        label: matchCount >= 3 ? "High Affinity" : "Active Inquiry",
+        badge: matchCount >= 3 ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-emerald-50 text-emerald-700 border-emerald-200",
+        last_observed: latestTimestamp,
+        sample_excerpt: latestExcerpt ? `"${latestExcerpt}"` : null
+      });
+    }
+  });
+  evaluatedPassionTopics.sort((a, b) => b.count - a.count);
+
   // Overall Observation Coverage
   const overallCoveragePct = Math.round((totalObservedSkillsCount / Math.max(1, totalSkillsCount)) * 100);
 
@@ -818,6 +905,7 @@ function computeSkillsAnalytics({ refresh = false } = {}) {
     emerging_skills: emergingSkills.slice(0, 4),
     unobserved_skills: unobservedSkills,
     suggested_activities: suggestedNextActivities,
+    passion_topics: evaluatedPassionTopics,
     transparency_notice: "This observational profile tracks verified dialogue turns, task milestones, and daily habits recorded with KOTL. It maps observation coverage and evidence counts. It is NOT an IQ score, standardized grading metric, or clinical psychological diagnosis."
   };
 

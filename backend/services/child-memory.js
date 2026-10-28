@@ -657,14 +657,16 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       category: "Emotional Articulation",
       source: "Sentiment and feeling keywords in sessions.json",
       sample_size: `${totalTurns} child turn${totalTurns === 1 ? "" : "s"} evaluated`,
-      status: isInsufficient ? "Insufficient Data" : "Active Observation",
-      calculated_indicator: isInsufficient ? null : {
+      status: isInsufficient ? "Insufficient Data" : (rawEmotions.length > 0 ? "Active Observation" : "Awaiting Observations"),
+      calculated_indicator: (isInsufficient || rawEmotions.length === 0) ? null : {
         emotional_expressions_count: rawEmotions.length,
-        completion_pct: rawEmotions.length > 0 ? 85 : 60
+        completion_pct: Math.min(100, rawEmotions.length * 25)
       },
       evidence_summary: isInsufficient
-        ? "No emotional expression tokens recorded."
-        : `${rawEmotions.length} feeling/sentiment token(s) verbalized and validated by KOTL during dialogue.`,
+        ? "No child speech turns recorded yet."
+        : (rawEmotions.length > 0
+          ? `${rawEmotions.length} feeling/sentiment token(s) verbalized and validated by KOTL during dialogue.`
+          : "No feeling tokens verbalized in evaluated dialogue turns."),
       ai_guidance: "KOTL provides calm acoustic inflections and validating expressions to support positive emotional grounding."
     },
     routine_habits: {
@@ -674,13 +676,15 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       source: "backend/uploads/habits.json",
       sample_size: `${totalHabits} configured daily habits`,
       status: totalHabits === 0 ? "Insufficient Data" : "Active Observation",
-      calculated_indicator: {
+      calculated_indicator: totalHabits === 0 ? null : {
         completed_today: completedHabits,
         total_habits: totalHabits,
         adherence_rate_pct: Math.round((completedHabits / Math.max(1, totalHabits)) * 100),
         completion_pct: Math.round((completedHabits / Math.max(1, totalHabits)) * 100)
       },
-      evidence_summary: `${completedHabits} of ${totalHabits} daily habits checked off today (${Math.round((completedHabits / Math.max(1, totalHabits)) * 100)}% adherence rate).`,
+      evidence_summary: totalHabits > 0
+        ? `${completedHabits} of ${totalHabits} daily habits checked off today (${Math.round((completedHabits / Math.max(1, totalHabits)) * 100)}% adherence rate).`
+        : "No daily routines configured.",
       ai_guidance: "Using gamified 1-click voice directives reinforces morning, mealtime, and hygiene habits without friction."
     },
     physical_motor: {
@@ -693,7 +697,9 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       calculated_indicator: {
         active_minutes: profile.medical?.sports?.active_minutes || 0,
         target_minutes: 60,
-        completion_pct: Math.min(100, Math.round(((profile.medical?.sports?.active_minutes || 0) / 60) * 100))
+        completion_pct: profile.medical?.sports?.active_minutes
+          ? Math.min(100, Math.round((profile.medical.sports.active_minutes / 60) * 100))
+          : null
       },
       evidence_summary: profile.medical?.sports?.active_minutes
         ? `${profile.medical.sports.active_minutes} of 60 active movement minutes logged today.`
@@ -707,9 +713,9 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       source: "Active quests in parent_missions.json & quests.json",
       sample_size: `${missions.length} active creative missions`,
       status: missions.length === 0 ? "Insufficient Data" : "Active Observation",
-      calculated_indicator: {
+      calculated_indicator: missions.length === 0 ? null : {
         active_missions_count: missions.length,
-        completion_pct: missions.length > 0 ? 80 : 50
+        completion_pct: Math.min(100, missions.length * 33)
       },
       evidence_summary: missions.length > 0
         ? `Engaged with "${missions[0].title}" inquiry project.`
@@ -722,12 +728,14 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       category: "Social Values",
       source: "Manner Stars in child_profile.json & polite dialogue turns",
       sample_size: `${mannerStars} stars awarded by parents`,
-      status: "Active Observation",
-      calculated_indicator: {
+      status: mannerStars > 0 ? "Active Observation" : "Awaiting Data",
+      calculated_indicator: mannerStars === 0 ? null : {
         manner_stars_count: mannerStars,
         completion_pct: Math.min(100, Math.max(30, mannerStars * 5))
       },
-      evidence_summary: `${mannerStars} Kindness and Good Manners Stars awarded to date.`,
+      evidence_summary: mannerStars > 0
+        ? `${mannerStars} Kindness and Good Manners Stars awarded to date.`
+        : "Awaiting positive manner star awards from parents.",
       ai_guidance: "Parent praise and star rewards encourage courteous turn-taking and considerate communication."
     },
     bedtime_readiness: {
@@ -736,11 +744,11 @@ function generateChildDevelopmentReport({ refresh = false } = {}) {
       category: "Circadian Wind-Down",
       source: "Evening interaction timestamps vs configured target bedtime",
       sample_size: `Target bedtime: ${profile.bedtime || "21:00"} IST`,
-      status: "Active Observation",
+      status: "Active Configuration",
       calculated_indicator: {
         target_bedtime: profile.bedtime || "21:00",
         wind_down_mode: "Active",
-        completion_pct: 85
+        completion_pct: profile.bedtime ? 100 : null
       },
       evidence_summary: `Bedtime wind-down configured for ${profile.bedtime || "21:00"} IST. KOTL softens volume and transitions to calming star stories.`,
       ai_guidance: "Dimming room lighting and initiating story wind-down 15 minutes before bed supports restful circadian sleep."
