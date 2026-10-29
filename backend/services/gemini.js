@@ -10,6 +10,19 @@ const DEFAULT_MODEL = process.env.GEMINI_CHAT_MODEL || "gemini-3.5-flash-lite";
 const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.GEMINI_TIMEOUT_MS || "", 10) || 15000;
 const { recordLlmUsage } = require("./api-usage");
 
+function getGeminiCandidateModels() {
+  const primaryModel = process.env.GEMINI_CHAT_MODEL || "gemini-3.5-flash-lite";
+  // Always prioritize the configured primary model first, followed by supported Gemini candidate models
+  return [
+    primaryModel,
+    "gemini-3.5-flash-lite",
+    "gemini-flash-latest",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+  ].filter((m, i, arr) => m && arr.indexOf(m) === i);
+}
+
 async function generateGeminiAssistantReply({ messages, sessionId = null }) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -32,16 +45,7 @@ async function generateGeminiAssistantReply({ messages, sessionId = null }) {
     };
   }
 
-  const primaryModel = process.env.GEMINI_CHAT_MODEL || "gemini-flash-latest";
-  // Always prioritize the configured primary model first, followed by supported Gemini candidate models
-  const candidateModels = [
-    primaryModel,
-    "gemini-flash-latest",
-    "gemini-3.5-flash-lite",
-    "gemini-2.5-flash-lite",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-  ].filter((m, i, arr) => m && arr.indexOf(m) === i);
+  const candidateModels = getGeminiCandidateModels();
 
   const cleanMessages = messages.map((m) => ({
     role: m.role,
@@ -109,6 +113,10 @@ async function generateGeminiAssistantReply({ messages, sessionId = null }) {
     } catch (error) {
       const isTimeout = error && (error.name === "AbortError" || error.code === "ABORT_ERR");
       lastError = isTimeout ? `Gemini timeout after ${DEFAULT_TIMEOUT_MS}ms` : error.message;
+      if (isTimeout) {
+        console.warn(`[Gemini LLM] Model ${modelToUse} timed out after ${DEFAULT_TIMEOUT_MS}ms. Aborting candidate loop.`);
+        break;
+      }
     } finally {
       clearTimeout(timeout);
     }
@@ -125,4 +133,5 @@ async function generateGeminiAssistantReply({ messages, sessionId = null }) {
 
 module.exports = {
   generateGeminiAssistantReply,
+  getGeminiCandidateModels,
 };

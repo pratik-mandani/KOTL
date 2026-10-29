@@ -23,6 +23,7 @@ const WHISPER_BIN = process.env.WHISPER_BIN || "";
 const WHISPER_MODEL_PATH = process.env.WHISPER_MODEL_PATH || "";
 const WHISPER_LANGUAGE = process.env.WHISPER_LANGUAGE || "auto";
 const WHISPER_TIMEOUT_MS = Number.parseInt(process.env.WHISPER_TIMEOUT_MS || process.env.OPENAI_TIMEOUT_MS || "", 10) || 45000;
+const DEFAULT_STT_PROMPT = "KOTL, Kotil, Hey KOTL, Namaste KOTL.";
 
 function getWhisperModelLabel() {
   if (!WHISPER_MODEL_PATH) {
@@ -171,7 +172,12 @@ function prepareCompletionsFormData(audioBuffer, fileName, model, defaultLanguag
 
   // Read config language and prompt fallbacks
   const configLanguage = process.env.STT_LANGUAGE || process.env.WHISPER_LANGUAGE || defaultLanguage;
-  const configPrompt = (process.env.STT_PROMPT || process.env.WHISPER_PROMPT || defaultPrompt || "").trim();
+  const rawPrompt = process.env.STT_PROMPT !== undefined
+    ? process.env.STT_PROMPT
+    : process.env.WHISPER_PROMPT !== undefined
+      ? process.env.WHISPER_PROMPT
+      : (defaultPrompt ? defaultPrompt : DEFAULT_STT_PROMPT);
+  const configPrompt = (rawPrompt || "").trim();
 
   if (configLanguage && configLanguage.trim().toLowerCase() !== "auto") {
     form.append("language", configLanguage.trim());
@@ -546,4 +552,6 @@ module.exports = {
   normalizeWhisperTranscript,
   NOISE_FILTER_BLACKLIST,
   isBlacklistedNoiseTranscript,
+  DEFAULT_STT_PROMPT,
+  prepareCompletionsFormData,
 };
