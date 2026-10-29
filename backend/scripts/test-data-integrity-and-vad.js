@@ -200,16 +200,16 @@ runTest("shouldRejectAudioTurn rejects background music lyrics and repetitive fi
   }
 });
 
-runTest("shouldRejectAudioTurn accepts Gujarati speech with greetings or wake-word", () => {
+runTest("shouldRejectAudioTurn accepts Gujarati speech with greetings and wake-word", () => {
   const gujaratiTurns = [
     "Kem cho KOTL, mane vaarta kaho",
     "KOTL, tame kem cho?",
-    "kem cho",
+    "Kem cho KOTL",
     "hello KOTL"
   ];
   for (const g of gujaratiTurns) {
     const rejected = shouldRejectAudioTurn({ transcript: g, isTouchOrButton: false, isSessionActive: false });
-    assert.strictEqual(rejected, false, `Gujarati turn with wake-word/greeting '${g}' must be accepted`);
+    assert.strictEqual(rejected, false, `Gujarati turn with wake-word '${g}' must be accepted`);
   }
 });
 
@@ -319,17 +319,17 @@ runTest("shouldRejectAudioTurn rejects empty, noise, and filler transcripts unde
   }
 });
 
-runTest("isAutoTriggerModeEnabled respects AUTO_TRIGGER_MODE environment setting and defaults to true", () => {
+runTest("isAutoTriggerModeEnabled respects AUTO_TRIGGER_MODE environment setting and defaults to false", () => {
   const originalEnv = process.env.AUTO_TRIGGER_MODE;
   try {
     delete process.env.AUTO_TRIGGER_MODE;
-    assert.strictEqual(isAutoTriggerModeEnabled(), true, "Default configuration must enable auto-trigger on startup");
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "Default configuration must disable auto-trigger on startup (strict wake gating)");
 
     process.env.AUTO_TRIGGER_MODE = "";
-    assert.strictEqual(isAutoTriggerModeEnabled(), true, "Empty string must default to enabled");
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "Empty string must default to disabled");
 
     process.env.AUTO_TRIGGER_MODE = "   ";
-    assert.strictEqual(isAutoTriggerModeEnabled(), true, "Whitespace-only string must default to enabled");
+    assert.strictEqual(isAutoTriggerModeEnabled(), false, "Whitespace-only string must default to disabled");
 
     process.env.AUTO_TRIGGER_MODE = "true";
     assert.strictEqual(isAutoTriggerModeEnabled(), true, "AUTO_TRIGGER_MODE=true must enable auto-trigger");
@@ -339,6 +339,9 @@ runTest("isAutoTriggerModeEnabled respects AUTO_TRIGGER_MODE environment setting
 
     process.env.AUTO_TRIGGER_MODE = "1";
     assert.strictEqual(isAutoTriggerModeEnabled(), true, "AUTO_TRIGGER_MODE=1 must enable auto-trigger");
+
+    process.env.AUTO_TRIGGER_MODE = "on";
+    assert.strictEqual(isAutoTriggerModeEnabled(), true, "AUTO_TRIGGER_MODE=on must enable auto-trigger");
 
     process.env.AUTO_TRIGGER_MODE = "false";
     assert.strictEqual(isAutoTriggerModeEnabled(), false, "AUTO_TRIGGER_MODE=false must disable auto-trigger");

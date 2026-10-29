@@ -57,13 +57,13 @@ function splitIntoSentences(text) {
 function isAutoTriggerModeEnabled() {
   const envVal = process.env.AUTO_TRIGGER_MODE;
   if (envVal === undefined || envVal === null) {
-    return true; // Default: true (auto-trigger enabled on startup for natural conversational speech)
+    return false; // Default: false (strict wake-word gating in cold idle by default)
   }
   const cleanVal = String(envVal).trim().toLowerCase();
   if (cleanVal === "") {
-    return true;
+    return false;
   }
-  return cleanVal !== "false" && cleanVal !== "0" && cleanVal !== "off";
+  return cleanVal === "true" || cleanVal === "1" || cleanVal === "on";
 }
 
 function isValidConversationalSpeech(transcript, clean, words) {
@@ -99,6 +99,11 @@ function isValidConversationalSpeech(transcript, clean, words) {
   return true;
 }
 
+// Shared Wake-Word & Conversational Session Configuration
+const PRIMARY_WAKE_WORDS = ["kotl", "kotil", "cotte", "cuttle", "cotel", "coatl"];
+const HOMOPHONE_PAIR_REGEX = /\b(hey|hi|hello|namaste|kem\s*cho|suno|ok|okay)\s+(kotl|kotil|cocktail|hotel|bottle|turtle|cattle)\b/i;
+const FOLLOW_UP_WINDOW_MS = 12000; // 12s natural follow-up window
+
 function shouldRejectAudioTurn({
   transcript,
   isTouchOrButton = false,
@@ -131,31 +136,23 @@ function shouldRejectAudioTurn({
   if (isTouchOrButton) return false;
 
   // 4. Primary Wake-Words for KOTL (discrete word boundary)
-  const PRIMARY_WAKE_WORDS = ["kotl", "kotil", "cotte", "cuttle", "cotel", "coatl"];
   const hasPrimaryWakeWord = words.some((w) => PRIMARY_WAKE_WORDS.includes(w));
   if (hasPrimaryWakeWord) return false;
 
-  // 5. Homophone Wake-Words ('hotel', 'bottle', 'turtle') - ONLY when paired with greetings
-  const HOMOPHONE_PAIR_REGEX = /\b(hey|hi|hello|namaste|kem\s*cho|suno|ok|okay)\s+(hotel|bottle|turtle|cattle)\b/i;
+  // 5. Homophone Wake-Words ('hotel', 'bottle', 'turtle', 'cocktail') - ONLY when paired with greetings
   if (HOMOPHONE_PAIR_REGEX.test(transcript)) return false;
 
-  // 6. Conversational Greetings (discrete tokens)
-  const GREETING_TOKENS = ["hello", "namaste", "kem cho", "kemcho", "morning", "evening"];
-  const hasGreeting = GREETING_TOKENS.some((g) => clean === g || clean.startsWith(g + " ") || clean.endsWith(" " + g) || clean.includes(" " + g + " ") || words.includes(g));
-  if (hasGreeting) return false;
-  if (words[0] === "hi" || words[0] === "hey") return false;
-
-  // 7. Active Follow-up Conversation Window (within 10s of last assistant reply):
+  // 6. Active Follow-up Conversation Window (within 12s of last assistant reply):
   // Allows natural follow-up questions and conversational responses without repeating wake-word,
   // limited to maxConsecutiveVoiceTurns (3 turns) before requiring a fresh wake-word or touch.
   if (isSessionActive && consecutiveVoiceTurns < maxConsecutiveVoiceTurns) {
     return false;
   }
 
-  // 8. Cold Idle Auto-Trigger Policy:
-  // When auto-trigger mode is enabled (default), accept valid conversational inquiries
-  // and directives without demanding an explicit "Hey KOTL" wake-word, while strictly
-  // rejecting ambient chatter, filler tokens, pop music lyrics, and background noise.
+  // 7. Cold Idle Auto-Trigger Policy:
+  // When auto-trigger mode is explicitly enabled via environment (AUTO_TRIGGER_MODE=true),
+  // accept valid conversational inquiries without demanding an explicit wake phrase.
+  // By default (AUTO_TRIGGER_MODE=false), this policy is inactive in cold idle.
   const autoTriggerActive = autoTrigger !== undefined ? Boolean(autoTrigger) : isAutoTriggerModeEnabled();
   if (autoTriggerActive && !isSessionActive) {
     if (isValidConversationalSpeech(transcript, clean, words)) {
@@ -163,9 +160,9 @@ function shouldRejectAudioTurn({
     }
   }
 
-  // 9. Cold Idle Rejection:
-  // In cold idle when auto-trigger is disabled or speech is not a valid inquiry,
-  // reject turn to prevent false activations from office chatter, TV, or ambient noise.
+  // 8. Cold Idle Rejection:
+  // In cold idle when auto-trigger is disabled (default) or speech lacks a recognized wake phrase,
+  // reject turn to prevent false activations from office chatter, TV, music, or ambient noise.
   return true;
 }
 
@@ -625,7 +622,6 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState,
 
     // 2b. Intelligent Wake-Word & Background Music Filter:
     const isTouchOrButton = ws.turnSource === "touch" || ws.turnSource === "button";
-    const FOLLOW_UP_WINDOW_MS = 10000; // 10s natural follow-up window
     const isSessionActive = Boolean(ws.lastTurnCompletedAt && (Date.now() - ws.lastTurnCompletedAt < FOLLOW_UP_WINDOW_MS));
     const currentFollowUpCount = ws.consecutiveVoiceFollowUps || 0;
 
@@ -650,12 +646,11 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState,
       return;
     }
 
-    // Determine whether this turn contained an explicit wake-word, greeting, or touch:
-    const cleanLower = transcript.trim().toLowerCase();
+    // Determine whether this turn contained an explicit wake-word, homophone pair, or touch:
+    const cleanWords = transcript.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "").split(/\s+/).filter(Boolean);
     const hasWakeOrTouch = isTouchOrButton ||
-      ["kotl", "kotil", "cotte", "cuttle", "cotel", "coatl"].some((w) => cleanLower.includes(w)) ||
-      ["hello", "namaste", "kem cho", "kemcho"].some((g) => cleanLower.includes(g)) ||
-      cleanLower.startsWith("hi ") || cleanLower.startsWith("hey ");
+      cleanWords.some((w) => PRIMARY_WAKE_WORDS.includes(w)) ||
+      HOMOPHONE_PAIR_REGEX.test(transcript);
 
     if (hasWakeOrTouch) {
       ws.consecutiveVoiceFollowUps = 0; // Fresh wake-word or touch resets follow-up count
@@ -928,6 +923,9 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState,
 }
 
 module.exports = {
+  FOLLOW_UP_WINDOW_MS,
+  PRIMARY_WAKE_WORDS,
+  HOMOPHONE_PAIR_REGEX,
   initWebSocketServer,
   synthesizeSpeechPcm,
   shouldRejectAudioTurn,
