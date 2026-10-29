@@ -135,6 +135,38 @@ function shouldRejectAudioTurn({
   // 3. Touch or button always accepted (explicit physical intent by child/parent)
   if (isTouchOrButton) return false;
 
+  // 3b. Reject bare wake-word hallucinations and prompt echo loops in cold idle:
+  // When session is cold idle (not an active follow-up), filter out Whisper hallucinations
+  // triggered by ambient noise/music that merely echo the wake word or prompt vocabulary.
+  if (!isSessionActive) {
+    // A. Solitary bare wake-word without greeting or utterance (e.g. "KOTL", "kotil", "cotte")
+    if (words.length === 1 && PRIMARY_WAKE_WORDS.includes(words[0])) {
+      return true;
+    }
+
+    // B. Pure wake-token sequence (e.g. "KOTL KOTL", "KOTL Kotil")
+    const ALL_WAKE_TOKENS = [...PRIMARY_WAKE_WORDS, "cocktail", "hotel", "bottle", "turtle", "cattle"];
+    if (words.every((w) => ALL_WAKE_TOKENS.includes(w))) {
+      return true;
+    }
+
+    // C. Repeated wake words with only greeting tokens and no conversational utterance/request
+    // (e.g. "KOTL, KOTL, Namaste KOTL.", "Hey KOTL, Namaste KOTL")
+    const wakeCount = words.filter((w) => ALL_WAKE_TOKENS.includes(w)).length;
+    if (wakeCount >= 2) {
+      const GREETING_TOKENS = [
+        "hey", "hi", "hello", "namaste", "kem", "cho", "suno", "ok", "okay",
+        "good", "morning", "afternoon", "evening"
+      ];
+      const substantiveWords = words.filter(
+        (w) => !ALL_WAKE_TOKENS.includes(w) && !GREETING_TOKENS.includes(w)
+      );
+      if (substantiveWords.length === 0) {
+        return true;
+      }
+    }
+  }
+
   // 4. Primary Wake-Words for KOTL (discrete word boundary)
   const hasPrimaryWakeWord = words.some((w) => PRIMARY_WAKE_WORDS.includes(w));
   if (hasPrimaryWakeWord) return false;

@@ -70,8 +70,8 @@ runTest("Cold idle: supported wake-word transcription variants are accepted", ()
     "Hey cocktail!",
     "Hello bottle",
     "Kem cho KOTL",
-    "cotte",
-    "cuttle",
+    "hey cotte",
+    "hello cuttle",
     "Namaste KOTL",
     "ok hotel",
     "okay bottle",
@@ -84,6 +84,66 @@ runTest("Cold idle: supported wake-word transcription variants are accepted", ()
       isSessionActive: false,
     });
     assert.strictEqual(rejected, false, `Variant '${variant}' must be accepted in cold idle`);
+  }
+});
+
+runTest("Cold idle: bare wake words without speech intent ('KOTL', 'kotil', 'cotte', 'cuttle') are rejected", () => {
+  const bareWakeWords = [
+    "KOTL",
+    "KOTL.",
+    "kotil",
+    "cotte",
+    "cuttle",
+    "cotel",
+    "coatl",
+  ];
+  for (const b of bareWakeWords) {
+    const rejected = shouldRejectAudioTurn({
+      transcript: b,
+      isTouchOrButton: false,
+      isSessionActive: false,
+    });
+    assert.strictEqual(rejected, true, `Bare wake word '${b}' must be rejected in cold idle`);
+  }
+});
+
+runTest("Cold idle: repeated wake words and prompt echo loops ('KOTL, KOTL, Namaste KOTL.') are rejected", () => {
+  const promptEchoes = [
+    "KOTL, KOTL, Namaste KOTL.",
+    "KOTL, KOTL",
+    "KOTL KOTL",
+    "Hey KOTL, Namaste KOTL.",
+    "KOTL, Kotil.",
+    "Namaste KOTL, KOTL",
+    "KOTL, KOTL, KOTL.",
+  ];
+  for (const pe of promptEchoes) {
+    const rejected = shouldRejectAudioTurn({
+      transcript: pe,
+      isTouchOrButton: false,
+      isSessionActive: false,
+    });
+    assert.strictEqual(rejected, true, `Prompt echo / loop '${pe}' must be rejected in cold idle`);
+  }
+});
+
+runTest("Cold idle: valid wake phrases and real requests are accepted", () => {
+  const validRequests = [
+    "Hey KOTL, how are you?",
+    "KOTL, what time is it?",
+    "Kem cho KOTL?",
+    "Namaste KOTL, tell me a story.",
+    "KOTL, sing a song",
+    "Hey KOTL, turn on the lights",
+    "KOTL, KOTL, what is the weather?",
+  ];
+  for (const vr of validRequests) {
+    const rejected = shouldRejectAudioTurn({
+      transcript: vr,
+      isTouchOrButton: false,
+      isSessionActive: false,
+    });
+    assert.strictEqual(rejected, false, `Valid request '${vr}' must be accepted in cold idle`);
   }
 });
 
@@ -228,6 +288,8 @@ runTest("Explicit touch/button: speech accepted without wake-phrase even in cold
     "Why is the sky blue?",
     "I'm going to sleep now",
     "sing a song",
+    "KOTL",
+    "KOTL, KOTL",
   ];
   for (const t of touchTurns) {
     const rejected = shouldRejectAudioTurn({
