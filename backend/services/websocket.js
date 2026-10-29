@@ -169,6 +169,57 @@ function shouldRejectAudioTurn({
   return true;
 }
 
+// Lightweight, concurrency-safe circuit breaker for TTS providers
+const ttsCircuitBreaker = {
+  edge: { failures: 0, cooldownUntil: 0, lastError: null },
+  gemini: { failures: 0, cooldownUntil: 0, lastError: null },
+};
+const CIRCUIT_BREAKER_COOLDOWN_MS = Number.parseInt(process.env.TTS_CIRCUIT_BREAKER_COOLDOWN_MS || "", 10) || 60000;
+
+function isTtsProviderAvailable(name) {
+  const state = ttsCircuitBreaker[name];
+  if (!state) return true;
+  if (state.cooldownUntil === 0) return true;
+  if (Date.now() >= state.cooldownUntil) {
+    state.cooldownUntil = 0;
+    return true;
+  }
+  return false;
+}
+
+function recordTtsSuccess(name) {
+  const state = ttsCircuitBreaker[name];
+  if (state) {
+    state.failures = 0;
+    state.cooldownUntil = 0;
+    state.lastError = null;
+  }
+}
+
+function recordTtsFailure(name, error) {
+  const state = ttsCircuitBreaker[name];
+  if (state) {
+    state.failures++;
+    state.cooldownUntil = Date.now() + CIRCUIT_BREAKER_COOLDOWN_MS;
+    state.lastError = error ? error.message : "Unknown error";
+    console.warn(`[WebSocket TTS] Circuit breaker tripped for provider "${name}" (${state.lastError}). Cooling down for ${Math.round(CIRCUIT_BREAKER_COOLDOWN_MS / 1000)}s.`);
+  }
+}
+
+let lastSynthesizedTtsProvider = "edge";
+
+function getLastSynthesizedTtsProvider() {
+  return lastSynthesizedTtsProvider;
+}
+
+function resetTtsCircuitBreaker() {
+  for (const k of Object.keys(ttsCircuitBreaker)) {
+    ttsCircuitBreaker[k].failures = 0;
+    ttsCircuitBreaker[k].cooldownUntil = 0;
+    ttsCircuitBreaker[k].lastError = null;
+  }
+}
+
 async function synthesizeSpeechPcm(text) {
   if (!text || !text.trim()) return Buffer.alloc(0);
 
@@ -190,26 +241,54 @@ async function synthesizeSpeechPcm(text) {
   const spokenText = toPhoneticSpokenText(text.trim(), lang);
   const speechRate = process.env.EDGE_TTS_RATE || "-20%";
 
-  // 1. Primary: Edge TTS v2 with Sec-MS-GEC v2 (Native Node.js - Fast, Unlimited, Never blocked)
-  try {
-    const v2Pcm = await synthesizeEdgeV2Pcm(spokenText, voice, speechRate);
-    if (v2Pcm && v2Pcm.length > 0) {
-      console.log(`[WebSocket TTS] Edge TTS v2 successfully generated ${v2Pcm.length} bytes male voice audio!`);
-      return v2Pcm;
+  // Determine provider priority according to TTS_PROVIDER
+  const configuredProvider = (process.env.TTS_PROVIDER || "edge").trim().toLowerCase();
+  const primaryName = configuredProvider === "gemini" ? "gemini" : "edge";
+  const secondaryName = primaryName === "edge" ? "gemini" : "edge";
+
+  async function tryProvider(name) {
+    if (name === "gemini") {
+      const geminiPcm = await synthesizeGeminiPcm(spokenText);
+      if (geminiPcm && geminiPcm.length > 0) return geminiPcm;
+      throw new Error("Gemini TTS produced empty audio");
     }
-  } catch (v2Err) {
-    console.warn(`[WebSocket TTS] Edge TTS v2 primary failed (${v2Err.message})...`);
+    if (name === "edge") {
+      const v2Pcm = await synthesizeEdgeV2Pcm(spokenText, voice, speechRate);
+      if (v2Pcm && v2Pcm.length > 0) return v2Pcm;
+      throw new Error("Edge TTS v2 produced empty audio");
+    }
+    throw new Error(`Unsupported provider: ${name}`);
   }
 
-  // 2. Secondary: Gemini Neural Male Voice ("Puck")
-  try {
-    const geminiPcm = await synthesizeGeminiPcm(spokenText);
-    if (geminiPcm && geminiPcm.length > 0) {
-      console.log(`[WebSocket TTS] Gemini Neural Male Voice successfully generated ${geminiPcm.length} bytes!`);
-      return geminiPcm;
+  // 1. Try Primary provider if available (not in circuit-breaker cooldown)
+  if (isTtsProviderAvailable(primaryName)) {
+    try {
+      const pcm = await tryProvider(primaryName);
+      recordTtsSuccess(primaryName);
+      lastSynthesizedTtsProvider = primaryName;
+      console.log(`[WebSocket TTS] ${primaryName === "edge" ? "Edge TTS v2" : "Gemini Neural Voice"} successfully generated ${pcm.length} bytes male voice audio!`);
+      return pcm;
+    } catch (primaryErr) {
+      recordTtsFailure(primaryName, primaryErr);
+      console.warn(`[WebSocket TTS] Primary provider "${primaryName}" failed (${primaryErr.message}). Falling back to "${secondaryName}"...`);
     }
-  } catch (geminiErr) {
-    console.error(`[WebSocket TTS] Gemini TTS failed: ${geminiErr.message}`);
+  } else {
+    const remainingSec = Math.max(0, Math.ceil((ttsCircuitBreaker[primaryName].cooldownUntil - Date.now()) / 1000));
+    console.log(`[WebSocket TTS] Primary "${primaryName}" in circuit-breaker cooldown (${remainingSec}s remaining). Skipping directly to fallback "${secondaryName}"...`);
+  }
+
+  // 2. Try Secondary fallback if available (or as fallback attempt)
+  if (isTtsProviderAvailable(secondaryName) || !isTtsProviderAvailable(primaryName)) {
+    try {
+      const pcm = await tryProvider(secondaryName);
+      recordTtsSuccess(secondaryName);
+      lastSynthesizedTtsProvider = secondaryName;
+      console.log(`[WebSocket TTS] Fallback provider "${secondaryName}" successfully generated ${pcm.length} bytes!`);
+      return pcm;
+    } catch (secondaryErr) {
+      recordTtsFailure(secondaryName, secondaryErr);
+      console.error(`[WebSocket TTS] Fallback provider "${secondaryName}" failed: ${secondaryErr.message}`);
+    }
   }
 
   console.error("[WebSocket TTS] All TTS providers exhausted.");
@@ -679,7 +758,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState,
 
       try {
         recordTtsUsage({
-          provider: "edge",
+          provider: lastSynthesizedTtsProvider || "edge",
           characterCount: replyText.length,
           audioBytes: pcmAudio.length,
         });
@@ -690,6 +769,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState,
         type: "tts_start",
         sample_rate: NORMALIZED_SAMPLE_RATE,
         turn_id: turnId,
+        provider: lastSynthesizedTtsProvider || "edge",
         server_prep_ms: Math.round(totalPrepMs),
         stt_ms: Math.round(sttMs),
         llm_ms: Math.round(llmMs),
@@ -750,6 +830,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState,
         type: "tts_start",
         sample_rate: NORMALIZED_SAMPLE_RATE,
         turn_id: turnId,
+        provider: lastSynthesizedTtsProvider || "edge",
         server_prep_ms: Math.round(totalPrepMs),
         stt_ms: Math.round(sttMs),
         llm_ms: Math.round(llmMs),
@@ -804,7 +885,7 @@ async function handleVoiceTurn(ws, rawPcmBuffer, sendJson, sendBinary, setState,
 
       try {
         recordTtsUsage({
-          provider: "edge",
+          provider: lastSynthesizedTtsProvider || "edge",
           characterCount: replyText.length,
           audioBytes: totalStreamedBytes,
         });
@@ -853,4 +934,10 @@ module.exports = {
   isAutoTriggerModeEnabled,
   isValidConversationalSpeech,
   categorizeAndSanitizeError,
+  ttsCircuitBreaker,
+  isTtsProviderAvailable,
+  recordTtsSuccess,
+  recordTtsFailure,
+  resetTtsCircuitBreaker,
+  getLastSynthesizedTtsProvider,
 };

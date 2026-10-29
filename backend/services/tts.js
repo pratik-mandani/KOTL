@@ -475,21 +475,39 @@ async function generateGoogleSpeech({ text, sessionId = null }) {
 async function generateSpeech({ text, sessionId = null, voice = null }) {
   const provider = (process.env.TTS_PROVIDER || "edge").trim().toLowerCase();
 
-  // 1. Try Edge TTS (Primary - Indian Male Voices: en-IN-PrabhatNeural, gu-IN-NiranjanNeural, hi-IN-MadhurNeural)
-  const edgeResult = await generateEdgeSpeech({ text, sessionId, voice });
-  if (edgeResult.success) {
-    try { recordTtsUsage({ provider: "edge", characterCount: text.length }); } catch (_) {}
-    return edgeResult;
-  }
-  console.warn(`[TTS] Edge TTS failed (${edgeResult.error}). Switching to Gemini Neural Male Voice ("Puck")...`);
+  if (provider === "gemini") {
+    // 1. Configured Primary: Gemini Neural Male Voice ("Puck" - Fast, Unblocked on Cloud)
+    const geminiResult = await generateGeminiSpeech({ text, sessionId });
+    if (geminiResult.success) {
+      try { recordTtsUsage({ provider: "gemini", characterCount: text.length }); } catch (_) {}
+      return geminiResult;
+    }
+    console.warn(`[TTS] Gemini TTS failed (${geminiResult.error}). Trying Edge TTS fallback...`);
 
-  // 2. Guaranteed Datacenter-Unblocked Neural Male Voice Fallback (Gemini "Puck" - Never blocked on Render)
-  const geminiResult = await generateGeminiSpeech({ text, sessionId });
-  if (geminiResult.success) {
-    try { recordTtsUsage({ provider: "gemini", characterCount: text.length }); } catch (_) {}
-    return geminiResult;
+    // 2. Secondary Fallback: Edge TTS
+    const edgeResult = await generateEdgeSpeech({ text, sessionId, voice });
+    if (edgeResult.success) {
+      try { recordTtsUsage({ provider: "edge", characterCount: text.length }); } catch (_) {}
+      return edgeResult;
+    }
+    console.warn(`[TTS] Edge TTS fallback failed (${edgeResult.error}). Checking backup providers...`);
+  } else {
+    // 1. Configured Primary: Edge TTS (Indian Male Voices: en-IN-PrabhatNeural, gu-IN-NiranjanNeural, hi-IN-MadhurNeural)
+    const edgeResult = await generateEdgeSpeech({ text, sessionId, voice });
+    if (edgeResult.success) {
+      try { recordTtsUsage({ provider: "edge", characterCount: text.length }); } catch (_) {}
+      return edgeResult;
+    }
+    console.warn(`[TTS] Edge TTS failed (${edgeResult.error}). Switching to Gemini Neural Male Voice ("Puck")...`);
+
+    // 2. Guaranteed Datacenter-Unblocked Neural Male Voice Fallback (Gemini "Puck" - Never blocked on Render)
+    const geminiResult = await generateGeminiSpeech({ text, sessionId });
+    if (geminiResult.success) {
+      try { recordTtsUsage({ provider: "gemini", characterCount: text.length }); } catch (_) {}
+      return geminiResult;
+    }
+    console.warn(`[TTS] Gemini TTS failed (${geminiResult.error}). Checking backup providers...`);
   }
-  console.warn(`[TTS] Gemini TTS failed (${geminiResult.error}). Checking backup providers...`);
 
   // 3. Fallback to Piper if configured
   if (provider === "piper") {

@@ -7,7 +7,7 @@ try {
 }
 const DEFAULT_URL = "https://api.groq.com/openai/v1/chat/completions";
 const DEFAULT_MODEL = process.env.GROQ_CHAT_MODEL || "openai/gpt-oss-20b";
-const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.GROQ_TIMEOUT_MS || "", 10) || 15000;
+const DEFAULT_TIMEOUT_MS = Number.parseInt(process.env.GROQ_TIMEOUT_MS || "", 10) || 8000;
 const { recordLlmUsage } = require("./api-usage");
 
 let lastGroqQuota = {
@@ -141,7 +141,11 @@ async function generateGroqAssistantReply({ messages, sessionId = null }) {
       };
     } catch (err) {
       lastError = err.message;
-      console.warn(`[Groq LLM] Fetch exception on ${modelToUse}: ${err.message}. Trying next candidate model...`);
+      const isTimeout = err.name === "AbortError" || String(err.message || "").toLowerCase().includes("aborted");
+      console.warn(`[Groq LLM] Fetch exception on ${modelToUse}: ${err.message}. ${isTimeout ? "Aborting candidate loop due to timeout." : "Trying next candidate model..."}`);
+      if (isTimeout) {
+        break;
+      }
     } finally {
       clearTimeout(timeout);
     }

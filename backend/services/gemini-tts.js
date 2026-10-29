@@ -119,7 +119,20 @@ async function generateGeminiSpeech({ text, sessionId = null, uploadsDir = null 
     };
   }
 
-  const pcmBuffer = await synthesizeGeminiPcm(text);
+  let pcmBuffer;
+  try {
+    pcmBuffer = await synthesizeGeminiPcm(text);
+  } catch (err) {
+    return {
+      success: false,
+      filename: null,
+      url: null,
+      provider: "gemini",
+      voice: "Puck (Male)",
+      model: "gemini-2.5-flash-tts",
+      error: err.message,
+    };
+  }
   if (!pcmBuffer || pcmBuffer.length === 0) {
     return {
       success: false,

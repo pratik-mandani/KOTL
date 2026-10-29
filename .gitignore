@@ -36,6 +36,8 @@ latest_device_mic.wav
 .vscode/
 .DS_Store
 Thumbs.db
+esp32/build/
+esp32/**/build/
 
 # Nested vendor git metadata
 vendor/**/.git

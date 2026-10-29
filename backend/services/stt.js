@@ -261,6 +261,8 @@ async function transcribeWithOpenAi(filePath) {
   }
 }
 
+const GROQ_STT_TIMEOUT_MS = Number.parseInt(process.env.GROQ_STT_TIMEOUT_MS || "", 10) || 8000;
+
 async function transcribeWithGroq(filePath) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
@@ -296,6 +298,9 @@ async function transcribeWithGroq(filePath) {
 
     console.log(`[STT groq] Sending request to Groq STT API. Model: ${model}, Language: ${language}, Prompt: "${prompt}"`);
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), GROQ_STT_TIMEOUT_MS);
+
     try {
       const response = await fetch(GROQ_TRANSCRIPTION_URL, {
         method: "POST",
@@ -303,7 +308,9 @@ async function transcribeWithGroq(filePath) {
           Authorization: `Bearer ${apiKey}`,
         },
         body: form,
+        signal: controller.signal,
       });
+      clearTimeout(timer);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -341,8 +348,13 @@ async function transcribeWithGroq(filePath) {
         error: null,
       };
     } catch (error) {
-      console.warn(`[STT groq] Model ${model} fetch error: ${error.message}. Trying next candidate...`);
-      lastError = error.message;
+      clearTimeout(timer);
+      const isTimeout = error.name === "AbortError" || String(error.message || "").toLowerCase().includes("aborted");
+      console.warn(`[STT groq] Model ${model} ${isTimeout ? `timed out after ${GROQ_STT_TIMEOUT_MS}ms` : `fetch error: ${error.message}`}. ${isTimeout ? "Aborting candidate loop due to timeout." : "Trying next candidate..."}`);
+      lastError = isTimeout ? `Groq STT timed out after ${GROQ_STT_TIMEOUT_MS}ms` : error.message;
+      if (isTimeout) {
+        break;
+      }
     }
   }
 

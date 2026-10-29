@@ -26,7 +26,9 @@ function formatNaturalPunctuation(text) {
   return text.replace(/([.!?।])\s+/g, "$1 ... ");
 }
 
-function synthesizeEdgeV2Mp3(text, voice = "en-IN-PrabhatNeural", rate = "-20%", timeoutMs = 12000) {
+const DEFAULT_EDGE_TTS_TIMEOUT_MS = Number.parseInt(process.env.EDGE_TTS_TIMEOUT_MS || "", 10) || 3000;
+
+function synthesizeEdgeV2Mp3(text, voice = "en-IN-PrabhatNeural", rate = "-20%", timeoutMs = DEFAULT_EDGE_TTS_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const token = generateSecMsGecV2();
     const connectionId = crypto.randomUUID().replace(/-/g, "");
@@ -134,10 +136,10 @@ function synthesizeEdgeV2Mp3(text, voice = "en-IN-PrabhatNeural", rate = "-20%",
 /**
  * Synthesizes text directly into 16kHz 16-bit Mono PCM audio Buffer.
  */
-async function synthesizeEdgeV2Pcm(text, voice = "en-IN-PrabhatNeural", rate = "-20%") {
+async function synthesizeEdgeV2Pcm(text, voice = "en-IN-PrabhatNeural", rate = "-20%", timeoutMs = DEFAULT_EDGE_TTS_TIMEOUT_MS) {
   if (!text || !text.trim()) return Buffer.alloc(0);
 
-  const mp3Bytes = await synthesizeEdgeV2Mp3(text.trim(), voice, rate);
+  const mp3Bytes = await synthesizeEdgeV2Mp3(text.trim(), voice, rate, timeoutMs);
   if (!mp3Bytes || mp3Bytes.length === 0) {
     throw new Error("Edge TTS v2 produced empty MP3 output");
   }
