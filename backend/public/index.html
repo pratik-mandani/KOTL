@@ -185,8 +185,8 @@
           👦
         </div>
         <div class="min-w-0 flex-1">
-          <div class="font-fredoka font-bold text-sm text-slate-900 truncate">Parth (Demo)</div>
-          <div class="text-[11px] text-slate-500">Age 6 • Boy • IST</div>
+          <div id="sidebarChildName" class="font-fredoka font-bold text-sm text-slate-900 truncate">Parth (Demo)</div>
+          <div id="sidebarChildAge" class="text-[11px] text-slate-500">Age 6 • Boy • IST</div>
         </div>
       </div>
       <div class="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-600">
@@ -285,8 +285,8 @@
           </div>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <h1 class="font-fredoka font-bold text-base sm:text-lg text-slate-900 truncate">
-                KOTL Parent Dashboard
+              <h1 class="font-fredoka font-bold text-sm sm:text-lg text-slate-900 whitespace-nowrap">
+                <span class="sm:hidden">KOTL</span><span class="hidden sm:inline">KOTL Parent Dashboard</span>
               </h1>
               <span id="demoModeIndicatorBadge" class="hidden text-[10px] font-fredoka font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full whitespace-nowrap">
                 Demo Mode (?demo=1)
@@ -315,7 +315,7 @@
 
           <!-- Quick Refresh Button -->
           <button onclick="switchMainTab(currentActiveTab);
-      loadGrowthMetrics(); loadSkillsAnalytics(); loadSkillsAnalytics(); loadTasks(); loadHabits(); loadDayWiseHistory(); loadChildReport(true); loadDeviceState();" title="Refresh Dashboard Data" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition-all active:scale-95">
+      loadGrowthMetrics(); loadSkillsAnalytics(); loadTasks(); loadHabits(); loadDayWiseHistory(); loadChildReport(true); loadDeviceState();" title="Refresh Dashboard Data" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition-all active:scale-95">
             ⟳
           </button>
 
@@ -2081,10 +2081,8 @@
       return window.location.origin;
     }
 
-    // Modal Helpers
-    function openProfileModal() {
-      var modal = document.getElementById('childProfileModal');
-      if (modal) modal.classList.remove('hidden');
+    // Child Profile Hydration & Modal Helpers
+    function loadChildProfile() {
       fetch(getBaseApiUrl() + '/api/child/profile')
       .then(function(r) { return r.json(); })
       .then(function(d) {
@@ -2098,9 +2096,25 @@
           if (bedtimeInput && p.bedtime) bedtimeInput.value = p.bedtime;
           var cardBedtime = document.getElementById('cardBedtimeDisplay');
           if (cardBedtime && p.bedtime) cardBedtime.innerText = p.bedtime + ' IST';
+
+          var sideName = document.getElementById('sidebarChildName');
+          if (sideName && p.name) sideName.innerText = p.name + (isDemoRequested() ? ' (Demo)' : '');
+          var sideAge = document.getElementById('sidebarChildAge');
+          if (sideAge && p.age) {
+            var cleanAge = p.age.replace(/[^0-9]/g, '') || '6';
+            sideAge.innerText = 'Age ' + cleanAge + ' • ' + (p.gender || 'Boy') + ' • IST';
+          }
+          var repChild = document.getElementById('repChildName');
+          if (repChild && p.name) repChild.innerText = p.name;
         }
       })
       .catch(function() {});
+    }
+
+    function openProfileModal() {
+      var modal = document.getElementById('childProfileModal');
+      if (modal) modal.classList.remove('hidden');
+      loadChildProfile();
     }
     function closeProfileModal() {
       var modal = document.getElementById('childProfileModal');
@@ -2320,12 +2334,14 @@
           if (content) content.classList.remove('hidden');
           if (btn) {
             if (t === 'growth') btn.className = 'tab-btn-active flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
+            if (t === 'skills') btn.className = 'tab-btn-active-skills flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
             if (t === 'tasks') btn.className = 'tab-btn-active-tasks flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
             if (t === 'habits') btn.className = 'tab-btn-active-habits flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
             if (t === 'cockpit') btn.className = 'tab-btn-active-cockpit flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
+            if (t === 'diagnostics') btn.className = 'tab-btn-active-diagnostics flex-1 py-2 sm:py-2.5 px-3 rounded-xl font-fredoka font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all';
           }
           if (mobBtn) {
-            var color = (t === 'growth' ? 'text-indigo-600' : (t === 'tasks' ? 'text-amber-600' : (t === 'habits' ? 'text-emerald-700' : 'text-sky-700')));
+            var color = (t === 'growth' ? 'text-indigo-600' : (t === 'tasks' ? 'text-amber-600' : (t === 'habits' ? 'text-emerald-700' : (t === 'skills' ? 'text-indigo-600' : 'text-sky-700'))));
             mobBtn.className = 'flex flex-col items-center justify-center gap-1 ' + color + ' font-fredoka font-bold text-[10px] active:scale-95 transition-all';
           }
           if (sideBtn) {
@@ -3115,20 +3131,22 @@
         var evidenceBox = '';
         if (Array.isArray(skill.recent_evidence) && skill.recent_evidence.length > 0) {
           var ev = skill.recent_evidence[0];
+          var cleanExcerpt = (ev.excerpt || '').replace(/^["'\s]+|["'\s]+$/g, '');
           evidenceBox =
             '<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs space-y-1">' +
               '<div class="flex items-center justify-between text-[10px] text-slate-400 font-medium">' +
                 '<span class="font-bold text-slate-600 uppercase">' + ev.source.replace('_', ' ') + '</span>' +
                 '<span>' + (ev.timestamp ? new Date(ev.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Recent') + '</span>' +
               '</div>' +
-              '<p class="italic font-medium text-slate-800 leading-snug">\"' + ev.excerpt + '\"</p>' +
+              '<p class="italic font-medium text-slate-800 leading-snug">"' + cleanExcerpt + '"</p>' +
               '<p class="text-[10px] text-slate-500">' + ev.note + '</p>' +
             '</div>';
         } else {
+          var cleanActivity = (skill.suggested_activity || 'Ask an open-ended question during evening play.').replace(/^["'\s]+|["'\s]+$/g, '');
           evidenceBox =
             '<div class="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/70 text-xs space-y-1">' +
               '<div class="font-bold text-[10px] flex items-center gap-1 text-amber-900"><span>💡</span><span>Parent Discovery Idea:</span></div>' +
-              '<p class="text-[11px] text-amber-950 leading-snug italic">\"' + (skill.suggested_activity || 'Ask an open-ended question during evening play.') + '\"</p>' +
+              '<p class="text-[11px] text-amber-950 leading-snug italic">"' + cleanActivity + '"</p>' +
             '</div>';
         }
 
@@ -3891,6 +3909,10 @@
       var container = document.getElementById('daySelectorPillsContainer');
       if (!container) return;
       container.innerHTML = '';
+      if (!cachedDaysHistory || cachedDaysHistory.length === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-400 italic py-1 px-2">No activity sessions recorded yet</span>';
+        return;
+      }
       cachedDaysHistory.forEach(function(day) {
         var btn = document.createElement('button');
         var isActive = (day.id === selectedDayId);
@@ -4265,6 +4287,7 @@
       })
       .then(function(r) { return r.json(); })
       .then(function() {
+        loadChildProfile();
         closeProfileModal();
         showToast('Profile settings saved! ✓', '✓');
         playLocalVoice('Profile settings updated for ' + name + '!');
@@ -4552,9 +4575,9 @@
         return;
       }
 
-      var elapsed = typeof ds?.last_seen_seconds_ago === 'number'
+      var elapsed = (ds && typeof ds.last_seen_seconds_ago === 'number')
         ? ds.last_seen_seconds_ago
-        : (ds?.last_seen ? Math.max(0, (Date.now() - new Date(ds.last_seen).getTime()) / 1000) : null);
+        : ((ds && ds.last_seen) ? Math.max(0, (Date.now() - new Date(ds.last_seen).getTime()) / 1000) : null);
       var isFresh = typeof elapsed === 'number' && elapsed < 45;
 
       if (ds && ds.online === true && isFresh) {
@@ -4897,6 +4920,7 @@
         var badge = document.getElementById('demoModeIndicatorBadge');
         if (badge) badge.classList.remove('hidden');
       }
+      loadChildProfile();
       loadGrowthMetrics();
       loadSkillsAnalytics(false);
       loadTasks();
